@@ -22,6 +22,7 @@
 //              hvor figuren allerede er midt i et skridt)
 //    skridt: hvor benene skilles (bruges, når bukserne er samlet et stykke under hoften)
 //    benDeling: hvor på tværs benene skilles (0.5 = midt på billedet)
+//    saks:   benene går fra hinanden som en saks, når figuren går (tallet = hvor meget)
 //
 //  EKSTRA TEGNINGER (valgfrit)
 //  Tegner du selv flere billeder, bruger spillet dem automatisk:
@@ -57,6 +58,7 @@ const BILLED_FIGURER = {
       hofte: 0.58,
       skridt: 0.81,
       benDeling: 0.41,
+      saks: 0.35,
       arme: null,                     // hans hænder er i lommerne, så armene svinger ikke
       gaa: [],
       sidder: "",
@@ -66,6 +68,7 @@ const BILLED_FIGURER = {
       hofte: 0.58,
       skridt: 0.81,
       benDeling: 0.55,
+      saks: 0.45,
       arme: null,
       gaa: [],
       sidder: "",
@@ -178,13 +181,40 @@ function tegnMenneske(c, x, y, valg, forfra, vendt, gaarTrin, sidde) {
   // ----- Benene -----
   const hofteY = -benLaengde;
   if (siddeGrad > 0) {
-    // knæene bøjer, så benene bliver kortere og skubbes lidt frem
-    const benHoejde = (benLaengde - synk) / benLaengde;
-    tegnStykke(c, b, s, 0, del.hofte, 0.5, 1, 0.25, del.hofte, 0, [2 * siddeGrad, synk], benHoejde, false);
-    tegnStykke(c, b, s, 0.5, del.hofte, 1, 1, 0.75, del.hofte, 0, [3 * siddeGrad, synk], benHoejde, false);
+    // Lårene peger ind mod os og kan ikke ses forfra, så kun underbenene
+    // (fra knæet ned til skoene) bliver stående under sædet. Resten gemmes bag kroppen.
+    const underben = Math.min(benLaengde, sidde.hoejde + 3) / H;
+    const top = del.hofte + (1 - del.hofte - underben) * siddeGrad;
+    tegnStykke(c, b, s, 0, top, 1, 1, 0.5, 1, 0, [0, 0], 1, false);
   } else if (del.spejlBen) {
     // tegningen er allerede midt i et skridt: byt om på benene ved hvert skridt
     tegnStykke(c, b, s, 0, del.hofte, 1, 1, 0.5, del.hofte, 0, [0, 0], 1, sving > 0);
+  } else if (del.saks) {
+    // benene går fra hinanden som en saks (det ene frem og det andet tilbage),
+    // mens toppen af benene bliver siddende i bukserne
+    const skridt = del.skridt || del.hofte;
+    const d = del.benDeling || 0.5;
+    const ledY = (skridt - 1) * H;
+    if (skridt > del.hofte) {
+      tegnStykke(c, b, s, 0, del.hofte, 1, skridt, 0.5, del.hofte, 0, [0, 0], 1, false);
+    }
+    // benene spredes ved hvert skridt, og det er skiftevis det ene og det andet ben, der løftes
+    const spred = Math.abs(sving) * del.saks;
+    const ben = [
+      { u0: 0, u1: d, skraa: -spred, loeft: Math.max(0, -sving) },
+      { u0: d, u1: 1, skraa: spred, loeft: Math.max(0, sving) },
+    ];
+    // det bagerste ben tegnes først
+    if (sving > 0) ben.reverse();
+    for (const e of ben) {
+      c.save();
+      c.translate(0, ledY);
+      c.transform(1, 0, e.skraa, 1, 0, 0);
+      c.translate(0, -ledY);
+      tegnStykke(c, b, s, e.u0, skridt - 0.015, e.u1, 1, (e.u0 + e.u1) / 2, skridt, 0,
+        [0, 0], 1 - e.loeft * 0.12, false);
+      c.restore();
+    }
   } else {
     // bukserne over skridtet følger kroppen, kun selve benene bevæger sig
     const skridt = del.skridt || del.hofte;
