@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KUBLO – Hotellet</title>
+  <link rel="stylesheet" href="css/stil.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="tilbage">&larr; Forside</a>
+    <h1>KUBLO</h1>
+  </header>
+
+  <main>
+    <!-- Selve spillet bliver tegnet på dette "lærred" -->
+    <canvas id="spil" width="900" height="600"></canvas>
+
+    <aside id="panel">
+      <h2>Møbler</h2>
+      <p class="lille">Klik på et møbel og derefter på gulvet for at stille det.</p>
+      <div id="moebel-knapper"></div>
+
+      <div id="valgt-boks" hidden>
+        <h3 id="valgt-navn"></h3>
+        <button id="knap-drej">Drej (R)</button>
+        <button id="knap-saml">Saml op</button>
+      </div>
+
+      <button id="knap-ryd" class="diskret">Ryd hele rummet</button>
+
+      <h2>Garderobe</h2>
+      <div id="garderobe">
+        <canvas id="figur-forhaandsvisning" width="132" height="130"></canvas>
+        <div id="figur-typer" class="valg-raekke"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer id="besked">Klik på gulvet for at gå.</footer>
+
+  <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->
+  <script src="js/indstillinger.js"></script>
+  <script src="js/figur.js"></script>
+  <script src="js/spil.js"></script>
+</body>
+</html>

@@ -15,6 +15,22 @@ header {
   border-bottom: 3px solid #f2b134;
 }
 
+header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.tilbage {
+  color: #f4f1e8;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.tilbage:hover {
+  color: #f2b134;
+}
+
 h1 {
   margin: 0;
   font-size: 26px;
