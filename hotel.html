@@ -33,28 +33,37 @@
       <h2>Garderobe</h2>
       <div id="garderobe">
         <canvas id="figur-forhaandsvisning" width="132" height="130"></canvas>
-        <div id="figur-typer" class="valg-raekke"></div>
       </div>
-      <button id="knap-garderobe">Åbn garderoben</button>
+      <button id="knap-garderobe">Skift udseende</button>
     </aside>
   </main>
 
-  <!-- Garderoben: vælg tøj. Den åbnes med knappen i panelet -->
+  <!-- "Skift udseende": vælg figur, tøj og farver. Åbnes med knappen i panelet -->
   <div id="garderobe-vindue" hidden>
-    <div class="gv-boks">
-      <div class="gv-top">
-        <h2>Garderobe</h2>
-        <button id="gv-tilfaeldig" class="diskret">Tilfældigt outfit</button>
-        <button id="gv-luk">Luk</button>
+    <div class="su-boks" role="dialog" aria-labelledby="su-titel">
+      <div class="su-top">
+        <h2 id="su-titel">Skift udseende</h2>
+        <button id="gv-luk" class="su-luk" title="Luk uden at gemme">✕</button>
       </div>
-      <div class="gv-indhold">
-        <div>
-          <div id="outfit-kort" class="outfit-kort"></div>
-          <p class="lille">Frisuren bliver dit profilbillede ved dit navn.</p>
+      <div id="su-faner" class="su-faner"></div>
+      <div class="su-indhold">
+        <div class="su-venstre">
+          <div id="su-under" class="su-under"></div>
+          <div id="su-ting" class="su-ting"></div>
+          <div id="su-palet" class="su-palet"></div>
         </div>
-        <div class="gv-valg">
-          <div id="gv-faner" class="gv-faner"></div>
-          <div id="gv-ting" class="gv-ting"></div>
+        <div class="su-hoejre">
+          <div class="su-scene">
+            <canvas id="su-figur" width="220" height="300"></canvas>
+            <button id="su-drej-venstre" class="su-pil venstre" title="Drej">⟲</button>
+            <button id="su-drej-hoejre" class="su-pil hoejre" title="Drej">⟳</button>
+          </div>
+          <div class="su-knapper">
+            <button id="su-fortryd" title="Fortryd">↶</button>
+            <button id="su-fjern" title="Fjern farven her">🗑</button>
+            <button id="gv-tilfaeldig" title="Tilfældigt udseende">🎲</button>
+          </div>
+          <button id="su-gem" class="su-gem">Gem ændringer</button>
         </div>
       </div>
     </div>
@@ -67,6 +76,7 @@
   <script src="js/moebel-katalog.js"></script>
   <script src="js/figur.js"></script>
   <script src="js/toej.js"></script>
+  <script src="js/toej-farver.js"></script>
   <script src="js/spil.js"></script>
   <script src="js/garderobe.js"></script>
 </body>

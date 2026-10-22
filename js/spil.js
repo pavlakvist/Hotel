@@ -745,11 +745,13 @@ document.addEventListener("keydown", function (e) {
 //  Garderobe — vælg figur
 // =============================================================
 const GARDEROBE_NOEGLE = "mit-hotel-figur-5";
-const garderobe = { type: FIGUR.type };
+const garderobe = { type: FIGUR.type, farver: { kvinde: {}, mand: {} } };
 
 try {
   const gemt = JSON.parse(localStorage.getItem(GARDEROBE_NOEGLE));
   if (gemt && alleFigurer()[gemt.type]) garderobe.type = gemt.type;
+  if (gemt && gemt.farver) Object.assign(garderobe.farver, gemt.farver);
+  if (gemt && gemt.ting) garderobe.ting = gemt.ting;
 } catch (fejl) {
   // ingen gemt figur endnu
 }
@@ -773,6 +775,7 @@ function tegnForhaandsvisning() {
 
 function lavFigurKnapper() {
   const boks = document.getElementById("figur-typer");
+  if (!boks) return;
   boks.innerHTML = "";
   const figurer = alleFigurer();
   for (const id in figurer) {

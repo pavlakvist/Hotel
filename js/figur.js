@@ -127,11 +127,61 @@ function tegnMenneske(c, x, y, valg, retning, gaarTrin, sidde) {
       del = billeder[GAA_RAEKKE[Math.floor(gaarTrin) % GAA_RAEKKE.length]];
     }
   }
-  const b = figurBillede(del.fil);
+  let b = figurBillede(del.fil);
   if (!klar(b)) return;
+  const farvet = farvetFigur(del.fil, b, valg.farver ? valg.farver[valg.type] : null);
   const s = f.skala;
+  if (farvet) b = farvet;
   c.drawImage(b, Math.round(x - del.anker[0] * s), Math.round(y - del.anker[1] * s),
-    b.naturalWidth * s, b.naturalHeight * s);
+    b.width * s, b.height * s);
+}
+
+
+// =============================================================
+//  Farver på figuren (fra "Skift udseende")
+//  Hvert billede af figuren har et farvelag i billeder/figurer/farvelag.
+//  Farvelaget er delt op i områder, som ligger ved siden af hinanden:
+// =============================================================
+const FARVE_OMRAADER = ["hud", "haar", "vest", "skjorte", "underdel", "stroemper", "sko"];
+let farveGemmer = {};
+let farveAntal = 0;
+
+// Giver et nyt billede, hvor de valgte områder har fået deres farve.
+// Er der ingen farver valgt, eller er farvelaget ikke hentet endnu, gives null.
+function farvetFigur(fil, b, farver) {
+  if (!farver) return null;
+  const brugte = FARVE_OMRAADER.filter(function (o) { return farver[o]; });
+  if (brugte.length === 0) return null;
+  const lag = figurBillede(fil.replace("billeder/figurer/", "billeder/figurer/farvelag/"));
+  if (!klar(lag)) return null;
+
+  const noegle = fil + "|" + brugte.map(function (o) { return o + farver[o]; }).join();
+  if (farveGemmer[noegle]) return farveGemmer[noegle];
+  if (farveAntal > 400) { farveGemmer = {}; farveAntal = 0; }
+
+  const w = b.naturalWidth, h = b.naturalHeight;
+  const ud = document.createElement("canvas");
+  ud.width = w; ud.height = h;
+  const uc = ud.getContext("2d");
+  uc.drawImage(b, 0, 0);
+  const hj = document.createElement("canvas");
+  hj.width = w; hj.height = h;
+  const hc = hj.getContext("2d");
+  brugte.forEach(function (o) {
+    const i = FARVE_OMRAADER.indexOf(o);
+    hc.globalCompositeOperation = "source-over";
+    hc.clearRect(0, 0, w, h);
+    hc.drawImage(lag, i * w, 0, w, h, 0, 0, w, h);      // skyggerne i gråt
+    hc.globalCompositeOperation = "multiply";
+    hc.fillStyle = farver[o];                            // gang med farven
+    hc.fillRect(0, 0, w, h);
+    hc.globalCompositeOperation = "destination-in";
+    hc.drawImage(lag, i * w, 0, w, h, 0, 0, w, h);      // kun inden for området
+    uc.drawImage(hj, 0, 0);
+  });
+  farveGemmer[noegle] = ud;
+  farveAntal++;
+  return ud;
 }
 
 // Hvor høj figuren er på skærmen (bruges til navneskiltet)
