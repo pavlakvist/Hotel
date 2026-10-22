@@ -283,6 +283,9 @@ function tegnMoebel(c, type, cx, cy, spejlet) {
 // =============================================================
 //  Figuren
 // =============================================================
+// hvor mange pixels figuren rykker tilbage mod ryglænet, når den sidder
+const SIDDE_BAGUD = 6;
+
 function tegnFigur(c) {
   const p = punkt(figur.x + 0.5, figur.y + 0.5);   // fødderne
   const gaar = figur.rute.length > 0;
@@ -310,7 +313,9 @@ function tegnFigur(c) {
     if (figur.sidde && figur.sidde.grad > 0.4) {
       sidde = { hoejde: MOEBEL_TYPER[figur.sidde.moebel.type].saede };
     }
-    tegnMenneske(c, p.x, p.y, garderobe, figur.retning, gaar && !figur.sidde ? figur.trin : null, sidde);
+    // på et sæde rykker figuren lidt tilbage mod ryglænet
+    const bagud = sidde ? (figur.sidde.moebel.spejlet ? -1 : 1) * SIDDE_BAGUD : 0;
+    tegnMenneske(c, p.x + bagud, p.y - Math.abs(bagud) / 2, garderobe, figur.retning, gaar && !figur.sidde ? figur.trin : null, sidde);
   }
 
   // navneskilt

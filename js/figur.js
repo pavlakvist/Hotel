@@ -62,7 +62,7 @@ const FIGURER = {
       "op": { fil: "billeder/figurer/mand-sidder-4.png", anker: [40.0, 114.4] },
       "op-venstre": { fil: "billeder/figurer/mand-sidder-5.png", anker: [47.0, 130.7] },
       "venstre": { fil: "billeder/figurer/mand-sidder-6.png", anker: [47.0, 128.1] },
-      "ned-venstre": { fil: "billeder/figurer/mand-sidder-7.png", anker: [77.4, 130.2] },
+      "ned-venstre": { fil: "billeder/figurer/mand-sidder-7.png", anker: [65.7, 130.2] },
     },
   },
 };
