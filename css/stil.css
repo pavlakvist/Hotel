@@ -124,6 +124,64 @@ button.diskret {
   margin-bottom: 12px;
 }
 
+#knap-ryd {
+  margin-bottom: 18px;
+}
+
+#garderobe {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+}
+
+#figur-forhaandsvisning {
+  grid-column: 1 / -1;
+  justify-self: center;
+  background: #1d2b45;
+  border-radius: 6px;
+  width: 180px;
+  image-rendering: pixelated;
+}
+
+#figur-typer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+}
+
+#figur-typer button {
+  background: #3d5488;
+  color: #f4f1e8;
+  border: 2px solid transparent;
+}
+
+#figur-typer button.aktiv {
+  border-color: #f2b134;
+  background: #55509a;
+}
+
+#garderobe label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+#garderobe input[type=color] {
+  width: 36px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid #1d2b45;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+#knap-nulstil-figur {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
 footer {
   padding: 0 20px 20px;
   font-size: 15px;

@@ -27,6 +27,18 @@
       </div>
 
       <button id="knap-ryd" class="diskret">Ryd hele rummet</button>
+
+      <h2>Garderobe</h2>
+      <div id="garderobe">
+        <canvas id="figur-forhaandsvisning" width="120" height="90"></canvas>
+        <div id="figur-typer"></div>
+        <label>Hår <input type="color" data-del="haar"></label>
+        <label>Hud <input type="color" data-del="hud"></label>
+        <label>Vest <input type="color" data-del="troeje"></label>
+        <label>Underdel <input type="color" data-del="bukser"></label>
+        <label>Sko <input type="color" data-del="sko"></label>
+        <button id="knap-nulstil-figur" class="diskret">Start-farver</button>
+      </div>
     </aside>
   </main>
 
@@ -34,6 +46,7 @@
 
   <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->
   <script src="js/indstillinger.js"></script>
+  <script src="js/figur.js"></script>
   <script src="js/spil.js"></script>
 </body>
 </html>

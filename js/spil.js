@@ -27,6 +27,7 @@ const figur = {
   x: 2, y: 2,              // hvor figuren står (kan være et kommatal, mens den går)
   rute: [],                // de felter figuren skal gå igennem
   vendt: 1,                // 1 = kigger mod højre, -1 = mod venstre
+  forfra: true,            // true = kigger mod os, false = vender ryggen til
   trin: 0,                 // bruges til at få benene til at bevæge sig
 };
 
@@ -276,43 +277,18 @@ function tegnFigur(c) {
   c.fill();
 
   const b = hentBillede(FIGUR.billede);
+  let hoejde = figurHoejde(garderobe.type);
   if (billedeKlar(b)) {
+    // Dit eget billede af figuren
     c.save();
     c.translate(p.x, p.y);
     if (figur.vendt < 0) c.scale(-1, 1);
     c.drawImage(b, -b.naturalWidth / 2, -b.naturalHeight - Math.abs(sving) / 2);
     c.restore();
+    hoejde = b.naturalHeight;
   } else {
-    const x = p.x;
-    const y = p.y;
-    // ben
-    c.fillStyle = FIGUR.bukser;
-    c.fillRect(x - 7, y - 26 + sving / 2, 6, 24 - sving / 2);
-    c.fillRect(x + 1, y - 26 - sving / 2, 6, 24 + sving / 2);
-    c.fillStyle = FIGUR.sko;
-    c.fillRect(x - 8, y - 3, 8, 4);
-    c.fillRect(x + 1, y - 3, 8, 4);
-    // krop og arme
-    c.fillStyle = FIGUR.troeje;
-    c.fillRect(x - 10, y - 50, 20, 26);
-    c.fillRect(x - 14, y - 49 - sving / 2, 5, 20);
-    c.fillRect(x + 9, y - 49 + sving / 2, 5, 20);
-    c.fillStyle = FIGUR.hud;
-    c.fillRect(x - 14, y - 30 - sving / 2, 5, 5);
-    c.fillRect(x + 9, y - 30 + sving / 2, 5, 5);
-    // hoved
-    c.beginPath();
-    c.arc(x, y - 62, 12, 0, Math.PI * 2);
-    c.fill();
-    // hår
-    c.fillStyle = FIGUR.haar;
-    c.beginPath();
-    c.arc(x, y - 65, 12.5, Math.PI, Math.PI * 2);
-    c.fill();
-    // øjne (kigger den vej, figuren går)
-    c.fillStyle = "#222222";
-    c.fillRect(x + figur.vendt * 3 - 4, y - 62, 2, 3);
-    c.fillRect(x + figur.vendt * 3 + 2, y - 62, 2, 3);
+    // Pixel-figuren fra figur.js
+    tegnPixelFigur(c, p.x, p.y, garderobe, figur.forfra, figur.vendt, gaar ? figur.trin : null);
   }
 
   // navneskilt
@@ -320,9 +296,9 @@ function tegnFigur(c) {
   c.textAlign = "center";
   const tekstB = c.measureText(FIGUR.navn).width + 12;
   c.fillStyle = "rgba(0,0,0,0.55)";
-  c.fillRect(p.x - tekstB / 2, p.y - 100, tekstB, 18);
+  c.fillRect(p.x - tekstB / 2, p.y - hoejde - 26, tekstB, 18);
   c.fillStyle = "#ffffff";
-  c.fillText(FIGUR.navn, p.x, p.y - 87);
+  c.fillText(FIGUR.navn, p.x, p.y - hoejde - 13);
 }
 
 function flytFigur(dt) {
@@ -334,8 +310,11 @@ function flytFigur(dt) {
   const skridt = FIGUR.fart * dt;
 
   // Hvilken vej kigger figuren på skærmen?
+  // (dx - dy) er højre/venstre, og (dx + dy) er ned mod os/op væk fra os
   if (dx - dy > 0.01) figur.vendt = 1;
   if (dx - dy < -0.01) figur.vendt = -1;
+  if (dx + dy > 0.01) figur.forfra = true;
+  if (dx + dy < -0.01) figur.forfra = false;
 
   if (afstand <= skridt) {
     figur.x = maal.x;
@@ -345,7 +324,7 @@ function flytFigur(dt) {
     figur.x += (dx / afstand) * skridt;
     figur.y += (dy / afstand) * skridt;
   }
-  figur.trin += dt * 12;
+  figur.trin += dt * 8;   // hvor hurtigt benene skifter
 }
 
 
@@ -612,6 +591,97 @@ document.addEventListener("keydown", function (e) {
 
 
 // =============================================================
+//  Garderobe — vælg kvinde eller mand, og farver til figuren
+// =============================================================
+const GARDEROBE_NOEGLE = "mit-hotel-figur-2";
+
+function startGarderobe() {
+  return {
+    type: FIGUR.type,
+    haar: FIGUR.haar,
+    hud: FIGUR.hud,
+    troeje: FIGUR.troeje,
+    bukser: FIGUR.bukser,
+    sko: FIGUR.sko,
+  };
+}
+
+const garderobe = startGarderobe();
+
+try {
+  const gemt = JSON.parse(localStorage.getItem(GARDEROBE_NOEGLE));
+  if (gemt) {
+    if (FIGURER[gemt.type]) garderobe.type = gemt.type;
+    for (const del of ["haar", "hud", "troeje", "bukser", "sko"]) {
+      if (/^#[0-9a-fA-F]{6}$/.test(gemt[del])) garderobe[del] = gemt[del];
+    }
+  }
+} catch (fejl) {
+  // ingen gemt figur endnu
+}
+
+function gemGarderobe() {
+  try {
+    localStorage.setItem(GARDEROBE_NOEGLE, JSON.stringify(garderobe));
+  } catch (fejl) {
+    // kan ikke gemme, men valget virker stadig nu
+  }
+}
+
+const forhaandsvisning = document.getElementById("figur-forhaandsvisning");
+
+function tegnForhaandsvisning() {
+  const c = forhaandsvisning.getContext("2d");
+  c.clearRect(0, 0, forhaandsvisning.width, forhaandsvisning.height);
+  tegnPixelFigur(c, 34, forhaandsvisning.height - 4, garderobe, true, 1, null);
+  tegnPixelFigur(c, 86, forhaandsvisning.height - 4, garderobe, false, -1, null);
+}
+
+// Knapper til at vælge figur (én knap for hver figur i figur.js)
+const typeKnapper = document.getElementById("figur-typer");
+
+function opdaterTypeKnapper() {
+  typeKnapper.querySelectorAll("button").forEach(function (k) {
+    k.classList.toggle("aktiv", k.dataset.type === garderobe.type);
+  });
+}
+
+for (const type in FIGURER) {
+  const knap = document.createElement("button");
+  knap.textContent = FIGURER[type].navn;
+  knap.dataset.type = type;
+  knap.addEventListener("click", function () {
+    garderobe.type = type;
+    opdaterTypeKnapper();
+    tegnForhaandsvisning();
+    gemGarderobe();
+  });
+  typeKnapper.appendChild(knap);
+}
+opdaterTypeKnapper();
+
+document.querySelectorAll("#garderobe input[type=color]").forEach(function (felt) {
+  const del = felt.dataset.del;
+  felt.value = garderobe[del];
+  felt.addEventListener("input", function () {
+    garderobe[del] = felt.value;
+    tegnForhaandsvisning();
+    gemGarderobe();
+  });
+});
+
+document.getElementById("knap-nulstil-figur").addEventListener("click", function () {
+  const type = garderobe.type;   // behold kvinde/mand, nulstil kun farverne
+  Object.assign(garderobe, startGarderobe(), { type: type });
+  document.querySelectorAll("#garderobe input[type=color]").forEach(function (felt) {
+    felt.value = garderobe[felt.dataset.del];
+  });
+  gemGarderobe();
+  tegnForhaandsvisning();
+});
+
+
+// =============================================================
 //  Gem rummet i browseren, så det er der næste gang
 // =============================================================
 const GEMME_NOEGLE = "mit-hotel-rum";
@@ -651,6 +721,7 @@ function hent() {
 // =============================================================
 hent();
 tegnIkoner();
+tegnForhaandsvisning();
 opdaterPanel();
 
 let sidsteTid = performance.now();
