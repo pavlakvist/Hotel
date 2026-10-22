@@ -20,6 +20,8 @@
 //    arme:   hvor armene sidder (top, bund, og hvor langt ind fra siderne)
 //    spejlBen: true = benene byttes om ved hvert skridt (til tegninger,
 //              hvor figuren allerede er midt i et skridt)
+//    skridt: hvor benene skilles (bruges, når bukserne er samlet et stykke under hoften)
+//    benDeling: hvor på tværs benene skilles (0.5 = midt på billedet)
 //
 //  EKSTRA TEGNINGER (valgfrit)
 //  Tegner du selv flere billeder, bruger spillet dem automatisk:
@@ -53,14 +55,18 @@ const BILLED_FIGURER = {
     forfra: {
       fil: "billeder/mand-forfra.png",
       hofte: 0.58,
-      arme: { top: 0.37, bund: 0.66, ind: 0.27 },
+      skridt: 0.81,
+      benDeling: 0.41,
+      arme: null,                     // hans hænder er i lommerne, så armene svinger ikke
       gaa: [],
       sidder: "",
     },
     bagfra: {
       fil: "billeder/mand-bagfra.png",
       hofte: 0.58,
-      arme: { top: 0.37, bund: 0.64, ind: 0.24 },
+      skridt: 0.81,
+      benDeling: 0.55,
+      arme: null,
       gaa: [],
       sidder: "",
     },
@@ -180,11 +186,18 @@ function tegnMenneske(c, x, y, valg, forfra, vendt, gaarTrin, sidde) {
     // tegningen er allerede midt i et skridt: byt om på benene ved hvert skridt
     tegnStykke(c, b, s, 0, del.hofte, 1, 1, 0.5, del.hofte, 0, [0, 0], 1, sving > 0);
   } else {
+    // bukserne over skridtet følger kroppen, kun selve benene bevæger sig
+    const skridt = del.skridt || del.hofte;
+    const d = del.benDeling || 0.5;
+    if (skridt > del.hofte) {
+      tegnStykke(c, b, s, 0, del.hofte, 1, skridt, 0.5, del.hofte, 0, [0, 0], 1, false);
+    }
     // det ben, der går frem, løftes (bliver lidt kortere) og flytter sig lidt frem
+    // benene starter en anelse højere oppe, så der ikke kommer en lys streg i samlingen
     const venstreLoeft = Math.max(0, sving), hoejreLoeft = Math.max(0, -sving);
-    tegnStykke(c, b, s, 0, del.hofte, 0.5, 1, 0.3, del.hofte, sving * 0.06,
+    tegnStykke(c, b, s, 0, skridt - 0.015, d, 1, d * 0.6, skridt, sving * 0.06,
       [venstreLoeft * 1.5, 0], 1 - venstreLoeft * 0.13, false);
-    tegnStykke(c, b, s, 0.5, del.hofte, 1, 1, 0.7, del.hofte, -sving * 0.06,
+    tegnStykke(c, b, s, d, skridt - 0.015, 1, 1, d + (1 - d) * 0.4, skridt, -sving * 0.06,
       [hoejreLoeft * 1.5, 0], 1 - hoejreLoeft * 0.13, false);
   }
 
