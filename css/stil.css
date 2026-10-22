@@ -139,8 +139,6 @@ button.diskret {
   justify-self: center;
   background: #1d2b45;
   border-radius: 6px;
-  width: 180px;
-  image-rendering: pixelated;
 }
 
 #figur-typer {

@@ -633,8 +633,8 @@ const forhaandsvisning = document.getElementById("figur-forhaandsvisning");
 function tegnForhaandsvisning() {
   const c = forhaandsvisning.getContext("2d");
   c.clearRect(0, 0, forhaandsvisning.width, forhaandsvisning.height);
-  tegnPixelFigur(c, 34, forhaandsvisning.height - 4, garderobe, true, 1, null);
-  tegnPixelFigur(c, 86, forhaandsvisning.height - 4, garderobe, false, -1, null);
+  tegnPixelFigur(c, 33, forhaandsvisning.height - 4, garderobe, true, 1, null);
+  tegnPixelFigur(c, 91, forhaandsvisning.height - 4, garderobe, false, -1, null);
 }
 
 // Knapper til at vælge figur (én knap for hver figur i figur.js)
