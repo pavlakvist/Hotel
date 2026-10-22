@@ -28,6 +28,7 @@ const figur = {
   rute: [],                // de felter figuren skal gå igennem
   vendt: 1,                // 1 = kigger mod højre, -1 = mod venstre
   forfra: true,            // true = kigger mod os, false = vender ryggen til
+  retning: "ned",          // hvilken vej figuren kigger på skærmen (se js/figur.js)
   sidde: null,             // når figuren sidder: { moebel, grad (0 = står, 1 = sidder helt ned) }
   skalSidde: null,         // det møbel, figuren er på vej hen for at sidde på
   trin: 0,                 // bruges til at få benene til at bevæge sig
@@ -157,6 +158,7 @@ function saetDig(m) {
   // kig væk fra ryglænet
   figur.forfra = true;
   figur.vendt = m.spejlet ? 1 : -1;
+  figur.retning = m.spejlet ? "ned-hoejre" : "ned-venstre";
 }
 
 
@@ -305,11 +307,10 @@ function tegnFigur(c) {
   } else {
     // Figuren fra figur.js
     let sidde = null;
-    if (figur.sidde) {
-      sidde = { grad: figur.sidde.grad, hoejde: MOEBEL_TYPER[figur.sidde.moebel.type].saede };
-      hoejde -= 18 * figur.sidde.grad;   // navneskiltet følger med ned
+    if (figur.sidde && figur.sidde.grad > 0.4) {
+      sidde = { hoejde: MOEBEL_TYPER[figur.sidde.moebel.type].saede };
     }
-    tegnMenneske(c, p.x, p.y, garderobe, figur.forfra, figur.vendt, gaar && !figur.sidde ? figur.trin : null, sidde);
+    tegnMenneske(c, p.x, p.y, garderobe, figur.retning, gaar && !figur.sidde ? figur.trin : null, sidde);
   }
 
   // navneskilt
@@ -334,6 +335,7 @@ function flytFigur(dt) {
       // sæt dig langsomt ned
       figur.sidde.grad = Math.min(1, figur.sidde.grad + dt / 0.9);
       figur.vendt = figur.sidde.moebel.spejlet ? 1 : -1;
+      figur.retning = figur.sidde.moebel.spejlet ? "ned-hoejre" : "ned-venstre";
     }
     return;
   }
@@ -360,6 +362,9 @@ function flytFigur(dt) {
   if (dx - dy < -0.01) figur.vendt = -1;
   if (dx + dy > 0.01) figur.forfra = true;
   if (dx + dy < -0.01) figur.forfra = false;
+  const lodret = dx + dy > 0.01 ? "ned" : dx + dy < -0.01 ? "op" : "";
+  const vandret = dx - dy > 0.01 ? "hoejre" : dx - dy < -0.01 ? "venstre" : "";
+  figur.retning = lodret && vandret ? lodret + "-" + vandret : lodret || vandret || figur.retning;
 
   if (afstand <= skridt) {
     figur.x = maal.x;
@@ -670,8 +675,8 @@ const forhaandsvisning = document.getElementById("figur-forhaandsvisning");
 function tegnForhaandsvisning() {
   const c = forhaandsvisning.getContext("2d");
   c.clearRect(0, 0, forhaandsvisning.width, forhaandsvisning.height);
-  tegnMenneske(c, 34, forhaandsvisning.height - 4, garderobe, true, 1, null);
-  tegnMenneske(c, 98, forhaandsvisning.height - 4, garderobe, false, 1, null);
+  tegnMenneske(c, 34, forhaandsvisning.height - 4, garderobe, "ned", null, null);
+  tegnMenneske(c, 98, forhaandsvisning.height - 4, garderobe, "op", null, null);
 }
 
 function lavFigurKnapper() {

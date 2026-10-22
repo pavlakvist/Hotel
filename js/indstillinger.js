@@ -44,7 +44,7 @@ const FIGUR = {
 //
 //  Du kan sagtens tilføje flere møbler: kopiér en linje og ret den til.
 const MOEBLER = [
-  { id: "stol",   navn: "Stol",   billede: "", tegning: "stol",   farve: "#c0392b", saede: 19 },
+  { id: "stol",   navn: "Stol",   billede: "billeder/moebler/stol.png", tegning: "stol", farve: "#c0392b", saede: 19 },
   { id: "bord",   navn: "Bord",   billede: "", tegning: "bord",   farve: "#a0703c" },
   { id: "sofa",   navn: "Sofa",   billede: "", tegning: "sofa",   farve: "#6c5ce7", saede: 15 },
   { id: "lampe",  navn: "Lampe",  billede: "", tegning: "lampe",  farve: "#f9e076" },
