@@ -8,7 +8,7 @@
 //  Retningerne er, som figuren ser ud på skærmen:
 //    ned, ned-hoejre, hoejre, op-hoejre, op, op-venstre, venstre, ned-venstre
 //
-//  gaa:    tre billeder pr. retning, som vises efter hinanden, når figuren går.
+//  gaa:    fire billeder pr. retning, som vises efter hinanden, når figuren går.
 //          Det første billede bruges også, når figuren står stille.
 //  sidder: ét billede pr. retning af figuren, der sidder.
 //  anker:  det punkt på billedet (i pixels), der skal stå på gulvet.
@@ -20,25 +20,26 @@ const FIGURER = {
   kvinde: {
     navn: "Kvinde",
     skala: 0.87,
+    raekke: "alle",                   // alle hendes gå-billeder vises efter hinanden
     gaa: {
-      "ned": [{ fil: "billeder/figurer/kvinde-gaa-0-1.png", anker: [32.0, 139] }, { fil: "billeder/figurer/kvinde-gaa-0-2.png", anker: [32.0, 142] }, { fil: "billeder/figurer/kvinde-gaa-0-3.png", anker: [31.5, 141] }],
-      "ned-venstre": [{ fil: "billeder/figurer/kvinde-gaa-7-1.png", anker: [36.0, 137] }, { fil: "billeder/figurer/kvinde-gaa-7-2.png", anker: [35.0, 141] }, { fil: "billeder/figurer/kvinde-gaa-7-3.png", anker: [35.5, 137] }],
-      "venstre": [{ fil: "billeder/figurer/kvinde-gaa-6-1.png", anker: [36.5, 138] }, { fil: "billeder/figurer/kvinde-gaa-6-2.png", anker: [35.0, 142] }, { fil: "billeder/figurer/kvinde-gaa-6-3.png", anker: [38.0, 141] }],
-      "op-venstre": [{ fil: "billeder/figurer/kvinde-gaa-5-1.png", anker: [36.0, 138] }, { fil: "billeder/figurer/kvinde-gaa-5-2.png", anker: [36.0, 138] }, { fil: "billeder/figurer/kvinde-gaa-5-3.png", anker: [36.0, 139] }],
-      "op": [{ fil: "billeder/figurer/kvinde-gaa-4-1.png", anker: [31.5, 137] }, { fil: "billeder/figurer/kvinde-gaa-4-2.png", anker: [31.0, 138] }, { fil: "billeder/figurer/kvinde-gaa-4-3.png", anker: [31.5, 134] }],
-      "op-hoejre": [{ fil: "billeder/figurer/kvinde-gaa-3-1.png", anker: [35.5, 138] }, { fil: "billeder/figurer/kvinde-gaa-3-2.png", anker: [36.0, 137] }, { fil: "billeder/figurer/kvinde-gaa-3-3.png", anker: [35.5, 137] }],
-      "hoejre": [{ fil: "billeder/figurer/kvinde-gaa-2-1.png", anker: [34.0, 138] }, { fil: "billeder/figurer/kvinde-gaa-2-2.png", anker: [34.5, 137] }, { fil: "billeder/figurer/kvinde-gaa-2-3.png", anker: [37.0, 138] }],
-      "ned-hoejre": [{ fil: "billeder/figurer/kvinde-gaa-1-1.png", anker: [32.0, 138] }, { fil: "billeder/figurer/kvinde-gaa-1-2.png", anker: [32.0, 138] }, { fil: "billeder/figurer/kvinde-gaa-1-3.png", anker: [31.5, 142] }],
+      "ned": [{ fil: "billeder/figurer/kvinde3-gaa-ned-1.png", anker: [37.5, 137] }, { fil: "billeder/figurer/kvinde3-gaa-ned-2.png", anker: [38.5, 137] }, { fil: "billeder/figurer/kvinde3-gaa-ned-3.png", anker: [38.5, 137] }, { fil: "billeder/figurer/kvinde3-gaa-ned-4.png", anker: [37.5, 135] }],
+      "ned-hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-1.png", anker: [38.5, 130] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-2.png", anker: [39.5, 130] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-3.png", anker: [38.5, 130] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-4.png", anker: [40.5, 130] }],
+      "hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-hoejre-1.png", anker: [38.0, 127] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-2.png", anker: [39.0, 127] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-3.png", anker: [39.0, 128] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-4.png", anker: [39.5, 128] }],
+      "op-hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-op-hoejre-1.png", anker: [38.0, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-2.png", anker: [38.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-3.png", anker: [37.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-4.png", anker: [38.0, 134] }],
+      "op": [{ fil: "billeder/figurer/kvinde3-gaa-op-1.png", anker: [38.0, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-2.png", anker: [38.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-3.png", anker: [37.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-4.png", anker: [38.0, 134] }],
+      "op-venstre": [{ fil: "billeder/figurer/kvinde3-gaa-op-venstre-1.png", anker: [38.0, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-2.png", anker: [38.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-3.png", anker: [37.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-4.png", anker: [38.0, 134] }],
+      "venstre": [{ fil: "billeder/figurer/kvinde3-gaa-venstre-1.png", anker: [36.5, 131] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-2.png", anker: [37.0, 131] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-3.png", anker: [37.5, 131] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-4.png", anker: [36.5, 131] }],
+      "ned-venstre": [{ fil: "billeder/figurer/kvinde3-gaa-ned-venstre-1.png", anker: [39.0, 138] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-2.png", anker: [38.5, 138] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-3.png", anker: [38.5, 138] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-4.png", anker: [38.0, 138] }],
     },
     sidder: {
       "ned": { fil: "billeder/figurer/kvinde-sidder-0.png", anker: [33.0, 122.1] },
-      "ned-hoejre": { fil: "billeder/figurer/kvinde-stol-ned-hoejre.png", anker: [38.5, 99.0] },
+      "ned-hoejre": { fil: "billeder/figurer/kvinde3-stol-ned-hoejre.png", anker: [39.4, 104.5] },
       "hoejre": { fil: "billeder/figurer/kvinde-sidder-2.png", anker: [38.0, 122.1] },
       "op-hoejre": { fil: "billeder/figurer/kvinde-sidder-3.png", anker: [37.0, 122.1] },
       "op": { fil: "billeder/figurer/kvinde-sidder-4.png", anker: [33.0, 104.9] },
       "op-venstre": { fil: "billeder/figurer/kvinde-sidder-5.png", anker: [38.5, 122.1] },
       "venstre": { fil: "billeder/figurer/kvinde-sidder-6.png", anker: [39.5, 121.3] },
-      "ned-venstre": { fil: "billeder/figurer/kvinde-stol-ned-venstre.png", anker: [38.5, 99.0] },
+      "ned-venstre": { fil: "billeder/figurer/kvinde3-stol-ned-venstre.png", anker: [48.6, 104.5] },
     },
   },
   mand: {
@@ -46,24 +47,24 @@ const FIGURER = {
     skala: 0.79,
     raekke: "alle",                   // alle hans gå-billeder vises efter hinanden
     gaa: {
-      "ned": [{ fil: "billeder/figurer/mand2-gaa-ned-1.png", anker: [47.5, 146] }, { fil: "billeder/figurer/mand2-gaa-ned-2.png", anker: [47.5, 148] }, { fil: "billeder/figurer/mand2-gaa-ned-3.png", anker: [48.0, 148] }, { fil: "billeder/figurer/mand2-gaa-ned-4.png", anker: [48.0, 146] }, { fil: "billeder/figurer/mand2-gaa-ned-5.png", anker: [49.0, 146] }, { fil: "billeder/figurer/mand2-gaa-ned-6.png", anker: [48.5, 148] }, { fil: "billeder/figurer/mand2-gaa-ned-7.png", anker: [47.5, 146] }, { fil: "billeder/figurer/mand2-gaa-ned-8.png", anker: [47.0, 146] }],
-      "ned-hoejre": [{ fil: "billeder/figurer/mand2-gaa-ned-hoejre-1.png", anker: [47.5, 139] }, { fil: "billeder/figurer/mand2-gaa-ned-hoejre-2.png", anker: [46.0, 140] }, { fil: "billeder/figurer/mand2-gaa-ned-hoejre-3.png", anker: [47.5, 140] }, { fil: "billeder/figurer/mand2-gaa-ned-hoejre-4.png", anker: [47.5, 140] }, { fil: "billeder/figurer/mand2-gaa-ned-hoejre-5.png", anker: [46.0, 140] }, { fil: "billeder/figurer/mand2-gaa-ned-hoejre-6.png", anker: [44.5, 140] }, { fil: "billeder/figurer/mand2-gaa-ned-hoejre-7.png", anker: [49.0, 140] }, { fil: "billeder/figurer/mand2-gaa-ned-hoejre-8.png", anker: [47.0, 139] }],
-      "hoejre": [{ fil: "billeder/figurer/mand2-gaa-hoejre-1.png", anker: [47.5, 139] }, { fil: "billeder/figurer/mand2-gaa-hoejre-2.png", anker: [47.5, 139] }, { fil: "billeder/figurer/mand2-gaa-hoejre-3.png", anker: [48.0, 139] }, { fil: "billeder/figurer/mand2-gaa-hoejre-4.png", anker: [47.0, 139] }, { fil: "billeder/figurer/mand2-gaa-hoejre-5.png", anker: [46.5, 139] }, { fil: "billeder/figurer/mand2-gaa-hoejre-6.png", anker: [46.5, 139] }, { fil: "billeder/figurer/mand2-gaa-hoejre-7.png", anker: [48.5, 139] }, { fil: "billeder/figurer/mand2-gaa-hoejre-8.png", anker: [47.0, 137] }],
-      "op-hoejre": [{ fil: "billeder/figurer/mand2-gaa-op-hoejre-1.png", anker: [44.5, 137] }, { fil: "billeder/figurer/mand2-gaa-op-hoejre-2.png", anker: [46.0, 136] }, { fil: "billeder/figurer/mand2-gaa-op-hoejre-3.png", anker: [48.0, 137] }, { fil: "billeder/figurer/mand2-gaa-op-hoejre-4.png", anker: [45.0, 137] }],
-      "op": [{ fil: "billeder/figurer/mand2-gaa-op-1.png", anker: [45.5, 142] }, { fil: "billeder/figurer/mand2-gaa-op-2.png", anker: [44.5, 140] }, { fil: "billeder/figurer/mand2-gaa-op-3.png", anker: [45.5, 140] }, { fil: "billeder/figurer/mand2-gaa-op-4.png", anker: [43.5, 142] }, { fil: "billeder/figurer/mand2-gaa-op-5.png", anker: [45.5, 142] }, { fil: "billeder/figurer/mand2-gaa-op-6.png", anker: [45.5, 140] }, { fil: "billeder/figurer/mand2-gaa-op-7.png", anker: [46.0, 140] }, { fil: "billeder/figurer/mand2-gaa-op-8.png", anker: [46.5, 142] }, { fil: "billeder/figurer/mand2-gaa-op-9.png", anker: [46.0, 142] }],
-      "op-venstre": [{ fil: "billeder/figurer/mand2-gaa-op-venstre-1.png", anker: [45.5, 137] }, { fil: "billeder/figurer/mand2-gaa-op-venstre-2.png", anker: [44.0, 136] }, { fil: "billeder/figurer/mand2-gaa-op-venstre-3.png", anker: [44.0, 137] }, { fil: "billeder/figurer/mand2-gaa-op-venstre-4.png", anker: [45.0, 137] }],
-      "venstre": [{ fil: "billeder/figurer/mand2-gaa-venstre-1.png", anker: [47.5, 142] }, { fil: "billeder/figurer/mand2-gaa-venstre-2.png", anker: [47.0, 143] }, { fil: "billeder/figurer/mand2-gaa-venstre-3.png", anker: [49.0, 143] }, { fil: "billeder/figurer/mand2-gaa-venstre-4.png", anker: [46.0, 142] }, { fil: "billeder/figurer/mand2-gaa-venstre-5.png", anker: [47.5, 140] }, { fil: "billeder/figurer/mand2-gaa-venstre-6.png", anker: [47.5, 142] }, { fil: "billeder/figurer/mand2-gaa-venstre-7.png", anker: [45.5, 142] }],
-      "ned-venstre": [{ fil: "billeder/figurer/mand2-gaa-ned-venstre-1.png", anker: [46.5, 152] }, { fil: "billeder/figurer/mand2-gaa-ned-venstre-2.png", anker: [47.5, 151] }, { fil: "billeder/figurer/mand2-gaa-ned-venstre-3.png", anker: [47.0, 152] }, { fil: "billeder/figurer/mand2-gaa-ned-venstre-4.png", anker: [47.0, 154] }, { fil: "billeder/figurer/mand2-gaa-ned-venstre-5.png", anker: [45.5, 151] }, { fil: "billeder/figurer/mand2-gaa-ned-venstre-6.png", anker: [46.5, 151] }, { fil: "billeder/figurer/mand2-gaa-ned-venstre-7.png", anker: [46.0, 151] }, { fil: "billeder/figurer/mand2-gaa-ned-venstre-8.png", anker: [44.5, 151] }],
+      "ned": [{ fil: "billeder/figurer/mand3-gaa-ned-1.png", anker: [46.5, 146] }, { fil: "billeder/figurer/mand3-gaa-ned-2.png", anker: [48.0, 148] }, { fil: "billeder/figurer/mand3-gaa-ned-3.png", anker: [48.0, 148] }, { fil: "billeder/figurer/mand3-gaa-ned-4.png", anker: [46.5, 146] }],
+      "ned-hoejre": [{ fil: "billeder/figurer/mand3-gaa-ned-hoejre-1.png", anker: [45.5, 140] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-2.png", anker: [45.0, 140] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-3.png", anker: [47.5, 140] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-4.png", anker: [46.5, 138] }],
+      "hoejre": [{ fil: "billeder/figurer/mand3-gaa-hoejre-1.png", anker: [45.5, 138] }, { fil: "billeder/figurer/mand3-gaa-hoejre-2.png", anker: [46.0, 138] }, { fil: "billeder/figurer/mand3-gaa-hoejre-3.png", anker: [46.5, 138] }, { fil: "billeder/figurer/mand3-gaa-hoejre-4.png", anker: [46.5, 137] }],
+      "op-hoejre": [{ fil: "billeder/figurer/mand3-gaa-op-hoejre-1.png", anker: [45.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-2.png", anker: [46.0, 135] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-3.png", anker: [46.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-4.png", anker: [45.5, 137] }],
+      "op": [{ fil: "billeder/figurer/mand3-gaa-op-1.png", anker: [46.0, 141] }, { fil: "billeder/figurer/mand3-gaa-op-2.png", anker: [45.0, 140] }, { fil: "billeder/figurer/mand3-gaa-op-3.png", anker: [45.0, 140] }, { fil: "billeder/figurer/mand3-gaa-op-4.png", anker: [44.0, 141] }],
+      "op-venstre": [{ fil: "billeder/figurer/mand3-gaa-op-venstre-1.png", anker: [45.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-2.png", anker: [45.0, 135] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-3.png", anker: [46.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-4.png", anker: [45.5, 137] }],
+      "venstre": [{ fil: "billeder/figurer/mand3-gaa-venstre-1.png", anker: [46.5, 141] }, { fil: "billeder/figurer/mand3-gaa-venstre-2.png", anker: [47.0, 143] }, { fil: "billeder/figurer/mand3-gaa-venstre-3.png", anker: [48.5, 143] }, { fil: "billeder/figurer/mand3-gaa-venstre-4.png", anker: [46.5, 141] }],
+      "ned-venstre": [{ fil: "billeder/figurer/mand3-gaa-ned-venstre-1.png", anker: [47.0, 152] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-2.png", anker: [48.0, 151] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-3.png", anker: [47.0, 152] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-4.png", anker: [47.0, 154] }],
     },
     sidder: {
       "ned": { fil: "billeder/figurer/mand-sidder-0.png", anker: [41.0, 134.2] },
-      "ned-hoejre": { fil: "billeder/figurer/mand-stol-ned-hoejre.png", anker: [42.5, 108.7] },
+      "ned-hoejre": { fil: "billeder/figurer/mand3-stol-ned-hoejre.png", anker: [45.4, 120.0] },
       "hoejre": { fil: "billeder/figurer/mand-sidder-2.png", anker: [43.5, 131.6] },
       "op-hoejre": { fil: "billeder/figurer/mand-sidder-3.png", anker: [44.5, 130.7] },
       "op": { fil: "billeder/figurer/mand-sidder-4.png", anker: [40.0, 114.4] },
       "op-venstre": { fil: "billeder/figurer/mand-sidder-5.png", anker: [47.0, 130.7] },
       "venstre": { fil: "billeder/figurer/mand-sidder-6.png", anker: [47.0, 128.1] },
-      "ned-venstre": { fil: "billeder/figurer/mand-stol-ned-venstre.png", anker: [42.5, 108.7] },
+      "ned-venstre": { fil: "billeder/figurer/mand3-stol-ned-venstre.png", anker: [55.6, 120.0] },
     },
   },
 };
