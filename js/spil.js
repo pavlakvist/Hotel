@@ -345,6 +345,28 @@ function tegnFigur(c) {
   c.fillRect(p.x - tekstB / 2, p.y - hoejde - 26, tekstB, 18);
   c.fillStyle = "#ffffff";
   c.fillText(FIGUR.navn, p.x, p.y - hoejde - 13);
+
+  // profilbilledet (frisuren fra garderoben) til venstre for navnet
+  const profil = typeof profilBillede === "function" ? profilBillede() : null;
+  if (billedeKlar(profil)) {
+    const px = p.x - tekstB / 2 - 16;
+    const py = p.y - hoejde - 17;
+    c.save();
+    c.beginPath();
+    c.arc(px, py, 14, 0, Math.PI * 2);
+    c.fillStyle = "#f6ead8";
+    c.fill();
+    c.clip();
+    const s = 30 / Math.max(profil.naturalWidth, profil.naturalHeight);
+    c.drawImage(profil, px - profil.naturalWidth * s / 2, py - 13, profil.naturalWidth * s, profil.naturalHeight * s);
+    c.restore();
+    c.beginPath();
+    c.arc(px, py, 14, 0, Math.PI * 2);
+    c.strokeStyle = "#f2b134";
+    c.lineWidth = 2;
+    c.stroke();
+    c.lineWidth = 1;
+  }
 }
 
 function flytFigur(dt) {

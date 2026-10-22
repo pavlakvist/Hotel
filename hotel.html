@@ -34,14 +34,38 @@
         <canvas id="figur-forhaandsvisning" width="132" height="130"></canvas>
         <div id="figur-typer" class="valg-raekke"></div>
       </div>
+      <button id="knap-garderobe">Åbn garderoben</button>
     </aside>
   </main>
+
+  <!-- Garderoben: vælg tøj. Den åbnes med knappen i panelet -->
+  <div id="garderobe-vindue" hidden>
+    <div class="gv-boks">
+      <div class="gv-top">
+        <h2>Garderobe</h2>
+        <button id="gv-tilfaeldig" class="diskret">Tilfældigt outfit</button>
+        <button id="gv-luk">Luk</button>
+      </div>
+      <div class="gv-indhold">
+        <div>
+          <div id="outfit-kort" class="outfit-kort"></div>
+          <p class="lille">Frisuren bliver dit profilbillede ved dit navn.</p>
+        </div>
+        <div class="gv-valg">
+          <div id="gv-faner" class="gv-faner"></div>
+          <div id="gv-ting" class="gv-ting"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <footer id="besked">Klik på gulvet for at gå.</footer>
 
   <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->
   <script src="js/indstillinger.js"></script>
   <script src="js/figur.js"></script>
+  <script src="js/toej.js"></script>
   <script src="js/spil.js"></script>
+  <script src="js/garderobe.js"></script>
 </body>
 </html>
