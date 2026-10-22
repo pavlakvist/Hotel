@@ -28,6 +28,8 @@
 //  Tegner du selv flere billeder, bruger spillet dem automatisk:
 //    gaa:    en liste af billeder, der vises efter hinanden, når figuren går
 //    sidder: et billede af figuren, der sidder ned
+//    gaaVenstre / sidderVenstre: de samme, men tegnet så de kigger mod venstre
+//            (står der ingen, bliver gaa og sidder bare spejlvendt)
 //  Står der "" eller [], bruges de opklippede stykker i stedet.
 
 const BILLED_FIGURER = {
@@ -38,8 +40,12 @@ const BILLED_FIGURER = {
       fil: "billeder/kvinde-forfra.png",
       hofte: 0.71,
       arme: null,                     // hendes hænder er foldet foran, så armene svinger ikke
-      gaa: [],                        // fx ["billeder/kvinde-gaa-1.png", "billeder/kvinde-gaa-2.png"]
-      sidder: "",                     // fx "billeder/kvinde-sidder.png"
+      gaa: ["billeder/kvinde-gaa-hoejre-1.png", "billeder/kvinde-gaa-hoejre-2.png",
+            "billeder/kvinde-gaa-hoejre-3.png", "billeder/kvinde-gaa-hoejre-4.png"],
+      gaaVenstre: ["billeder/kvinde-gaa-venstre-1.png", "billeder/kvinde-gaa-venstre-2.png",
+            "billeder/kvinde-gaa-venstre-3.png", "billeder/kvinde-gaa-venstre-4.png"],
+      sidder: "billeder/kvinde-sidder-hoejre.png",
+      sidderVenstre: "billeder/kvinde-sidder-venstre.png",
     },
     bagfra: {
       fil: "billeder/kvinde-bagfra.png",
@@ -58,17 +64,19 @@ const BILLED_FIGURER = {
       hofte: 0.58,
       skridt: 0.81,
       benDeling: 0.41,
-      saks: 0.35,
       arme: null,                     // hans hænder er i lommerne, så armene svinger ikke
-      gaa: [],
-      sidder: "",
+      gaa: ["billeder/mand-gaa-hoejre-1.png", "billeder/mand-gaa-hoejre-2.png",
+            "billeder/mand-gaa-hoejre-3.png", "billeder/mand-gaa-hoejre-4.png"],
+      gaaVenstre: ["billeder/mand-gaa-venstre-1.png", "billeder/mand-gaa-venstre-2.png",
+            "billeder/mand-gaa-venstre-3.png", "billeder/mand-gaa-venstre-4.png"],
+      sidder: "billeder/mand-sidder-hoejre.png",
+      sidderVenstre: "billeder/mand-sidder-venstre.png",
     },
     bagfra: {
       fil: "billeder/mand-bagfra.png",
       hofte: 0.58,
       skridt: 0.81,
       benDeling: 0.55,
-      saks: 0.45,
       arme: null,
       gaa: [],
       sidder: "",
@@ -136,17 +144,24 @@ function tegnMenneske(c, x, y, valg, forfra, vendt, gaarTrin, sidde) {
   const tid = performance.now();
   const siddeGrad = sidde ? sidde.grad : 0;
 
-  // Har du tegnet et siddende billede, bruges det, når figuren sidder helt ned
-  const siddeBillede = figurBillede(del.sidder);
-  if (siddeGrad >= 1 && klar(siddeBillede)) {
-    tegnHeltBillede(c, x, y, siddeBillede, s, vendt);
+  // Er der tegnet billeder, der kigger mod venstre, bruges de i stedet for at spejlvende
+  const venstre = vendt < 0;
+  const gaaListe = venstre && del.gaaVenstre && del.gaaVenstre.length > 0 ? del.gaaVenstre : del.gaa;
+  const gaaSpejl = gaaListe === del.gaa ? vendt : 1;
+  const siddeSti = venstre && del.sidderVenstre ? del.sidderVenstre : del.sidder;
+  const siddeSpejl = siddeSti === del.sidder ? vendt : 1;
+
+  // Har du tegnet et siddende billede, bruges det, når figuren sætter sig
+  const siddeBillede = figurBillede(siddeSti);
+  if (siddeGrad > 0 && klar(siddeBillede)) {
+    tegnHeltBillede(c, x, y, siddeBillede, s, siddeSpejl);
     return;
   }
   // Har du tegnet gå-billeder, bruges de, når figuren går
-  if (gaarTrin !== null && del.gaa && del.gaa.length > 0) {
-    const gb = figurBillede(del.gaa[Math.floor(gaarTrin) % del.gaa.length]);
+  if (gaarTrin !== null && gaaListe && gaaListe.length > 0) {
+    const gb = figurBillede(gaaListe[Math.floor(gaarTrin) % gaaListe.length]);
     if (klar(gb)) {
-      tegnHeltBillede(c, x, y, gb, s, vendt);
+      tegnHeltBillede(c, x, y, gb, s, gaaSpejl);
       return;
     }
   }
@@ -281,4 +296,12 @@ function alleFigurer() {
   const liste = {};
   for (const id in BILLED_FIGURER) liste[id] = BILLED_FIGURER[id].navn;
   return liste;
+}
+
+// Hent alle billederne med det samme, så de er klar, når figuren begynder at gå
+for (const id in BILLED_FIGURER) {
+  for (const side of ["forfra", "bagfra"]) {
+    const del = BILLED_FIGURER[id][side];
+    [del.fil, del.sidder, del.sidderVenstre].concat(del.gaa || [], del.gaaVenstre || []).forEach(figurBillede);
+  }
 }
