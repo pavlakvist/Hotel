@@ -6,11 +6,30 @@
 const laerred = document.getElementById("spil");
 const ctx = laerred.getContext("2d");
 
+// Spillet regner altid i 900 x 600 punkter. Selve lærredet får lige så mange
+// pixels, som skærmen viser, så alt bliver skarpt (også på skærme med zoom).
+const BREDDE = laerred.width;
+const HOEJDE = laerred.height;
+
+function skarptLaerred() {
+  const r = laerred.getBoundingClientRect();
+  const taethed = window.devicePixelRatio || 1;
+  const b = Math.round(r.width * taethed);
+  const h = Math.round(r.height * taethed);
+  if (b > 0 && h > 0 && (laerred.width !== b || laerred.height !== h)) {
+    laerred.width = b;
+    laerred.height = h;
+  }
+  ctx.setTransform(laerred.width / BREDDE, 0, 0, laerred.height / HOEJDE, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+}
+
 // Et felt på gulvet er en "rude" (diamant), 64 pixels bred og 32 høj.
 const FLISE_B = 64;
 const FLISE_H = 32;
 const VAEG_HOEJDE = 110;
-const START = { x: laerred.width / 2, y: 170 };   // hvor det bagerste hjørne af gulvet står
+const START = { x: BREDDE / 2, y: 170 };   // hvor det bagerste hjørne af gulvet står
 
 // Slå møbeltyper op på deres id, fx MOEBEL_TYPER["stol"]
 const MOEBEL_TYPER = {};
@@ -441,7 +460,8 @@ function tegnMarkering() {
 }
 
 function tegnAlt() {
-  ctx.clearRect(0, 0, laerred.width, laerred.height);
+  skarptLaerred();
+  ctx.clearRect(0, 0, BREDDE, HOEJDE);
   tegnVaegge();
   tegnGulv();
 
@@ -585,8 +605,8 @@ document.getElementById("knap-ryd").addEventListener("click", function () {
 // =============================================================
 function musTilFelt(e) {
   const r = laerred.getBoundingClientRect();
-  const sx = (e.clientX - r.left) * (laerred.width / r.width);
-  const sy = (e.clientY - r.top) * (laerred.height / r.height);
+  const sx = (e.clientX - r.left) * (BREDDE / r.width);
+  const sy = (e.clientY - r.top) * (HOEJDE / r.height);
   return skaermTilFelt(sx, sy);
 }
 

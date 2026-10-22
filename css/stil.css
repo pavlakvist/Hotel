@@ -49,8 +49,10 @@ main {
   background: #0f1830;
   border: 3px solid #2f4370;
   border-radius: 8px;
+  width: 900px;
   max-width: 100%;
   height: auto;
+  aspect-ratio: 3 / 2;
   cursor: pointer;
 }
 
