@@ -141,19 +141,21 @@ button.diskret {
   border-radius: 6px;
 }
 
-#figur-typer {
+#garderobe .valg-raekke {
   grid-column: 1 / -1;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
-#figur-typer button {
+#garderobe .valg-raekke button {
+  font-size: 13px;
   background: #3d5488;
   color: #f4f1e8;
   border: 2px solid transparent;
 }
 
-#figur-typer button.aktiv {
+#garderobe .valg-raekke button.aktiv {
   border-color: #f2b134;
   background: #55509a;
 }
