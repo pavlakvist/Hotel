@@ -1,0 +1,130 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Trebuchet MS", Verdana, sans-serif;
+  background: #1d2b45;
+  color: #f4f1e8;
+}
+
+header {
+  padding: 12px 20px;
+  background: #13203a;
+  border-bottom: 3px solid #f2b134;
+}
+
+h1 {
+  margin: 0;
+  font-size: 26px;
+  color: #f2b134;
+}
+
+main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  align-items: flex-start;
+}
+
+#spil {
+  background: #0f1830;
+  border: 3px solid #2f4370;
+  border-radius: 8px;
+  max-width: 100%;
+  height: auto;
+  cursor: pointer;
+}
+
+#panel {
+  width: 250px;
+  background: #2a3b60;
+  border: 3px solid #3d5488;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+#panel h2,
+#panel h3 {
+  margin: 0 0 8px;
+}
+
+.lille {
+  font-size: 13px;
+  opacity: 0.8;
+  margin: 0 0 10px;
+}
+
+#moebel-knapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.moebel-knap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  background: #3d5488;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.moebel-knap canvas {
+  width: 100%;
+  max-width: 64px;
+  height: auto;
+}
+
+.moebel-knap:hover {
+  background: #4a64a0;
+}
+
+.moebel-knap.aktiv {
+  border-color: #f2b134;
+  background: #55509a;
+}
+
+button {
+  font: inherit;
+  padding: 6px 10px;
+  margin: 0 4px 6px 0;
+  border: none;
+  border-radius: 6px;
+  background: #f2b134;
+  color: #1d2b45;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #ffc857;
+}
+
+button.diskret {
+  background: transparent;
+  color: #f4f1e8;
+  border: 1px solid #6b7fae;
+  font-weight: normal;
+  font-size: 13px;
+}
+
+#valgt-boks {
+  background: #1d2b45;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+footer {
+  padding: 0 20px 20px;
+  font-size: 15px;
+}

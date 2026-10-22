@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mit Hotel</title>
+  <link rel="stylesheet" href="css/stil.css">
+</head>
+<body>
+  <header>
+    <h1>Mit Hotel</h1>
+  </header>
+
+  <main>
+    <!-- Selve spillet bliver tegnet på dette "lærred" -->
+    <canvas id="spil" width="900" height="600"></canvas>
+
+    <aside id="panel">
+      <h2>Møbler</h2>
+      <p class="lille">Klik på et møbel og derefter på gulvet for at stille det.</p>
+      <div id="moebel-knapper"></div>
+
+      <div id="valgt-boks" hidden>
+        <h3 id="valgt-navn"></h3>
+        <button id="knap-drej">Drej (R)</button>
+        <button id="knap-saml">Saml op</button>
+      </div>
+
+      <button id="knap-ryd" class="diskret">Ryd hele rummet</button>
+    </aside>
+  </main>
+
+  <footer id="besked">Klik på gulvet for at gå.</footer>
+
+  <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->
+  <script src="js/indstillinger.js"></script>
+  <script src="js/spil.js"></script>
+</body>
+</html>

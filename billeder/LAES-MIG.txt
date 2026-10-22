@@ -1,0 +1,25 @@
+SÅDAN BRUGER DU DIN EGEN GRAFIK
+===============================
+
+Læg dine billeder i denne mappe ("billeder"). Brug helst .png med
+gennemsigtig baggrund, så man ikke ser en hvid firkant omkring møblet.
+
+Åbn derefter js/indstillinger.js og skriv stien ved "billede", fx:
+
+    { id: "stol", navn: "Stol", billede: "billeder/stol.png", tegning: "stol", farve: "#c0392b" },
+
+Gem filen og tryk F5 i browseren.
+
+GODE STØRRELSER
+- Et gulvfelt er 64 pixels bredt og 32 pixels højt (en rude/diamant).
+- Møbler: ca. 64 pixels brede. Højden må du selv bestemme.
+  Bunden af dit billede bliver sat på feltets nederste spids,
+  og billedet står i midten af feltet.
+- Figur: ca. 40 x 80 pixels. Fødderne skal være i bunden af billedet.
+- Gulv (valgfrit): et billede på 64 x 32 pixels -> RUM.gulvBillede
+
+TIP
+- Tegn dine møbler set skråt ovenfra, ligesom i Habbo.
+- "Drej" spejlvender billedet, så du kun behøver at tegne én retning.
+- Store og små bogstaver i filnavnet skal passe præcist.
+- Undgå æ, ø, å og mellemrum i filnavne (skriv fx "roed-sofa.png").
