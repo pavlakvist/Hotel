@@ -193,12 +193,14 @@ function tegnMenneske(c, x, y, valg, forfra, vendt, gaarTrin, sidde) {
       tegnStykke(c, b, s, 0, del.hofte, 1, skridt, 0.5, del.hofte, 0, [0, 0], 1, false);
     }
     // det ben, der går frem, løftes (bliver lidt kortere) og flytter sig lidt frem
+    // korte ben skal bevæge sig lige så meget som lange, ellers ser det ud som om figuren svæver
+    const ekstra = Math.min(2, 35 / ((1 - skridt) * H));
     // benene starter en anelse højere oppe, så der ikke kommer en lys streg i samlingen
     const venstreLoeft = Math.max(0, sving), hoejreLoeft = Math.max(0, -sving);
-    tegnStykke(c, b, s, 0, skridt - 0.015, d, 1, d * 0.6, skridt, sving * 0.06,
-      [venstreLoeft * 1.5, 0], 1 - venstreLoeft * 0.13, false);
-    tegnStykke(c, b, s, d, skridt - 0.015, 1, 1, d + (1 - d) * 0.4, skridt, -sving * 0.06,
-      [hoejreLoeft * 1.5, 0], 1 - hoejreLoeft * 0.13, false);
+    tegnStykke(c, b, s, 0, skridt - 0.015, d, 1, d * 0.6, skridt, sving * 0.06 * ekstra,
+      [venstreLoeft * 1.5 * ekstra, 0], 1 - venstreLoeft * 0.13 * ekstra, false);
+    tegnStykke(c, b, s, d, skridt - 0.015, 1, 1, d + (1 - d) * 0.4, skridt, -sving * 0.06 * ekstra,
+      [hoejreLoeft * 1.5 * ekstra, 0], 1 - hoejreLoeft * 0.13 * ekstra, false);
   }
 
   // ----- Overkroppen (synker ned, når figuren sætter sig) -----
