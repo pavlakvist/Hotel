@@ -427,7 +427,7 @@ footer {
 
 .su-palet {
   display: grid;
-  grid-template-columns: repeat(14, 1fr);
+  grid-template-columns: repeat(15, 1fr);
   gap: 3px;
   margin-top: 8px;
 }
@@ -439,6 +439,13 @@ footer {
   border: 2px solid #dcc3b2;
   border-radius: 4px;
   min-width: 0;
+}
+
+.su-original {
+  background: repeating-linear-gradient(45deg, #fcf2e9 0 4px, #f2e3d7 4px 8px);
+  color: #924b2f;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .su-farve.aktiv {
@@ -468,7 +475,8 @@ footer {
 #su-figur {
   display: block;
   width: 220px;
-  height: 300px;
+  height: 340px;
+  image-rendering: pixelated;
 }
 
 .su-pil {

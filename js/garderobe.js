@@ -31,7 +31,7 @@ const PALET = [
   "#fbe3cf", "#f2cfae", "#e8b98f", "#d9a274", "#c68a5a", "#a96d42", "#8a5232", "#6b3c22", "#4e2a17", "#33190c", "#f4ede1", "#d8cfc2", "#9a948c", "#2b2827",
   "#f6d26b", "#e8b13c", "#d98f2b", "#c46a1e", "#a8471a", "#8c2f17", "#c0392b", "#9b1d2a", "#6e1423", "#e8a0a8", "#d96a84", "#b83d6a", "#8a2b5a", "#5a1c3e",
   "#f4e3a1", "#d9d27a", "#a9b85a", "#6f9a4a", "#3f7a3c", "#2a5a34", "#1f4030", "#9ed3c6", "#4ea8a0", "#2a7a80", "#1d5566", "#a8c8e8", "#5f8fcf", "#2f5fa8",
-  "#1e3a78", "#151f45", "#c8b4e0", "#9a78c8", "#6a4a9a", "#46306e", "#ffffff", "#e6e6e6", "#b3b3b3", "#7a7a7a", "#4a4a4a", "#1a1a1a", "#f0c8a0", "#7a4a2a",
+  "#1e3a78", "#151f45", "#c8b4e0", "#9a78c8", "#6a4a9a", "#46306e", "#ffffff", "#e6e6e6", "#b3b3b3", "#7a7a7a", "#4a4a4a", "#1a1a1a", "#f0c8a0", "#7a4a2a", "#e8cfa0", "#3a5a4a", "#c87850",
 ];
 
 const DREJ = ["ned", "ned-venstre", "venstre", "op-venstre", "op", "op-hoejre", "hoejre", "ned-hoejre"];
@@ -306,6 +306,19 @@ function tegnSuPalet() {
   boks.innerHTML = "";
   if (suFane === "gemte") return;
   const nu = (mineFarver()[suOmr] || "").toLowerCase();
+  // første knap: den oprindelige farve fra din tegning
+  const orig = document.createElement("button");
+  orig.className = "su-farve su-original";
+  orig.title = "Original farve";
+  orig.textContent = "↺";
+  orig.classList.toggle("aktiv", !nu);
+  orig.addEventListener("click", function () {
+    foerAendring();
+    delete mineFarver()[suOmr];
+    delete mineTing()[suOmr];
+    tegnSkift();
+  });
+  boks.appendChild(orig);
   PALET.forEach(function (farve) {
     const knap = document.createElement("button");
     knap.className = "su-farve";
@@ -323,29 +336,36 @@ function tegnSuPalet() {
 }
 
 // ----- Figuren på scenen til højre -----
+// Figuren tegnes i hele pixels (2, 3, 4 ... skærm-pixels pr. billed-pixel),
+// så den bliver skarp og ikke sløret.
+const SCENE_B = 220, SCENE_H = 340, SCENE_FOEDDER = 330;
+const SCENE_MAKS = 2;   // højst 2 gange billedets størrelse, så figuren kan være der
+
 function tegnSuFigur() {
   if (!kladde) return;
   const dpr = window.devicePixelRatio || 1;
-  const B = 220, H = 300;
-  if (suFigur.width !== Math.round(B * dpr)) {
-    suFigur.width = Math.round(B * dpr);
-    suFigur.height = Math.round(H * dpr);
+  if (suFigur.width !== Math.round(SCENE_B * dpr)) {
+    suFigur.width = Math.round(SCENE_B * dpr);
+    suFigur.height = Math.round(SCENE_H * dpr);
   }
   const c = suFigur.getContext("2d");
-  c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  c.clearRect(0, 0, B, H);
-  c.imageSmoothingQuality = "high";
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.clearRect(0, 0, suFigur.width, suFigur.height);
   // skygge
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.beginPath();
-  c.ellipse(B / 2, 262, 46, 12, 0, 0, Math.PI * 2);
+  c.ellipse(SCENE_B / 2, SCENE_FOEDDER, 50, 13, 0, 0, Math.PI * 2);
   c.fillStyle = "rgba(60, 30, 10, 0.25)";
   c.fill();
-  const skala = 1.75;
-  c.save();
-  c.translate(B / 2, 262);
-  c.scale(skala, skala);
+  // figuren: et helt antal skærm-pixels pr. billed-pixel
+  const f = FIGURER[kladde.type] || FIGURER.kvinde;
+  const pr = Math.max(1, Math.floor(SCENE_MAKS * dpr + 0.01));
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.imageSmoothingEnabled = false;
+  c.translate(Math.round(SCENE_B / 2 * dpr), Math.round(SCENE_FOEDDER * dpr));
+  c.scale(pr / f.skala, pr / f.skala);
   tegnMenneske(c, 0, 0, kladde, DREJ[suDrej], null, null);
-  c.restore();
+  c.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function tegnLilleFigur(c, udseende) {
