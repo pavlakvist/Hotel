@@ -43,7 +43,8 @@ const FIGURER = {
   },
   mand: {
     navn: "Mand",
-    skala: 0.831,
+    skala: 0.79,
+    raekke: [0, 0, 1, 1],             // hans tredje billede er tegnet fra en anden vinkel, så det springes over
     gaa: {
       "ned": [{ fil: "billeder/figurer/mand-gaa-0-1.png", anker: [40.5, 144] }, { fil: "billeder/figurer/mand-gaa-0-2.png", anker: [39.5, 146] }, { fil: "billeder/figurer/mand-gaa-0-3.png", anker: [41.5, 142] }],
       "ned-venstre": [{ fil: "billeder/figurer/mand-gaa-7-1.png", anker: [41.5, 144] }, { fil: "billeder/figurer/mand-gaa-7-2.png", anker: [40.0, 142] }, { fil: "billeder/figurer/mand-gaa-7-3.png", anker: [42.5, 142] }],
@@ -68,6 +69,7 @@ const FIGURER = {
 };
 
 // Rækkefølgen af gå-billederne: 1, 2, 3, 2, 1, 2, 3 ...
+// (en figur kan have sin egen rækkefølge med "raekke")
 const GAA_RAEKKE = [0, 1, 2, 1];
 
 
@@ -116,7 +118,8 @@ function tegnMenneske(c, x, y, valg, retning, gaarTrin, sidde) {
     y -= sidde.hoejde;   // numsen sidder på sædet
   } else {
     const billeder = f.gaa[retning] || f.gaa.ned;
-    del = billeder[gaarTrin === null ? 0 : GAA_RAEKKE[Math.floor(gaarTrin) % GAA_RAEKKE.length]];
+    const raekke = f.raekke || GAA_RAEKKE;
+    del = billeder[gaarTrin === null ? 0 : raekke[Math.floor(gaarTrin) % raekke.length]];
   }
   const b = figurBillede(del.fil);
   if (!klar(b)) return;
