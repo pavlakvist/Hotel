@@ -1,28 +1,47 @@
 // =============================================================
-//  SKIFT UDSEENDE — vælg figur, tøj og farver.
-//  Du vælger en farve til hver del af figuren: hår, vest, skjorte,
-//  bukser/nederdel, strømper, sko og hud. Farven kommer på alle billederne af figuren.
+//  SKIFT UDSEENDE — vælg figur, frisure, tøj og farver.
+//
+//  Tøjet fra dine tøj-ark er tegnet forfra. Derfor vises det på figuren
+//  her i vinduet, når den kigger frem. Inde i rummet får figuren tøjets
+//  farver (på vesten, bukserne/nederdelen, strømperne og skoene).
+//  Frisurerne fra dit lag-ark kommer på figuren i alle retninger.
 //  Ændringerne kommer først på figuren i rummet, når du trykker "Gem ændringer".
 // =============================================================
 
 const GEMTE_NOEGLE = "mit-hotel-gemte-udseender";
 const MAKS_GEMTE = 10;
 
-// Fanerne øverst i vinduet. "omraader" er de dele af figuren, man kan farve.
+// Fanerne øverst i vinduet. Hver fane har nogle "dele", man kan vælge imellem:
+//   slags "toej":    ting fra tøj-arket (slot = hvilken slags ting).
+//                    "omr" er den del af figuren i rummet, der får tingens farve.
+//   slags "farve":   en farve til en del af figuren (omr)
+//   slags "frisure": frisurerne fra lag-arket
 const SU_FANER = [
-  { id: "krop", navn: "Krop", omraader: [{ omr: "hud", navn: "Huden" }] },
-  { id: "haar", navn: "Hår", ikon: "frisure", omraader: [{ omr: "haar", navn: "Hår" }] },
-  { id: "overdel", navn: "Overdel", ikon: "top", omraader: [
-    { omr: "vest", navn: "Vest" },
-    { omr: "skjorte", navn: "Skjorte" },
+  { id: "krop", navn: "Krop", dele: [{ slags: "farve", omr: "hud", navn: "Hudfarve" }] },
+  { id: "haar", navn: "Hår", ikon: "frisure", dele: [
+    { slags: "frisure", navn: "Frisurer" },
+    { slags: "farve", omr: "haar", navn: "Hårfarve" },
   ] },
-  { id: "underdel", navn: "Underdel", ikon: "underdel", omraader: [
-    { omr: "underdel", navn: "Nederdel", drengNavn: "Bukser" },
-    { omr: "stroemper", navn: "Strømper", kunPige: true },
-    { omr: "sko", navn: "Sko" },
+  { id: "overdel", navn: "Overdel", ikon: "top", dele: [
+    { slags: "toej", slot: "top", omr: "vest", navn: "Toppe" },
+    { slags: "toej", slot: "jakke", omr: "vest", navn: "Jakker" },
+    { slags: "toej", slot: "kjole", omr: "vest", navn: "Kjoler" },
+    { slags: "farve", omr: "vest", navn: "Farve på vest" },
+    { slags: "farve", omr: "skjorte", navn: "Farve på skjorte" },
+  ] },
+  { id: "underdel", navn: "Underdel", ikon: "underdel", dele: [
+    { slags: "toej", slot: "underdel", omr: "underdel", navn: "Nederdele og bukser", drengNavn: "Bukser" },
+    { slags: "toej", slot: "stroemper", omr: "stroemper", navn: "Strømper" },
+    { slags: "toej", slot: "sko", omr: "sko", navn: "Sko" },
+    { slags: "farve", omr: "underdel", navn: "Farve på nederdel", drengNavn: "Farve på bukser" },
+    { slags: "farve", omr: "stroemper", navn: "Farve på strømper", kunPige: true },
+    { slags: "farve", omr: "sko", navn: "Farve på sko" },
   ] },
   { id: "gemte", navn: "Gemte" },
 ];
+
+// Rækkefølgen tøjet lægges på figuren i (det sidste ligger øverst)
+const TOEJ_LAG = ["stroemper", "underdel", "sko", "kjole", "top", "jakke"];
 
 // Farverne i paletten
 const PALET = [
@@ -37,18 +56,20 @@ const DREJ = ["ned", "ned-venstre", "venstre", "op-venstre", "op", "op-hoejre", 
 let kladde = null;          // det man er ved at lave, før man gemmer
 let fortrydListe = [];
 let suFane = "haar";
-let suOmr = "haar";
+let suDel = 0;              // hvilken del under fanen der er valgt
 let suDrej = 0;
 
-if (!garderobe.ting) garderobe.ting = { kvinde: {}, mand: {} };
+if (!garderobe.ting) garderobe.ting = {};
+if (!garderobe.frisure) garderobe.frisure = {};
 
 function kopi(x) {
-  return JSON.parse(JSON.stringify(x));
+  return JSON.parse(JSON.stringify(x || {}));
 }
 
 // pige eller dreng (tøj-mapperne), efter hvilken figur der er valgt
 function hvem(type) {
-  return (type || (kladde ? kladde.type : garderobe.type)) === "mand" ? "dreng" : "pige";
+  const t = type || (kladde ? kladde.type : garderobe.type);
+  return t.indexOf("mand") === 0 ? "dreng" : "pige";
 }
 
 function toejSti(fil, type) {
@@ -58,14 +79,13 @@ function toejSti(fil, type) {
 // ----- Profilbilledet ved navnet i rummet (den valgte frisure) -----
 const profilBilleder = {};
 function profilBillede() {
-  const fil = (garderobe.ting[garderobe.type] || {}).haar;
-  if (!fil) return null;
-  const sti = toejSti(fil, garderobe.type);
-  if (!profilBilleder[sti]) {
-    profilBilleder[sti] = new Image();
-    profilBilleder[sti].src = sti;
+  const fr = valgtFrisure(garderobe);
+  if (!fr || !fr.ikon) return null;
+  if (!profilBilleder[fr.ikon]) {
+    profilBilleder[fr.ikon] = new Image();
+    profilBilleder[fr.ikon].src = fr.ikon;
   }
-  return profilBilleder[sti];
+  return profilBilleder[fr.ikon];
 }
 
 // ----- Gemte udseender -----
@@ -92,7 +112,7 @@ const vindue = document.getElementById("garderobe-vindue");
 const suFigur = document.getElementById("su-figur");
 
 function aabnGarderobe() {
-  kladde = { type: garderobe.type, farver: kopi(garderobe.farver), ting: kopi(garderobe.ting) };
+  kladde = { type: garderobe.type, farver: kopi(garderobe.farver), ting: kopi(garderobe.ting), frisure: kopi(garderobe.frisure) };
   fortrydListe = [];
   suDrej = 0;
   vindue.hidden = false;
@@ -108,6 +128,7 @@ function gemAendringer() {
   garderobe.type = kladde.type;
   garderobe.farver = kopi(kladde.farver);
   garderobe.ting = kopi(kladde.ting);
+  garderobe.frisure = kopi(kladde.frisure);
   gemGarderobe();
   tegnForhaandsvisning();
   lukGarderobe();
@@ -120,10 +141,12 @@ function foerAendring() {
 }
 
 function mineFarver() {
+  if (!kladde.farver[kladde.type]) kladde.farver[kladde.type] = {};
   return kladde.farver[kladde.type];
 }
 
 function mineTing() {
+  if (!kladde.ting[kladde.type]) kladde.ting[kladde.type] = {};
   return kladde.ting[kladde.type];
 }
 
@@ -131,15 +154,28 @@ function faneMedId(id) {
   return SU_FANER.find(function (f) { return f.id === id; });
 }
 
-// De dele af figuren, der kan farves under en fane (strømper kun for pigen)
-function omraaderI(fane) {
-  return (fane.omraader || []).filter(function (o) { return !(o.kunPige && kladde.type === "mand"); });
+// De dele, der kan vælges under en fane (kun dem der findes for figuren)
+function deleI(fane) {
+  const alle = TOEJ[hvem()];
+  return (fane.dele || []).filter(function (d) {
+    if (d.kunPige && hvem() === "dreng") return false;
+    if (d.slags === "toej") return alle[d.slot] && alle[d.slot].length > 0;
+    if (d.slags === "frisure") return typeof FRISURER !== "undefined" && FRISURER[kladde.type] && FRISURER[kladde.type].stile.length > 0;
+    return true;
+  });
+}
+
+function delNavn(d) {
+  return hvem() === "dreng" && d.drengNavn ? d.drengNavn : d.navn;
+}
+
+function valgtDel() {
+  const dele = deleI(faneMedId(suFane));
+  if (suDel >= dele.length) suDel = 0;
+  return dele[suDel] || null;
 }
 
 function tegnSkift() {
-  const fane = faneMedId(suFane);
-  const omr = omraaderI(fane);
-  if (omr.length && !omr.some(function (o) { return o.omr === suOmr; })) suOmr = omr[0].omr;
   tegnSuFaner();
   tegnSuUnder();
   tegnSuTing();
@@ -164,124 +200,159 @@ function tegnSuFaner() {
     knap.appendChild(t);
     knap.addEventListener("click", function () {
       suFane = fane.id;
+      suDel = 0;
       tegnSkift();
     });
     boks.appendChild(knap);
   });
 }
 
-// Lille række under fanerne: vælg hvilken del af figuren man farver
+// Række under fanerne: vælg figur (Krop), eller hvilken del man ændrer
 function tegnSuUnder() {
   const boks = document.getElementById("su-under");
   boks.innerHTML = "";
-  const fane = faneMedId(suFane);
-  if (fane.id === "krop") {
-    lavFigurValg(boks);
+  if (suFane === "krop") {
+    const figurer = alleFigurer();
+    for (const id in figurer) {
+      lavChip(boks, figurer[id], kladde.type === id, function () {
+        if (kladde.type === id) return;
+        foerAendring();
+        kladde.type = id;
+        tegnSkift();
+      });
+    }
     return;
   }
-  if (fane.id === "gemte") {
-    const knap = document.createElement("button");
-    knap.className = "su-chip aktiv";
-    knap.textContent = "Gem det, du har på nu";
-    knap.addEventListener("click", function () {
-      gemte.unshift(kopi({ type: kladde.type, farver: kladde.farver, ting: kladde.ting }));
+  if (suFane === "gemte") {
+    lavChip(boks, "Gem det, du har på nu", true, function () {
+      gemte.unshift(kopi({ type: kladde.type, farver: kladde.farver, ting: kladde.ting, frisure: kladde.frisure }));
       gemte = gemte.slice(0, MAKS_GEMTE);
       gemGemte();
       tegnSkift();
     });
-    boks.appendChild(knap);
     return;
   }
-  omraaderI(fane).forEach(function (o) {
-    const knap = document.createElement("button");
-    knap.className = "su-chip";
-    knap.classList.toggle("aktiv", o.omr === suOmr);
-    knap.textContent = kladde.type === "mand" && o.drengNavn ? o.drengNavn : o.navn;
-    knap.addEventListener("click", function () {
-      suOmr = o.omr;
+  deleI(faneMedId(suFane)).forEach(function (d, nr) {
+    lavChip(boks, delNavn(d), nr === suDel, function () {
+      suDel = nr;
       tegnSkift();
     });
-    boks.appendChild(knap);
   });
 }
 
-// Krop-fanen: vælg kvinde eller mand
-function lavFigurValg(boks) {
-  const figurer = alleFigurer();
-  for (const id in figurer) {
-    const knap = document.createElement("button");
-    knap.className = "su-chip";
-    knap.classList.toggle("aktiv", kladde.type === id);
-    knap.textContent = figurer[id];
-    knap.addEventListener("click", function () {
-      if (kladde.type === id) return;
-      foerAendring();
-      kladde.type = id;
-      tegnSkift();
-    });
-    boks.appendChild(knap);
+function lavChip(boks, tekst, aktiv, klik) {
+  const knap = document.createElement("button");
+  knap.className = "su-chip";
+  knap.classList.toggle("aktiv", aktiv);
+  knap.textContent = tekst;
+  knap.addEventListener("click", klik);
+  boks.appendChild(knap);
+}
+
+function lavTekst(boks, tekst) {
+  const t = document.createElement("p");
+  t.className = "su-tom";
+  t.textContent = tekst;
+  boks.appendChild(t);
+}
+
+// En knap i gitteret med et billede
+function lavBilledKnap(boks, sti, aktiv, klik) {
+  const knap = document.createElement("button");
+  knap.className = "su-ting-knap";
+  knap.classList.toggle("aktiv", aktiv);
+  if (sti) {
+    const b = document.createElement("img");
+    b.src = sti;
+    b.alt = "";
+    b.loading = "lazy";
+    knap.appendChild(b);
   }
+  knap.addEventListener("click", klik);
+  boks.appendChild(knap);
+  return knap;
+}
+
+// "Ingen" / "Din egen" – første knap i gitteret
+function lavIngenKnap(boks, tekst, aktiv, klik) {
+  const knap = lavBilledKnap(boks, null, aktiv, klik);
+  knap.classList.add("su-ingen");
+  knap.textContent = tekst;
 }
 
 function tegnSuTing() {
   const boks = document.getElementById("su-ting");
   boks.innerHTML = "";
-  const fane = faneMedId(suFane);
 
-  if (fane.id === "gemte") {
-    if (gemte.length === 0) {
-      const t = document.createElement("p");
-      t.className = "su-tom";
-      t.textContent = "Du har ikke gemt noget endnu. Tryk på knappen ovenover for at gemme dit udseende.";
-      boks.appendChild(t);
-    }
-    gemte.forEach(function (g, nr) {
-      const knap = document.createElement("button");
-      knap.className = "su-ting-knap su-gemt";
-      const c = document.createElement("canvas");
-      c.width = 72; c.height = 84;
-      tegnLilleFigur(c, g);
-      knap.appendChild(c);
-      const slet = document.createElement("span");
-      slet.className = "su-slet";
-      slet.textContent = "✕";
-      slet.title = "Slet";
-      slet.addEventListener("click", function (e) {
-        e.stopPropagation();
-        gemte.splice(nr, 1);
-        gemGemte();
-        tegnSkift();
-      });
-      knap.appendChild(slet);
-      knap.addEventListener("click", function () {
+  if (suFane === "gemte") {
+    tegnGemte(boks);
+    return;
+  }
+  if (suFane === "krop") {
+    lavTekst(boks, "Vælg figur ovenover og hudfarve herunder.");
+    tegnPalet(boks, "hud");
+    return;
+  }
+  const d = valgtDel();
+  if (!d) return;
+
+  if (d.slags === "farve") {
+    lavTekst(boks, "Vælg en farve. Den kommer på figuren, både når den står, går og sidder.");
+    tegnPalet(boks, d.omr);
+    return;
+  }
+
+  if (d.slags === "frisure") {
+    lavTekst(boks, "Frisurerne fra dit lag-ark. De kommer på figuren i alle retninger.");
+    lavIngenKnap(boks, "Din egen", !kladde.frisure[kladde.type], function () {
+      foerAendring();
+      delete kladde.frisure[kladde.type];
+      tegnSkift();
+    });
+    FRISURER[kladde.type].stile.forEach(function (st) {
+      const knap = lavBilledKnap(boks, st.ikon, kladde.frisure[kladde.type] === st.id, function () {
         foerAendring();
-        kladde.type = g.type;
-        kladde.farver = kopi(g.farver);
-        kladde.ting = kopi(g.ting);
+        kladde.frisure[kladde.type] = st.id;
+        delete mineFarver().haar;           // frisurens egen hårfarve
         tegnSkift();
       });
-      boks.appendChild(knap);
+      knap.title = st.navn;
     });
     return;
   }
 
-  // Farverne til den valgte del af figuren
-  const t = document.createElement("p");
-  t.className = "su-tom";
-  t.textContent = "Vælg en farve til " + delNavn().toLowerCase() + ". Den kommer på figuren, både når den står, går og sidder.";
-  boks.appendChild(t);
-  tegnSuPalet(boks);
+  // tøj fra tøj-arket
+  lavTekst(boks, "Tøjet vises på figuren forfra her. Inde i rummet får figuren tøjets farver.");
+  lavIngenKnap(boks, "Ingen", !mineTing()[d.slot], function () {
+    foerAendring();
+    delete mineTing()[d.slot];
+    tegnSkift();
+  });
+  TOEJ[hvem()][d.slot].forEach(function (fil) {
+    lavBilledKnap(boks, toejSti(fil), mineTing()[d.slot] === fil, function () {
+      foerAendring();
+      vaelgToej(d, fil);
+      tegnSkift();
+    });
+  });
 }
 
-// Navnet på den del af figuren, man farver lige nu
-function delNavn() {
-  const o = omraaderI(faneMedId(suFane)).find(function (x) { return x.omr === suOmr; });
-  if (!o) return "";
-  return kladde.type === "mand" && o.drengNavn ? o.drengNavn : o.navn;
+// Tag en ting på: den får sin plads, og figuren i rummet får tingens farve
+function vaelgToej(d, fil) {
+  const ting = mineTing();
+  ting[d.slot] = fil;
+  // en kjole erstatter top og nederdel/bukser, og omvendt
+  if (d.slot === "kjole") { delete ting.top; delete ting.underdel; }
+  if (d.slot === "top" || d.slot === "underdel") delete ting.kjole;
+  const farve = TOEJ_FARVER[hvem() + "/" + fil];
+  if (farve) {
+    mineFarver()[d.omr] = farve;
+    if (d.slot === "kjole") mineFarver().underdel = farve;
+  }
 }
 
-function tegnSuPalet(boks) {
-  const nu = (mineFarver()[suOmr] || "").toLowerCase();
+function tegnPalet(boks, omr) {
+  const nu = (mineFarver()[omr] || "").toLowerCase();
   // første knap: den oprindelige farve fra din tegning
   const orig = document.createElement("button");
   orig.className = "su-farve su-original";
@@ -290,8 +361,7 @@ function tegnSuPalet(boks) {
   orig.classList.toggle("aktiv", !nu);
   orig.addEventListener("click", function () {
     foerAendring();
-    delete mineFarver()[suOmr];
-    delete mineTing()[suOmr];
+    delete mineFarver()[omr];
     tegnSkift();
   });
   boks.appendChild(orig);
@@ -303,13 +373,47 @@ function tegnSuPalet(boks) {
     knap.classList.toggle("aktiv", nu === farve);
     knap.addEventListener("click", function () {
       foerAendring();
-      mineFarver()[suOmr] = farve;
-      delete mineTing()[suOmr];
+      mineFarver()[omr] = farve;
       tegnSkift();
     });
     boks.appendChild(knap);
   });
 }
+
+function tegnGemte(boks) {
+  if (gemte.length === 0) {
+    lavTekst(boks, "Du har ikke gemt noget endnu. Tryk på knappen ovenover for at gemme dit udseende.");
+  }
+  gemte.forEach(function (g, nr) {
+    const knap = document.createElement("button");
+    knap.className = "su-ting-knap su-gemt";
+    const c = document.createElement("canvas");
+    c.width = 72; c.height = 96;
+    tegnLilleFigur(c, g);
+    knap.appendChild(c);
+    const slet = document.createElement("span");
+    slet.className = "su-slet";
+    slet.textContent = "✕";
+    slet.title = "Slet";
+    slet.addEventListener("click", function (e) {
+      e.stopPropagation();
+      gemte.splice(nr, 1);
+      gemGemte();
+      tegnSkift();
+    });
+    knap.appendChild(slet);
+    knap.addEventListener("click", function () {
+      foerAendring();
+      kladde.type = g.type;
+      kladde.farver = kopi(g.farver);
+      kladde.ting = kopi(g.ting);
+      kladde.frisure = kopi(g.frisure);
+      tegnSkift();
+    });
+    boks.appendChild(knap);
+  });
+}
+
 
 // ----- Figuren på scenen til højre -----
 // Figuren tegnes i hele pixels (2, 3, 4 ... skærm-pixels pr. billed-pixel),
@@ -341,7 +445,37 @@ function tegnSuFigur() {
   c.translate(Math.round(SCENE_B / 2 * dpr), Math.round(SCENE_FOEDDER * dpr));
   c.scale(pr / f.skala, pr / f.skala);
   tegnMenneske(c, 0, 0, kladde, DREJ[suDrej], null, null);
+  if (DREJ[suDrej] === "ned") tegnToejForfra(c, kladde);
   c.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// Læg tøjet fra garderoben på figuren, når den kigger frem.
+// (c er flyttet hen til figurens fødder og skaleret som tegnMenneske gør det)
+const toejBilleder = {};
+function tegnToejForfra(c, udseende) {
+  const f = FIGURER[udseende.type] || FIGURER.kvinde;
+  const kasser = TOEJ_KASSER[hvem(udseende.type) === "dreng" ? "mand" : "kvinde"];
+  const del = f.gaa.ned[0];
+  if (!kasser || kasser.fil !== del.fil) return;      // kun figurer med kendte kasser
+  const ting = udseende.ting[udseende.type] || {};
+  const s = f.skala;
+  c.save();
+  c.imageSmoothingEnabled = true;
+  c.imageSmoothingQuality = "high";
+  TOEJ_LAG.forEach(function (slot) {
+    if (!ting[slot] || !kasser[slot]) return;
+    const sti = toejSti(ting[slot], udseende.type);
+    if (!toejBilleder[sti]) {
+      toejBilleder[sti] = new Image();
+      toejBilleder[sti].onload = function () { if (kladde) tegnSkift(); };
+      toejBilleder[sti].src = sti;
+    }
+    const b = toejBilleder[sti];
+    if (!klar(b)) return;
+    const k = kasser[slot];
+    c.drawImage(b, (k[0] - del.anker[0]) * s, (k[1] - del.anker[1]) * s, (k[2] - k[0]) * s, (k[3] - k[1]) * s);
+  });
+  c.restore();
 }
 
 function tegnLilleFigur(c, udseende) {
@@ -349,21 +483,33 @@ function tegnLilleFigur(c, udseende) {
   g.clearRect(0, 0, c.width, c.height);
   g.save();
   g.translate(c.width / 2, c.height - 4);
-  g.scale(0.62, 0.62);
-  tegnMenneske(g, 0, 0, udseende, "ned", null, null);
+  g.scale(0.58, 0.58);
+  const u = { type: udseende.type, farver: udseende.farver || {}, ting: udseende.ting || {}, frisure: udseende.frisure || {} };
+  tegnMenneske(g, 0, 0, u, "ned", null, null);
+  tegnToejForfra(g, u);
   g.restore();
 }
 
-// Et tilfældigt udseende: tilfældige ting fra dine tøj-ark
+// Et tilfældigt udseende: tilfældig frisure, tilfældigt tøj og tøjets farver
 function tilfaeldigtUdseende() {
   foerAendring();
-  const farver = {};
   const valg = function (liste) { return liste[Math.floor(Math.random() * liste.length)]; };
-  farver.haar = valg(["#6b3c22", "#4e2a17", "#33190c", "#a96d42", "#e8b13c", "#f6d26b", "#c46a1e", "#8c2f17", "#2b2827", "#f4ede1", "#d96a84", "#5f8fcf"]);
-  ["vest", "skjorte", "underdel", "stroemper", "sko"].forEach(function (o) { farver[o] = valg(PALET); });
-  if (mineFarver().hud) farver.hud = mineFarver().hud;   // hudfarven bliver, som den er
-  kladde.farver[kladde.type] = farver;
+  const hud = mineFarver().hud;
+  kladde.farver[kladde.type] = hud ? { hud: hud } : {};
   kladde.ting[kladde.type] = {};
+  if (typeof FRISURER !== "undefined" && FRISURER[kladde.type] && FRISURER[kladde.type].stile.length) {
+    kladde.frisure[kladde.type] = valg(FRISURER[kladde.type].stile).id;
+  }
+  const alle = TOEJ[hvem()];
+  const dele = deleI(faneMedId("overdel")).concat(deleI(faneMedId("underdel")));
+  const brugKjole = alle.kjole && Math.random() < 0.3;
+  dele.forEach(function (d) {
+    if (d.slags !== "toej") return;
+    if (brugKjole && (d.slot === "top" || d.slot === "underdel")) return;
+    if (!brugKjole && d.slot === "kjole") return;
+    if (d.slot === "jakke" && Math.random() < 0.5) return;
+    vaelgToej(d, valg(alle[d.slot]));
+  });
   tegnSkift();
 }
 
@@ -384,11 +530,16 @@ document.getElementById("su-fortryd").addEventListener("click", function () {
     tegnSkift();
   }
 });
+// skraldespanden: fjern det, der er valgt under den del, man står på
 document.getElementById("su-fjern").addEventListener("click", function () {
   if (suFane === "gemte") return;
   foerAendring();
-  delete mineFarver()[suOmr];
-  delete mineTing()[suOmr];
+  if (suFane === "krop") { delete mineFarver().hud; tegnSkift(); return; }
+  const d = valgtDel();
+  if (!d) return;
+  if (d.slags === "farve") delete mineFarver()[d.omr];
+  if (d.slags === "frisure") delete kladde.frisure[kladde.type];
+  if (d.slags === "toej") { delete mineTing()[d.slot]; delete mineFarver()[d.omr]; }
   tegnSkift();
 });
 document.getElementById("su-drej-venstre").addEventListener("click", function () {

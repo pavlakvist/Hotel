@@ -15,6 +15,11 @@
 //          For "sidder" er det numsen, som skal ramme sædet.
 //  skala:  hvor store billederne tegnes. Alle billeder af samme figur har
 //          samme skala, så figuren ikke skifter størrelse, når den går.
+//
+//  OUTFITS: Et outfit er en hel figur mere i listen herunder (fx "kvinde-sommer"),
+//  med sine egne gå- og sidde-billeder i samme opstilling som de andre.
+//  Alle figurer i listen kan vælges under "Krop" i "Skift udseende".
+//  Ligger navnet med "mand" først, bruger outfittet drengens tøj-farver.
 
 const FIGURER = {
   kvinde: {
@@ -127,13 +132,42 @@ function tegnMenneske(c, x, y, valg, retning, gaarTrin, sidde) {
       del = billeder[GAA_RAEKKE[Math.floor(gaarTrin) % GAA_RAEKKE.length]];
     }
   }
-  let b = figurBillede(del.fil);
-  if (!klar(b)) return;
-  const farvet = farvetFigur(del.fil, b, valg.farver ? valg.farver[valg.type] : null);
+  const d = figurDel(valg, del);
+  if (!d) return;
   const s = f.skala;
-  if (farvet) b = farvet;
-  c.drawImage(b, Math.round(x - del.anker[0] * s), Math.round(y - del.anker[1] * s),
-    b.width * s, b.height * s);
+  const farvet = farvetFigur(d, valg.farver ? valg.farver[valg.type] : null);
+  const fx = Math.round(x - d.ax * s), fy = Math.round(y - d.ay * s);
+  if (farvet) c.drawImage(farvet, fx, fy, d.w * s, d.h * s);
+  else c.drawImage(d.img, d.x, d.y, d.w, d.h, fx, fy, d.w * s, d.h * s);
+}
+
+// Den valgte frisure (fra js/frisurer.js), eller null for den oprindelige
+function valgtFrisure(valg) {
+  const id = valg.frisure ? valg.frisure[valg.type] : null;
+  if (!id || typeof FRISURER === "undefined" || !FRISURER[valg.type]) return null;
+  return FRISURER[valg.type].stile.find(function (st) { return st.id === id; }) || null;
+}
+
+// Hvor billedet af figuren skal tages fra: det almindelige billede,
+// eller (med en ny frisure) det store frisure-billede.
+//   img, x, y, w, h: billedet og stykket af det
+//   ax, ay:          ankeret (fødderne / numsen) i stykket
+//   lag, lagX, lagY: farvelagene (område nr. i ligger ved lagX + i * w)
+function figurDel(valg, del) {
+  const fr = valgtFrisure(valg);
+  if (fr && fr.felter[del.fil] !== undefined) {
+    const atlas = figurBillede(fr.fil);
+    if (klar(atlas)) {
+      const F = FRISURER[valg.type];
+      const y = fr.felter[del.fil] * F.ch;
+      return { img: atlas, x: 0, y: y, w: F.cw, h: F.ch, ax: del.anker[0] + F.pad[0], ay: del.anker[1] + F.pad[1],
+        lag: atlas, lagX: F.cw, lagY: y, noegle: fr.id + del.fil };
+    }
+  }
+  const b = figurBillede(del.fil);
+  if (!klar(b)) return null;
+  return { img: b, x: 0, y: 0, w: b.naturalWidth, h: b.naturalHeight, ax: del.anker[0], ay: del.anker[1],
+    lag: figurBillede(del.fil.replace("billeder/figurer/", "billeder/figurer/farvelag/")), lagX: 0, lagY: 0, noegle: del.fil };
 }
 
 
@@ -148,35 +182,34 @@ let farveAntal = 0;
 
 // Giver et nyt billede, hvor de valgte områder har fået deres farve.
 // Er der ingen farver valgt, eller er farvelaget ikke hentet endnu, gives null.
-function farvetFigur(fil, b, farver) {
+function farvetFigur(d, farver) {
   if (!farver) return null;
   const brugte = FARVE_OMRAADER.filter(function (o) { return farver[o]; });
   if (brugte.length === 0) return null;
-  const lag = figurBillede(fil.replace("billeder/figurer/", "billeder/figurer/farvelag/"));
-  if (!klar(lag)) return null;
+  if (!klar(d.lag)) return null;
 
-  const noegle = fil + "|" + brugte.map(function (o) { return o + farver[o]; }).join();
+  const noegle = d.noegle + "|" + brugte.map(function (o) { return o + farver[o]; }).join();
   if (farveGemmer[noegle]) return farveGemmer[noegle];
   if (farveAntal > 400) { farveGemmer = {}; farveAntal = 0; }
 
-  const w = b.naturalWidth, h = b.naturalHeight;
+  const w = d.w, h = d.h;
   const ud = document.createElement("canvas");
   ud.width = w; ud.height = h;
   const uc = ud.getContext("2d");
-  uc.drawImage(b, 0, 0);
+  uc.drawImage(d.img, d.x, d.y, w, h, 0, 0, w, h);
   const hj = document.createElement("canvas");
   hj.width = w; hj.height = h;
   const hc = hj.getContext("2d");
   brugte.forEach(function (o) {
-    const i = FARVE_OMRAADER.indexOf(o);
+    const lx = d.lagX + FARVE_OMRAADER.indexOf(o) * w;
     hc.globalCompositeOperation = "source-over";
     hc.clearRect(0, 0, w, h);
-    hc.drawImage(lag, i * w, 0, w, h, 0, 0, w, h);      // skyggerne i gråt
+    hc.drawImage(d.lag, lx, d.lagY, w, h, 0, 0, w, h);   // skyggerne i gråt
     hc.globalCompositeOperation = "multiply";
     hc.fillStyle = farver[o];                            // gang med farven
     hc.fillRect(0, 0, w, h);
     hc.globalCompositeOperation = "destination-in";
-    hc.drawImage(lag, i * w, 0, w, h, 0, 0, w, h);      // kun inden for området
+    hc.drawImage(d.lag, lx, d.lagY, w, h, 0, 0, w, h);   // kun inden for området
     uc.drawImage(hj, 0, 0);
   });
   farveGemmer[noegle] = ud;

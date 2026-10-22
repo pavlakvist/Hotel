@@ -745,13 +745,14 @@ document.addEventListener("keydown", function (e) {
 //  Garderobe — vælg figur
 // =============================================================
 const GARDEROBE_NOEGLE = "mit-hotel-figur-5";
-const garderobe = { type: FIGUR.type, farver: { kvinde: {}, mand: {} } };
+const garderobe = { type: FIGUR.type, farver: { kvinde: {}, mand: {} }, frisure: {} };
 
 try {
   const gemt = JSON.parse(localStorage.getItem(GARDEROBE_NOEGLE));
   if (gemt && alleFigurer()[gemt.type]) garderobe.type = gemt.type;
   if (gemt && gemt.farver) Object.assign(garderobe.farver, gemt.farver);
   if (gemt && gemt.ting) garderobe.ting = gemt.ting;
+  if (gemt && gemt.frisure) garderobe.frisure = gemt.frisure;
 } catch (fejl) {
   // ingen gemt figur endnu
 }
