@@ -40,12 +40,13 @@ const FIGUR = {
 //  tegning:   hvilken reserve-tegning der bruges: stol, bord, sofa, lampe, plante, taeppe
 //  farve:     farven på reserve-tegningen
 //  kanGaaPaa: true = figuren kan gå hen over møblet (fx et tæppe)
+//  saede:     man kan sidde på møblet. Tallet er, hvor højt sædet er (i pixels)
 //
 //  Du kan sagtens tilføje flere møbler: kopiér en linje og ret den til.
 const MOEBLER = [
-  { id: "stol",   navn: "Stol",   billede: "", tegning: "stol",   farve: "#c0392b" },
+  { id: "stol",   navn: "Stol",   billede: "", tegning: "stol",   farve: "#c0392b", saede: 19 },
   { id: "bord",   navn: "Bord",   billede: "", tegning: "bord",   farve: "#a0703c" },
-  { id: "sofa",   navn: "Sofa",   billede: "", tegning: "sofa",   farve: "#6c5ce7" },
+  { id: "sofa",   navn: "Sofa",   billede: "", tegning: "sofa",   farve: "#6c5ce7", saede: 15 },
   { id: "lampe",  navn: "Lampe",  billede: "", tegning: "lampe",  farve: "#f9e076" },
   { id: "plante", navn: "Plante", billede: "", tegning: "plante", farve: "#2ecc71" },
   { id: "taeppe", navn: "Tæppe",  billede: "", tegning: "taeppe", farve: "#e17055", kanGaaPaa: true },

@@ -28,6 +28,8 @@ const figur = {
   rute: [],                // de felter figuren skal gå igennem
   vendt: 1,                // 1 = kigger mod højre, -1 = mod venstre
   forfra: true,            // true = kigger mod os, false = vender ryggen til
+  sidde: null,             // når figuren sidder: { moebel, grad (0 = står, 1 = sidder helt ned) }
+  skalSidde: null,         // det møbel, figuren er på vej hen for at sidde på
   trin: 0,                 // bruges til at få benene til at bevæge sig
 };
 
@@ -105,8 +107,12 @@ function figurFelt() {
 // =============================================================
 //  Find vej (så figuren går uden om møblerne)
 // =============================================================
-function findRute(fraX, fraY, tilX, tilY) {
-  if (!kanGaa(tilX, tilY)) return [];
+// maalErSaede: true = man må gå ind på det sidste felt, selvom der står en stol
+function findRute(fraX, fraY, tilX, tilY, maalErSaede) {
+  const maaGaa = function (x, y) {
+    return kanGaa(x, y) || (maalErSaede && x === tilX && y === tilY);
+  };
+  if (!maaGaa(tilX, tilY)) return [];
   const noegle = function (x, y) { return x + "," + y; };
   const forrige = new Map();
   forrige.set(noegle(fraX, fraY), null);
@@ -128,7 +134,7 @@ function findRute(fraX, fraY, tilX, tilY) {
     for (const [dx, dy] of retninger) {
       const nx = x + dx;
       const ny = y + dy;
-      if (!kanGaa(nx, ny) || forrige.has(noegle(nx, ny))) continue;
+      if (!maaGaa(nx, ny) || forrige.has(noegle(nx, ny))) continue;
       // Gå ikke skråt hen over et hjørne af et møbel
       if (dx !== 0 && dy !== 0 && (!kanGaa(x + dx, y) || !kanGaa(x, y + dy))) continue;
       forrige.set(noegle(nx, ny), noegle(x, y));
@@ -138,9 +144,19 @@ function findRute(fraX, fraY, tilX, tilY) {
   return [];
 }
 
-function gaaTil(x, y) {
+// saede: møblet, figuren skal sætte sig på, når den kommer frem (eller null)
+function gaaTil(x, y, saede) {
   const fra = figurFelt();
-  figur.rute = findRute(fra.x, fra.y, x, y);
+  figur.rute = findRute(fra.x, fra.y, x, y, !!saede);
+  figur.skalSidde = figur.rute.length > 0 ? saede || null : null;
+}
+
+// Sæt sig ned på et møbel (figuren står allerede på feltet)
+function saetDig(m) {
+  figur.sidde = { moebel: m, grad: 0 };
+  // kig væk fra ryglænet
+  figur.forfra = true;
+  figur.vendt = m.spejlet ? 1 : -1;
 }
 
 
@@ -288,7 +304,12 @@ function tegnFigur(c) {
     hoejde = b.naturalHeight;
   } else {
     // Figuren fra figur.js
-    tegnMenneske(c, p.x, p.y, garderobe, figur.forfra, figur.vendt, gaar ? figur.trin : null);
+    let sidde = null;
+    if (figur.sidde) {
+      sidde = { grad: figur.sidde.grad, hoejde: MOEBEL_TYPER[figur.sidde.moebel.type].saede };
+      hoejde -= 18 * figur.sidde.grad;   // navneskiltet følger med ned
+    }
+    tegnMenneske(c, p.x, p.y, garderobe, figur.forfra, figur.vendt, gaar && !figur.sidde ? figur.trin : null, sidde);
   }
 
   // navneskilt
@@ -302,7 +323,31 @@ function tegnFigur(c) {
 }
 
 function flytFigur(dt) {
-  if (figur.rute.length === 0) return;
+  // ----- Sidder figuren? -----
+  if (figur.sidde) {
+    const vaek = moeblerIRummet.indexOf(figur.sidde.moebel) < 0;
+    if (figur.rute.length > 0 || vaek) {
+      // rejs dig op, før du går
+      figur.sidde.grad -= dt / 0.5;
+      if (figur.sidde.grad <= 0) figur.sidde = null;
+    } else {
+      // sæt dig langsomt ned
+      figur.sidde.grad = Math.min(1, figur.sidde.grad + dt / 0.9);
+      figur.vendt = figur.sidde.moebel.spejlet ? 1 : -1;
+    }
+    return;
+  }
+
+  if (figur.rute.length === 0) {
+    // fremme ved stolen? Så sæt dig
+    if (figur.skalSidde) {
+      const m = figur.skalSidde;
+      figur.skalSidde = null;
+      const fig = figurFelt();
+      if (moeblerIRummet.indexOf(m) >= 0 && fig.x === m.x && fig.y === m.y) saetDig(m);
+    }
+    return;
+  }
   const maal = figur.rute[0];
   const dx = maal.x - figur.x;
   const dy = maal.y - figur.y;
@@ -565,7 +610,7 @@ laerred.addEventListener("click", function (e) {
     // Hvis møblet står i vejen for figuren, finder den en ny vej
     if (figur.rute.length > 0) {
       const maal = figur.rute[figur.rute.length - 1];
-      gaaTil(maal.x, maal.y);
+      gaaTil(maal.x, maal.y, figur.skalSidde);
     }
     gem();
     opdaterPanel();
@@ -573,9 +618,18 @@ laerred.addEventListener("click", function (e) {
   }
 
   // Klik på et møbel = vælg det. Klik på gulvet = gå derhen.
+  // Klik på en stol eller sofa = gå derhen og sæt dig.
   const m = moebelPaa(f.x, f.y);
   valgtMoebel = m || null;
-  if (!m || MOEBEL_TYPER[m.type].kanGaaPaa) gaaTil(f.x, f.y);
+  if (m && MOEBEL_TYPER[m.type].saede) {
+    if (!figur.sidde || figur.sidde.moebel !== m) {
+      const fig = figurFelt();
+      if (fig.x === m.x && fig.y === m.y && !figur.sidde) saetDig(m);
+      else gaaTil(f.x, f.y, m);
+    }
+  } else if (!m || MOEBEL_TYPER[m.type].kanGaaPaa) {
+    gaaTil(f.x, f.y);
+  }
   opdaterPanel();
 });
 
