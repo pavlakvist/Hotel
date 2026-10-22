@@ -288,7 +288,7 @@ function tegnFigur(c) {
     hoejde = b.naturalHeight;
   } else {
     // Figuren fra figur.js
-    tegnMenneske(c, p.x, p.y, garderobe, figur.forfra, figur.vendt, gaar ? figur.trin : null, 1);
+    tegnMenneske(c, p.x, p.y, garderobe, figur.forfra, figur.vendt, gaar ? figur.trin : null);
   }
 
   // navneskilt
@@ -591,41 +591,17 @@ document.addEventListener("keydown", function (e) {
 
 
 // =============================================================
-//  Garderobe — vælg figur, frisure, tøj og farver
+//  Garderobe — vælg figur
 // =============================================================
-const GARDEROBE_NOEGLE = "mit-hotel-figur-3";
-const FARVE_DELE = ["haar", "hud", "troeje", "bukser", "sko"];
-
-function startGarderobe() {
-  return {
-    type: FIGUR.type,
-    frisure: FIGUR.frisure,
-    toej: FIGUR.toej,
-    haar: FIGUR.haar,
-    hud: FIGUR.hud,
-    troeje: FIGUR.troeje,
-    bukser: FIGUR.bukser,
-    sko: FIGUR.sko,
-  };
-}
-
-const garderobe = startGarderobe();
+const GARDEROBE_NOEGLE = "mit-hotel-figur-5";
+const garderobe = { type: FIGUR.type };
 
 try {
   const gemt = JSON.parse(localStorage.getItem(GARDEROBE_NOEGLE));
-  if (gemt) {
-    if (gemt.type === "kvinde" || gemt.type === "mand") garderobe.type = gemt.type;
-    if (FRISURER[gemt.frisure]) garderobe.frisure = gemt.frisure;
-    if (TOEJ[gemt.toej]) garderobe.toej = gemt.toej;
-    for (const del of FARVE_DELE) {
-      if (/^#[0-9a-fA-F]{6}$/.test(gemt[del])) garderobe[del] = gemt[del];
-    }
-  }
+  if (gemt && alleFigurer()[gemt.type]) garderobe.type = gemt.type;
 } catch (fejl) {
   // ingen gemt figur endnu
 }
-// Sørg for at frisuren passer til figuren
-if (FRISURER[garderobe.frisure].figur !== garderobe.type) garderobe.frisure = frisurerTil(garderobe.type)[0];
 
 function gemGarderobe() {
   try {
@@ -640,28 +616,21 @@ const forhaandsvisning = document.getElementById("figur-forhaandsvisning");
 function tegnForhaandsvisning() {
   const c = forhaandsvisning.getContext("2d");
   c.clearRect(0, 0, forhaandsvisning.width, forhaandsvisning.height);
-  tegnMenneske(c, 34, forhaandsvisning.height - 6, garderobe, true, 1, null, 1);
-  tegnMenneske(c, 94, forhaandsvisning.height - 6, garderobe, false, -1, null, 1);
+  tegnMenneske(c, 34, forhaandsvisning.height - 4, garderobe, true, 1, null);
+  tegnMenneske(c, 98, forhaandsvisning.height - 4, garderobe, false, 1, null);
 }
 
-function opdaterFarveFelter() {
-  document.querySelectorAll("#garderobe input[type=color]").forEach(function (felt) {
-    felt.value = garderobe[felt.dataset.del];
-  });
-}
-
-// Laver en række knapper. valgmuligheder: { id: "navn på knappen" }
-function knapRaekke(boksId, valgmuligheder, erValgt, vaelg) {
-  const boks = document.getElementById(boksId);
+function lavFigurKnapper() {
+  const boks = document.getElementById("figur-typer");
   boks.innerHTML = "";
-  for (const id in valgmuligheder) {
+  const figurer = alleFigurer();
+  for (const id in figurer) {
     const knap = document.createElement("button");
-    knap.textContent = valgmuligheder[id];
-    knap.classList.toggle("aktiv", erValgt(id));
+    knap.textContent = figurer[id];
+    knap.classList.toggle("aktiv", garderobe.type === id);
     knap.addEventListener("click", function () {
-      vaelg(id);
-      lavGarderobeKnapper();
-      opdaterFarveFelter();
+      garderobe.type = id;
+      lavFigurKnapper();
       tegnForhaandsvisning();
       gemGarderobe();
     });
@@ -669,51 +638,7 @@ function knapRaekke(boksId, valgmuligheder, erValgt, vaelg) {
   }
 }
 
-function lavGarderobeKnapper() {
-  knapRaekke("figur-typer", { kvinde: "Kvinde", mand: "Mand" },
-    function (id) { return garderobe.type === id; },
-    function (id) {
-      garderobe.type = id;
-      garderobe.frisure = frisurerTil(id)[0];
-    });
-
-  const frisurer = {};
-  frisurerTil(garderobe.type).forEach(function (id) { frisurer[id] = FRISURER[id].navn; });
-  knapRaekke("figur-frisurer", frisurer,
-    function (id) { return garderobe.frisure === id; },
-    function (id) { garderobe.frisure = id; });
-
-  const toej = {};
-  for (const id in TOEJ) toej[id] = TOEJ[id].navn;
-  knapRaekke("figur-toej", toej,
-    function (id) { return garderobe.toej === id; },
-    function (id) {
-      garderobe.toej = id;
-      Object.assign(garderobe, TOEJ[id].farver);   // tøjet får sine egne start-farver
-    });
-}
-
-lavGarderobeKnapper();
-opdaterFarveFelter();
-
-document.querySelectorAll("#garderobe input[type=color]").forEach(function (felt) {
-  felt.addEventListener("input", function () {
-    garderobe[felt.dataset.del] = felt.value;
-    tegnForhaandsvisning();
-    gemGarderobe();
-  });
-});
-
-document.getElementById("knap-nulstil-figur").addEventListener("click", function () {
-  // behold figur, frisure og tøj — nulstil kun farverne
-  const start = startGarderobe();
-  garderobe.haar = start.haar;
-  garderobe.hud = start.hud;
-  Object.assign(garderobe, TOEJ[garderobe.toej].farver);
-  opdaterFarveFelter();
-  gemGarderobe();
-  tegnForhaandsvisning();
-});
+lavFigurKnapper();
 
 
 // =============================================================

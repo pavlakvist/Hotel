@@ -23,19 +23,12 @@ const RUM = {
 
 
 // ----- Din figur -----
-//  Det her er start-valgene. I spillet kan du ændre dem under "Garderobe".
-//  Selve tegningerne af figurerne, frisurerne og tøjet ligger i js/figur.js
+//  Hvilken figur du starter med. I spillet kan du skifte under "Garderobe".
+//  Figurerne er lavet af billeder i mappen "billeder" (se js/figur.js).
 const FIGUR = {
   navn: "Pavla",
   type: "kvinde",          // "kvinde" eller "mand"
-  frisure: "knold",        // kvinde: "knold" eller "langt" — mand: "kort" eller "undercut"
-  toej: "hotel",           // "hotel" eller "moderne"
-  billede: "",             // fx "billeder/figur.png" (så bruges dit billede i stedet)
-  hud: "#f1c49b",
-  haar: "#6b3e23",
-  troeje: "#8b1e2b",       // vest/hættetrøje
-  bukser: "#2f2f35",       // nederdel/bukser
-  sko: "#1e1e22",
+  billede: "",             // et helt andet billede af figuren (bruges i stedet, hvis du skriver et her)
   fart: 3,                 // hvor mange felter figuren går pr. sekund
 };
 
