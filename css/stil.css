@@ -75,11 +75,40 @@ main {
   margin: 0 0 10px;
 }
 
+#moebel-faner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+#moebel-faner button {
+  padding: 3px 7px;
+  font-size: 11px;
+  background: #2c3e66;
+  border: 1px solid #4a64a0;
+  border-radius: 10px;
+  color: inherit;
+  cursor: pointer;
+}
+
+#moebel-faner button.aktiv {
+  background: #f2b134;
+  border-color: #f2b134;
+  color: #2a1a08;
+}
+
 #moebel-knapper {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
   margin-bottom: 12px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.moebel-knap[hidden] {
+  display: none;
 }
 
 .moebel-knap {

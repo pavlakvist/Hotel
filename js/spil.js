@@ -176,8 +176,19 @@ function saetDig(m) {
   figur.sidde = { moebel: m, grad: 0 };
   // kig væk fra ryglænet
   figur.forfra = true;
-  figur.vendt = m.spejlet ? 1 : -1;
-  figur.retning = m.spejlet ? "ned-hoejre" : "ned-venstre";
+  vendFraRyglaenet(m);
+}
+
+// Vender møblet mod højre på skærmen? (spejling og "vender" fra kataloget)
+function venderHoejre(m) {
+  const type = MOEBEL_TYPER[m.type] || {};
+  return m.spejlet !== (type.vender === "hoejre");
+}
+
+function vendFraRyglaenet(m) {
+  const h = venderHoejre(m);
+  figur.vendt = h ? 1 : -1;
+  figur.retning = h ? "ned-hoejre" : "ned-venstre";
 }
 
 
@@ -290,7 +301,13 @@ function tegnMoebel(c, type, cx, cy, spejlet) {
     c.save();
     c.translate(cx, cy + FLISE_H / 2);
     if (spejlet) c.scale(-1, 1);
-    c.drawImage(b, -b.naturalWidth / 2, -b.naturalHeight);
+    if (type.klip) {
+      // møbler fra kataloget: klip det lille stykke ud af det store billede
+      const k = type.klip;
+      c.drawImage(b, k[0], k[1], k[2], k[3], -k[2] / 2, -k[3], k[2], k[3]);
+    } else {
+      c.drawImage(b, -b.naturalWidth / 2, -b.naturalHeight);
+    }
     c.restore();
     return;
   }
@@ -333,7 +350,7 @@ function tegnFigur(c) {
       sidde = { hoejde: MOEBEL_TYPER[figur.sidde.moebel.type].saede };
     }
     // på et sæde rykker figuren lidt tilbage mod ryglænet
-    const bagud = sidde ? (figur.sidde.moebel.spejlet ? -1 : 1) * SIDDE_BAGUD : 0;
+    const bagud = sidde ? (venderHoejre(figur.sidde.moebel) ? -1 : 1) * SIDDE_BAGUD : 0;
     tegnMenneske(c, p.x + bagud, p.y - Math.abs(bagud) / 2, garderobe, figur.retning, gaar && !figur.sidde ? figur.trin : null, sidde);
   }
 
@@ -380,8 +397,7 @@ function flytFigur(dt) {
     } else {
       // sæt dig langsomt ned
       figur.sidde.grad = Math.min(1, figur.sidde.grad + dt / 0.9);
-      figur.vendt = figur.sidde.moebel.spejlet ? 1 : -1;
-      figur.retning = figur.sidde.moebel.spejlet ? "ned-hoejre" : "ned-venstre";
+      vendFraRyglaenet(figur.sidde.moebel);
     }
     return;
   }
@@ -535,12 +551,40 @@ function tegnAlt() {
 //  Panelet med møbler
 // =============================================================
 const knapBoks = document.getElementById("moebel-knapper");
+const faneBoks = document.getElementById("moebel-faner");
 const ikoner = [];
+
+// Faner: én for hver kategori (de første møbler hører til "Basis")
+const KATEGORIER = [];
+MOEBLER.forEach(function (type) {
+  const k = type.kategori || "Basis";
+  if (KATEGORIER.indexOf(k) < 0) KATEGORIER.push(k);
+});
+let valgtKategori = KATEGORIER[0];
+
+function visKategori(k) {
+  valgtKategori = k;
+  faneBoks.querySelectorAll("button").forEach(function (f) {
+    f.classList.toggle("aktiv", f.textContent === k);
+  });
+  knapBoks.querySelectorAll(".moebel-knap").forEach(function (knap) {
+    knap.hidden = knap.dataset.kategori !== k;
+  });
+  knapBoks.scrollTop = 0;
+}
+
+KATEGORIER.forEach(function (k) {
+  const fane = document.createElement("button");
+  fane.textContent = k;
+  fane.addEventListener("click", function () { visKategori(k); });
+  faneBoks.appendChild(fane);
+});
 
 MOEBLER.forEach(function (type) {
   const knap = document.createElement("button");
   knap.className = "moebel-knap";
   knap.dataset.id = type.id;
+  knap.dataset.kategori = type.kategori || "Basis";
   const ikon = document.createElement("canvas");
   ikon.width = 64;
   ikon.height = 70;
@@ -562,9 +606,10 @@ function tegnIkoner() {
     c.clearRect(0, 0, i.ikon.width, i.ikon.height);
     const b = hentBillede(i.type.billede);
     if (billedeKlar(b)) {
-      const skala = Math.min(1, 60 / b.naturalWidth, 66 / b.naturalHeight);
-      const w = b.naturalWidth * skala, h = b.naturalHeight * skala;
-      c.drawImage(b, 32 - w / 2, 68 - h, w, h);
+      const k = i.type.klip || [0, 0, b.naturalWidth, b.naturalHeight];
+      const skala = Math.min(1, 60 / k[2], 66 / k[3]);
+      const w = k[2] * skala, h = k[3] * skala;
+      c.drawImage(b, k[0], k[1], k[2], k[3], 32 - w / 2, 68 - h, w, h);
     } else {
       // Reserve-tegningen gøres lidt mindre, så den kan være på knappen
       c.save();
@@ -787,6 +832,7 @@ function hent() {
 // =============================================================
 hent();
 tegnIkoner();
+visKategori(valgtKategori);
 tegnForhaandsvisning();
 opdaterPanel();
 
