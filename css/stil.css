@@ -656,3 +656,54 @@ footer {
   background: rgba(0, 0, 0, 0.55);
   white-space: nowrap;
 }
+
+
+/* ----- Chatten ----- */
+#chat {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  width: min(520px, calc(100vw - 32px));
+  padding: 6px;
+  border-radius: 14px;
+  background: #3a2116;
+  border: 2px solid #7a4313;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+#chat input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 2px solid #c9862a;
+  border-radius: 10px;
+  background: #fcf2e9;
+  color: #4a2210;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+#chat input:focus {
+  border-color: #f2b134;
+  box-shadow: 0 0 0 3px rgba(242, 177, 52, 0.35);
+}
+
+#chat button {
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 2px solid #7a4313;
+  background: linear-gradient(#f7c65a, #f2b134 55%, #c9862a);
+  color: #4a2210;
+}
+
+/* beskeden ligger lige over chatten */
+footer {
+  bottom: 72px;
+  font-size: 14px;
+}

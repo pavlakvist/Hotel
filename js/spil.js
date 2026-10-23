@@ -564,6 +564,7 @@ function tegnAlt() {
 
   ting.sort(function (a, b) { return a.dybde - b.dybde; });
   ting.forEach(function (t) { t.tegn(); });
+  if (typeof tegnBobler === "function") tegnBobler();
 }
 
 
@@ -751,6 +752,7 @@ laerred.addEventListener("click", function (e) {
 });
 
 document.addEventListener("keydown", function (e) {
+  if (e.target.tagName === "INPUT") return;   // man skriver i chatten
   if (e.key === "Escape") {
     valgtType = null;
     valgtMoebel = null;
