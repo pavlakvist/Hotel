@@ -82,6 +82,53 @@
     </div>
   </div>
 
+  <!-- Menuen, når man klikker på sig selv (js/min-menu.js) -->
+  <div id="min-menu" hidden>
+    <div id="min-menu-knapper"></div>
+  </div>
+
+  <!-- Min profil -->
+  <div id="profil-vindue" class="lille-vindue" hidden>
+    <div class="lv-boks">
+      <div class="lv-top"><h2>Min profil</h2><button id="profil-luk" class="su-luk" title="Luk">✕</button></div>
+      <div class="profil-indhold">
+        <canvas id="profil-figur" width="130" height="190"></canvas>
+        <div class="profil-tekst">
+          <h3 id="profil-navn"></h3>
+          <label for="profil-motto">Motto</label>
+          <input id="profil-motto" type="text" maxlength="40" placeholder="Skriv dit motto …">
+          <p><b>Medlem siden:</b> <span id="profil-medlem"></span></p>
+          <p><b>Er lige nu i:</b> <span id="profil-rum"></span></p>
+          <p><b>Mit værelse:</b> <span id="profil-moebler"></span></p>
+          <p><b>Venner:</b> 0</p>
+          <button id="profil-outfit" class="lv-knap">Skift outfit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rapportere -->
+  <div id="rapport-vindue" class="lille-vindue" hidden>
+    <div class="lv-boks">
+      <div class="lv-top"><h2>Rapportere</h2><button id="rapport-luk" class="su-luk" title="Luk">✕</button></div>
+      <form id="rapport-form" class="rapport-indhold">
+        <p>Hvad vil du fortælle os om?</p>
+        <label><input type="radio" name="rapport-grund" value="Mobning" checked> Nogen er grim eller mobber</label>
+        <label><input type="radio" name="rapport-grund" value="Grimme ord"> Grimme ord i chatten</label>
+        <label><input type="radio" name="rapport-grund" value="Fejl"> Der er en fejl i spillet</label>
+        <label><input type="radio" name="rapport-grund" value="Andet"> Andet</label>
+        <p>Hvem handler det om?</p>
+        <select id="rapport-hvem"></select>
+        <textarea id="rapport-tekst" maxlength="300" rows="3" placeholder="Fortæl lidt mere (hvis du vil) …"></textarea>
+        <button type="submit" class="lv-knap">Send rapport</button>
+      </form>
+      <div id="rapport-tak" class="rapport-indhold" hidden>
+        <p><b>Tak!</b> Din rapport er sendt til hotellets personale.</p>
+        <button id="rapport-ok" class="lv-knap">OK</button>
+      </div>
+    </div>
+  </div>
+
   <footer id="besked">Klik på gulvet for at gå.</footer>
 
   <!-- Chatten: skriv noget, så kommer det i en taleboble over din figur -->
@@ -115,5 +162,6 @@
   <script src="js/velkomsthal.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/garderobe.js"></script>
+  <script src="js/min-menu.js"></script>
 </body>
 </html>

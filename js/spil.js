@@ -17,6 +17,8 @@ const MAKS_ZOOM = 3.5;
 const RUM_ZOOM = 1.35;     // hvor meget større end skærmen rummet er (1 = det passer lige præcis)
 let brugerZoom = 1;        // musehjulet zoomer ind og ud
 const KAMERA = { x: 0, y: 0 };   // hvor meget man har trukket i skærmen (i skærm-pixels)
+let figurDanser = false;         // sættes af "Handlinger" i js/min-menu.js
+let danseTid = 0;
 
 function skarptLaerred() {
   const r = laerred.getBoundingClientRect();
@@ -399,6 +401,9 @@ function tegnFigur(c) {
   c.ellipse(p.x, p.y, 16, 7, 0, 0, Math.PI * 2);
   c.fillStyle = "rgba(0,0,0,0.25)";
   c.fill();
+
+  // når figuren danser, hopper den lidt op og ned
+  if (figurDanser) p.y -= Math.abs(Math.sin(danseTid * 8)) * 7;
 
   const b = hentBillede(FIGUR.billede);
   let hoejde = figurHoejde(garderobe);
