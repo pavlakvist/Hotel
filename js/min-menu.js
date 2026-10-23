@@ -79,6 +79,7 @@ function visHandlinger() {
     lukMinMenu();
     figurDanser = false;
     for (let i = 0; i < 3; i++) setTimeout(function () { svaev("👋"); }, i * 350);
+    if (typeof visUdtryk === "function") visUdtryk("vink", 2.5);
   });
   knap(figurDanser ? "🛑 Stop dansen" : "💃 Dans", function () {
     lukMinMenu();
@@ -89,6 +90,7 @@ function visHandlinger() {
     lukMinMenu();
     for (let i = 0; i < 4; i++) setTimeout(function () { svaev("❤️"); }, i * 250);
   });
+  if (typeof harUdtryk === "function" && harUdtryk()) knap("🙂 Ansigt", visAnsigter);
   if (figur.sidde) {
     knap("🧍 Rejs dig op", function () {
       lukMinMenu();

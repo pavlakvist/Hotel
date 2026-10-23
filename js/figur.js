@@ -49,6 +49,20 @@ const FIGURER = {
       "venstre": [{ fil: "billeder/figurer/pige-gaa-venstre-1.png", anker: [29.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-2.png", anker: [26.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-3.png", anker: [30.0, 150.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-4.png", anker: [25.0, 155.0], ingenLag: true }],
       "ned-venstre": [{ fil: "billeder/figurer/pige-gaa-venstre-1.png", anker: [29.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-2.png", anker: [26.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-3.png", anker: [30.0, 150.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-4.png", anker: [25.0, 155.0], ingenLag: true }],
     },
+    // udtryk og vink: hun står forfra (sat sammen af dit ark: ansigterne på hendes krop)
+    poser: {
+      "neutral": { fil: "billeder/figurer/pige-udtryk-neutral.png", anker: [26.0, 158.0], ingenLag: true },
+      "smil": { fil: "billeder/figurer/pige-udtryk-smil.png", anker: [26.0, 158.0], ingenLag: true },
+      "glad": { fil: "billeder/figurer/pige-udtryk-glad.png", anker: [26.0, 158.0], ingenLag: true },
+      "grin": { fil: "billeder/figurer/pige-udtryk-grin.png", anker: [26.0, 158.0], ingenLag: true },
+      "vred": { fil: "billeder/figurer/pige-udtryk-vred.png", anker: [26.0, 158.0], ingenLag: true },
+      "ked": { fil: "billeder/figurer/pige-udtryk-ked.png", anker: [26.0, 158.0], ingenLag: true },
+      "overrasket": { fil: "billeder/figurer/pige-udtryk-overrasket.png", anker: [26.0, 158.0], ingenLag: true },
+      "blink": { fil: "billeder/figurer/pige-udtryk-blink.png", anker: [26.0, 158.0], ingenLag: true },
+      "flirt": { fil: "billeder/figurer/pige-udtryk-flirt.png", anker: [26.0, 158.0], ingenLag: true },
+      "traet": { fil: "billeder/figurer/pige-udtryk-traet.png", anker: [26.0, 158.0], ingenLag: true },
+      "vink": { fil: "billeder/figurer/pige-vink.png", anker: [35.0, 163.0], ingenLag: true },
+    },
     // sidde: stolene er fjernet; mod venstre er billedet spejlet
     sidder: {
       "ned": { fil: "billeder/figurer/pige-sidder-ned.png", anker: [42.0, 101.0], ingenLag: true },
@@ -163,7 +177,9 @@ function tegnMenneske(c, x, y, valg, retning, gaarTrin, sidde) {
     y -= sidde.hoejde;   // numsen sidder på sædet
   } else {
     const billeder = f.gaa[retning] || f.gaa.ned;
-    if (gaarTrin === null) {
+    if (gaarTrin === null && valg.pose && f.poser && f.poser[valg.pose]) {
+      del = f.poser[valg.pose];          // et ansigtsudtryk eller et vink (js/udtryk.js)
+    } else if (gaarTrin === null) {
       del = (f.staa && f.staa[retning]) || billeder[0];
     } else if (f.raekke === "alle") {
       del = billeder[Math.floor(gaarTrin) % billeder.length];
