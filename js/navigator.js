@@ -120,7 +120,9 @@ function visNav() {
     rum = NAV_RUM.filter(function (r) { return r.rum; }).sort(function (a, b) { return antalIRum(b) - antalIRum(a); });
     titel = "Populære"; ikon = "🔥";
   } else if (navFilter === "venner") {
-    rum = []; titel = "Venner"; ikon = "👥";
+    // rum hvor dine venner er lige nu
+    rum = NAV_RUM.filter(function (r) { return r.rum === "hal" && venner.some(venOnline); });
+    titel = "Venner"; ikon = "👥";
   } else if (navFilter === "favoritter") {
     rum = NAV_RUM.filter(function (r) { return favoritter.indexOf(r.id) >= 0; });
     titel = "Favoritter"; ikon = "♥";
@@ -132,7 +134,7 @@ function visNav() {
     rum = NAV_RUM.filter(function (r) { return r.etage === navEtage; });
     titel = e.navn; ikon = e.ikon;
   }
-  const tom = { venner: "Du har ingen venner online endnu.", favoritter: "Tryk på ♡ ved et rum for at gøre det til favorit.", senest: "Du har ikke besøgt nogen rum endnu." }[navFilter];
+  const tom = { venner: "Ingen af dine venner er online. Klik på en gæst og vælg ➕ Tilføj ven.", favoritter: "Tryk på ♡ ved et rum for at gøre det til favorit.", senest: "Du har ikke besøgt nogen rum endnu." }[navFilter];
   document.getElementById("nav-midte").innerHTML =
     "<div class='nav-titel'><span>" + ikon + "</span><div><h3>" + navHtml(titel) + "</h3><small>" + rum.length + (rum.length === 1 ? " rum" : " rum") + "</small></div></div>" +
     (rum.length ? rum.map(rumKort).join("") : "<p class='nav-tom'>" + (tom || (navEtage === "hemmelig" ? "…" : "Her er stille … Der er ingen rum endnu.")) + "</p>");

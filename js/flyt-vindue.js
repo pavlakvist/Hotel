@@ -55,3 +55,4 @@ goerFlytbar(document.querySelector("#garderobe-vindue .su-boks"), document.query
 goerFlytbar(document.querySelector("#byt-vindue .lv-boks"), document.querySelector("#byt-vindue .lv-top"), "mit-hotel-vindue-byt");
 goerFlytbar(document.getElementById("chatlog"), document.querySelector(".chatlog-top"), "mit-hotel-vindue-chatlog");
 goerFlytbar(document.getElementById("nav-vindue"), document.querySelector(".nav-top"), "mit-hotel-vindue-nav");
+goerFlytbar(document.getElementById("venner-vindue"), document.querySelector(".venner-top"), "mit-hotel-vindue-venner");

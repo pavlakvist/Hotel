@@ -2317,3 +2317,140 @@ footer {
     margin-top: 0;
   }
 }
+
+/* ===== Venneliste ===== */
+#venner-vindue {
+  position: fixed;
+  top: 70px;
+  right: 16px;
+  z-index: 9;
+  width: 260px;
+  max-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  background: #fbf6ea;
+  border: 3px solid #4e7d4a;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font: 13px Verdana, sans-serif;
+  color: #33402c;
+  overflow: hidden;
+}
+
+#venner-vindue[hidden] {
+  display: none;
+}
+
+.venner-top {
+  display: flex;
+  align-items: center;
+  padding: 5px 6px 5px 10px;
+  background: #4e7d4a;
+  color: #fbf6ea;
+  font-weight: bold;
+  user-select: none;
+}
+
+.venner-top span {
+  flex: 1;
+}
+
+.venner-top button {
+  margin: 0;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  background: #6b9c62;
+  color: #fff;
+  border: 1px solid #d9edcc;
+  border-radius: 5px;
+  font: bold 12px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+#venner-antal {
+  margin: 0;
+  padding: 5px 10px;
+  background: #e2efd3;
+  font-size: 11px;
+  color: #3b6338;
+}
+
+#venner-liste {
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+#venner-liste li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #ece3cb;
+}
+
+#venner-liste li.venner-tom {
+  display: block;
+  border: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #7f8a6f;
+  line-height: 1.6;
+}
+
+.ven-prik {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.ven-prik.on {
+  background: #5cb85c;
+  box-shadow: 0 0 6px #7fd67f;
+}
+
+.ven-prik.off {
+  background: #c9c2ad;
+}
+
+.ven-navn {
+  flex: 1;
+  min-width: 0;
+}
+
+.ven-navn small {
+  display: block;
+  font-size: 11px;
+  color: #7f8a6f;
+}
+
+#venner-liste button {
+  margin: 0;
+  padding: 4px 8px;
+  background: linear-gradient(#bfe3b1, #9ccc8f 55%, #7fb56f);
+  color: #1f3a1c;
+  border: 1px solid #4e7d4a;
+  border-radius: 6px;
+  font: bold 11px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+#venner-liste button:disabled {
+  background: #e2efd3;
+  color: #7f8a6f;
+  border-color: #cfe3c3;
+  cursor: default;
+}
+
+#venner-liste button.fjern {
+  background: none;
+  border-color: transparent;
+  color: #b0a689;
+}
+
+#venner-liste button.fjern:hover {
+  color: #b33f3b;
+}
