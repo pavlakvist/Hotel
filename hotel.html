@@ -143,6 +143,39 @@
     </div>
   </div>
 
+  <!-- Hotellets navigatør (js/navigator.js) -->
+  <div id="nav-vindue" hidden>
+    <div class="nav-top">
+      <h2><span class="nav-gnist">✦</span> Hotellets navigatør <span class="nav-gnist sen">✧</span></h2>
+      <button id="nav-luk" class="su-luk" title="Luk">✕</button>
+    </div>
+    <div class="nav-krop">
+      <nav id="nav-etager"></nav>
+      <div id="nav-midte"></div>
+      <aside class="nav-side">
+        <input id="nav-soeg" type="text" placeholder="🔍 Søg efter rum eller ejer …">
+        <div id="nav-filtre">
+          <button data-filter="alle">Alle rum</button>
+          <button data-filter="populaere">🔥 Populære</button>
+          <button data-filter="venner">👥 Venner</button>
+          <button data-filter="favoritter">♥ Favoritter</button>
+          <button data-filter="senest">🕒 Senest besøgte</button>
+        </div>
+        <section>
+          <h3>🔥 Populære lige nu</h3>
+          <div id="nav-populaere"></div>
+        </section>
+        <section>
+          <h3>⭐ Dine hurtige genveje</h3>
+          <div id="nav-genveje">
+            <button data-filter="favoritter">♥ Favoritter <i>›</i></button>
+            <button data-filter="senest">🕒 Senest besøgte <i>›</i></button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
   <!-- Chatlog for alle (js/chatlog.js) -->
   <div id="chatlog">
     <div class="chatlog-top"><span>💬 Chatlog</span><button id="chatlog-luk" title="Skjul chatloggen">–</button></div>
@@ -203,6 +236,7 @@
   <form id="chat" autocomplete="off">
     <button type="button" id="chat-smiley-knap" class="chat-lille" title="Smileyer">😊</button>
     <button type="button" id="chat-farve-knap" class="chat-lille" title="Farve på din taleboble"></button>
+    <button type="button" id="chat-nav-knap" class="chat-lille" title="Hotellets navigatør">🛎️</button>
     <button type="button" id="chat-log-knap" class="chat-lille" title="Vis eller skjul chatloggen">📜</button>
     <button type="button" id="chat-ejer-knap" class="chat-lille" title="Ejerpanel (mod tools)">🛡️</button>
     <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
@@ -237,6 +271,7 @@
   <script src="js/glimt.js"></script>
   <script src="js/gaest-menu.js"></script>
   <script src="js/chatlog.js"></script>
+  <script src="js/navigator.js"></script>
   <script src="js/flyt-vindue.js"></script>
 </body>
 </html>

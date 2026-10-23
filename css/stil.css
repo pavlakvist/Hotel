@@ -1877,3 +1877,443 @@ footer {
   background: rgba(59, 99, 56, 0.85);
   color: #fbf6ea;
 }
+
+/* ===== Hotellets navigatør: grøn og creme, men lidt mystisk ===== */
+#nav-vindue {
+  position: fixed;
+  left: max(10px, calc(50% - 450px));
+  top: max(10px, calc(50% - 290px));
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  width: min(900px, calc(100vw - 20px));
+  height: min(580px, calc(100vh - 20px));
+  background: #fbf6ea;
+  border: 4px solid #2f4f2c;
+  border-radius: 14px;
+  box-shadow: 0 0 0 2px #9ccc8f, 0 0 34px rgba(156, 204, 143, 0.45), 0 14px 40px rgba(0, 0, 0, 0.45);
+  color: #33402c;
+  font: 14px Verdana, sans-serif;
+  overflow: hidden;
+}
+
+#nav-vindue[hidden] {
+  display: none;
+}
+
+.nav-top {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px 10px 18px;
+  background: linear-gradient(100deg, #223b20, #3b6338 45%, #2a4727 75%, #3f2a5c);
+  background-size: 220% 100%;
+  animation: nav-skaer 9s ease-in-out infinite alternate;
+}
+
+@keyframes nav-skaer {
+  from { background-position: 0% 0; }
+  to { background-position: 100% 0; }
+}
+
+.nav-top h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f4f9ec;
+  text-shadow: 0 0 10px rgba(191, 227, 177, 0.7);
+}
+
+.nav-gnist {
+  display: inline-block;
+  color: #d9c8ff;
+  animation: nav-gnist 2.4s ease-in-out infinite;
+}
+
+.nav-gnist.sen {
+  animation-delay: 1.2s;
+}
+
+@keyframes nav-gnist {
+  0%, 100% { opacity: 0.25; transform: scale(0.8) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(20deg); }
+}
+
+.nav-top .su-luk {
+  background: #4e7d4a;
+  border-color: #d9edcc;
+}
+
+.nav-krop {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 170px 1fr 250px;
+  min-height: 0;
+}
+
+/* etagerne */
+#nav-etager {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 10px;
+  background: linear-gradient(#2f4f2c, #223b20);
+}
+
+#nav-etager button {
+  margin: 0;
+  padding: 10px 10px;
+  text-align: left;
+  background: #fbf6ea;
+  color: #2f4f2c;
+  border: 2px solid #9ccc8f;
+  border-radius: 9px;
+  font: bold 13px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+#nav-etager button span {
+  display: inline-block;
+  width: 22px;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+#nav-etager button:hover {
+  background: #eaf4df;
+}
+
+#nav-etager button.valgt {
+  background: #9ccc8f;
+  border-color: #e2efd3;
+  color: #1f3a1c;
+  box-shadow: 0 0 12px rgba(156, 204, 143, 0.7);
+}
+
+#nav-etager button.hemmelig {
+  margin-top: auto;
+  background: linear-gradient(110deg, #2b1d45, #5a3b8c, #2b1d45);
+  background-size: 200% 100%;
+  border-color: #b896f0;
+  color: #eee2ff;
+  animation: nav-lilla 4s linear infinite;
+}
+
+#nav-etager button.hemmelig.valgt {
+  box-shadow: 0 0 14px rgba(184, 150, 240, 0.9);
+}
+
+@keyframes nav-lilla {
+  from { background-position: 0% 0; }
+  to { background-position: 200% 0; }
+}
+
+/* rummene i midten */
+#nav-midte {
+  padding: 14px 16px;
+  overflow-y: auto;
+  background: radial-gradient(ellipse at 50% 0%, #fffdf6, #f3ecd9);
+}
+
+.nav-titel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.nav-titel > span {
+  font-size: 28px;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.nav-titel h3 {
+  margin: 0;
+  font-size: 22px;
+  color: #2f4f2c;
+}
+
+.nav-titel small {
+  color: #7f8a6f;
+}
+
+.nav-kort {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #fffdf6;
+  border: 2px solid #e2d8bc;
+  border-radius: 10px;
+}
+
+.nav-kort:hover {
+  border-color: #9ccc8f;
+  box-shadow: 0 0 10px rgba(156, 204, 143, 0.4);
+}
+
+.nav-billede {
+  position: relative;
+  flex: none;
+  width: 120px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2f4f2c;
+}
+
+.nav-billede img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.nav-billede.laast img {
+  filter: grayscale(0.5) brightness(0.65);
+}
+
+.nav-billede span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: #eee2ff;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.8);
+}
+
+.nav-billede.hemmelig {
+  background: radial-gradient(circle at 50% 60%, #5a3b8c, #1c1230);
+}
+
+.nav-billede.hemmelig span {
+  font: bold 40px Georgia, serif;
+  text-shadow: 0 0 14px #b896f0;
+  animation: nav-gnist 3s ease-in-out infinite;
+}
+
+.nav-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-info h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #2f4f2c;
+}
+
+.nav-info p {
+  margin: 2px 0 6px;
+  font-size: 12px;
+  color: #7f8a6f;
+}
+
+.nav-antal {
+  font-size: 13px;
+  color: #3b6338;
+}
+
+.nav-kort.hemmelig {
+  background: linear-gradient(110deg, #f3ecff, #fffdf6);
+  border-color: #d3c1f2;
+}
+
+.nav-kort.hemmelig h4 {
+  color: #5a3b8c;
+  letter-spacing: 0.2em;
+}
+
+.nav-kort.hemmelig p {
+  font-style: italic;
+}
+
+.nav-hoejre {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.nav-hjerte {
+  margin: 0;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  color: #c98a2a;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nav-hjerte:hover {
+  background: none;
+}
+
+.nav-hjerte.valgt {
+  color: #d9534f;
+}
+
+.nav-hjerte.tom {
+  color: #b896f0;
+}
+
+.nav-besoeg {
+  margin: 0;
+  padding: 7px 14px;
+  background: linear-gradient(#6b9c62, #4e7d4a);
+  color: #fbf6ea;
+  border: 2px solid #2f4f2c;
+  border-radius: 8px;
+  font: bold 13px Verdana, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.nav-besoeg:hover {
+  filter: brightness(1.1);
+}
+
+.nav-besoeg:disabled {
+  background: #e2efd3;
+  color: #5e8f55;
+  border-color: #cfe3c3;
+  cursor: default;
+  filter: none;
+}
+
+.nav-besoeg.laast:disabled {
+  background: #ece3cb;
+  color: #8a7f62;
+  border-color: #ddd2b4;
+}
+
+.nav-tom {
+  margin-top: 30px;
+  text-align: center;
+  font-style: italic;
+  color: #7f8a6f;
+}
+
+/* højre side */
+.nav-side {
+  padding: 12px;
+  overflow-y: auto;
+  background: #f3ecd9;
+  border-left: 2px solid #e2d8bc;
+}
+
+#nav-soeg {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 7px 10px;
+  border: 2px solid #cfe3c3;
+  border-radius: 8px;
+  background: #fffdf6;
+  font: 13px Verdana, sans-serif;
+  color: #33402c;
+}
+
+#nav-filtre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+#nav-filtre button {
+  margin: 0;
+  padding: 5px 9px;
+  background: #fffdf6;
+  color: #33402c;
+  border: 2px solid #e2d8bc;
+  border-radius: 8px;
+  font: bold 12px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+#nav-filtre button.valgt {
+  background: #4e7d4a;
+  border-color: #2f4f2c;
+  color: #fbf6ea;
+}
+
+.nav-side section {
+  margin-bottom: 10px;
+  background: #fffdf6;
+  border: 2px solid #e2d8bc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.nav-side h3 {
+  margin: 0;
+  padding: 7px 10px;
+  background: #e2efd3;
+  font-size: 13px;
+  color: #2f4f2c;
+}
+
+#nav-populaere button,
+#nav-genveje button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 10px;
+  background: none;
+  border: 0;
+  border-top: 1px solid #ece3cb;
+  border-radius: 0;
+  color: #33402c;
+  font: bold 12px Verdana, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+#nav-populaere button:hover,
+#nav-genveje button:hover {
+  background: #eaf4df;
+}
+
+#nav-populaere img {
+  width: 44px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+#nav-populaere span {
+  flex: 1;
+}
+
+#nav-populaere small {
+  display: block;
+  font-weight: normal;
+  color: #3b6338;
+}
+
+#nav-populaere i,
+#nav-genveje i {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 18px;
+  color: #7f8a6f;
+}
+
+@media (max-width: 760px) {
+  .nav-krop {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  #nav-etager {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  #nav-etager button.hemmelig {
+    margin-top: 0;
+  }
+}
