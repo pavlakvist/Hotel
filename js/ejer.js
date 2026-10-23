@@ -44,8 +44,9 @@ const SYSTEM_NOEGLE = "mit-hotel-system";
 
 let adminLog = hentListe(ADMINLOG_NOEGLE);
 let nyheder = hentListe(NYHED_NOEGLE);
-const system = { velkomst: "", filterTil: true, ekstraOrd: "", timeoutMin: 5, valutaNavn: "Mønter", startBeloeb: 100 };
+const system = { velkomst: "", filterTil: true, ekstraOrd: "", timeoutMin: 5, valutaNavn: "Glimt", startBeloeb: 100 };
 try { Object.assign(system, JSON.parse(localStorage.getItem(SYSTEM_NOEGLE) || "{}")); } catch (e) {}
+if (system.valutaNavn === "Mønter") system.valutaNavn = "Glimt";
 function gemSystem() {
   try { localStorage.setItem(SYSTEM_NOEGLE, JSON.stringify(system)); } catch (e) {}
 }
@@ -397,26 +398,37 @@ function straf(navn, handling, grund) {
 
 // ----- 4. Rapporter -----
 function visRapporter() {
-  const alle = rapporter();
-  let html = "<p class='ejer-antal'>Rapporter, som spillerne har sendt med \"Rapportere\".</p>" +
-    liste(alle.map(function (r, i) { return { r: r, i: i }; }).reverse().map(function (x) {
-      const r = x.r;
-      return "<b>" + (r.behandlet ? "✅ " : "🆕 ") + rens(r.grund) + "</b>" +
-        (r.hvem ? " om <a href='#' data-spiller='" + rens(r.hvem) + "'>" + rens(r.hvem) + "</a>" : "") +
-        "<span>" + rens(r.tekst || "(ingen tekst)") + " · " + tidTekst(r.tid) + "</span>" +
-        (r.behandlet ? "" : "<button class='lille' data-behandl='" + x.i + "'>Marker som behandlet</button>");
-    }), "Ingen rapporter endnu");
-  ejerIndhold.innerHTML = html;
+  const alle = rapporter().map(function (r, i) { return { r: r, i: i }; }).reverse();
+  function linje(x) {
+    const r = x.r;
+    return "<b>" + rens(r.grund) + "</b>" +
+      (r.hvem ? " om <a href='#' data-spiller='" + rens(r.hvem) + "'>" + rens(r.hvem) + "</a>" : "") +
+      "<span>" + rens(r.tekst || "(ingen tekst)") + " · " + tidTekst(r.tid) + "</span>" +
+      (r.behandlet
+        ? "<span>Behandlet " + tidTekst(r.behandletTid || r.tid) + "</span><button class='lille' data-aabn='" + x.i + "'>Åbn igen</button>"
+        : "<button class='lille' data-behandl='" + x.i + "'>✅ Marker som behandlet</button>");
+  }
+  const aabne = alle.filter(function (x) { return !x.r.behandlet; });
+  const faerdige = alle.filter(function (x) { return x.r.behandlet; });
+  ejerIndhold.innerHTML = "<p class='ejer-antal'>Rapporter, som spillerne har sendt med \"Rapportere\".</p>" +
+    "<div class='ejer-to'><section><h3>🆕 Åbne (" + aabne.length + ")</h3>" + liste(aabne.map(linje), "Ingen åbne rapporter 🎉") + "</section>" +
+    "<section><h3>✅ Behandlet (" + faerdige.length + ")</h3>" + liste(faerdige.map(linje), "Ingen endnu") + "</section></div>";
   spillerLinks();
-  ejerIndhold.querySelectorAll("[data-behandl]").forEach(function (k) {
-    k.addEventListener("click", function () {
-      const alleR = rapporter();
-      alleR[+k.dataset.behandl].behandlet = true;
-      gemListe("mit-hotel-rapporter", alleR);
-      adminSkriv("Rapport behandlet: " + alleR[+k.dataset.behandl].grund);
-      visFane();
+  function knapper(attr, behandlet) {
+    ejerIndhold.querySelectorAll("[" + attr + "]").forEach(function (k) {
+      k.addEventListener("click", function () {
+        const alleR = rapporter();
+        const r = alleR[+k.getAttribute(attr)];
+        r.behandlet = behandlet;
+        r.behandletTid = behandlet ? Date.now() : null;
+        gemListe("mit-hotel-rapporter", alleR);
+        adminSkriv((behandlet ? "Rapport behandlet: " : "Rapport åbnet igen: ") + r.grund);
+        visFane();
+      });
     });
-  });
+  }
+  knapper("data-behandl", true);
+  knapper("data-aabn", false);
 }
 
 // ----- 5. IP og loginhistorik -----
@@ -441,16 +453,29 @@ function visRum() {
 
 // ----- 7. Valuta og økonomi -----
 function visValuta() {
-  ejerIndhold.innerHTML = "<p class='ejer-info'>🪙 Hotellet har ingen penge endnu. Her vælger du, hvad de skal hedde.</p>" +
+  ejerIndhold.innerHTML = "<div class='ejer-kort-raekke'><div class='ejer-kort'><span class='ikon'><img src='billeder/glimt.png' alt='' width='22'></span>" +
+    "<b>" + glimt.toLocaleString("da-DK") + "</b><span>Dine " + rens(system.valutaNavn) + "</span></div></div>" +
+    "<label class='ejer-felt'>Giv eller tag " + rens(system.valutaNavn) + " (minus tager)<input id='v-antal' type='number' value='100'></label>" +
+    "<button id='v-giv' class='lv-knap'>⭐ Giv til mig</button>" +
+    "<h4>Indstillinger</h4>" +
     "<label class='ejer-felt'>Navn på valutaen<input id='v-navn' type='text' maxlength='20' value='" + rens(system.valutaNavn) + "'></label>" +
     "<label class='ejer-felt'>Nye spillere starter med<input id='v-start' type='number' min='0' max='100000' value='" + system.startBeloeb + "'></label>" +
-    "<button id='v-gem' class='lv-knap'>Gem</button>";
+    "<button id='v-gem' class='lv-knap'>Gem</button>" +
+    "<p class='ejer-info'>⭐ " + rens(system.valutaNavn) + " er hotellets penge. De kan bruges, når der kommer en shop. At give andre spillere " + rens(system.valutaNavn) + " kræver en server.</p>";
+  document.getElementById("v-giv").addEventListener("click", function () {
+    const antal = parseInt(document.getElementById("v-antal").value, 10) || 0;
+    if (!antal) return;
+    faaGlimt(antal);
+    adminSkriv((antal > 0 ? "Gav " : "Tog ") + Math.abs(antal) + " " + system.valutaNavn + (antal > 0 ? " til " : " fra ") + FIGUR.navn);
+    visValuta();
+  });
   document.getElementById("v-gem").addEventListener("click", function () {
-    system.valutaNavn = document.getElementById("v-navn").value.trim() || "Mønter";
+    system.valutaNavn = document.getElementById("v-navn").value.trim() || "Glimt";
     system.startBeloeb = Math.max(0, +document.getElementById("v-start").value || 0);
     gemSystem();
+    visGlimt();
     adminSkriv("Valuta: " + system.valutaNavn + ", start " + system.startBeloeb);
-    besked.textContent = "Gemt!";
+    visValuta();
   });
 }
 
