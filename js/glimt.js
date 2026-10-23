@@ -36,7 +36,7 @@ function brugGlimt(pris) {
 // Glimt står altid lige til venstre for panelet, også når det åbnes
 function placerGlimt() {
   const panel = document.getElementById("panel");
-  glimtBoks.style.right = (panel.offsetWidth + 20) + "px";
+  glimtBoks.style.right = (panel.offsetWidth + 16) + "px";
 }
 new ResizeObserver(placerGlimt).observe(document.getElementById("panel"));
 placerGlimt();
