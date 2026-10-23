@@ -707,3 +707,67 @@ footer {
   bottom: 72px;
   font-size: 14px;
 }
+
+/* ----- Smileyer og boblefarve i chatten ----- */
+#chat .chat-lille {
+  width: 40px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+#chat #chat-farve-knap {
+  border: 3px solid #c9862a;
+  box-shadow: inset 0 0 0 2px #fcf2e9;
+}
+
+.chat-valg {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #3a2116;
+  border: 2px solid #7a4313;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.chat-valg[hidden] {
+  display: none;
+}
+
+#chat .chat-valg button {
+  padding: 4px;
+  margin: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #fcf2e9;
+  font-size: 22px;
+  line-height: 1.1;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+#chat .chat-valg button:hover {
+  border-color: #f2b134;
+  background: #fff6d8;
+}
+
+.chat-valg.farver {
+  left: 46px;
+  grid-template-columns: repeat(6, 34px);
+}
+
+#chat .chat-valg.farver button {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #7a4313;
+}
+
+#chat .chat-valg.farver button.aktiv {
+  border-color: #f2b134;
+  box-shadow: 0 0 0 2px #fcf2e9;
+}

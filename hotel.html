@@ -86,8 +86,12 @@
 
   <!-- Chatten: skriv noget, så kommer det i en taleboble over din figur -->
   <form id="chat" autocomplete="off">
+    <button type="button" id="chat-smiley-knap" class="chat-lille" title="Smileyer">😊</button>
+    <button type="button" id="chat-farve-knap" class="chat-lille" title="Farve på din taleboble"></button>
     <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
     <button type="submit">Send</button>
+    <div id="chat-smileyer" class="chat-valg" hidden></div>
+    <div id="chat-farver" class="chat-valg farver" hidden></div>
   </form>
 
   <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->

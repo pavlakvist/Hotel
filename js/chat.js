@@ -12,6 +12,8 @@ const chatTekst = document.getElementById("chat-tekst");
 
 const BOBLE_MAKS_B = 230;     // hvor bred en boble højst må være
 const BOBLE_LEVETID = 16;     // sekunder før en boble forsvinder
+// emoji-skrifterne gør, at smileyerne bliver farvede (Windows, Mac og Linux)
+const SKRIFT = "13px Verdana, Arial, sans-serif, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji'";
 let bobler = [];              // { navn, linjer, x, y, maalY, b, h, alder }
 let boblerSidst = performance.now();
 
@@ -36,6 +38,38 @@ const SNAK = [
   "Godmorgen alle sammen",
 ];
 
+// Farverne, man kan give sin taleboble
+const BOBLE_FARVER = ["#fcf2e9", "#fff2a8", "#ffd2df", "#f7b8c8", "#cdeefc", "#9fd3f2", "#c9f0c0", "#a8dca0", "#e3d0ff", "#f6c08b", "#c98a5b", "#5b2c16"];
+const BOBLE_NOEGLE = "mit-hotel-boble";
+let minBobleFarve = BOBLE_FARVER[0];
+try {
+  const gemt = localStorage.getItem(BOBLE_NOEGLE);
+  if (BOBLE_FARVER.indexOf(gemt) >= 0) minBobleFarve = gemt;
+} catch (fejl) {
+  // kan ikke huske farven, men den virker stadig nu
+}
+
+// Gæsterne har hver deres farve
+const GAEST_FARVER = { Ida: "#ffd2df", Noah: "#cdeefc", Freja: "#c9f0c0", Oliver: "#fff2a8" };
+
+// Smileyerne man kan vælge
+const SMILEYER = ["😊", "😂", "😍", "😎", "😉", "😮", "😢", "😡", "🥳", "😴", "🤔", "😘",
+  "👋", "👍", "❤️", "💖", "⭐", "🎉", "🌸", "🍕", "☕", "🐱", "🏨", "🔑"];
+
+// Skriver man :) eller <3, bliver det til en smiley
+const TEKST_SMILEYER = [[":D", "😂"], [":)", "😊"], [";)", "😉"], [":(", "😢"], [":O", "😮"], [":o", "😮"], ["<3", "❤️"], [":P", "😜"], [":p", "😜"]];
+
+function lavSmileyer(tekst) {
+  TEKST_SMILEYER.forEach(function (t) { tekst = tekst.split(t[0]).join(t[1]); });
+  return tekst;
+}
+
+// Er farven så mørk, at teksten skal være lys?
+function erMoerk(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return ((n >> 16) & 255) * 0.3 + ((n >> 8) & 255) * 0.59 + (n & 255) * 0.11 < 110;
+}
+
 function tilfaeldig(liste) {
   return liste[Math.floor(Math.random() * liste.length)];
 }
@@ -45,7 +79,7 @@ function tilfaeldig(liste) {
 //  Lav en ny boble
 // =============================================================
 function delILinjer(tekst, navn) {
-  ctx.font = "13px Verdana, sans-serif";
+  ctx.font = SKRIFT;
   const ord = (navn + ": " + tekst).split(" ");
   const linjer = [];
   let linje = "";
@@ -76,12 +110,13 @@ function sig(hvem, navn, tekst) {
   tekst = tekst.trim();
   if (!tekst) return;
   const linjer = delILinjer(tekst, navn);
-  ctx.font = "13px Verdana, sans-serif";
+  ctx.font = SKRIFT;
   const b = Math.min(BOBLE_MAKS_B, Math.max.apply(null, linjer.map(function (l) { return ctx.measureText(l).width; })) + 20);
   const h = linjer.length * 17 + 10;
   const hoved = hovedPaa(hvem);
   bobler.forEach(function (bo) { bo.nyest = false; });
-  bobler.push({ navn: navn, linjer: linjer, x: hoved.x, y: hoved.y, maalY: hoved.y, b: b, h: h, alder: 0, egen: hvem === figur, nyest: true });
+  bobler.push({ navn: navn, linjer: linjer, x: hoved.x, y: hoved.y, maalY: hoved.y, b: b, h: h, alder: 0, nyest: true,
+    farve: hvem === figur ? minBobleFarve : GAEST_FARVER[navn] || "#fcf2e9" });
 }
 
 
@@ -132,7 +167,7 @@ function tegnBobler() {
       ctx.moveTo(bo.x - 7, bo.y - 1);
       ctx.lineTo(bo.x, bo.y + 9);
       ctx.lineTo(bo.x + 7, bo.y - 1);
-      ctx.fillStyle = "#fcf2e9";
+      ctx.fillStyle = bo.farve;
       ctx.strokeStyle = "#5b2c16";
       ctx.lineWidth = 2;
       ctx.fill();
@@ -140,7 +175,7 @@ function tegnBobler() {
     }
 
     rundRamme(x, y, bo.b, bo.h, 9);
-    ctx.fillStyle = bo.egen ? "#fff6d8" : "#fcf2e9";
+    ctx.fillStyle = bo.farve;
     ctx.fill();
     ctx.lineWidth = 2;
     ctx.strokeStyle = "#5b2c16";
@@ -153,15 +188,15 @@ function tegnBobler() {
       let tx = x + 10;
       const ty = y + 6 + i * 17;
       if (i === 0) {
-        ctx.font = "bold 13px Verdana, sans-serif";
-        ctx.fillStyle = "#5b2c16";
+        ctx.font = "bold " + SKRIFT;
+        ctx.fillStyle = erMoerk(bo.farve) ? "#f7c65a" : "#5b2c16";
         const del = bo.navn + ":";
         ctx.fillText(del, tx, ty);
         tx += ctx.measureText(del + " ").width;
         l = l.slice(del.length + 1);
       }
-      ctx.font = "13px Verdana, sans-serif";
-      ctx.fillStyle = "#3a1d0e";
+      ctx.font = SKRIFT;
+      ctx.fillStyle = erMoerk(bo.farve) ? "#fcf2e9" : "#3a1d0e";
       ctx.fillText(l, tx, ty);
     });
     ctx.restore();
@@ -174,8 +209,9 @@ function tegnBobler() {
 // =============================================================
 chatForm.addEventListener("submit", function (e) {
   e.preventDefault();
-  const tekst = chatTekst.value;
+  const tekst = lavSmileyer(chatTekst.value);
   chatTekst.value = "";
+  lukChatValg();
   if (!tekst.trim()) return;
   sig(figur, FIGUR.navn, tekst);
 
@@ -205,3 +241,65 @@ skiftRum = function (navn) {
   bobler = [];
   gammelSkiftRum(navn);
 };
+
+
+// =============================================================
+//  Smileyer og boblens farve
+// =============================================================
+const smileyBoks = document.getElementById("chat-smileyer");
+const farveBoks = document.getElementById("chat-farver");
+const farveKnap = document.getElementById("chat-farve-knap");
+
+function lukChatValg() {
+  smileyBoks.hidden = true;
+  farveBoks.hidden = true;
+}
+
+SMILEYER.forEach(function (sm) {
+  const k = document.createElement("button");
+  k.type = "button";
+  k.textContent = sm;
+  k.addEventListener("click", function () {
+    // sæt smileyen ind, hvor man står i teksten
+    const start = chatTekst.selectionStart ?? chatTekst.value.length;
+    const slut = chatTekst.selectionEnd ?? start;
+    chatTekst.value = chatTekst.value.slice(0, start) + sm + chatTekst.value.slice(slut);
+    chatTekst.focus();
+    chatTekst.selectionStart = chatTekst.selectionEnd = start + sm.length;
+  });
+  smileyBoks.appendChild(k);
+});
+
+function visFarver() {
+  farveBoks.querySelectorAll("button").forEach(function (k) {
+    k.classList.toggle("aktiv", k.dataset.farve === minBobleFarve);
+  });
+  farveKnap.style.background = minBobleFarve;
+}
+
+BOBLE_FARVER.forEach(function (f) {
+  const k = document.createElement("button");
+  k.type = "button";
+  k.dataset.farve = f;
+  k.style.background = f;
+  k.title = "Brug denne farve";
+  k.addEventListener("click", function () {
+    minBobleFarve = f;
+    try { localStorage.setItem(BOBLE_NOEGLE, f); } catch (fejl) { /* husker den bare ikke */ }
+    visFarver();
+    farveBoks.hidden = true;
+    chatTekst.focus();
+  });
+  farveBoks.appendChild(k);
+});
+visFarver();
+
+document.getElementById("chat-smiley-knap").addEventListener("click", function () {
+  farveBoks.hidden = true;
+  smileyBoks.hidden = !smileyBoks.hidden;
+});
+farveKnap.addEventListener("click", function () {
+  smileyBoks.hidden = true;
+  farveBoks.hidden = !farveBoks.hidden;
+});
+laerred.addEventListener("click", lukChatValg);
