@@ -16,8 +16,8 @@
     <!-- Selve spillet bliver tegnet på dette "lærred" -->
     <canvas id="spil" width="900" height="600"></canvas>
 
-    <aside id="panel">
-      <button id="panel-knap" class="panel-knap" title="Skjul eller vis panelet">✕</button>
+    <aside id="panel" class="lukket">
+      <button id="panel-knap" class="panel-knap" title="Skjul eller vis panelet">☰ Panel</button>
       <div class="rum-boks">
         <span class="lille">Du er i</span>
         <h2 id="rum-navn">Velkomsthallen</h2>
@@ -123,7 +123,7 @@
         <button type="submit" class="lv-knap">Send rapport</button>
       </form>
       <div id="rapport-tak" class="rapport-indhold" hidden>
-        <p><b>Tak!</b> Din rapport er sendt til hotellets personale.</p>
+        <p><b>Tak!</b> Din rapport er gemt. Hotellets personale kigger på den.</p>
         <button id="rapport-ok" class="lv-knap">OK</button>
       </div>
     </div>

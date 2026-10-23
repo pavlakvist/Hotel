@@ -13,8 +13,8 @@ const ctx = laerred.getContext("2d");
 let BREDDE = laerred.width;
 let HOEJDE = laerred.height;
 let ZOOM = 1;
-const MAKS_ZOOM = 3.5;
-const RUM_ZOOM = 1.35;     // hvor meget større end skærmen rummet er (1 = det passer lige præcis)
+const MAKS_ZOOM = 5;
+const RUM_ZOOM = 1.6;      // hvor meget større end skærmen rummet er (1 = det passer lige præcis)
 let brugerZoom = 1;        // musehjulet zoomer ind og ud
 const KAMERA = { x: 0, y: 0 };   // hvor meget man har trukket i skærmen (i skærm-pixels)
 let figurDanser = false;         // sættes af "Handlinger" i js/min-menu.js
@@ -30,9 +30,8 @@ function skarptLaerred() {
     laerred.height = h;
   }
   if (r.width > 0 && r.height > 0) {
-    // panelet til højre dækker en del af skærmen, så rummet står midt i resten
-    const panel = document.getElementById("panel");
-    const panelB = panel && !panel.classList.contains("lukket") ? panel.offsetWidth + 24 : 0;
+    // (ligesom i Habbo ligger panelet ovenpå rummet, så rummet bruger hele skærmen)
+    const panelB = 0;
     const rumB = (RUM.bredde + RUM.dybde) * FLISE_B / 2 + 60;
     const rumH = (RUM.bredde + RUM.dybde) * FLISE_H / 2 + VAEG_HOEJDE + 110;
     const passer = Math.min((r.width - panelB) / rumB, (r.height - 20) / rumH);
@@ -40,7 +39,8 @@ function skarptLaerred() {
     BREDDE = r.width / ZOOM;
     HOEJDE = r.height / ZOOM;
     // man må ikke kunne trække rummet helt væk fra skærmen
-    const maksX = rumB * ZOOM / 2, maksY = rumH * ZOOM / 2;
+    const maksX = Math.max(0, rumB * ZOOM - r.width) / 2 + 150;
+    const maksY = Math.max(0, rumH * ZOOM - r.height) / 2 + 150;
     KAMERA.x = Math.max(-maksX, Math.min(maksX, KAMERA.x));
     KAMERA.y = Math.max(-maksY, Math.min(maksY, KAMERA.y));
     START.x = (BREDDE - panelB / ZOOM) / 2 + (RUM.dybde - RUM.bredde) * FLISE_B / 4 + KAMERA.x / ZOOM;
