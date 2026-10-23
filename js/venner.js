@@ -42,6 +42,7 @@ aabnGaestMenu = function (g) {
   aabnGaestMenuVenner(g);
   if (erVen(g.navn)) {
     knap("💚 Ven", function () { lukMinMenu(); aabnVenner(); });
+    knap("➖ Fjern ven", function () { lukMinMenu(); fjernVen(g.navn); svaev("💔", g); });
   } else {
     knap("➕ Tilføj ven", function () { lukMinMenu(); tilfoejVen(g); });
   }
@@ -78,7 +79,7 @@ function visVenner() {
       "<button class='skriv' data-skriv='" + tegnTilHtml(navn) + "' title='Send en besked'>💬" +
       (typeof ulaestFra === "function" && ulaestFra(navn) ? "<i>" + ulaestFra(navn) + "</i>" : "") + "</button>" +
       (on ? "<button data-gaa='" + tegnTilHtml(navn) + "'" + (her ? " disabled" : "") + ">" + (her ? "Her" : "Gå til") + "</button>" : "") +
-      "<button class='fjern' data-fjern='" + tegnTilHtml(navn) + "' title='Fjern ven'>✕</button></li>";
+      "<button class='fjern' data-fjern='" + tegnTilHtml(navn) + "'>Fjern ven</button></li>";
   }).join("");
   liste.querySelectorAll("[data-gaa]").forEach(function (k) {
     k.addEventListener("click", function () { if (rumValg !== "hal") skiftRum("hal"); });
@@ -87,7 +88,15 @@ function visVenner() {
     k.addEventListener("click", function () { aabnBeskeder(k.dataset.skriv); });
   });
   liste.querySelectorAll("[data-fjern]").forEach(function (k) {
-    k.addEventListener("click", function () { fjernVen(k.dataset.fjern); });
+    // første klik spørger, andet klik fjerner
+    k.addEventListener("click", function () {
+      if (k.classList.contains("sikker")) { fjernVen(k.dataset.fjern); return; }
+      k.classList.add("sikker");
+      k.textContent = "Er du sikker?";
+      setTimeout(function () {
+        if (k.isConnected) { k.classList.remove("sikker"); k.textContent = "Fjern ven"; }
+      }, 3000);
+    });
   });
 }
 

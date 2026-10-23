@@ -2324,7 +2324,7 @@ footer {
   top: 70px;
   right: 16px;
   z-index: 9;
-  width: 260px;
+  width: 330px;
   max-height: calc(100vh - 160px);
   display: flex;
   flex-direction: column;
@@ -2446,13 +2446,22 @@ footer {
 }
 
 #venner-liste button.fjern {
-  background: none;
-  border-color: transparent;
-  color: #b0a689;
+  background: #fbf6ea;
+  border-color: #e0d6bb;
+  color: #9a8f72;
+  font-weight: normal;
 }
 
 #venner-liste button.fjern:hover {
   color: #b33f3b;
+  border-color: #e3b3ad;
+}
+
+#venner-liste button.fjern.sikker {
+  background: #c94a3f;
+  border-color: #962a35;
+  color: #fff;
+  font-weight: bold;
 }
 
 /* ===== Private beskeder ===== */
@@ -2503,7 +2512,7 @@ footer {
 #besked-vindue {
   position: fixed;
   top: 70px;
-  right: 290px;
+  right: 360px;
   z-index: 9;
   width: 280px;
   height: 340px;
