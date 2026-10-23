@@ -6,10 +6,14 @@
 const laerred = document.getElementById("spil");
 const ctx = laerred.getContext("2d");
 
-// Spillet regner altid i 900 x 600 punkter. Selve lærredet får lige så mange
-// pixels, som skærmen viser, så alt bliver skarpt (også på skærme med zoom).
-const BREDDE = laerred.width;
-const HOEJDE = laerred.height;
+// Lærredet fylder hele vinduet. Rummet bliver zoomet, så det fylder skærmen,
+// og lærredet får lige så mange pixels, som skærmen viser, så alt bliver skarpt.
+//   BREDDE x HOEJDE: hvor mange "spil-punkter" der er plads til på skærmen
+//   ZOOM:            hvor mange skærm-pixels et spil-punkt fylder
+let BREDDE = laerred.width;
+let HOEJDE = laerred.height;
+let ZOOM = 1;
+const MAKS_ZOOM = 2.5;
 
 function skarptLaerred() {
   const r = laerred.getBoundingClientRect();
@@ -20,6 +24,18 @@ function skarptLaerred() {
     laerred.width = b;
     laerred.height = h;
   }
+  if (r.width > 0 && r.height > 0) {
+    // panelet til højre dækker en del af skærmen, så rummet står midt i resten
+    const panel = document.getElementById("panel");
+    const panelB = panel && !panel.classList.contains("lukket") ? panel.offsetWidth + 24 : 0;
+    const rumB = (RUM.bredde + RUM.dybde) * FLISE_B / 2 + 60;
+    const rumH = (RUM.bredde + RUM.dybde) * FLISE_H / 2 + VAEG_HOEJDE + 110;
+    ZOOM = Math.min(MAKS_ZOOM, (r.width - panelB) / rumB, (r.height - 20) / rumH);
+    BREDDE = r.width / ZOOM;
+    HOEJDE = r.height / ZOOM;
+    START.x = (BREDDE - panelB / ZOOM) / 2 + (RUM.dybde - RUM.bredde) * FLISE_B / 4;
+    START.y = (HOEJDE - rumH) / 2 + VAEG_HOEJDE + 90;
+  }
   ctx.setTransform(laerred.width / BREDDE, 0, 0, laerred.height / HOEJDE, 0, 0);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
@@ -29,7 +45,7 @@ function skarptLaerred() {
 const FLISE_B = 64;
 const FLISE_H = 32;
 const VAEG_HOEJDE = 110;
-const START = { x: BREDDE / 2, y: 170 };   // hvor det bagerste hjørne af gulvet står
+const START = { x: BREDDE / 2, y: 170 };   // hvor det bagerste hjørne af gulvet står (regnes ud i skarptLaerred)
 
 // Slå møbeltyper op på deres id, fx MOEBEL_TYPER["stol"]
 const MOEBEL_TYPER = {};

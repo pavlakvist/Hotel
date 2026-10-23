@@ -560,3 +560,99 @@ footer {
 .stor-knap:hover {
   filter: brightness(1.08);
 }
+
+
+/* =============================================================
+   Hele siden er spillet: lærredet fylder vinduet,
+   og panelet, menuen og beskeden ligger ovenpå.
+   ============================================================= */
+html, body {
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+}
+
+body.i-hallen {
+  background: radial-gradient(ellipse at 42% 45%, #4a2a1a, #1e100a 75%);
+}
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  padding: 8px 18px;
+  background: rgba(19, 32, 58, 0.8);
+  border-bottom: none;
+  border-bottom-right-radius: 14px;
+}
+
+body.i-hallen header {
+  background: rgba(42, 22, 12, 0.85);
+}
+
+main {
+  padding: 0;
+}
+
+#spil {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  aspect-ratio: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+#panel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+body.i-hallen #panel {
+  background: #3a2116;
+  border-color: #7a4313;
+}
+
+.panel-knap {
+  float: right;
+  margin: -4px -4px 0 8px;
+  padding: 2px 9px;
+  font-size: 14px;
+}
+
+#panel.lukket {
+  width: auto;
+  padding: 8px;
+}
+
+#panel.lukket > :not(.panel-knap) {
+  display: none;
+}
+
+#panel.lukket .panel-knap {
+  float: none;
+  margin: 0;
+}
+
+footer {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 7px 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  white-space: nowrap;
+}

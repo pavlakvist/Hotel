@@ -9,34 +9,46 @@ const HAL_MOEBLER = [
   // langs højre væg (bagerst til højre)
   { type: "reception-17", x: 1, y: 0 },
   { type: "lobby-11", x: 2, y: 0 },
-  { type: "lobby-11", x: 8, y: 0 },
-  { type: "reception-07", x: 9, y: 0 },
+  { type: "reception-16", x: 3, y: 0 },
+  { type: "lobby-11", x: 10, y: 0 },
+  { type: "reception-12", x: 11, y: 0 },
+  { type: "reception-07", x: 12, y: 0 },
+  { type: "lobby-16", x: 13, y: 0 },
   // langs venstre væg
   { type: "lobby-16", x: 0, y: 1, spejlet: true },
   { type: "lobby-02", x: 0, y: 3, spejlet: true },
   { type: "lobby-31", x: 1, y: 4 },
   { type: "lobby-07", x: 0, y: 5, spejlet: true },
   { type: "lobby-05", x: 0, y: 7, spejlet: true },
-  { type: "reception-07", x: 0, y: 9, spejlet: true },
+  { type: "lobby-11", x: 0, y: 9, spejlet: true },
+  { type: "reception-07", x: 0, y: 10, spejlet: true },
   // sofagruppen i midten
-  { type: "taepper-08", x: 5, y: 6 },
-  { type: "lobby-12", x: 5, y: 4 },
-  { type: "lobby-15", x: 5, y: 5 },
-  { type: "lobby-03", x: 4, y: 5 },
-  { type: "lobby-20", x: 6, y: 4 },
+  { type: "taepper-08", x: 6, y: 6 },
+  { type: "lobby-12", x: 6, y: 4 },
+  { type: "lobby-15", x: 6, y: 5 },
+  { type: "lobby-03", x: 5, y: 5 },
+  { type: "lobby-20", x: 7, y: 4 },
   // hyggekrog til højre
-  { type: "taepper-03", x: 8, y: 3 },
-  { type: "lobby-23", x: 8, y: 7 },
-  { type: "lobby-30", x: 9, y: 9 },
-  { type: "lobby-26", x: 9, y: 5 },
+  { type: "taepper-03", x: 10, y: 3 },
+  { type: "lobby-23", x: 10, y: 7 },
+  { type: "lobby-26", x: 12, y: 5 },
+  { type: "lobby-24", x: 13, y: 7 },
+  { type: "lobby-30", x: 12, y: 9 },
+  { type: "lobby-01", x: 13, y: 10 },
+  // forrest til venstre
+  { type: "lobby-08", x: 3, y: 9 },
   { type: "lobby-32", x: 2, y: 8 },
+  { type: "lobby-29", x: 8, y: 10 },
 ];
+
+// Hvor stor velkomsthallen er (dit værelse har sin egen størrelse i indstillinger.js)
+const HAL_STOERRELSE = { bredde: 14, dybde: 11 };
 
 // Felter, man ikke kan gå på, selvom der ikke står et møbel (fx hvis et stort møbel fylder flere felter)
 const HAL_BLOKERET = [];
 
 // Døren til værelserne (på højre væg) og feltet foran den
-const HAL_DOER = { fra: 5.1, til: 5.9, hoejde: 80, felt: { x: 5, y: 0 } };
+const HAL_DOER = { fra: 6.1, til: 6.9, hoejde: 80, felt: { x: 6, y: 0 } };
 
 // Farver i velkomsthallen
 const HAL_FARVER = {
@@ -53,6 +65,7 @@ const HAL_GAESTER = [
   { navn: "Ida", valg: { type: "kvinde", frisure: { kvinde: "langt-boelget" }, farver: { kvinde: { bukser: "jeans" } } }, x: 2, y: 6 },
   { navn: "Noah", valg: { type: "mand", farver: { mand: { bukser: "chinos" } } }, x: 7, y: 2 },
   { navn: "Freja", valg: { type: "kvinde", frisure: { kvinde: "fletninger" } }, x: 7, y: 8 },
+  { navn: "Oliver", valg: { type: "mand" }, x: 11, y: 5 },
 ];
 HAL_GAESTER.forEach(function (g) {
   g.rute = [];
@@ -66,7 +79,7 @@ HAL_GAESTER.forEach(function (g) {
 let mitVaerelse = [];          // møblerne i dit eget værelse
 let halVilGaaUd = false;       // figuren er på vej hen til døren
 let halMus = null;             // hvor musen er på lærredet (i spillets punkter)
-const RUM_FARVER = { vaeg: RUM.vaegFarve, gulv1: RUM.gulvFarve1, gulv2: RUM.gulvFarve2 };
+const RUM_FARVER = { vaeg: RUM.vaegFarve, gulv1: RUM.gulvFarve1, gulv2: RUM.gulvFarve2, bredde: RUM.bredde, dybde: RUM.dybde };
 
 
 // =============================================================
@@ -79,6 +92,9 @@ function skiftRum(navn) {
   RUM.vaegFarve = navn === "hal" ? HAL_FARVER.tapet : RUM_FARVER.vaeg;
   RUM.gulvFarve1 = navn === "hal" ? HAL_FARVER.gulv1 : RUM_FARVER.gulv1;
   RUM.gulvFarve2 = navn === "hal" ? HAL_FARVER.gulv2 : RUM_FARVER.gulv2;
+  RUM.bredde = navn === "hal" ? HAL_STOERRELSE.bredde : RUM_FARVER.bredde;
+  RUM.dybde = navn === "hal" ? HAL_STOERRELSE.dybde : RUM_FARVER.dybde;
+  document.body.classList.toggle("i-hallen", navn === "hal");
 
   // figuren kommer ind gennem døren
   figur.x = navn === "hal" ? HAL_DOER.felt.x : 2;
@@ -157,7 +173,7 @@ function tegnHalVaegge() {
   ctx.fill();
 
   // skiltet over døren
-  const s = punkt(5.5, 0);
+  const s = punkt((HAL_DOER.fra + HAL_DOER.til) / 2, 0);
   ctx.save();
   ctx.translate(s.x, s.y - 96);
   ctx.transform(1, 0.5, 0, 1, 0, 0);
@@ -332,3 +348,10 @@ function halTing(ting) {
 // =============================================================
 mitVaerelse = moeblerIRummet;
 skiftRum("hal");
+
+// Panelet til højre kan klappes ind, så rummet får hele skærmen
+document.getElementById("panel-knap").addEventListener("click", function () {
+  const panel = document.getElementById("panel");
+  panel.classList.toggle("lukket");
+  this.textContent = panel.classList.contains("lukket") ? "☰ Panel" : "✕";
+});
