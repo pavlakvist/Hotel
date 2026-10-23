@@ -129,12 +129,36 @@
     </div>
   </div>
 
+  <!-- Ejerpanel / mod tools (js/ejer.js) -->
+  <div id="ejer-vindue" hidden>
+    <div class="ejer-boks">
+      <div class="ejer-top">
+        <h2>🛡️ Ejerpanel</h2>
+        <button id="ejer-luk" class="su-luk" title="Luk">✕</button>
+      </div>
+      <nav id="ejer-faner">
+        <button data-fane="oversigt">📊 Oversigt</button>
+        <button data-fane="spillere">👥 Spillere og konti</button>
+        <button data-fane="chat">💬 Chatlogs</button>
+        <button data-fane="rapporter">🚩 Rapporter og moderation <span id="ejer-rapport-tal"></span></button>
+        <button data-fane="ip">🔐 IP og loginhistorik</button>
+        <button data-fane="rum">🛋️ Rum og møbler</button>
+        <button data-fane="valuta">🪙 Valuta og økonomi</button>
+        <button data-fane="events">📰 Events og nyheder</button>
+        <button data-fane="adminlog">📜 Administratorlog</button>
+        <button data-fane="system">⚙️ Systemindstillinger</button>
+      </nav>
+      <div id="ejer-indhold"></div>
+    </div>
+  </div>
+
   <footer id="besked">Klik på gulvet for at gå.</footer>
 
   <!-- Chatten: skriv noget, så kommer det i en taleboble over din figur -->
   <form id="chat" autocomplete="off">
     <button type="button" id="chat-smiley-knap" class="chat-lille" title="Smileyer">😊</button>
     <button type="button" id="chat-farve-knap" class="chat-lille" title="Farve på din taleboble"></button>
+    <button type="button" id="chat-ejer-knap" class="chat-lille" title="Ejerpanel (mod tools)">🛡️</button>
     <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
     <button type="submit">Send</button>
     <div id="chat-smileyer" class="chat-valg" hidden></div>
@@ -163,5 +187,6 @@
   <script src="js/chat.js"></script>
   <script src="js/garderobe.js"></script>
   <script src="js/min-menu.js"></script>
+  <script src="js/ejer.js"></script>
 </body>
 </html>

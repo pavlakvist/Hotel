@@ -1015,3 +1015,394 @@ footer {
   background: #5b85a8;
   border-color: #cfe6f7;
 }
+
+
+/* ===== Ejerpanel (mod tools) — ude i højre side ===== */
+#ejer-vindue {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 12;
+  width: min(620px, 100vw);
+  padding: 10px;
+}
+
+#ejer-vindue[hidden],
+#ejer-vindue [hidden] {
+  display: none;
+}
+
+.ejer-boks {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  grid-template-rows: auto 1fr;
+  background: #f3f8fc;
+  border: 4px solid #3d5f7d;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: #2a3f52;
+  overflow: hidden;
+  font: 14px Verdana, sans-serif;
+}
+
+.ejer-top {
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px 8px 16px;
+  background: #3d5f7d;
+}
+
+.ejer-top h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 20px;
+  color: #e3f1fb;
+}
+
+.ejer-top .su-luk {
+  background: #5b85a8;
+  border-color: #cfe6f7;
+}
+
+#ejer-faner {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px;
+  background: #dceaf5;
+  border-right: 2px solid #b5d0e6;
+  overflow-y: auto;
+}
+
+#ejer-faner button {
+  margin: 0;
+  padding: 8px 10px;
+  background: transparent;
+  color: #2a3f52;
+  border: 0;
+  border-radius: 6px;
+  font: bold 13px Verdana, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+#ejer-faner button:hover {
+  background: #c3dbee;
+}
+
+#ejer-faner button.valgt {
+  background: #4f7698;
+  color: #fff;
+}
+
+#ejer-rapport-tal:not(:empty) {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #d9534f;
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
+
+#ejer-indhold {
+  padding: 14px 16px;
+  overflow-y: auto;
+}
+
+#ejer-indhold h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #2f4a63;
+}
+
+#ejer-indhold h4 {
+  margin: 14px 0 4px;
+  font-size: 13px;
+  color: #4f7698;
+  text-transform: uppercase;
+}
+
+#ejer-indhold ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#ejer-indhold li {
+  padding: 6px 0;
+  border-bottom: 1px solid #dceaf5;
+}
+
+#ejer-indhold li span,
+#ejer-indhold td small {
+  display: block;
+  font-size: 12px;
+  color: #6b8296;
+}
+
+#ejer-indhold a {
+  color: #2f6fa3;
+  font-weight: bold;
+}
+
+#ejer-indhold .tom,
+#ejer-indhold .graa {
+  color: #8aa0b3;
+}
+
+.ejer-info {
+  margin: 10px 0;
+  padding: 8px 10px;
+  background: #e5f0f9;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.ejer-kort-raekke {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ejer-kort {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  background: #fff;
+  border: 2px solid #c3dbee;
+  border-radius: 10px;
+}
+
+.ejer-kort b {
+  font-size: 26px;
+  color: #2f4a63;
+}
+
+.ejer-kort .ikon {
+  float: right;
+  align-self: flex-end;
+  margin-bottom: -22px;
+  font-size: 18px;
+}
+
+.ejer-kort small {
+  color: #6b8296;
+}
+
+.ejer-tre section {
+  margin-bottom: 12px;
+}
+
+.maerke {
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #f6d5d4;
+  color: #a33b37;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.ejer-filtre {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ejer-filtre label,
+.ejer-felt {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: bold;
+  color: #4f7698;
+  text-transform: uppercase;
+}
+
+.ejer-felt {
+  margin-bottom: 10px;
+}
+
+.ejer-filtre .bred {
+  grid-column: span 2;
+}
+
+.ejer-filtre .tjek,
+.ejer-tjek {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+#ejer-indhold input[type=text],
+#ejer-indhold input[type=number],
+#ejer-indhold input[type=date],
+#ejer-indhold select,
+#ejer-indhold textarea {
+  margin-top: 2px;
+  padding: 5px 7px;
+  border: 2px solid #b5d0e6;
+  border-radius: 6px;
+  background: #fff;
+  font: 13px Verdana, sans-serif;
+  color: #2a3f52;
+  text-transform: none;
+}
+
+#ejer-indhold textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.ejer-antal {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #6b8296;
+}
+
+.ejer-tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.ejer-tabel th {
+  text-align: left;
+  padding: 5px 6px;
+  background: #dceaf5;
+  color: #2f4a63;
+}
+
+.ejer-tabel td {
+  padding: 5px 6px;
+  border-bottom: 1px solid #dceaf5;
+  vertical-align: top;
+}
+
+.ejer-tabel tr.grim td {
+  background: #fdeceb;
+}
+
+.ejer-spillere {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 12px;
+}
+
+.ejer-spillere aside input {
+  width: 100%;
+}
+
+#sp-liste button {
+  width: 100%;
+  margin: 3px 0 0;
+  padding: 6px 8px;
+  background: #fff;
+  color: #2a3f52;
+  border: 1px solid #c3dbee;
+  border-radius: 6px;
+  font: 13px Verdana, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+#sp-liste button.valgt {
+  background: #4f7698;
+  color: #fff;
+  border-color: #4f7698;
+}
+
+#sp-liste li {
+  padding: 0;
+  border: 0;
+}
+
+.sp-detaljer h3 small {
+  font-weight: normal;
+  font-size: 12px;
+  color: #6b8296;
+}
+
+.sp-fakta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sp-fakta span {
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #c3dbee;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.sp-fakta b {
+  display: block;
+  font-size: 10px;
+  color: #6b8296;
+  text-transform: uppercase;
+}
+
+.sp-handlinger {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sp-handlinger input {
+  flex: 1 1 100%;
+}
+
+.sp-handlinger button,
+#ejer-indhold button.lille {
+  margin: 0;
+  padding: 6px 10px;
+  background: #e5f0f9;
+  color: #2a3f52;
+  border: 2px solid #b5d0e6;
+  border-radius: 6px;
+  font: bold 12px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+#ejer-indhold button.lille {
+  margin-top: 4px;
+}
+
+.sp-handlinger button.roed {
+  background: #d9534f;
+  border-color: #b33f3b;
+  color: #fff;
+}
+
+.sp-handlinger button.groen {
+  background: #5cb85c;
+  border-color: #449d44;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .ejer-boks {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+  .ejer-top {
+    grid-column: 1;
+  }
+  #ejer-faner {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

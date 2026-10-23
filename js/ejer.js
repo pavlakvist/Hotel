@@ -1,0 +1,512 @@
+// =============================================================
+//  Ejerpanel (mod tools) — kun for hotellets ejer
+//  Åbnes med 🛡️-knappen nede ved chatten.
+//
+//  VIGTIGT: Indtil hotellet får en server, bliver alt her gemt på
+//  din egen computer (localStorage). Derfor kan panelet kun se dig
+//  selv og computer-gæsterne. Rigtige spillere, logins fra andre og
+//  IP-adresser kræver en server.
+// =============================================================
+
+// Hvem må åbne ejerpanelet? Skriv flere navne for at gøre dem til moderatorer.
+const EJERE = ["Pavla"];
+
+const LOG_NOEGLE = "mit-hotel-chatlog";
+const LOGIN_NOEGLE = "mit-hotel-logins";
+const MISTAENKT_NOEGLE = "mit-hotel-mistaenkeligt";
+const SANKTION_NOEGLE = "mit-hotel-sanktioner";
+const MAKS_LOG = 1000;          // så mange chatbeskeder gemmes højst
+
+function hentListe(noegle) {
+  try { return JSON.parse(localStorage.getItem(noegle) || "[]"); } catch (e) { return []; }
+}
+function gemListe(noegle, liste, maks) {
+  if (maks && liste.length > maks) liste.splice(0, liste.length - maks);
+  try { localStorage.setItem(noegle, JSON.stringify(liste)); } catch (e) {}
+}
+
+let chatLog = hentListe(LOG_NOEGLE);
+let logins = hentListe(LOGIN_NOEGLE);
+let mistaenkeligt = hentListe(MISTAENKT_NOEGLE);
+let sanktioner = {};
+try { sanktioner = JSON.parse(localStorage.getItem(SANKTION_NOEGLE) || "{}"); } catch (e) {}
+function gemSanktioner() {
+  try { localStorage.setItem(SANKTION_NOEGLE, JSON.stringify(sanktioner)); } catch (e) {}
+}
+function spillerData(navn) {
+  if (!sanktioner[navn]) sanktioner[navn] = { bannet: false, timeoutTil: 0, historik: [], note: "" };
+  return sanktioner[navn];
+}
+
+const ADMINLOG_NOEGLE = "mit-hotel-adminlog";
+const NYHED_NOEGLE = "mit-hotel-nyheder";
+const SYSTEM_NOEGLE = "mit-hotel-system";
+
+let adminLog = hentListe(ADMINLOG_NOEGLE);
+let nyheder = hentListe(NYHED_NOEGLE);
+const system = { velkomst: "", filterTil: true, ekstraOrd: "", timeoutMin: 5, valutaNavn: "Mønter", startBeloeb: 100 };
+try { Object.assign(system, JSON.parse(localStorage.getItem(SYSTEM_NOEGLE) || "{}")); } catch (e) {}
+function gemSystem() {
+  try { localStorage.setItem(SYSTEM_NOEGLE, JSON.stringify(system)); } catch (e) {}
+}
+// Alt hvad ejeren gør, bliver skrevet ned
+function adminSkriv(hvad) {
+  adminLog.push({ tid: Date.now(), hvem: FIGUR.navn, hvad: hvad });
+  gemListe(ADMINLOG_NOEGLE, adminLog, 500);
+}
+
+// Du er lige logget ind
+logins.push({ navn: FIGUR.navn, tid: Date.now() });
+gemListe(LOGIN_NOEGLE, logins, 200);
+
+function rumNavn(r) { return r === "hal" ? "Velkomsthallen" : "Mit værelse"; }
+function tidTekst(t) {
+  return new Date(t).toLocaleString("da-DK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+function dagNoegle(t) {
+  const d = new Date(t);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+// Gør tekst ufarlig, før den sættes ind på siden
+function rens(t) {
+  return String(t == null ? "" : t).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function nyMistanke(navn, type, tekst) {
+  mistaenkeligt.push({ navn: navn, type: type, tekst: tekst, rum: rumValg, tid: Date.now() });
+  gemListe(MISTAENKT_NOEGLE, mistaenkeligt, 300);
+}
+
+
+// -------------------------------------------------------------
+//  Hold øje med chatten
+// -------------------------------------------------------------
+let sidsteOriginal = null;
+
+// Grimme ord: husk hvad der egentlig blev skrevet
+const rensTekstFoer = rensTekst;
+let ekstraMoenstre = [];
+function lavEkstraOrd() {
+  ekstraMoenstre = system.ekstraOrd.split(",").map(function (o) { return o.trim().toLowerCase(); })
+    .filter(Boolean).map(lavOrdMoenster);
+}
+lavEkstraOrd();
+rensTekst = function (tekst) {
+  if (!system.filterTil) { sidsteOriginal = null; return tekst; }
+  let renset = rensTekstFoer(tekst);
+  ekstraMoenstre.forEach(function (m) { renset = renset.replace(m, "***"); });
+  sidsteOriginal = renset !== tekst ? tekst : null;
+  if (sidsteOriginal) nyMistanke(FIGUR.navn, "Grimme ord", tekst);
+  return renset;
+};
+
+// Alt hvad der bliver sagt, kommer i chatloggen
+const sigFoer = sig;
+sig = function (hvem, navn, tekst) {
+  if (!String(tekst).trim()) return;
+  const linje = { tid: Date.now(), navn: navn, rum: rumValg, tekst: tekst.trim() };
+  if (hvem === figur && sidsteOriginal) { linje.original = sidsteOriginal; sidsteOriginal = null; }
+  chatLog.push(linje);
+  gemListe(LOG_NOEGLE, chatLog, MAKS_LOG);
+
+  // spam: 5 beskeder på 10 sekunder
+  const nylige = chatLog.filter(function (l) { return l.navn === navn && linje.tid - l.tid < 10000; });
+  if (nylige.length === 5) nyMistanke(navn, "Spam", "5 beskeder på 10 sekunder");
+
+  sigFoer(hvem, navn, tekst);
+  if (!ejerVindue.hidden && ejerFane === "chat" && !ejerIndhold.contains(document.activeElement)) visFane();
+};
+
+// Bannede gæster er væk fra hallen, og gæster med timeout kan ikke skrive
+function erBannet(navn) { return !!(sanktioner[navn] && sanktioner[navn].bannet); }
+function harTimeout(navn) { return !!(sanktioner[navn] && sanktioner[navn].timeoutTil > Date.now()); }
+
+const halTingFoer = halTing;
+halTing = function (ting) {
+  const alle = HAL_GAESTER.slice();
+  HAL_GAESTER.length = 0;
+  alle.forEach(function (g) { if (!erBannet(g.navn)) HAL_GAESTER.push(g); });
+  halTingFoer(ting);
+  HAL_GAESTER.length = 0;
+  alle.forEach(function (g) { HAL_GAESTER.push(g); });
+};
+
+const gaestSkriverFoer = gaestSkriver;
+gaestSkriver = function (g, tekst) {
+  if (erBannet(g.navn) || harTimeout(g.navn)) return;
+  gaestSkriverFoer(g, tekst);
+};
+
+
+// Velkomstbeskeden og den nyeste nyhed står nederst i hallen
+function hallensBesked() {
+  if (rumValg !== "hal") return;
+  const ny = nyheder[nyheder.length - 1];
+  if (ny) besked.textContent = "📰 " + ny.titel + (ny.tekst ? ": " + ny.tekst : "");
+  else if (system.velkomst) besked.textContent = system.velkomst;
+}
+const skiftRumEjer = skiftRum;
+skiftRum = function (navn) {
+  skiftRumEjer(navn);
+  hallensBesked();
+};
+hallensBesked();
+
+
+// -------------------------------------------------------------
+//  Selve panelet
+// -------------------------------------------------------------
+const ejerKnap = document.getElementById("chat-ejer-knap");
+const ejerVindue = document.getElementById("ejer-vindue");
+const ejerIndhold = document.getElementById("ejer-indhold");
+let ejerFane = "oversigt";
+let valgtSpiller = FIGUR.navn;
+const chatFilter = { spiller: "", rum: "", dato: "", soeg: "", kunGrimme: false };
+
+if (EJERE.indexOf(FIGUR.navn) < 0) ejerKnap.hidden = true;
+
+ejerKnap.addEventListener("click", function () {
+  if (EJERE.indexOf(FIGUR.navn) < 0) return;
+  ejerVindue.hidden = !ejerVindue.hidden;
+  if (!ejerVindue.hidden) visFane();
+});
+document.getElementById("ejer-luk").addEventListener("click", function () { ejerVindue.hidden = true; });
+window.addEventListener("keydown", function (e) { if (e.key === "Escape") ejerVindue.hidden = true; });
+
+document.querySelectorAll("#ejer-faner button").forEach(function (k) {
+  k.addEventListener("click", function () { ejerFane = k.dataset.fane; visFane(); });
+});
+
+function alleSpillere() {
+  return [{ navn: FIGUR.navn, hvad: "Ejer (dig)" }].concat(HAL_GAESTER.map(function (g) {
+    return { navn: g.navn, hvad: "Computer-gæst" };
+  }));
+}
+function erOnline(navn) {
+  if (navn === FIGUR.navn) return true;
+  return rumValg === "hal" && !erBannet(navn);
+}
+function senestSet(navn) {
+  let t = 0;
+  chatLog.forEach(function (l) { if (l.navn === navn) t = Math.max(t, l.tid); });
+  logins.forEach(function (l) { if (l.navn === navn) t = Math.max(t, l.tid); });
+  return t;
+}
+function rapporter() { return hentListe("mit-hotel-rapporter"); }
+
+function visFane() {
+  document.querySelectorAll("#ejer-faner button").forEach(function (k) {
+    k.classList.toggle("valgt", k.dataset.fane === ejerFane);
+  });
+  const nye = rapporter().filter(function (r) { return !r.behandlet; }).length;
+  document.getElementById("ejer-rapport-tal").textContent = nye ? nye : "";
+  if (ejerFane === "oversigt") visOversigt();
+  if (ejerFane === "chat") visChatlog();
+  if (ejerFane === "spillere") visSpillere();
+  if (ejerFane === "rapporter") visRapporter();
+  if (ejerFane === "ip") visIp();
+  if (ejerFane === "rum") visRum();
+  if (ejerFane === "valuta") visValuta();
+  if (ejerFane === "events") visEvents();
+  if (ejerFane === "adminlog") visAdminlog();
+  if (ejerFane === "system") visSystem();
+}
+
+// ----- 1. Oversigt -----
+function visOversigt() {
+  const online = alleSpillere().filter(function (s) { return erOnline(s.navn); }).length;
+  const idag = dagNoegle(Date.now());
+  const loginsIdag = logins.filter(function (l) { return dagNoegle(l.tid) === idag; }).length;
+  const bannede = Object.keys(sanktioner).filter(erBannet);
+  const nyeRapporter = rapporter().filter(function (r) { return !r.behandlet; }).length;
+
+  let html = "<div class='ejer-kort-raekke'>" +
+    kort("🟢", online, "Spillere online", "du + computer-gæster") +
+    kort("🔑", loginsIdag, "Logins i dag", "") +
+    kort("⛔", bannede.length, "Bannede spillere", "") +
+    kort("⚠️", mistaenkeligt.length, "Mistænkelig aktivitet", nyeRapporter ? nyeRapporter + " nye rapporter" : "") +
+    "</div><div class='ejer-tre'>";
+
+  html += "<section><h3>Seneste logins</h3>" + liste(logins.slice(-8).reverse().map(function (l) {
+    return "<b>" + rens(l.navn) + "</b><span>" + tidTekst(l.tid) + "</span>";
+  }), "Ingen logins endnu") + "</section>";
+
+  html += "<section><h3>Bannede spillere</h3>" + liste(bannede.map(function (n) {
+    const h = sanktioner[n].historik.filter(function (x) { return x.handling === "Ban"; }).pop();
+    return "<a href='#' data-spiller='" + rens(n) + "'>" + rens(n) + "</a><span>" + (h ? rens(h.grund || "ingen grund") : "") + "</span>";
+  }), "Ingen er bannet 🎉") + "</section>";
+
+  html += "<section><h3>Mistænkelig aktivitet</h3>" + liste(mistaenkeligt.slice(-8).reverse().map(function (m) {
+    return "<a href='#' data-spiller='" + rens(m.navn) + "'>" + rens(m.navn) + "</a> <em class='maerke'>" + rens(m.type) + "</em>" +
+      "<span>" + rens(m.tekst) + " · " + tidTekst(m.tid) + "</span>";
+  }), "Intet mistænkeligt") + "</section></div>";
+
+  html += "<p class='ejer-info'>ℹ️ Alt her er gemt på din egen computer. Når hotellet får en server, kan panelet også se rigtige spillere, deres logins og IP-adresser.</p>";
+  ejerIndhold.innerHTML = html;
+  spillerLinks();
+}
+
+function kort(ikon, tal, navn, under) {
+  return "<div class='ejer-kort'><span class='ikon'>" + ikon + "</span><b>" + tal + "</b><span>" + navn + "</span>" +
+    (under ? "<small>" + rens(under) + "</small>" : "") + "</div>";
+}
+function liste(linjer, tom) {
+  if (!linjer.length) return "<p class='tom'>" + tom + "</p>";
+  return "<ul>" + linjer.map(function (l) { return "<li>" + l + "</li>"; }).join("") + "</ul>";
+}
+function spillerLinks() {
+  ejerIndhold.querySelectorAll("[data-spiller]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      valgtSpiller = a.dataset.spiller;
+      ejerFane = "spillere";
+      visFane();
+    });
+  });
+}
+
+// ----- 2. Chatlogs -----
+function visChatlog() {
+  const navne = alleSpillere().map(function (s) { return s.navn; });
+  const f = chatFilter;
+  let html = "<div class='ejer-filtre'>" +
+    "<label>Spiller<select id='cf-spiller'><option value=''>Alle</option>" + navne.map(function (n) {
+      return "<option" + (f.spiller === n ? " selected" : "") + ">" + rens(n) + "</option>";
+    }).join("") + "</select></label>" +
+    "<label>Rum<select id='cf-rum'><option value=''>Alle</option>" +
+      "<option value='hal'" + (f.rum === "hal" ? " selected" : "") + ">Velkomsthallen</option>" +
+      "<option value='vaerelse'" + (f.rum === "vaerelse" ? " selected" : "") + ">Mit værelse</option></select></label>" +
+    "<label>Dato<input id='cf-dato' type='date' value='" + rens(f.dato) + "'></label>" +
+    "<label class='bred'>Søg i beskeder<input id='cf-soeg' type='text' placeholder='fx hej' value='" + rens(f.soeg) + "'></label>" +
+    "<label class='tjek'><input id='cf-grimme' type='checkbox'" + (f.kunGrimme ? " checked" : "") + "> Kun grimme ord</label>" +
+    "</div>";
+
+  const soeg = f.soeg.toLowerCase();
+  const fundet = chatLog.filter(function (l) {
+    return (!f.spiller || l.navn === f.spiller) && (!f.rum || l.rum === f.rum) &&
+      (!f.dato || dagNoegle(l.tid) === f.dato) && (!f.kunGrimme || l.original) &&
+      (!soeg || (l.tekst + " " + (l.original || "")).toLowerCase().indexOf(soeg) >= 0);
+  }).slice(-300).reverse();
+
+  html += "<p class='ejer-antal'>" + fundet.length + " beskeder</p><table class='ejer-tabel'><thead><tr><th>Tid</th><th>Rum</th><th>Spiller</th><th>Besked</th></tr></thead><tbody>" +
+    fundet.map(function (l) {
+      return "<tr" + (l.original ? " class='grim'" : "") + "><td>" + tidTekst(l.tid) + "</td><td>" + rumNavn(l.rum) + "</td>" +
+        "<td><a href='#' data-spiller='" + rens(l.navn) + "'>" + rens(l.navn) + "</a></td><td>" + rens(l.tekst) +
+        (l.original ? "<small>Skrev egentlig: " + rens(l.original) + "</small>" : "") + "</td></tr>";
+    }).join("") + "</tbody></table>" + (fundet.length ? "" : "<p class='tom'>Ingen beskeder passer til søgningen.</p>");
+
+  ejerIndhold.innerHTML = html;
+  spillerLinks();
+  function lyt(id, felt, hvordan) {
+    const el = document.getElementById(id);
+    el.addEventListener(hvordan, function () {
+      chatFilter[felt] = el.type === "checkbox" ? el.checked : el.value;
+      visChatlog();
+      if (hvordan === "input") { const ny = document.getElementById(id); ny.focus(); ny.setSelectionRange(ny.value.length, ny.value.length); }
+    });
+  }
+  lyt("cf-spiller", "spiller", "change");
+  lyt("cf-rum", "rum", "change");
+  lyt("cf-dato", "dato", "change");
+  lyt("cf-soeg", "soeg", "input");
+  lyt("cf-grimme", "kunGrimme", "change");
+}
+
+// ----- 3. Spillere -----
+function visSpillere() {
+  const spillere = alleSpillere();
+  if (!spillere.some(function (s) { return s.navn === valgtSpiller; })) valgtSpiller = FIGUR.navn;
+  const s = spillere.find(function (x) { return x.navn === valgtSpiller; });
+  const d = spillerData(s.navn);
+  const mig = s.navn === FIGUR.navn;
+  const status = d.bannet ? "⛔ Bannet" : harTimeout(s.navn) ? "⏱️ Timeout til " + tidTekst(d.timeoutTil) : erOnline(s.navn) ? "🟢 Online" : "⚪ Offline";
+  const beskeder = chatLog.filter(function (l) { return l.navn === s.navn; });
+  const omHam = rapporter().filter(function (r) { return r.hvem === s.navn; });
+  const sidst = senestSet(s.navn);
+
+  let html = "<div class='ejer-spillere'><aside><input id='sp-soeg' type='text' placeholder='Slå spiller op …'><ul id='sp-liste'>" +
+    spillere.map(function (x) {
+      const prik = erBannet(x.navn) ? "🔴" : harTimeout(x.navn) ? "🟡" : erOnline(x.navn) ? "🟢" : "⚪";
+      return "<li><button data-navn='" + rens(x.navn) + "'" + (x.navn === s.navn ? " class='valgt'" : "") + ">" + prik + " " + rens(x.navn) + "</button></li>";
+    }).join("") + "</ul></aside><div class='sp-detaljer'>" +
+    "<h3>" + rens(s.navn) + " <small>" + s.hvad + "</small></h3>" +
+    "<div class='sp-fakta'><span><b>Status</b>" + status + "</span><span><b>Senest set</b>" + (sidst ? tidTekst(sidst) : "aldrig") + "</span>" +
+    "<span><b>Beskeder</b>" + beskeder.length + "</span><span><b>Rapporter om</b>" + omHam.length + "</span></div>";
+
+  if (mig) {
+    html += "<p class='tom'>Du kan ikke straffe dig selv 😄</p>";
+  } else {
+    html += "<div class='sp-handlinger'><input id='sp-grund' type='text' maxlength='80' placeholder='Grund (fx grimt sprog)'>" +
+      "<button data-handling='Advarsel'>⚠️ Advar</button>" +
+      "<button data-handling='Timeout'>⏱️ Timeout " + system.timeoutMin + " min</button>" +
+      (d.bannet ? "<button data-handling='Ophæv ban' class='groen'>✅ Ophæv ban</button>" : "<button data-handling='Ban' class='roed'>⛔ Ban</button>") +
+      "</div>";
+  }
+
+  html += "<h4>Tidligere straffe</h4>" + liste(d.historik.slice().reverse().map(function (h) {
+    return "<b>" + rens(h.handling) + "</b><span>" + rens(h.grund || "ingen grund") + " · " + tidTekst(h.tid) + "</span>";
+  }), "Ingen endnu");
+  html += "<h4>Rapporter om " + rens(s.navn) + "</h4>" + liste(omHam.map(function (r) {
+    return "<b>" + rens(r.grund) + "</b><span>" + rens(r.tekst || "") + " · " + tidTekst(r.tid) + "</span>";
+  }), "Ingen rapporter");
+  html += "<h4>Seneste beskeder</h4>" + liste(beskeder.slice(-5).reverse().map(function (l) {
+    return rens(l.tekst) + "<span>" + rumNavn(l.rum) + " · " + tidTekst(l.tid) + "</span>";
+  }), "Har ikke skrevet noget");
+  html += "<h4>Moderator-note</h4><textarea id='sp-note' rows='3' placeholder='Kun du kan se den her note …'>" + rens(d.note) + "</textarea></div></div>";
+
+  ejerIndhold.innerHTML = html;
+
+  ejerIndhold.querySelectorAll("#sp-liste button").forEach(function (k) {
+    k.addEventListener("click", function () { valgtSpiller = k.dataset.navn; visSpillere(); });
+  });
+  const soeg = document.getElementById("sp-soeg");
+  soeg.addEventListener("input", function () {
+    const q = soeg.value.toLowerCase();
+    ejerIndhold.querySelectorAll("#sp-liste li").forEach(function (li) {
+      li.hidden = li.textContent.toLowerCase().indexOf(q) < 0;
+    });
+  });
+  ejerIndhold.querySelectorAll("[data-handling]").forEach(function (k) {
+    k.addEventListener("click", function () { straf(s.navn, k.dataset.handling, document.getElementById("sp-grund").value.trim()); });
+  });
+  document.getElementById("sp-note").addEventListener("input", function () {
+    d.note = this.value;
+    gemSanktioner();
+  });
+}
+
+function straf(navn, handling, grund) {
+  const d = spillerData(navn);
+  d.historik.push({ handling: handling, grund: grund, tid: Date.now() });
+  const g = HAL_GAESTER.find(function (x) { return x.navn === navn; });
+  if (handling === "Advarsel" && g) {
+    setTimeout(function () { gaestSkriverFoer(g, "Undskyld! Det skal ikke ske igen 😳"); }, 300);
+  }
+  if (handling === "Timeout") d.timeoutTil = Date.now() + system.timeoutMin * 60000;
+  if (handling === "Ban") {
+    d.bannet = true;
+    if (g) { g.saede = null; g.sidder = false; g.skriver = false; }
+  }
+  if (handling === "Ophæv ban") d.bannet = false;
+  gemSanktioner();
+  adminSkriv(handling + " til " + navn + (grund ? " (" + grund + ")" : ""));
+  besked.textContent = handling + ": " + navn + (grund ? " (" + grund + ")" : "");
+  visFane();
+}
+
+// ----- 4. Rapporter -----
+function visRapporter() {
+  const alle = rapporter();
+  let html = "<p class='ejer-antal'>Rapporter, som spillerne har sendt med \"Rapportere\".</p>" +
+    liste(alle.map(function (r, i) { return { r: r, i: i }; }).reverse().map(function (x) {
+      const r = x.r;
+      return "<b>" + (r.behandlet ? "✅ " : "🆕 ") + rens(r.grund) + "</b>" +
+        (r.hvem ? " om <a href='#' data-spiller='" + rens(r.hvem) + "'>" + rens(r.hvem) + "</a>" : "") +
+        "<span>" + rens(r.tekst || "(ingen tekst)") + " · " + tidTekst(r.tid) + "</span>" +
+        (r.behandlet ? "" : "<button class='lille' data-behandl='" + x.i + "'>Marker som behandlet</button>");
+    }), "Ingen rapporter endnu");
+  ejerIndhold.innerHTML = html;
+  spillerLinks();
+  ejerIndhold.querySelectorAll("[data-behandl]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      const alleR = rapporter();
+      alleR[+k.dataset.behandl].behandlet = true;
+      gemListe("mit-hotel-rapporter", alleR);
+      adminSkriv("Rapport behandlet: " + alleR[+k.dataset.behandl].grund);
+      visFane();
+    });
+  });
+}
+
+// ----- 5. IP og loginhistorik -----
+function visIp() {
+  ejerIndhold.innerHTML = "<p class='ejer-info'>🔐 IP-adresser kan først ses, når hotellet får en server.</p>" +
+    "<table class='ejer-tabel'><thead><tr><th>Tid</th><th>Spiller</th><th>IP-adresse</th></tr></thead><tbody>" +
+    logins.slice(-100).reverse().map(function (l) {
+      return "<tr><td>" + tidTekst(l.tid) + "</td><td>" + rens(l.navn) + "</td><td class='graa'>kræver server</td></tr>";
+    }).join("") + "</tbody></table>";
+}
+
+// ----- 6. Rum og møbler -----
+function visRum() {
+  const kategorier = {};
+  MOEBLER.forEach(function (m) { kategorier[m.kategori || "Andet"] = true; });
+  const vaerelse = rumValg === "vaerelse" ? moeblerIRummet : mitVaerelse;
+  ejerIndhold.innerHTML = "<table class='ejer-tabel'><thead><tr><th>Rum</th><th>Møbler</th><th>Gæster</th></tr></thead><tbody>" +
+    "<tr><td>Velkomsthallen</td><td>" + HAL_MOEBLER.length + "</td><td>" + HAL_GAESTER.filter(function (g) { return !erBannet(g.navn); }).length + "</td></tr>" +
+    "<tr><td>Mit værelse</td><td>" + vaerelse.length + "</td><td>1</td></tr></tbody></table>" +
+    "<p>Møbelkataloget har <b>" + MOEBLER.length + "</b> møbler i <b>" + Object.keys(kategorier).length + "</b> faner.</p>";
+}
+
+// ----- 7. Valuta og økonomi -----
+function visValuta() {
+  ejerIndhold.innerHTML = "<p class='ejer-info'>🪙 Hotellet har ingen penge endnu. Her vælger du, hvad de skal hedde.</p>" +
+    "<label class='ejer-felt'>Navn på valutaen<input id='v-navn' type='text' maxlength='20' value='" + rens(system.valutaNavn) + "'></label>" +
+    "<label class='ejer-felt'>Nye spillere starter med<input id='v-start' type='number' min='0' max='100000' value='" + system.startBeloeb + "'></label>" +
+    "<button id='v-gem' class='lv-knap'>Gem</button>";
+  document.getElementById("v-gem").addEventListener("click", function () {
+    system.valutaNavn = document.getElementById("v-navn").value.trim() || "Mønter";
+    system.startBeloeb = Math.max(0, +document.getElementById("v-start").value || 0);
+    gemSystem();
+    adminSkriv("Valuta: " + system.valutaNavn + ", start " + system.startBeloeb);
+    besked.textContent = "Gemt!";
+  });
+}
+
+// ----- 8. Events og nyheder -----
+function visEvents() {
+  ejerIndhold.innerHTML = "<label class='ejer-felt'>Overskrift<input id='n-titel' type='text' maxlength='40' placeholder='fx Fest i hallen i aften!'></label>" +
+    "<label class='ejer-felt'>Tekst<input id='n-tekst' type='text' maxlength='100' placeholder='fx Kl. 19, alle er velkomne'></label>" +
+    "<button id='n-send' class='lv-knap'>📢 Udsend</button>" +
+    "<h4>Udsendte nyheder</h4>" + liste(nyheder.map(function (n, i) { return { n: n, i: i }; }).reverse().map(function (x) {
+      return "<b>" + rens(x.n.titel) + "</b><span>" + rens(x.n.tekst) + " · " + tidTekst(x.n.tid) + "</span>" +
+        "<button class='lille' data-slet='" + x.i + "'>Slet</button>";
+    }), "Ingen nyheder endnu");
+  document.getElementById("n-send").addEventListener("click", function () {
+    const titel = document.getElementById("n-titel").value.trim();
+    if (!titel) return;
+    nyheder.push({ titel: titel, tekst: document.getElementById("n-tekst").value.trim(), tid: Date.now() });
+    gemListe(NYHED_NOEGLE, nyheder, 50);
+    adminSkriv("Nyhed udsendt: " + titel);
+    hallensBesked();
+    visEvents();
+  });
+  ejerIndhold.querySelectorAll("[data-slet]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      const n = nyheder.splice(+k.dataset.slet, 1)[0];
+      gemListe(NYHED_NOEGLE, nyheder);
+      adminSkriv("Nyhed slettet: " + n.titel);
+      visEvents();
+    });
+  });
+}
+
+// ----- 9. Administratorlog -----
+function visAdminlog() {
+  ejerIndhold.innerHTML = "<p class='ejer-antal'>Alt hvad der er gjort i ejerpanelet.</p>" +
+    liste(adminLog.slice(-200).reverse().map(function (a) {
+      return "<b>" + rens(a.hvem) + "</b> " + rens(a.hvad) + "<span>" + tidTekst(a.tid) + "</span>";
+    }), "Intet endnu");
+}
+
+// ----- 10. Systemindstillinger -----
+function visSystem() {
+  ejerIndhold.innerHTML = "<label class='ejer-felt'>Velkomstbesked i hallen<input id='s-velkomst' type='text' maxlength='120' placeholder='Velkommen til Hotelven! …' value='" + rens(system.velkomst) + "'></label>" +
+    "<label class='ejer-tjek'><input id='s-filter' type='checkbox'" + (system.filterTil ? " checked" : "") + "> Chatfilter er slået til</label>" +
+    "<label class='ejer-felt'>Ekstra grimme ord (adskil med komma)<input id='s-ord' type='text' value='" + rens(system.ekstraOrd) + "'></label>" +
+    "<label class='ejer-felt'>Timeout varer (minutter)<input id='s-timeout' type='number' min='1' max='1440' value='" + system.timeoutMin + "'></label>" +
+    "<button id='s-gem' class='lv-knap'>Gem</button>" +
+    "<p class='ejer-info'>Ejere: " + rens(EJERE.join(", ")) + " (ændres øverst i js/ejer.js)</p>";
+  document.getElementById("s-gem").addEventListener("click", function () {
+    system.velkomst = document.getElementById("s-velkomst").value.trim();
+    system.filterTil = document.getElementById("s-filter").checked;
+    system.ekstraOrd = document.getElementById("s-ord").value;
+    system.timeoutMin = Math.max(1, +document.getElementById("s-timeout").value || 5);
+    gemSystem();
+    lavEkstraOrd();
+    adminSkriv("Systemindstillinger gemt");
+    hallensBesked();
+    besked.textContent = "Gemt!";
+  });
+}
