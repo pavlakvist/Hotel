@@ -435,6 +435,13 @@ function tegnFigur(c) {
   c.fillStyle = "#ffffff";
   c.fillText(FIGUR.navn, p.x, p.y - hoejde - 13);
 
+  // EJER-skiltet over navnet (kun for ejerne i js/ejer.js)
+  const ejerSkilt = hentBillede("billeder/skilt-ejer.png");
+  if (typeof EJERE !== "undefined" && EJERE.indexOf(FIGUR.navn) >= 0 && billedeKlar(ejerSkilt)) {
+    const sw = ejerSkilt.naturalWidth * 0.85, sh = ejerSkilt.naturalHeight * 0.85;
+    c.drawImage(ejerSkilt, Math.round(p.x - sw / 2), Math.round(p.y - hoejde - 30 - sh), sw, sh);
+  }
+
   // profilbilledet (frisuren fra garderoben) til venstre for navnet
   const profil = typeof profilBillede === "function" ? profilBillede() : null;
   if (billedeKlar(profil)) {

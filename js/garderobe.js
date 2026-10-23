@@ -20,6 +20,7 @@ const MAKS_GEMTE = 10;
 const SU_FANER = [
   { id: "krop", navn: "Krop", dele: [{ slags: "farve", omr: "hud", navn: "Hudfarve" }] },
   { id: "haar", navn: "Hår", ikon: "frisure", dele: [
+    { slags: "haarstil", navn: "Frisurer" },
     { slags: "frisure", navn: "Frisurer" },
     { slags: "farve", omr: "haar", navn: "Hårfarve" },
   ] },
@@ -167,6 +168,7 @@ function deleI(fane) {
     if (kun && d.slags === "bukser") return kun.indexOf("underdel") >= 0;
     if (d.slags === "toej") return alle[d.slot] && alle[d.slot].length > 0;
     if (d.slags === "bukser") return typeof BUKSER !== "undefined";
+    if (d.slags === "haarstil") return !!(FIGURER[kladde.type] && FIGURER[kladde.type].haarstile);
     if (d.slags === "frisure") return typeof FRISURER !== "undefined" && FRISURER[kladde.type] && FRISURER[kladde.type].stile.length > 0;
     return true;
   });
@@ -308,6 +310,26 @@ function tegnSuTing() {
   if (d.slags === "farve") {
     lavTekst(boks, "Vælg en farve. Den kommer på figuren, både når den står, går og sidder.");
     tegnPalet(boks, d.omr);
+    return;
+  }
+
+  if (d.slags === "haarstil") {
+    const f = FIGURER[kladde.type];
+    const nu = valgtHaarstil(f, kladde);
+    lavTekst(boks, "Frisuren kommer på figuren i alle retninger. Farven vælger du under Hårfarve.");
+    lavIngenKnap(boks, "Skaldet", !nu, function () {
+      foerAendring();
+      mineTing().haarstil = "";
+      tegnSkift();
+    });
+    f.haarstile.forEach(function (st) {
+      const knap = lavBilledKnap(boks, st.ikon, nu === st, function () {
+        foerAendring();
+        mineTing().haarstil = st.id;
+        tegnSkift();
+      });
+      knap.title = st.navn;
+    });
     return;
   }
 
@@ -572,6 +594,7 @@ document.getElementById("su-fjern").addEventListener("click", function () {
   if (!d) return;
   if (d.slags === "farve") delete mineFarver()[d.omr];
   if (d.slags === "frisure") delete kladde.frisure[kladde.type];
+  if (d.slags === "haarstil") mineTing().haarstil = "";
   if (d.slags === "bukser") delete mineFarver().bukser;
   if (d.slags === "toej") { delete mineTing()[d.slot]; delete mineFarver()[d.omr]; }
   tegnSkift();

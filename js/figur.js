@@ -128,7 +128,9 @@ const FIGURER = {
     skala: 0.83,
     raekke: "alle",
     // fra dit t-shirt-ark: t-shirt, shorts og sko er hvide, så de kan få en farve
-    omraader: ["hud", "skjorte", "underdel", "sko"],
+    omraader: ["hud", "haar", "skjorte", "underdel", "sko"],
+    // frisurer lagt oven på hovedet (fra dit tøj-ark); den første er standard
+    haarstile: [{ id: "knold", navn: "Knold", mappe: "billeder/figurer/haar/knold/", pad: 26, ikon: "billeder/figurer/haar/knold/ikon.png" }],
     omraadeNavne: { skjorte: "Farve på t-shirt", underdel: "Farve på shorts" },
     staa: {
       "ned": { fil: "billeder/figurer/tpige-staa-ned.png", anker: [28.0, 158.0] },
@@ -244,6 +246,18 @@ for (const id in FIGURER) {
   const f = FIGURER[id];
   for (const r in f.gaa) f.gaa[r].forEach(function (b) { figurBillede(b.fil); });
   for (const r in f.sidder) figurBillede(f.sidder[r].fil);
+  // figurer med farvbart tøj og hår: hent også farvelag og hår med det samme
+  if (f.omraader || f.haarstile) {
+    const alle = [];
+    for (const r in f.staa) alle.push(f.staa[r].fil);
+    for (const r in f.gaa) f.gaa[r].forEach(function (b) { alle.push(b.fil); });
+    for (const r in f.sidder) alle.push(f.sidder[r].fil);
+    alle.forEach(function (fil) {
+      figurBillede(fil);
+      if (f.omraader) figurBillede(fil.replace("billeder/figurer/", "billeder/figurer/farvelag/"));
+      (f.haarstile || []).forEach(function (st) { figurBillede(st.mappe + fil.split("/").pop()); });
+    });
+  }
 }
 
 
@@ -280,6 +294,47 @@ function tegnMenneske(c, x, y, valg, retning, gaarTrin, sidde) {
   const fx = Math.round(x - d.ax * s), fy = Math.round(y - d.ay * s);
   if (farvet) c.drawImage(farvet, fx, fy, d.w * s, d.h * s);
   else c.drawImage(d.img, d.x, d.y, d.w, d.h, fx, fy, d.w * s, d.h * s);
+  tegnHaar(c, f, valg, del, fx, fy, s);
+}
+
+// Frisuren oven på hovedet (kun figurer med "haarstile", fx Pige (tøj)).
+// Hvert billede af figuren har sit eget hår-billede med samme navn i frisurens mappe.
+function valgtHaarstil(f, valg) {
+  if (!f.haarstile) return null;
+  const ting = valg.ting && valg.ting[valg.type];
+  const id = ting && ting.haarstil !== undefined ? ting.haarstil : f.haarstile[0].id;
+  return f.haarstile.find(function (st) { return st.id === id; }) || null;
+}
+
+const haarGemmer = {};
+function tegnHaar(c, f, valg, del, fx, fy, s) {
+  const st = valgtHaarstil(f, valg);
+  if (!st) return;
+  const fil = st.mappe + del.fil.split("/").pop();
+  const b = figurBillede(fil);
+  if (!klar(b)) return;
+  const farve = valg.farver && valg.farver[valg.type] && valg.farver[valg.type].haar;
+  let tegn = b;
+  if (farve) {
+    const noegle = fil + "|" + farve;
+    if (!haarGemmer[noegle]) {
+      const k = document.createElement("canvas");
+      k.width = b.naturalWidth;
+      k.height = b.naturalHeight;
+      const kc = k.getContext("2d");
+      kc.filter = "grayscale(1) brightness(1.7)";     // håret i gråt
+      kc.drawImage(b, 0, 0);
+      kc.filter = "none";
+      kc.globalCompositeOperation = "multiply";       // gang med hårfarven
+      kc.fillStyle = farve;
+      kc.fillRect(0, 0, k.width, k.height);
+      kc.globalCompositeOperation = "destination-in"; // kun hvor der er hår
+      kc.drawImage(b, 0, 0);
+      haarGemmer[noegle] = k;
+    }
+    tegn = haarGemmer[noegle];
+  }
+  c.drawImage(tegn, fx, fy - st.pad * s, b.naturalWidth * s, b.naturalHeight * s);
 }
 
 // Den valgte frisure (fra js/frisurer.js), eller null for den oprindelige

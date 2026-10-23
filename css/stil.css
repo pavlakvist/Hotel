@@ -3007,3 +3007,10 @@ footer {
     width: 110px;
   }
 }
+
+/* Tøj i shoppen (js/toej-butik.js) */
+.butik-ting img.toej-ikon {
+  max-width: 62px;
+  max-height: 62px;
+  image-rendering: pixelated;
+}

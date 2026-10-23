@@ -26,7 +26,7 @@ const RUM = {
 //  Hvilken figur du starter med. I spillet kan du skifte under "Garderobe".
 //  Figurerne er lavet af billeder i mappen "billeder" (se js/figur.js).
 const FIGUR = {
-  navn: "Pavla",
+  navn: "Pall",
   type: "pige",            // "pige", "kvinde" (den gamle pige) eller "mand"
   billede: "",             // et helt andet billede af figuren (bruges i stedet, hvis du skriver et her)
   fart: 3,                 // hvor mange felter figuren går pr. sekund

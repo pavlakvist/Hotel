@@ -9,7 +9,20 @@
 // =============================================================
 
 // Hvem må åbne ejerpanelet? Skriv flere navne for at gøre dem til moderatorer.
-const EJERE = ["Pavla"];
+const EJERE = ["Pall", "Pavla"];
+
+// Navne, ejeren har ændret i panelet (Spillere → Skift navn): { "Ida": "Isa", "__mig": "Pall" }
+const NAVNE_NOEGLE = "mit-hotel-navne";
+let nyeNavne = {};
+try { nyeNavne = JSON.parse(localStorage.getItem(NAVNE_NOEGLE) || "{}"); } catch (e) {}
+HAL_GAESTER.forEach(function (g) {
+  g.oprNavn = g.navn;
+  if (nyeNavne[g.navn]) g.navn = nyeNavne[g.navn];
+});
+if (nyeNavne.__mig) {
+  if (EJERE.indexOf(FIGUR.navn) >= 0 && EJERE.indexOf(nyeNavne.__mig) < 0) EJERE.push(nyeNavne.__mig);
+  FIGUR.navn = nyeNavne.__mig;
+}
 
 const LOG_NOEGLE = "mit-hotel-chatlog";
 const LOGIN_NOEGLE = "mit-hotel-logins";
@@ -335,6 +348,9 @@ function visSpillere() {
     "<div class='sp-fakta'><span><b>Status</b>" + status + "</span><span><b>Senest set</b>" + (sidst ? tidTekst(sidst) : "aldrig") + "</span>" +
     "<span><b>Beskeder</b>" + beskeder.length + "</span><span><b>Rapporter om</b>" + omHam.length + "</span></div>";
 
+  html += "<div class='sp-handlinger'><input id='sp-nytnavn' type='text' maxlength='16' value='" + rens(s.navn) + "'>" +
+    "<button id='sp-omdoeb'>✏️ Skift navn</button></div>";
+
   if (mig) {
     html += "<p class='tom'>Du kan ikke straffe dig selv 😄</p>";
   } else {
@@ -371,10 +387,42 @@ function visSpillere() {
   ejerIndhold.querySelectorAll("[data-handling]").forEach(function (k) {
     k.addEventListener("click", function () { straf(s.navn, k.dataset.handling, document.getElementById("sp-grund").value.trim()); });
   });
+  document.getElementById("sp-omdoeb").addEventListener("click", function () {
+    omdoeb(s.navn, document.getElementById("sp-nytnavn").value.trim());
+  });
   document.getElementById("sp-note").addEventListener("input", function () {
     d.note = this.value;
     gemSanktioner();
   });
+}
+
+// Giv en spiller (eller dig selv) et nyt navn
+function omdoeb(gammelt, nyt) {
+  nyt = nyt.replace(/[<>"']/g, "").slice(0, 16);
+  if (!nyt || nyt === gammelt) return;
+  if (alleSpillere().some(function (x) { return x.navn.toLowerCase() === nyt.toLowerCase(); })) {
+    besked.textContent = "Der er allerede en, der hedder " + nyt + ".";
+    return;
+  }
+  if (gammelt === FIGUR.navn) {
+    if (EJERE.indexOf(gammelt) >= 0 && EJERE.indexOf(nyt) < 0) EJERE.push(nyt);   // du er stadig ejer
+    FIGUR.navn = nyt;
+    nyeNavne.__mig = nyt;
+  } else {
+    const g = HAL_GAESTER.find(function (x) { return x.navn === gammelt; });
+    if (!g) return;
+    g.navn = nyt;
+    nyeNavne[g.oprNavn] = nyt;
+  }
+  try { localStorage.setItem(NAVNE_NOEGLE, JSON.stringify(nyeNavne)); } catch (e) {}
+  // straffe, noter, venner og beskeder følger med det nye navn
+  if (sanktioner[gammelt]) { sanktioner[nyt] = sanktioner[gammelt]; delete sanktioner[gammelt]; gemSanktioner(); }
+  if (typeof venner !== "undefined" && venner.indexOf(gammelt) >= 0) { venner[venner.indexOf(gammelt)] = nyt; gemVenner(); }
+  if (typeof beskeder !== "undefined" && beskeder[gammelt]) { beskeder[nyt] = beskeder[gammelt]; delete beskeder[gammelt]; gemBeskeder(); }
+  valgtSpiller = nyt;
+  adminSkriv("Skiftede navn: " + gammelt + " → " + nyt);
+  besked.textContent = gammelt + " hedder nu " + nyt + " ✏️";
+  visFane();
 }
 
 function straf(navn, handling, grund) {

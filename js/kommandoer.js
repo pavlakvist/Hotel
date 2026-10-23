@@ -1,7 +1,7 @@
 // =============================================================
 //  Ejer-kommandoer, der skrives i chatten (kun for ejeren)
-//    :GlimtPavla100   giver Pavla 100 Glimt
-//    :StellaPavla5    giver Pavla 5 Stella
+//    :GlimtPall100    giver Pall 100 Glimt
+//    :StellaPall5     giver Pall 5 Stella
 //  Navnet kan udelades (:Glimt100), så får du det selv.
 //  (Indtil hotellet får en server, tjekkes "kun ejeren" i browseren.)
 // =============================================================
@@ -29,7 +29,10 @@ document.addEventListener("submit", function (e) {
   const antal = Math.min(1000000, parseInt(m[3], 10));
   const valuta = hvad === "glimt" ? "Glimt" : "Stella";
 
-  if (navn.toLowerCase() !== FIGUR.navn.toLowerCase()) {
+  // dit eget navn (også dit gamle ejernavn) betyder dig selv
+  const mig = navn.toLowerCase() === FIGUR.navn.toLowerCase() ||
+    EJERE.some(function (n) { return n.toLowerCase() === navn.toLowerCase(); });
+  if (!mig) {
     besked.textContent = "At give " + valuta + " til " + navn + " kræver en server. Indtil da kan du kun give dig selv.";
     return;
   }
