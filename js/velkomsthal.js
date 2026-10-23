@@ -104,6 +104,8 @@ function skiftRum(navn) {
   figur.skalSidde = null;
   figur.retning = "ned";
   halVilGaaUd = false;
+  KAMERA.x = 0;
+  KAMERA.y = 0;
   valgtType = null;
   valgtMoebel = null;
 
@@ -231,9 +233,7 @@ laerred.addEventListener("click", function (e) {
 function halFrieSaeder(g) {
   return HAL_MOEBLER.filter(function (m) {
     if (!MOEBEL_TYPER[m.type] || !MOEBEL_TYPER[m.type].saede) return false;
-    if (figur.sidde && figur.sidde.moebel === m) return false;
-    if (figur.skalSidde === m) return false;
-    return !HAL_GAESTER.some(function (a) { return a !== g && a.saede === m; });
+    return ledigPlads(m, g) >= 0;
   });
 }
 
@@ -245,6 +245,7 @@ function halNytMaal(g) {
     const rute = findRute(fx, fy, m.x, m.y, true);
     if (rute.length) {
       g.saede = m;
+      g.plads = ledigPlads(m, g);
       g.rute = rute.slice(1);
       return;
     }
@@ -279,6 +280,12 @@ function opdaterHal(dt) {
     }
     if (!g.rute.length) {
       if (g.saede && Math.round(g.x) === g.saede.x && Math.round(g.y) === g.saede.y) {
+        // har en anden taget pladsen imens, så find en ny (eller bliv stående)
+        if (tagnePladser(g.saede, g).indexOf(g.plads) >= 0) g.plads = ledigPlads(g.saede, g);
+        if (g.plads < 0) {
+          g.saede = null;
+          return;
+        }
         g.sidder = true;
         g.retning = venderHoejre(g.saede) ? "ned-hoejre" : "ned-venstre";
         g.vent = 5 + Math.random() * 6;
@@ -310,8 +317,15 @@ function opdaterHal(dt) {
   });
 }
 
+// Hvor gæsten er rykket hen på sin plads i sofaen
+function gaestPlads(g) {
+  if (!g.sidder) return 0;
+  return saedePladser(g.saede)[g.plads] || 0;
+}
+
 function tegnHalGaest(g) {
   const p = punkt(g.x + 0.5, g.y + 0.5);
+  p.x += gaestPlads(g);
   let sidde = null, bagud = 0;
   if (g.sidder) {
     sidde = { hoejde: MOEBEL_TYPER[g.saede.type].saede };
@@ -338,7 +352,7 @@ function tegnHalGaest(g) {
 // Kaldes fra tegnAlt(): læg gæsterne i listen over ting, der skal tegnes
 function halTing(ting) {
   HAL_GAESTER.forEach(function (g) {
-    ting.push({ dybde: g.x + g.y + 0.1, tegn: function () { tegnHalGaest(g); } });
+    ting.push({ dybde: g.x + g.y + 0.1 + gaestPlads(g) / 1000, tegn: function () { tegnHalGaest(g); } });
   });
 }
 

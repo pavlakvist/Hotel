@@ -103,6 +103,41 @@ function lavSmileyer(tekst) {
   return tekst;
 }
 
+// =============================================================
+//  Grimme ord — de bliver til *** i chatten (ligesom "bobba" i Habbo)
+//  Skriv bare flere ord ind i listen. Små bogstaver, uden endelser:
+//  "luder" fanger også "luderen", "LUDER", "l u d e r" og "1uder".
+// =============================================================
+const GRIMME_ORD = ["nigga", "nigger", "neger", "mongol", "luder"];
+
+// Ord der ligner, men er helt okay
+const OKAY_ORD = ["mongoliet", "mongolsk", "mongolier"];
+
+// Bogstaver folk bytter ud for at snyde filteret
+const SNYDE_BOGSTAVER = {
+  a: "a4@åàá", e: "e3€éè", i: "i1!l|íì", o: "o0øóò", u: "uüú",
+  g: "g9", l: "l1|i!", s: "s5$", n: "n", d: "d", r: "r", m: "m"
+};
+
+function lavOrdMoenster(ord) {
+  const dele = ord.split("").map(function (b) {
+    const tegn = (SNYDE_BOGSTAVER[b] || b).replace(/[\\\]\-^|$]/g, "\\$&");
+    return "[" + tegn + "]+";
+  });
+  return new RegExp("(?<![a-zæøå0-9])" + dele.join("[\\s._\\-*,'+]*") + "[a-zæøå]*", "gi");
+}
+const GRIMME_MOENSTRE = GRIMME_ORD.map(lavOrdMoenster);
+
+function rensTekst(tekst) {
+  GRIMME_MOENSTRE.forEach(function (m) {
+    tekst = tekst.replace(m, function (fundet) {
+      if (OKAY_ORD.indexOf(fundet.toLowerCase()) >= 0) return fundet;
+      return "***";
+    });
+  });
+  return tekst;
+}
+
 // Er farven så mørk, at teksten skal være lys?
 function erMoerk(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -139,9 +174,11 @@ function delILinjer(tekst, navn) {
 function hovedPaa(hvem) {
   if (hvem === figur) {
     const p = punkt(figur.x + 0.5, figur.y + 0.5);
+    p.x += figurPlads();
     return { x: p.x, y: p.y - figurHoejde(garderobe) - 32 };
   }
   const p = punkt(hvem.x + 0.5, hvem.y + 0.5);
+  p.x += gaestPlads(hvem);
   return { x: p.x, y: p.y - figurHoejde(hvem.valg) - 36 };
 }
 
@@ -308,7 +345,7 @@ function tegnBobler() {
 // =============================================================
 chatForm.addEventListener("submit", function (e) {
   e.preventDefault();
-  const tekst = lavSmileyer(chatTekst.value);
+  const tekst = rensTekst(lavSmileyer(chatTekst.value));
   chatTekst.value = "";
   lukChatValg();
   if (!tekst.trim()) return;

@@ -13,7 +13,10 @@ const ctx = laerred.getContext("2d");
 let BREDDE = laerred.width;
 let HOEJDE = laerred.height;
 let ZOOM = 1;
-const MAKS_ZOOM = 2.5;
+const MAKS_ZOOM = 3.5;
+const RUM_ZOOM = 1.35;     // hvor meget større end skærmen rummet er (1 = det passer lige præcis)
+let brugerZoom = 1;        // musehjulet zoomer ind og ud
+const KAMERA = { x: 0, y: 0 };   // hvor meget man har trukket i skærmen (i skærm-pixels)
 
 function skarptLaerred() {
   const r = laerred.getBoundingClientRect();
@@ -30,11 +33,16 @@ function skarptLaerred() {
     const panelB = panel && !panel.classList.contains("lukket") ? panel.offsetWidth + 24 : 0;
     const rumB = (RUM.bredde + RUM.dybde) * FLISE_B / 2 + 60;
     const rumH = (RUM.bredde + RUM.dybde) * FLISE_H / 2 + VAEG_HOEJDE + 110;
-    ZOOM = Math.min(MAKS_ZOOM, (r.width - panelB) / rumB, (r.height - 20) / rumH);
+    const passer = Math.min((r.width - panelB) / rumB, (r.height - 20) / rumH);
+    ZOOM = Math.min(MAKS_ZOOM, passer * RUM_ZOOM * brugerZoom);
     BREDDE = r.width / ZOOM;
     HOEJDE = r.height / ZOOM;
-    START.x = (BREDDE - panelB / ZOOM) / 2 + (RUM.dybde - RUM.bredde) * FLISE_B / 4;
-    START.y = (HOEJDE - rumH) / 2 + VAEG_HOEJDE + 90;
+    // man må ikke kunne trække rummet helt væk fra skærmen
+    const maksX = rumB * ZOOM / 2, maksY = rumH * ZOOM / 2;
+    KAMERA.x = Math.max(-maksX, Math.min(maksX, KAMERA.x));
+    KAMERA.y = Math.max(-maksY, Math.min(maksY, KAMERA.y));
+    START.x = (BREDDE - panelB / ZOOM) / 2 + (RUM.dybde - RUM.bredde) * FLISE_B / 4 + KAMERA.x / ZOOM;
+    START.y = (HOEJDE - rumH) / 2 + VAEG_HOEJDE + 90 + KAMERA.y / ZOOM;
   }
   ctx.setTransform(laerred.width / BREDDE, 0, 0, laerred.height / HOEJDE, 0, 0);
   ctx.imageSmoothingEnabled = true;
@@ -191,7 +199,12 @@ function gaaTil(x, y, saede) {
 
 // Sæt sig ned på et møbel (figuren står allerede på feltet)
 function saetDig(m) {
-  figur.sidde = { moebel: m, grad: 0 };
+  const plads = ledigPlads(m, figur);
+  if (plads < 0) {
+    besked.textContent = "Der er ikke plads. Prøv et andet sted at sidde.";
+    return;
+  }
+  figur.sidde = { moebel: m, grad: 0, plads: plads };
   // kig væk fra ryglænet
   figur.forfra = true;
   vendFraRyglaenet(m);
@@ -201,6 +214,41 @@ function saetDig(m) {
 function venderHoejre(m) {
   const type = MOEBEL_TYPER[m.type] || {};
   return m.spejlet !== (type.vender === "hoejre");
+}
+
+// Hvor kan man sidde på møblet? Store sofaer har to pladser ved siden af hinanden.
+// Tallet er, hvor mange pixels pladsen er rykket til siden fra midten af møblet.
+function saedePladser(m) {
+  const t = MOEBEL_TYPER[m.type] || {};
+  if (!t.saede) return [];
+  const bred = t.klip ? t.klip[2] >= 95 : t.tegning === "sofa";
+  if (!bred) return [0];
+  return [-22, 22];
+}
+
+// Pladserne, som andre end "hvem" sidder på (eller er på vej hen til)
+function tagnePladser(m, hvem) {
+  const tagne = [];
+  if (hvem !== figur && figur.sidde && figur.sidde.moebel === m) tagne.push(figur.sidde.plads);
+  if (rumValg === "hal" && typeof HAL_GAESTER !== "undefined") {
+    HAL_GAESTER.forEach(function (g) { if (g !== hvem && g.saede === m) tagne.push(g.plads); });
+  }
+  return tagne;
+}
+
+// Første ledige plads på møblet, eller -1 hvis der er fyldt
+function ledigPlads(m, hvem) {
+  const tagne = tagnePladser(m, hvem);
+  const antal = saedePladser(m).length;
+  for (let i = 0; i < antal; i++) if (tagne.indexOf(i) < 0) return i;
+  return -1;
+}
+
+// Hvor meget figuren er rykket hen på sin plads (0, 0 når den står)
+function figurPlads() {
+  if (!figur.sidde) return 0;
+  const g = Math.max(0, Math.min(1, figur.sidde.grad));
+  return (saedePladser(figur.sidde.moebel)[figur.sidde.plads] || 0) * g;
 }
 
 function vendFraRyglaenet(m) {
@@ -342,6 +390,7 @@ const SIDDE_BAGUD = 6;
 
 function tegnFigur(c) {
   const p = punkt(figur.x + 0.5, figur.y + 0.5);   // fødderne
+  p.x += figurPlads();
   const gaar = figur.rute.length > 0;
   const sving = gaar ? Math.sin(figur.trin) * 4 : 0;
 
@@ -545,7 +594,7 @@ function tegnAlt() {
       },
     });
   });
-  ting.push({ dybde: figur.x + figur.y + 0.1, tegn: function () { tegnFigur(ctx); } });
+  ting.push({ dybde: figur.x + figur.y + 0.1 + figurPlads() / 1000, tegn: function () { tegnFigur(ctx); } });
   if (rumValg === "hal") halTing(ting);
 
   // Et "spøgelse" af møblet, man er ved at stille
@@ -697,6 +746,51 @@ function musTilFelt(e) {
   const sy = (e.clientY - r.top) * (HOEJDE / r.height);
   return skaermTilFelt(sx, sy);
 }
+
+// Træk i skærmen med musen for at flytte rundt. Et almindeligt klik går stadig.
+const traek = { nede: false, x: 0, y: 0, flyttet: false };
+
+laerred.addEventListener("mousedown", function (e) {
+  if (e.button !== 0) return;
+  traek.nede = true;
+  traek.x = e.clientX;
+  traek.y = e.clientY;
+  traek.flyttet = false;
+});
+
+window.addEventListener("mousemove", function (e) {
+  if (!traek.nede) return;
+  const dx = e.clientX - traek.x, dy = e.clientY - traek.y;
+  if (!traek.flyttet && Math.hypot(dx, dy) < 6) return;   // en lille rystelse er stadig et klik
+  traek.flyttet = true;
+  KAMERA.x += dx;
+  KAMERA.y += dy;
+  traek.x = e.clientX;
+  traek.y = e.clientY;
+  laerred.style.cursor = "grabbing";
+});
+
+window.addEventListener("mouseup", function () {
+  if (traek.nede && traek.flyttet) laerred.style.cursor = "";
+  traek.nede = false;
+});
+
+// Efter et træk skal der ikke ske noget, når man slipper musen
+laerred.addEventListener("click", function (e) {
+  if (traek.flyttet) {
+    traek.flyttet = false;
+    e.stopImmediatePropagation();
+  }
+}, true);
+
+// Musehjulet zoomer ind og ud
+laerred.addEventListener("wheel", function (e) {
+  e.preventDefault();
+  const foer = brugerZoom;
+  brugerZoom = Math.max(0.6, Math.min(2.2, brugerZoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+  KAMERA.x *= brugerZoom / foer;
+  KAMERA.y *= brugerZoom / foer;
+}, { passive: false });
 
 laerred.addEventListener("mousemove", function (e) {
   musFelt = musTilFelt(e);
