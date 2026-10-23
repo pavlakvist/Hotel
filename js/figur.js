@@ -27,24 +27,24 @@ const FIGURER = {
     skala: 0.87,
     raekke: "alle",                   // alle hendes gå-billeder vises efter hinanden
     gaa: {
-      "ned": [{ fil: "billeder/figurer/kvinde3-gaa-ned-1.png", anker: [37.5, 137] }, { fil: "billeder/figurer/kvinde3-gaa-ned-2.png", anker: [38.5, 137] }, { fil: "billeder/figurer/kvinde3-gaa-ned-3.png", anker: [38.5, 137] }, { fil: "billeder/figurer/kvinde3-gaa-ned-4.png", anker: [37.5, 135] }],
-      "ned-hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-1.png", anker: [38.5, 130] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-2.png", anker: [39.5, 130] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-3.png", anker: [38.5, 130] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-4.png", anker: [40.5, 130] }],
-      "hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-hoejre-1.png", anker: [38.0, 127] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-2.png", anker: [39.0, 127] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-3.png", anker: [39.0, 128] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-4.png", anker: [39.5, 128] }],
-      "op-hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-op-hoejre-1.png", anker: [38.0, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-2.png", anker: [38.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-3.png", anker: [37.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-4.png", anker: [38.0, 134] }],
-      "op": [{ fil: "billeder/figurer/kvinde3-gaa-op-1.png", anker: [38.0, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-2.png", anker: [38.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-3.png", anker: [37.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-4.png", anker: [38.0, 134] }],
-      "op-venstre": [{ fil: "billeder/figurer/kvinde3-gaa-op-venstre-1.png", anker: [38.0, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-2.png", anker: [38.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-3.png", anker: [37.5, 134] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-4.png", anker: [38.0, 134] }],
-      "venstre": [{ fil: "billeder/figurer/kvinde3-gaa-venstre-1.png", anker: [36.5, 131] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-2.png", anker: [37.0, 131] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-3.png", anker: [37.5, 131] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-4.png", anker: [36.5, 131] }],
-      "ned-venstre": [{ fil: "billeder/figurer/kvinde3-gaa-ned-venstre-1.png", anker: [39.0, 138] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-2.png", anker: [38.5, 138] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-3.png", anker: [38.5, 138] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-4.png", anker: [38.0, 138] }],
+      "ned": [{ fil: "billeder/figurer/kvinde3-gaa-ned-1.png", anker: [37.5, 153.6] }, { fil: "billeder/figurer/kvinde3-gaa-ned-2.png", anker: [38.5, 152.5] }, { fil: "billeder/figurer/kvinde3-gaa-ned-3.png", anker: [38.5, 153.4] }, { fil: "billeder/figurer/kvinde3-gaa-ned-4.png", anker: [37.5, 150.2] }],
+      "ned-hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-1.png", anker: [38.5, 144.2] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-2.png", anker: [39.5, 143.9] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-3.png", anker: [38.5, 143.9] }, { fil: "billeder/figurer/kvinde3-gaa-ned-hoejre-4.png", anker: [40.5, 144.8] }],
+      "hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-hoejre-1.png", anker: [38.0, 140.5] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-2.png", anker: [39.0, 141.2] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-3.png", anker: [39.0, 142.5] }, { fil: "billeder/figurer/kvinde3-gaa-hoejre-4.png", anker: [39.5, 142.0] }],
+      "op-hoejre": [{ fil: "billeder/figurer/kvinde3-gaa-op-hoejre-1.png", anker: [38.0, 148.6] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-2.png", anker: [38.5, 148.6] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-3.png", anker: [37.5, 148.9] }, { fil: "billeder/figurer/kvinde3-gaa-op-hoejre-4.png", anker: [38.0, 148.9] }],
+      "op": [{ fil: "billeder/figurer/kvinde3-gaa-op-1.png", anker: [38.0, 148.6] }, { fil: "billeder/figurer/kvinde3-gaa-op-2.png", anker: [38.5, 148.6] }, { fil: "billeder/figurer/kvinde3-gaa-op-3.png", anker: [37.5, 148.9] }, { fil: "billeder/figurer/kvinde3-gaa-op-4.png", anker: [38.0, 148.9] }],
+      "op-venstre": [{ fil: "billeder/figurer/kvinde3-gaa-op-venstre-1.png", anker: [38.0, 148.6] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-2.png", anker: [38.5, 148.6] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-3.png", anker: [37.5, 148.9] }, { fil: "billeder/figurer/kvinde3-gaa-op-venstre-4.png", anker: [38.0, 148.9] }],
+      "venstre": [{ fil: "billeder/figurer/kvinde3-gaa-venstre-1.png", anker: [36.5, 145.5] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-2.png", anker: [37.0, 145.8] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-3.png", anker: [37.5, 145.8] }, { fil: "billeder/figurer/kvinde3-gaa-venstre-4.png", anker: [36.5, 145.8] }],
+      "ned-venstre": [{ fil: "billeder/figurer/kvinde3-gaa-ned-venstre-1.png", anker: [39.0, 153.7] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-2.png", anker: [38.5, 153.4] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-3.png", anker: [38.5, 153.2] }, { fil: "billeder/figurer/kvinde3-gaa-ned-venstre-4.png", anker: [38.0, 153.4] }],
     },
     sidder: {
       "ned": { fil: "billeder/figurer/kvinde-sidder-0.png", anker: [33.0, 122.1] },
-      "ned-hoejre": { fil: "billeder/figurer/kvinde3-stol-ned-hoejre.png", anker: [39.4, 104.5] },
+      "ned-hoejre": { fil: "billeder/figurer/kvinde3-stol-ned-hoejre.png", anker: [39.4, 110.0] },
       "hoejre": { fil: "billeder/figurer/kvinde-sidder-2.png", anker: [38.0, 122.1] },
       "op-hoejre": { fil: "billeder/figurer/kvinde-sidder-3.png", anker: [37.0, 122.1] },
       "op": { fil: "billeder/figurer/kvinde-sidder-4.png", anker: [33.0, 104.9] },
       "op-venstre": { fil: "billeder/figurer/kvinde-sidder-5.png", anker: [38.5, 122.1] },
       "venstre": { fil: "billeder/figurer/kvinde-sidder-6.png", anker: [39.5, 121.3] },
-      "ned-venstre": { fil: "billeder/figurer/kvinde3-stol-ned-venstre.png", anker: [48.6, 104.5] },
+      "ned-venstre": { fil: "billeder/figurer/kvinde3-stol-ned-venstre.png", anker: [48.6, 110.0] },
     },
   },
   mand: {
@@ -52,24 +52,24 @@ const FIGURER = {
     skala: 0.79,
     raekke: "alle",                   // alle hans gå-billeder vises efter hinanden
     gaa: {
-      "ned": [{ fil: "billeder/figurer/mand3-gaa-ned-1.png", anker: [46.5, 146] }, { fil: "billeder/figurer/mand3-gaa-ned-2.png", anker: [48.0, 148] }, { fil: "billeder/figurer/mand3-gaa-ned-3.png", anker: [48.0, 148] }, { fil: "billeder/figurer/mand3-gaa-ned-4.png", anker: [46.5, 146] }],
-      "ned-hoejre": [{ fil: "billeder/figurer/mand3-gaa-ned-hoejre-1.png", anker: [45.5, 140] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-2.png", anker: [45.0, 140] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-3.png", anker: [47.5, 140] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-4.png", anker: [46.5, 138] }],
-      "hoejre": [{ fil: "billeder/figurer/mand3-gaa-hoejre-1.png", anker: [45.5, 138] }, { fil: "billeder/figurer/mand3-gaa-hoejre-2.png", anker: [46.0, 138] }, { fil: "billeder/figurer/mand3-gaa-hoejre-3.png", anker: [46.5, 138] }, { fil: "billeder/figurer/mand3-gaa-hoejre-4.png", anker: [46.5, 137] }],
-      "op-hoejre": [{ fil: "billeder/figurer/mand3-gaa-op-hoejre-1.png", anker: [45.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-2.png", anker: [46.0, 135] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-3.png", anker: [46.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-4.png", anker: [45.5, 137] }],
-      "op": [{ fil: "billeder/figurer/mand3-gaa-op-1.png", anker: [46.0, 141] }, { fil: "billeder/figurer/mand3-gaa-op-2.png", anker: [45.0, 140] }, { fil: "billeder/figurer/mand3-gaa-op-3.png", anker: [45.0, 140] }, { fil: "billeder/figurer/mand3-gaa-op-4.png", anker: [44.0, 141] }],
-      "op-venstre": [{ fil: "billeder/figurer/mand3-gaa-op-venstre-1.png", anker: [45.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-2.png", anker: [45.0, 135] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-3.png", anker: [46.5, 137] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-4.png", anker: [45.5, 137] }],
-      "venstre": [{ fil: "billeder/figurer/mand3-gaa-venstre-1.png", anker: [46.5, 141] }, { fil: "billeder/figurer/mand3-gaa-venstre-2.png", anker: [47.0, 143] }, { fil: "billeder/figurer/mand3-gaa-venstre-3.png", anker: [48.5, 143] }, { fil: "billeder/figurer/mand3-gaa-venstre-4.png", anker: [46.5, 141] }],
-      "ned-venstre": [{ fil: "billeder/figurer/mand3-gaa-ned-venstre-1.png", anker: [47.0, 152] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-2.png", anker: [48.0, 151] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-3.png", anker: [47.0, 152] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-4.png", anker: [47.0, 154] }],
+      "ned": [{ fil: "billeder/figurer/mand3-gaa-ned-1.png", anker: [46.5, 164.2] }, { fil: "billeder/figurer/mand3-gaa-ned-2.png", anker: [48.0, 167.4] }, { fil: "billeder/figurer/mand3-gaa-ned-3.png", anker: [48.0, 167.4] }, { fil: "billeder/figurer/mand3-gaa-ned-4.png", anker: [46.5, 164.1] }],
+      "ned-hoejre": [{ fil: "billeder/figurer/mand3-gaa-ned-hoejre-1.png", anker: [45.5, 156.6] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-2.png", anker: [45.0, 157.0] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-3.png", anker: [47.5, 156.6] }, { fil: "billeder/figurer/mand3-gaa-ned-hoejre-4.png", anker: [46.5, 154.6] }],
+      "hoejre": [{ fil: "billeder/figurer/mand3-gaa-hoejre-1.png", anker: [45.5, 154.4] }, { fil: "billeder/figurer/mand3-gaa-hoejre-2.png", anker: [46.0, 154.7] }, { fil: "billeder/figurer/mand3-gaa-hoejre-3.png", anker: [46.5, 154.6] }, { fil: "billeder/figurer/mand3-gaa-hoejre-4.png", anker: [46.5, 153.0] }],
+      "op-hoejre": [{ fil: "billeder/figurer/mand3-gaa-op-hoejre-1.png", anker: [45.5, 151.7] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-2.png", anker: [46.0, 150.5] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-3.png", anker: [46.5, 152.2] }, { fil: "billeder/figurer/mand3-gaa-op-hoejre-4.png", anker: [45.5, 152.5] }],
+      "op": [{ fil: "billeder/figurer/mand3-gaa-op-1.png", anker: [46.0, 157.7] }, { fil: "billeder/figurer/mand3-gaa-op-2.png", anker: [45.0, 156.8] }, { fil: "billeder/figurer/mand3-gaa-op-3.png", anker: [45.0, 156.4] }, { fil: "billeder/figurer/mand3-gaa-op-4.png", anker: [44.0, 157.7] }],
+      "op-venstre": [{ fil: "billeder/figurer/mand3-gaa-op-venstre-1.png", anker: [45.5, 151.7] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-2.png", anker: [45.0, 150.5] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-3.png", anker: [46.5, 152.2] }, { fil: "billeder/figurer/mand3-gaa-op-venstre-4.png", anker: [45.5, 152.5] }],
+      "venstre": [{ fil: "billeder/figurer/mand3-gaa-venstre-1.png", anker: [46.5, 157.8] }, { fil: "billeder/figurer/mand3-gaa-venstre-2.png", anker: [47.0, 161.0] }, { fil: "billeder/figurer/mand3-gaa-venstre-3.png", anker: [48.5, 161.3] }, { fil: "billeder/figurer/mand3-gaa-venstre-4.png", anker: [46.5, 157.9] }],
+      "ned-venstre": [{ fil: "billeder/figurer/mand3-gaa-ned-venstre-1.png", anker: [47.0, 170.7] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-2.png", anker: [48.0, 169.7] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-3.png", anker: [47.0, 170.5] }, { fil: "billeder/figurer/mand3-gaa-ned-venstre-4.png", anker: [47.0, 172.5] }],
     },
     sidder: {
       "ned": { fil: "billeder/figurer/mand-sidder-0.png", anker: [41.0, 134.2] },
-      "ned-hoejre": { fil: "billeder/figurer/mand3-stol-ned-hoejre.png", anker: [45.4, 120.0] },
+      "ned-hoejre": { fil: "billeder/figurer/mand3-stol-ned-hoejre.png", anker: [45.4, 129.5] },
       "hoejre": { fil: "billeder/figurer/mand-sidder-2.png", anker: [43.5, 131.6] },
       "op-hoejre": { fil: "billeder/figurer/mand-sidder-3.png", anker: [44.5, 130.7] },
       "op": { fil: "billeder/figurer/mand-sidder-4.png", anker: [40.0, 114.4] },
       "op-venstre": { fil: "billeder/figurer/mand-sidder-5.png", anker: [47.0, 130.7] },
       "venstre": { fil: "billeder/figurer/mand-sidder-6.png", anker: [47.0, 128.1] },
-      "ned-venstre": { fil: "billeder/figurer/mand3-stol-ned-venstre.png", anker: [55.6, 120.0] },
+      "ned-venstre": { fil: "billeder/figurer/mand3-stol-ned-venstre.png", anker: [55.6, 129.5] },
     },
   },
 };
@@ -161,13 +161,24 @@ function figurDel(valg, del) {
       const F = FRISURER[valg.type];
       const y = fr.felter[del.fil] * F.ch;
       return { img: atlas, x: 0, y: y, w: F.cw, h: F.ch, ax: del.anker[0] + F.pad[0], ay: del.anker[1] + F.pad[1],
-        lag: atlas, lagX: F.cw, lagY: y, noegle: fr.id + del.fil };
+        lag: atlas, lagX: F.cw, lagY: y, noegle: fr.id + del.fil, knae: flytKnae(knaeFor(del.fil), F.pad) };
     }
   }
   const b = figurBillede(del.fil);
   if (!klar(b)) return null;
   return { img: b, x: 0, y: 0, w: b.naturalWidth, h: b.naturalHeight, ax: del.anker[0], ay: del.anker[1],
-    lag: figurBillede(del.fil.replace("billeder/figurer/", "billeder/figurer/farvelag/")), lagX: 0, lagY: 0, noegle: del.fil };
+    lag: figurBillede(del.fil.replace("billeder/figurer/", "billeder/figurer/farvelag/")), lagX: 0, lagY: 0, noegle: del.fil,
+    knae: knaeFor(del.fil) };
+}
+
+// Knæet (til shorts): et tal er knæets højde, { x, mod } er knæet på en figur der sidder
+function knaeFor(fil) {
+  return typeof BUKSE_KNAE !== "undefined" && BUKSE_KNAE[fil] !== undefined ? BUKSE_KNAE[fil] : 9999;
+}
+
+function flytKnae(k, pad) {
+  if (typeof k === "number") return k + pad[1];
+  return { x: k.x + pad[0], mod: k.mod };
 }
 
 
@@ -184,11 +195,15 @@ let farveAntal = 0;
 // Er der ingen farver valgt, eller er farvelaget ikke hentet endnu, gives null.
 function farvetFigur(d, farver) {
   if (!farver) return null;
-  const brugte = FARVE_OMRAADER.filter(function (o) { return farver[o]; });
+  const bukser = farver.bukser && typeof BUKSER !== "undefined" ?
+    BUKSER.find(function (b) { return b.id === farver.bukser; }) : null;
+  const brugte = FARVE_OMRAADER.filter(function (o) {
+    return farver[o] || (bukser && (o === "underdel" || o === "stroemper"));
+  });
   if (brugte.length === 0) return null;
   if (!klar(d.lag)) return null;
 
-  const noegle = d.noegle + "|" + brugte.map(function (o) { return o + farver[o]; }).join();
+  const noegle = d.noegle + "|" + (bukser ? bukser.id : "") + "|" + brugte.map(function (o) { return o + farver[o]; }).join();
   if (farveGemmer[noegle]) return farveGemmer[noegle];
   if (farveAntal > 400) { farveGemmer = {}; farveAntal = 0; }
 
@@ -200,21 +215,75 @@ function farvetFigur(d, farver) {
   const hj = document.createElement("canvas");
   hj.width = w; hj.height = h;
   const hc = hj.getContext("2d");
-  brugte.forEach(function (o) {
+  const hud = farver.hud || "#f2cfae";
+
+  // farv ét område af figuren (evt. kun et stykke af det: firkanten [x, y, bredde, højde])
+  function farvOmraade(o, fyld, stykke) {
+    stykke = stykke || [0, 0, w, h];
     const lx = d.lagX + FARVE_OMRAADER.indexOf(o) * w;
+    hc.save();
     hc.globalCompositeOperation = "source-over";
     hc.clearRect(0, 0, w, h);
+    hc.beginPath();
+    hc.rect(stykke[0], stykke[1], stykke[2], stykke[3]);
+    hc.clip();
     hc.drawImage(d.lag, lx, d.lagY, w, h, 0, 0, w, h);   // skyggerne i gråt
     hc.globalCompositeOperation = "multiply";
-    hc.fillStyle = farver[o];                            // gang med farven
+    hc.fillStyle = fyld;                                 // gang med farven (eller stoffet)
     hc.fillRect(0, 0, w, h);
     hc.globalCompositeOperation = "destination-in";
     hc.drawImage(d.lag, lx, d.lagY, w, h, 0, 0, w, h);   // kun inden for området
+    hc.restore();
     uc.drawImage(hj, 0, 0);
+  }
+
+  brugte.forEach(function (o) {
+    if (bukser && o === "underdel") {
+      const stof = bukseStof(hc, bukser);
+      if (bukser.shorts) {
+        // shorts: stof over knæet, bare ben under knæet
+        const k = d.knae;
+        let stofDel, benDel;
+        if (typeof k === "number") { stofDel = [0, 0, w, k]; benDel = [0, k, w, h - k]; }
+        else if (k.mod > 0) { stofDel = [0, 0, k.x, h]; benDel = [k.x, 0, w - k.x, h]; }
+        else { stofDel = [k.x, 0, w - k.x, h]; benDel = [0, 0, k.x, h]; }
+        farvOmraade(o, stof, stofDel);
+        farvOmraade(o, hud, benDel);
+      } else {
+        farvOmraade(o, stof);
+      }
+    } else if (bukser && o === "stroemper") {
+      farvOmraade(o, bukser.shorts ? hud : bukseStof(hc, bukser));
+    } else {
+      farvOmraade(o, farver[o]);
+    }
   });
   farveGemmer[noegle] = ud;
   farveAntal++;
   return ud;
+}
+
+// Stoffet til bukserne: ensfarvet, eller et lille mønster der gentages
+const bukseStoffer = {};
+function bukseStof(c, bukser) {
+  if (!bukser.moenster) return bukser.farve;
+  if (!bukseStoffer[bukser.id]) {
+    const t = document.createElement("canvas");
+    t.width = 4; t.height = 4;
+    const tc = t.getContext("2d");
+    tc.fillStyle = bukser.farve;
+    tc.fillRect(0, 0, 4, 4);
+    tc.fillStyle = "rgba(255, 255, 255, 0.16)";
+    if (bukser.moenster === "twill") {
+      for (let i = 0; i < 4; i++) tc.fillRect(i, 3 - i, 1, 1);    // skrå striber som cowboystof
+    } else {
+      tc.fillRect(0, 0, 1, 1);                                     // små prikker: groft stof
+      tc.fillStyle = "rgba(0, 0, 0, 0.15)";
+      tc.fillRect(2, 2, 1, 1);
+    }
+    bukseStoffer[bukser.id] = t;
+  }
+  return c.createPattern(bukseStoffer[bukser.id], "repeat");
 }
 
 // Hvor høj figuren er på skærmen (bruges til navneskiltet)

@@ -16,6 +16,7 @@ const MAKS_GEMTE = 10;
 //                    "omr" er den del af figuren i rummet, der får tingens farve.
 //   slags "farve":   en farve til en del af figuren (omr)
 //   slags "frisure": frisurerne fra lag-arket
+//   slags "bukser":  bukser der sidder på selve figuren (js/bukser.js)
 const SU_FANER = [
   { id: "krop", navn: "Krop", dele: [{ slags: "farve", omr: "hud", navn: "Hudfarve" }] },
   { id: "haar", navn: "Hår", ikon: "frisure", dele: [
@@ -30,7 +31,8 @@ const SU_FANER = [
     { slags: "farve", omr: "skjorte", navn: "Farve på skjorte" },
   ] },
   { id: "underdel", navn: "Underdel", ikon: "underdel", dele: [
-    { slags: "toej", slot: "underdel", omr: "underdel", navn: "Nederdele og bukser", drengNavn: "Bukser" },
+    { slags: "bukser", navn: "Bukser" },
+    { slags: "toej", slot: "underdel", omr: "underdel", navn: "Nederdele", kunPige: true },
     { slags: "toej", slot: "stroemper", omr: "stroemper", navn: "Strømper" },
     { slags: "toej", slot: "sko", omr: "sko", navn: "Sko" },
     { slags: "farve", omr: "underdel", navn: "Farve på nederdel", drengNavn: "Farve på bukser" },
@@ -160,6 +162,7 @@ function deleI(fane) {
   return (fane.dele || []).filter(function (d) {
     if (d.kunPige && hvem() === "dreng") return false;
     if (d.slags === "toej") return alle[d.slot] && alle[d.slot].length > 0;
+    if (d.slags === "bukser") return typeof BUKSER !== "undefined";
     if (d.slags === "frisure") return typeof FRISURER !== "undefined" && FRISURER[kladde.type] && FRISURER[kladde.type].stile.length > 0;
     return true;
   });
@@ -321,6 +324,26 @@ function tegnSuTing() {
     return;
   }
 
+  if (d.slags === "bukser") {
+    lavTekst(boks, "Bukserne sidder på selve figuren og følger med, når den går og sidder.");
+    lavIngenKnap(boks, "Ingen", !mineFarver().bukser, function () {
+      foerAendring();
+      delete mineFarver().bukser;
+      tegnSkift();
+    });
+    BUKSER.forEach(function (b) {
+      const knap = lavBilledKnap(boks, b.ikon, mineFarver().bukser === b.id, function () {
+        foerAendring();
+        mineFarver().bukser = b.id;
+        delete mineTing().underdel;          // ikke også en nederdel ovenpå
+        delete mineTing().kjole;
+        tegnSkift();
+      });
+      knap.title = b.navn;
+    });
+    return;
+  }
+
   // tøj fra tøj-arket
   lavTekst(boks, "Tøjet vises på figuren forfra her. Inde i rummet får figuren tøjets farver.");
   lavIngenKnap(boks, "Ingen", !mineTing()[d.slot], function () {
@@ -344,6 +367,7 @@ function vaelgToej(d, fil) {
   // en kjole erstatter top og nederdel/bukser, og omvendt
   if (d.slot === "kjole") { delete ting.top; delete ting.underdel; }
   if (d.slot === "top" || d.slot === "underdel") delete ting.kjole;
+  if (d.slot === "underdel" || d.slot === "kjole") delete mineFarver().bukser;
   const farve = TOEJ_FARVER[hvem() + "/" + fil];
   if (farve) {
     mineFarver()[d.omr] = farve;
@@ -503,9 +527,12 @@ function tilfaeldigtUdseende() {
   const alle = TOEJ[hvem()];
   const dele = deleI(faneMedId("overdel")).concat(deleI(faneMedId("underdel")));
   const brugKjole = alle.kjole && Math.random() < 0.3;
+  const brugBukser = !brugKjole && typeof BUKSER !== "undefined" && (hvem() === "dreng" || Math.random() < 0.5);
+  if (brugBukser) mineFarver().bukser = valg(BUKSER).id;
   dele.forEach(function (d) {
     if (d.slags !== "toej") return;
     if (brugKjole && (d.slot === "top" || d.slot === "underdel")) return;
+    if (brugBukser && d.slot === "underdel") return;
     if (!brugKjole && d.slot === "kjole") return;
     if (d.slot === "jakke" && Math.random() < 0.5) return;
     vaelgToej(d, valg(alle[d.slot]));
@@ -539,6 +566,7 @@ document.getElementById("su-fjern").addEventListener("click", function () {
   if (!d) return;
   if (d.slags === "farve") delete mineFarver()[d.omr];
   if (d.slags === "frisure") delete kladde.frisure[kladde.type];
+  if (d.slags === "bukser") delete mineFarver().bukser;
   if (d.slags === "toej") { delete mineTing()[d.slot]; delete mineFarver()[d.omr]; }
   tegnSkift();
 });
