@@ -313,26 +313,31 @@ function tegnBobler() {
   skriver.forEach(function (hvem) {
     const h = hovedPaa(hvem);
     const stil = hvem === figur ? minBoble : GAEST_BOBLER[hvem.navn] || { farve: "#fcf2e9" };
-    const b = 42, hh = 22, x = h.x - b / 2, y = h.y - hh + 4;
+    const hh = 22, y = h.y - hh - 12;
+    // en lille sky: runde pust ved siden af hinanden, og to små pust ned mod hovedet
+    const pust = [[-17, 12, 9], [-8, 6, 10], [4, 5, 11], [15, 10, 9], [-4, 15, 9], [8, 15, 9],
+      [0, hh + 9, 3.5], [3, hh + 15, 2]];
+    const kant = erMoerk(stil.farve) ? "#000000" : "#5b2c16";
     ctx.save();
-    rundRamme(ctx, x, y, b, hh, 10);
+    // først kanten rundt om alle pust, så selve skyen ovenpå
+    ctx.fillStyle = kant;
+    pust.forEach(function (q) {
+      ctx.beginPath();
+      ctx.arc(h.x + q[0], y + q[1], q[2] + 2, 0, Math.PI * 2);
+      ctx.fill();
+    });
     ctx.fillStyle = stil.farve;
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = erMoerk(stil.farve) ? "#000000" : "#5b2c16";
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(h.x - 5, y + hh - 1);
-    ctx.lineTo(h.x, y + hh + 6);
-    ctx.lineTo(h.x + 5, y + hh - 1);
-    ctx.fill();
-    ctx.stroke();
+    pust.forEach(function (q) {
+      ctx.beginPath();
+      ctx.arc(h.x + q[0], y + q[1], q[2], 0, Math.PI * 2);
+      ctx.fill();
+    });
     // tre prikker, der hopper efter hinanden
     ctx.fillStyle = erMoerk(stil.farve) ? "#fcf2e9" : "#5b2c16";
     for (let i = 0; i < 3; i++) {
       const hop = Math.max(0, Math.sin(nu / 160 - i * 0.9)) * 3;
       ctx.beginPath();
-      ctx.arc(h.x - 10 + i * 10, y + hh / 2 - hop, 3, 0, Math.PI * 2);
+      ctx.arc(h.x - 10 + i * 10, y + 11 - hop, 3, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
