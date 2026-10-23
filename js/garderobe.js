@@ -159,8 +159,12 @@ function faneMedId(id) {
 // De dele, der kan vælges under en fane (kun dem der findes for figuren)
 function deleI(fane) {
   const alle = TOEJ[hvem()];
+  const kun = FIGURER[kladde.type] && FIGURER[kladde.type].omraader;   // figurer der kun kan farves nogle steder
   return (fane.dele || []).filter(function (d) {
     if (d.kunPige && hvem() === "dreng") return false;
+    if (kun && d.slags === "toej") return false;
+    if (kun && d.slags === "farve") return kun.indexOf(d.omr) >= 0;
+    if (kun && d.slags === "bukser") return kun.indexOf("underdel") >= 0;
     if (d.slags === "toej") return alle[d.slot] && alle[d.slot].length > 0;
     if (d.slags === "bukser") return typeof BUKSER !== "undefined";
     if (d.slags === "frisure") return typeof FRISURER !== "undefined" && FRISURER[kladde.type] && FRISURER[kladde.type].stile.length > 0;
@@ -169,6 +173,8 @@ function deleI(fane) {
 }
 
 function delNavn(d) {
+  const f = FIGURER[kladde.type];
+  if (d.slags === "farve" && f && f.omraadeNavne && f.omraadeNavne[d.omr]) return f.omraadeNavne[d.omr];
   return hvem() === "dreng" && d.drengNavn ? d.drengNavn : d.navn;
 }
 
