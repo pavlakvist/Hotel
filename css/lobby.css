@@ -1,0 +1,201 @@
+/* =============================================================
+   Hotelven — forsiden med den levende lobby
+   Farverne står samlet her øverst, så de er nemme at ændre.
+   ============================================================= */
+:root {
+  --baggrund: #2b1810;
+  --baggrund-lys: #4a2a1a;
+  --creme: #fcf2e9;
+  --guld: #f2b134;
+  --guld-moerk: #c9862a;
+  --brun: #5b2c16;
+  --tekst-lys: #e8cfb6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Nunito", "Trebuchet MS", sans-serif;
+  color: var(--creme);
+  background:
+    radial-gradient(ellipse at 50% 35%, var(--baggrund-lys), var(--baggrund) 70%);
+  background-color: var(--baggrund);
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+
+/* ----- Menuen ----- */
+.menu {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 32px;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(242, 177, 52, 0.25);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "Poppins", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--guld);
+  text-shadow: 0 2px 0 #6b3a12;
+}
+
+.logo img {
+  height: 30px;
+}
+
+
+/* ----- Overskrift ----- */
+.overskrift {
+  text-align: center;
+  margin-top: 14px;
+}
+
+.lille-tekst {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tekst-lys);
+  opacity: 0.8;
+}
+
+.overskrift h1 {
+  margin: 4px 0 0;
+  font-family: "Poppins", sans-serif;
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 700;
+  color: var(--creme);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+
+/* ----- Lobbyen ----- */
+.lobby-ramme {
+  position: relative;
+  margin-top: 10px;
+  /* så stor som muligt, men hele siden skal kunne ses på en bærbar */
+  width: min(94vw, calc((100vh - 250px) * 760 / 470));
+  min-width: 300px;
+  aspect-ratio: 760 / 470;
+  border-radius: 18px;
+  background: #1e100a;
+  border: 3px solid var(--guld-moerk);
+  box-shadow: 0 0 0 6px rgba(91, 44, 22, 0.6), 0 18px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+#lobby {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tip {
+  position: absolute;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--brun);
+  border: 2px solid var(--guld);
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tip.vis {
+  opacity: 1;
+}
+
+
+/* ----- Knappen nederst ----- */
+.bund {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 16px 0 20px;
+}
+
+.knap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.knap:hover {
+  transform: translateY(-2px);
+}
+
+.knap.guld {
+  background: linear-gradient(#f7c65a, var(--guld) 55%, var(--guld-moerk));
+  color: #4a2210;
+  border: 2px solid #7a4313;
+  box-shadow: 0 4px 0 #7a4313;
+}
+
+.knap.guld:hover {
+  box-shadow: 0 6px 0 #7a4313, 0 10px 20px rgba(242, 177, 52, 0.3);
+}
+
+.knap.lille {
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.knap.stor {
+  padding: 14px 54px;
+  border-radius: 30px;
+  font-size: 20px;
+}
+
+.pil {
+  font-size: 22px;
+}
+
+.hjaelp {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--tekst-lys);
+  opacity: 0.75;
+}
+
+@media (max-width: 600px) {
+  .menu {
+    padding: 10px 16px;
+  }
+  .logo {
+    font-size: 22px;
+  }
+}

@@ -41,6 +41,7 @@ let moeblerIRummet = [];   // hvert møbel: { type: "stol", x: 3, y: 4, spejlet:
 let valgtType = null;      // møbeltypen man er ved at stille (fra panelet)
 let valgtMoebel = null;    // møblet man har klikket på i rummet
 let musFelt = null;        // feltet musen står over lige nu
+let rumValg = "vaerelse";  // "hal" = velkomsthallen (js/velkomsthal.js), "vaerelse" = dit eget værelse
 
 const figur = {
   x: 2, y: 2,              // hvor figuren står (kan være et kommatal, mens den går)
@@ -115,6 +116,7 @@ function moebelPaa(x, y) {
 // Kan figuren gå på feltet?
 function kanGaa(x, y) {
   if (!erIRummet(x, y)) return false;
+  if (rumValg === "hal" && halBlokeret(x, y)) return false;
   const m = moebelPaa(x, y);
   return !m || MOEBEL_TYPER[m.type].kanGaaPaa === true;
 }
@@ -500,7 +502,8 @@ function tegnMarkering() {
 function tegnAlt() {
   skarptLaerred();
   ctx.clearRect(0, 0, BREDDE, HOEJDE);
-  tegnVaegge();
+  if (rumValg === "hal") tegnHalVaegge();
+  else tegnVaegge();
   tegnGulv();
 
   // Tæpper o.l. ligger fladt på gulvet og tegnes først
@@ -527,6 +530,7 @@ function tegnAlt() {
     });
   });
   ting.push({ dybde: figur.x + figur.y + 0.1, tegn: function () { tegnFigur(ctx); } });
+  if (rumValg === "hal") halTing(ting);
 
   // Et "spøgelse" af møblet, man er ved at stille
   if (valgtType && musFelt && erIRummet(musFelt.x, musFelt.y) && !moebelPaa(musFelt.x, musFelt.y)) {
@@ -644,13 +648,13 @@ function opdaterPanel() {
 }
 
 function drejValgt() {
-  if (!valgtMoebel) return;
+  if (!valgtMoebel || rumValg === "hal") return;
   valgtMoebel.spejlet = !valgtMoebel.spejlet;
   gem();
 }
 
 function samlOpValgt() {
-  if (!valgtMoebel) return;
+  if (!valgtMoebel || rumValg === "hal") return;
   moeblerIRummet = moeblerIRummet.filter(function (m) { return m !== valgtMoebel; });
   valgtMoebel = null;
   gem();
@@ -802,6 +806,7 @@ lavFigurKnapper();
 const GEMME_NOEGLE = "mit-hotel-rum";
 
 function gem() {
+  if (rumValg === "hal") return;   // velkomsthallen gemmes ikke
   try {
     localStorage.setItem(GEMME_NOEGLE, JSON.stringify(moeblerIRummet));
   } catch (fejl) {
@@ -845,6 +850,7 @@ function loop(nu) {
   const dt = Math.min(0.05, (nu - sidsteTid) / 1000);
   sidsteTid = nu;
   flytFigur(dt);
+  if (rumValg === "hal") opdaterHal(dt);
   tegnAlt();
   requestAnimationFrame(loop);
 }

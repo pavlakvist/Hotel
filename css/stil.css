@@ -529,3 +529,34 @@ footer {
   color: #7a5a48;
   background: repeating-linear-gradient(45deg, #fcf2e9 0 4px, #f2e3d7 4px 8px);
 }
+
+/* ----- Velkomsthallen / dit værelse ----- */
+.rum-boks {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.rum-boks .lille {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+}
+
+.stor-knap {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 2px solid #7a4313;
+  border-radius: 10px;
+  background: linear-gradient(#f7c65a, #f2b134 55%, #c9862a);
+  color: #4a2210;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.stor-knap:hover {
+  filter: brightness(1.08);
+}

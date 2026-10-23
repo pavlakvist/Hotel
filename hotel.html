@@ -17,6 +17,18 @@
     <canvas id="spil" width="900" height="600"></canvas>
 
     <aside id="panel">
+      <div class="rum-boks">
+        <span class="lille">Du er i</span>
+        <h2 id="rum-navn">Velkomsthallen</h2>
+      </div>
+
+      <div id="hal-sektion">
+        <p class="lille">Her mødes alle gæster, når de tjekker ind. Gå gennem døren under skiltet for at komme til dit eget værelse.</p>
+        <button id="knap-til-vaerelse" class="stor-knap">Gå til mit værelse &rarr;</button>
+      </div>
+
+      <div id="moebel-sektion" hidden>
+      <button id="knap-til-hal" class="stor-knap">&larr; Til velkomsthallen</button>
       <h2>Møbler</h2>
       <p class="lille">Klik på et møbel og derefter på gulvet for at stille det.</p>
       <div id="moebel-faner"></div>
@@ -29,6 +41,7 @@
       </div>
 
       <button id="knap-ryd" class="diskret">Ryd hele rummet</button>
+      </div>
 
       <h2>Garderobe</h2>
       <div id="garderobe">
@@ -79,6 +92,7 @@
   <script src="js/frisurer.js"></script>
   <script src="js/bukser.js"></script>
   <script src="js/spil.js"></script>
+  <script src="js/velkomsthal.js"></script>
   <script src="js/garderobe.js"></script>
 </body>
 </html>

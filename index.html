@@ -5,148 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hotelven – Dit hjem, dit hotel, din historie</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600&display=swap">
-  <link rel="stylesheet" href="css/forside.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/lobby.css">
 </head>
 <body>
 
   <!-- ===== Menuen øverst ===== -->
   <nav class="menu">
     <a href="index.html" class="logo">
+      <img src="billeder/forside/krone.png" alt="">
       <span>Hotelven</span>
     </a>
-
-    <div class="links">
-      <a href="index.html" class="aktiv">
-        <svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v10h-6v-6H9v6H3z"/></svg>
-        Hjem
-      </a>
-      <a href="#om">
-        <svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3.2"/><circle cx="16.5" cy="8.5" r="2.7"/><path d="M2 20c0-4 3-6.5 6-6.5s6 2.5 6 6.5zM13.5 20c0-2.5-.8-4.4-2-5.6 1.4-1 3-1.4 5-1.4 3 0 5.5 2 5.5 7z"/></svg>
-        Om Hotelven
-      </a>
-      <a href="#nyheder">
-        <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM7 7h10v2H7zm0 4h10v2H7zm0 4h6v2H7z" fill-rule="evenodd"/></svg>
-        Nyheder
-      </a>
-      <a href="#shop">
-        <svg viewBox="0 0 24 24"><path d="M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-        Shop
-      </a>
-      <a href="#regler">
-        <svg viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7l5 5-5 5-5-5z"/></svg>
-        Regler
-      </a>
-    </div>
-
-    <div class="konto">
-      <a href="hotel.html" class="knap lys">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="4.5"/><path d="M3 21c0-5 4-8 9-8s9 3 9 8z"/></svg>
-        Log ind
-      </a>
-      <a href="hotel.html" class="knap moerk">
-        <svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z"/></svg>
-        Opret profil
-      </a>
-    </div>
+    <a href="hotel.html" class="knap guld lille">Tjek ind</a>
   </nav>
 
-  <!-- ===== Den store forside-sektion ===== -->
-  <header class="hero">
-    <img src="billeder/forside/blade-top.png" class="blad blad-top" alt="">
-    <img src="billeder/forside/blade-bund.png" class="blad blad-bund" alt="">
-
-    <div class="hero-tekst">
-      <p class="lille-overskrift">Dit hjem · Dit hotel · Din historie</p>
-      <h1>Hotelven</h1>
-      <p class="beskrivelse">
-        Et socialt retrohotel, hvor du kan møde nye mennesker,
-        indrette dit eget rum og være en del af fællesskabet.
-      </p>
-      <a href="hotel.html" class="knap moerk stor">
-        <svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z"/></svg>
-        Opret profil
-        <span class="pil">&rarr;</span>
-      </a>
-      <a href="hotel.html" class="knap kant stor">
-        Log ind
-        <span class="pil">&rarr;</span>
-      </a>
-    </div>
-
-    <img src="billeder/forside/hotel-scene.png" class="hero-billede" alt="Lobbyen i Hotelven">
+  <!-- ===== Overskrift ===== -->
+  <header class="overskrift">
+    <p class="lille-tekst">Dit hjem · Dit hotel · Din historie</p>
+    <h1>Velkommen til Hotelven</h1>
   </header>
 
-  <!-- ===== Fire kort med hvad man kan ===== -->
-  <section class="kort-raekke" id="om">
-    <a href="hotel.html" class="kort">
-      <div class="kort-tekst">
-        <h3>
-          <svg viewBox="0 0 24 24"><path d="M3 18V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10h-2v-2H5v2zm2-6h6V9H5zm8 0h6V9h-6z"/></svg>
-          Indret dit eget rum
-        </h3>
-        <p>Skab dit helt unikke værelse med hundredevis af møbler.</p>
-        <span class="pil">&rarr;</span>
-      </div>
-      <img src="billeder/forside/kort-rum.png" alt="">
-    </a>
+  <!-- ===== Den levende lobby ===== -->
+  <main class="lobby-ramme">
+    <canvas id="lobby" width="760" height="470" aria-label="Lobbyen i Hotelven, hvor gæsterne går rundt"></canvas>
+    <div id="lobby-tip" class="tip">Tjek ind her</div>
+  </main>
 
-    <a href="hotel.html" class="kort">
-      <div class="kort-tekst">
-        <h3>
-          <svg viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><circle cx="16" cy="7" r="3"/><circle cx="12" cy="10" r="3"/><path d="M1 20c0-4 3-7 7-7 1.5 0 2.7.4 4 1 1.3-.6 2.5-1 4-1 4 0 7 3 7 7z"/></svg>
-          Mød nye mennesker
-        </h3>
-        <p>Chat, hæng ud og vær en del af fællesskabet.</p>
-        <span class="pil">&rarr;</span>
-      </div>
-      <img src="billeder/forside/kort-venner.png" alt="">
+  <div class="bund">
+    <a href="hotel.html" class="knap guld stor">
+      Tjek ind
+      <span class="pil">&rarr;</span>
     </a>
+    <p class="hjaelp">… eller klik på receptionen i lobbyen</p>
+  </div>
 
-    <a href="hotel.html" class="kort" id="nyheder">
-      <div class="kort-tekst">
-        <h3>
-          <svg viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.6 5.7 21l1.5-7L2 9.3l7-.8z"/></svg>
-          Deltag i events
-        </h3>
-        <p>Sjove aktiviteter, konkurrencer og særlige møbler.</p>
-        <span class="pil">&rarr;</span>
-      </div>
-      <img src="billeder/forside/kort-events.png" alt="">
-    </a>
-
-    <a href="hotel.html" class="kort" id="shop">
-      <div class="kort-tekst">
-        <h3>
-          <svg viewBox="0 0 24 24"><path d="M2 3h3l2.5 11h11L21 6H7" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="9" cy="19" r="2"/><circle cx="17" cy="19" r="2"/></svg>
-          Shop
-        </h3>
-        <p>Få unikke møbler, tøj og accessories.</p>
-        <span class="pil">&rarr;</span>
-      </div>
-      <img src="billeder/forside/kort-shop.png" alt="">
-    </a>
-  </section>
-
-  <!-- ===== Områder i hotellet ===== -->
-  <section class="omraader" id="regler">
-    <a href="hotel.html" class="omraade">
-      <img src="billeder/forside/omraade-vaerelser.png" alt="">
-      <span>Hotelværelser</span>
-    </a>
-    <a href="hotel.html" class="omraade">
-      <img src="billeder/forside/omraade-cafe.png" alt="">
-      <span>Café</span>
-    </a>
-    <a href="hotel.html" class="omraade">
-      <img src="billeder/forside/omraade-ude.png" alt="">
-      <span>Udendørs områder</span>
-    </a>
-    <a href="hotel.html" class="omraade">
-      <img src="billeder/forside/omraade-aktiviteter.png" alt="">
-      <span>Aktiviteter</span>
-    </a>
-  </section>
-
+  <script src="js/indstillinger.js"></script>
+  <script src="js/moebel-katalog.js"></script>
+  <script src="js/figur.js"></script>
+  <script src="js/frisurer.js"></script>
+  <script src="js/bukser.js"></script>
+  <script src="js/lobby.js"></script>
 </body>
 </html>
