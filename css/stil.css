@@ -575,7 +575,9 @@ body {
 }
 
 body.i-hallen {
-  background: radial-gradient(ellipse at 42% 45%, #4a2a1a, #1e100a 75%);
+  /* støvet blågrå rundt om velkomsthallen */
+  background: radial-gradient(ellipse at 42% 45%, #8293a3, #55636f 75%);
+  background-color: #55636f;
 }
 
 header {
