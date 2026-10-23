@@ -109,11 +109,11 @@ tegnBobler = function () {
 
 
 // -------------------------------------------------------------
-//  Byt: giv Glimt eller Krystaller, og få noget igen
+//  Byt: giv Glimt eller Stella, og få noget igen
 // -------------------------------------------------------------
 const bytVindue = document.getElementById("byt-vindue");
 let bytMed = null;
-const KURS = 50;    // 50 Glimt er det samme værd som 1 Krystal
+const KURS = 50;    // 50 Glimt er det samme værd som 1 Stella
 
 function aabnByt(g) {
   bytMed = g;
@@ -136,7 +136,7 @@ function bytTilbud() {
 function opdaterByt() {
   const t = bytTilbud();
   const linjer = [];
-  if (t.faarKr) linjer.push("<img src='billeder/krystal.png' alt=''> " + t.faarKr + " Krystaller");
+  if (t.faarKr) linjer.push("<img src='billeder/krystal.png' alt=''> " + t.faarKr + " Stella");
   if (t.faarGl) linjer.push("<img src='billeder/glimt.png' alt=''> " + t.faarGl + " " + system.valutaNavn);
   document.getElementById("byt-faar").innerHTML = linjer.length ? linjer.join("<br>") : "<span class='tom'>Tilbyd noget først</span>";
 }
@@ -150,9 +150,9 @@ window.addEventListener("keydown", function (e) { if (e.key === "Escape") bytVin
 document.getElementById("byt-ok").addEventListener("click", function () {
   const t = bytTilbud();
   const svar = document.getElementById("byt-svar");
-  if (!t.faarKr && !t.faarGl) { svar.textContent = "Du skal tilbyde mindst " + KURS + " " + system.valutaNavn + " eller 1 Krystal."; return; }
+  if (!t.faarKr && !t.faarGl) { svar.textContent = "Du skal tilbyde mindst " + KURS + " " + system.valutaNavn + " eller 1 Stella."; return; }
   if (t.gl > glimt || t.kr > krystaller) { svar.textContent = "Du har ikke nok til det bytte."; return; }
-  // man bytter kun hele Krystaller, så resten af Glimt bliver hos dig
+  // man bytter kun hele Stella, så resten af Glimt bliver hos dig
   faaGlimt(-(t.faarKr * KURS) + t.faarGl);
   faaKrystaller(t.faarKr - t.kr);
   bytVindue.hidden = true;

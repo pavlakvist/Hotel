@@ -389,7 +389,11 @@ let overReceptionen = false;
 
 function tegnLobby() {
   skarpLobby();
-  lc.fillStyle = "#1e100a";
+  // samme støvede blå baggrund som i velkomsthallen
+  const bag = lc.createRadialGradient(L_BREDDE / 2, L_HOEJDE * 0.4, 40, L_BREDDE / 2, L_HOEJDE * 0.4, L_BREDDE * 0.7);
+  bag.addColorStop(0, "#8293a3");
+  bag.addColorStop(1, "#55636f");
+  lc.fillStyle = bag;
   lc.fillRect(0, 0, L_BREDDE, L_HOEJDE);
   tegnRum();
 
@@ -410,7 +414,7 @@ function tegnLobby() {
   // varmt lys fra lysekronen
   const lys = lc.createRadialGradient(380, 200, 40, 380, 230, 430);
   lys.addColorStop(0, "rgba(255,200,120,0.12)");
-  lys.addColorStop(1, "rgba(20,8,2,0.35)");
+  lys.addColorStop(1, "rgba(20,30,40,0.25)");
   lc.fillStyle = lys;
   lc.fillRect(0, 0, L_BREDDE, L_HOEJDE);
 }

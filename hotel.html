@@ -16,17 +16,17 @@
     <!-- Selve spillet bliver tegnet på dette "lærred" -->
     <canvas id="spil" width="900" height="600"></canvas>
 
-    <!-- Hotellets penge: Glimt og Krystaller (js/glimt.js) -->
+    <!-- Hotellets penge: Glimt og Stella (js/glimt.js) -->
     <div id="glimt">
       <span class="penge" title="Glimt er hotellets penge. Dem kan du bruge i shoppen.">
         <img src="billeder/glimt.png" alt="">
         <b id="glimt-tal">0</b>
         <span id="glimt-navn">Glimt</span>
       </span>
-      <span class="penge krystal" title="Krystaller er sjældne. Dem kan du bruge til de fineste ting i shoppen.">
+      <span class="penge krystal" title="Stella er sjældne. Dem kan du bruge til de fineste ting i shoppen.">
         <img src="billeder/krystal.png" alt="">
         <b id="krystal-tal">0</b>
-        <span>Krystaller</span>
+        <span>Stella</span>
       </span>
     </div>
 
@@ -143,6 +143,12 @@
     </div>
   </div>
 
+  <!-- Chatlog for alle (js/chatlog.js) -->
+  <div id="chatlog">
+    <div class="chatlog-top"><span>💬 Chatlog</span><button id="chatlog-luk" title="Skjul chatloggen">–</button></div>
+    <ul id="chatlog-liste"></ul>
+  </div>
+
   <!-- Byt med en anden gæst (js/gaest-menu.js) -->
   <div id="byt-vindue" class="lille-vindue" hidden>
     <div class="lv-boks">
@@ -150,8 +156,8 @@
       <div class="byt-indhold">
         <div class="byt-side">
           <h3>Du giver</h3>
-          <label><img src="billeder/glimt.png" alt=""> Glimt <input id="byt-glimt" type="number" min="0" step="50" value="0"></label>
-          <label><img src="billeder/krystal.png" alt=""> Krystaller <input id="byt-krystal" type="number" min="0" value="0"></label>
+          <label><img src="billeder/glimt.png" alt=""> <span class="valuta-navn">Glimt</span> <input id="byt-glimt" type="number" min="0" step="50" value="0"></label>
+          <label><img src="billeder/krystal.png" alt=""> Stella <input id="byt-krystal" type="number" min="0" value="0"></label>
         </div>
         <div class="byt-pil">⇄</div>
         <div class="byt-side">
@@ -159,7 +165,7 @@
           <p id="byt-faar"></p>
         </div>
       </div>
-      <p class="byt-kurs">50 Glimt = 1 Krystal</p>
+      <p class="byt-kurs">50 <span class="valuta-navn">Glimt</span> = 1 Stella</p>
       <p id="byt-svar" class="byt-svar"></p>
       <div class="byt-knapper">
         <button id="byt-ok" class="lv-knap">🤝 Byt</button>
@@ -197,6 +203,7 @@
   <form id="chat" autocomplete="off">
     <button type="button" id="chat-smiley-knap" class="chat-lille" title="Smileyer">😊</button>
     <button type="button" id="chat-farve-knap" class="chat-lille" title="Farve på din taleboble"></button>
+    <button type="button" id="chat-log-knap" class="chat-lille" title="Vis eller skjul chatloggen">📜</button>
     <button type="button" id="chat-ejer-knap" class="chat-lille" title="Ejerpanel (mod tools)">🛡️</button>
     <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
     <button type="submit">Send</button>
@@ -229,6 +236,7 @@
   <script src="js/ejer.js"></script>
   <script src="js/glimt.js"></script>
   <script src="js/gaest-menu.js"></script>
+  <script src="js/chatlog.js"></script>
   <script src="js/flyt-vindue.js"></script>
 </body>
 </html>

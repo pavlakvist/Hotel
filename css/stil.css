@@ -1462,7 +1462,7 @@ footer {
 }
 
 #glimt .krystal b {
-  color: #8cdcfa;
+  color: #c99cf5;
 }
 
 #glimt .blink img {
@@ -1551,4 +1551,88 @@ footer {
 .lv-knap.graa {
   background: #e5f0f9;
   border-color: #b5d0e6;
+}
+
+/* ===== Chatlog for alle, nederst til højre ===== */
+#chatlog {
+  position: fixed;
+  /* left og top regnes ud i js/chatlog.js, så den starter nederst til højre */
+  left: 16px;
+  top: 16px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  height: 220px;
+  min-width: 200px;
+  min-height: 110px;
+  max-width: 90vw;
+  max-height: 85vh;
+  resize: both;
+  overflow: hidden;
+  background: rgba(243, 248, 252, 0.94);
+  border: 3px solid #3d5f7d;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font: 13px Verdana, sans-serif;
+  color: #2a3f52;
+}
+
+#chatlog[hidden] {
+  display: none;
+}
+
+.chatlog-top {
+  display: flex;
+  align-items: center;
+  padding: 4px 6px 4px 10px;
+  background: #3d5f7d;
+  color: #e3f1fb;
+  font-weight: bold;
+  user-select: none;
+}
+
+.chatlog-top span {
+  flex: 1;
+}
+
+.chatlog-top button {
+  margin: 0;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  background: #5b85a8;
+  color: #fff;
+  border: 1px solid #cfe6f7;
+  border-radius: 5px;
+  font: bold 14px Verdana, sans-serif;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#chatlog-liste {
+  flex: 1;
+  margin: 0;
+  padding: 6px 10px 14px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+#chatlog-liste li {
+  padding: 2px 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+#chatlog-liste .cl-tid {
+  font-size: 11px;
+  color: #8aa0b3;
+}
+
+#chatlog-liste .cl-rum {
+  margin: 2px 0 4px;
+  font-size: 11px;
+  font-style: italic;
+  color: #6b8296;
+  text-align: center;
 }

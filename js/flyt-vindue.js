@@ -53,3 +53,4 @@ goerFlytbar(document.querySelector("#profil-vindue .lv-boks"), document.querySel
 goerFlytbar(document.querySelector("#rapport-vindue .lv-boks"), document.querySelector("#rapport-vindue .lv-top"), "mit-hotel-vindue-rapport");
 goerFlytbar(document.querySelector("#garderobe-vindue .su-boks"), document.querySelector("#garderobe-vindue .su-top"), "mit-hotel-vindue-garderobe");
 goerFlytbar(document.querySelector("#byt-vindue .lv-boks"), document.querySelector("#byt-vindue .lv-top"), "mit-hotel-vindue-byt");
+goerFlytbar(document.getElementById("chatlog"), document.querySelector(".chatlog-top"), "mit-hotel-vindue-chatlog");

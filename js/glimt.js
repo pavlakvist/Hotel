@@ -1,7 +1,8 @@
 // =============================================================
-//  Glimt ⭐ og Krystaller 💎 — hotellets penge
+//  Glimt ⭐ og Stella 🔮 — hotellets penge
+//  (Stella hed før Krystaller, derfor hedder koden stadig krystal)
 //  Vises øverst til højre ved siden af panelet.
-//  Glimt er de almindelige penge, Krystaller er de sjældne.
+//  Glimt er de almindelige penge, Stella er de sjældne.
 //  Senere kan man bruge dem i en shop: brugGlimt(pris) og
 //  brugKrystaller(pris) giver true, hvis man havde råd.
 //  faaGlimt(antal) og faaKrystaller(antal) giver nogle.
@@ -23,6 +24,7 @@ krystaller = krystaller === null ? system.startKrystaller : Math.max(0, parseInt
 function visGlimt() {
   glimtTal.textContent = glimt.toLocaleString("da-DK");
   document.getElementById("glimt-navn").textContent = system.valutaNavn;
+  document.querySelectorAll(".valuta-navn").forEach(function (el) { el.textContent = system.valutaNavn; });
   document.getElementById("krystal-tal").textContent = krystaller.toLocaleString("da-DK");
   try {
     localStorage.setItem(GLIMT_NOEGLE, String(glimt));

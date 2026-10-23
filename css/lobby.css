@@ -3,13 +3,15 @@
    Farverne står samlet her øverst, så de er nemme at ændre.
    ============================================================= */
 :root {
-  --baggrund: #2b1810;
-  --baggrund-lys: #4a2a1a;
-  --creme: #fcf2e9;
-  --guld: #f2b134;
-  --guld-moerk: #c9862a;
-  --brun: #5b2c16;
-  --tekst-lys: #e8cfb6;
+  /* samme blå som i spillet (velkomsthallen og de blå menuer) */
+  --baggrund: #55636f;
+  --baggrund-lys: #8293a3;
+  --creme: #f3f8fc;
+  --blaa: #78acd6;
+  --blaa-lys: #9cc9ea;
+  --blaa-moerk: #3d5f7d;
+  --blaa-dyb: #2f4a63;
+  --tekst-lys: #e3f1fb;
 }
 
 * {
@@ -46,8 +48,8 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 10px 32px;
-  background: rgba(0, 0, 0, 0.25);
-  border-bottom: 1px solid rgba(242, 177, 52, 0.25);
+  background: var(--blaa-moerk);
+  border-bottom: 2px solid var(--blaa-lys);
 }
 
 .logo {
@@ -58,8 +60,8 @@ a {
   font-size: 28px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--guld);
-  text-shadow: 0 2px 0 #6b3a12;
+  color: var(--creme);
+  text-shadow: 0 2px 0 var(--blaa-dyb);
 }
 
 .logo img {
@@ -80,7 +82,7 @@ a {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--tekst-lys);
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .overskrift h1 {
@@ -89,7 +91,7 @@ a {
   font-size: clamp(26px, 3.4vw, 40px);
   font-weight: 700;
   color: var(--creme);
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+  text-shadow: 0 3px 0 rgba(47, 74, 99, 0.6);
 }
 
 
@@ -102,9 +104,9 @@ a {
   min-width: 300px;
   aspect-ratio: 760 / 470;
   border-radius: 18px;
-  background: #1e100a;
-  border: 3px solid var(--guld-moerk);
-  box-shadow: 0 0 0 6px rgba(91, 44, 22, 0.6), 0 18px 40px rgba(0, 0, 0, 0.45);
+  background: var(--baggrund);
+  border: 4px solid var(--blaa-moerk);
+  box-shadow: 0 0 0 5px rgba(169, 209, 238, 0.5), 0 18px 40px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
 
@@ -118,8 +120,8 @@ a {
   position: absolute;
   padding: 6px 12px;
   border-radius: 10px;
-  background: var(--brun);
-  border: 2px solid var(--guld);
+  background: var(--blaa-dyb);
+  border: 2px solid var(--blaa-lys);
   font-weight: 800;
   font-size: 14px;
   white-space: nowrap;
@@ -158,14 +160,14 @@ a {
 }
 
 .knap.guld {
-  background: linear-gradient(#f7c65a, var(--guld) 55%, var(--guld-moerk));
-  color: #4a2210;
-  border: 2px solid #7a4313;
-  box-shadow: 0 4px 0 #7a4313;
+  background: linear-gradient(var(--blaa-lys), var(--blaa) 55%, #5b8fbb);
+  color: #13283a;
+  border: 2px solid var(--blaa-moerk);
+  box-shadow: 0 4px 0 var(--blaa-moerk);
 }
 
 .knap.guld:hover {
-  box-shadow: 0 6px 0 #7a4313, 0 10px 20px rgba(242, 177, 52, 0.3);
+  box-shadow: 0 6px 0 var(--blaa-moerk), 0 10px 20px rgba(120, 172, 214, 0.35);
 }
 
 .knap.lille {
@@ -188,7 +190,7 @@ a {
   margin: 10px 0 0;
   font-size: 14px;
   color: var(--tekst-lys);
-  opacity: 0.75;
+  opacity: 0.9;
 }
 
 @media (max-width: 600px) {
