@@ -183,6 +183,17 @@
     <ul id="venner-liste"></ul>
   </div>
 
+  <!-- Private beskeder til venner (js/beskeder.js) -->
+  <div id="besked-vindue" hidden>
+    <div class="besked-top"><span id="besked-hvem">💬 Besked</span><button id="besked-luk" title="Luk">✕</button></div>
+    <ul id="besked-liste"></ul>
+    <p id="besked-skriver" hidden></p>
+    <form id="besked-form" autocomplete="off">
+      <input id="besked-tekst" maxlength="200" placeholder="Send en besked …">
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
   <!-- Chatlog for alle (js/chatlog.js) -->
   <div id="chatlog">
     <div class="chatlog-top"><span>💬 Chatlog</span><button id="chatlog-luk" title="Skjul chatloggen">–</button></div>
@@ -243,8 +254,8 @@
   <form id="chat" autocomplete="off">
     <button type="button" id="chat-smiley-knap" class="chat-lille" title="Smileyer">😊</button>
     <button type="button" id="chat-farve-knap" class="chat-lille" title="Farve på din taleboble"></button>
-    <button type="button" id="chat-nav-knap" class="chat-lille" title="Hotellets navigatør">🛎️</button>
-    <button type="button" id="chat-venner-knap" class="chat-lille" title="Venneliste">👫</button>
+    <button type="button" id="chat-nav-knap" class="chat-lille" title="Hotellets navigatør"><img class="knap-ikon" src="billeder/ikon-navigator.png" alt="Navigatør"></button>
+    <button type="button" id="chat-venner-knap" class="chat-lille" title="Venneliste"><img class="knap-ikon" src="billeder/ikon-venner.png" alt="Venner"><span id="venner-ulaest" hidden></span></button>
     <button type="button" id="chat-log-knap" class="chat-lille" title="Vis eller skjul chatloggen">📜</button>
     <button type="button" id="chat-ejer-knap" class="chat-lille" title="Ejerpanel (mod tools)">🛡️</button>
     <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
@@ -280,6 +291,7 @@
   <script src="js/gaest-menu.js"></script>
   <script src="js/chatlog.js"></script>
   <script src="js/venner.js"></script>
+  <script src="js/beskeder.js"></script>
   <script src="js/navigator.js"></script>
   <script src="js/flyt-vindue.js"></script>
 </body>

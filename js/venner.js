@@ -75,11 +75,16 @@ function visVenner() {
     const her = on && rumValg === "hal";
     return "<li><span class='ven-prik " + (on ? "on" : "off") + "'></span>" +
       "<span class='ven-navn'><b>" + tegnTilHtml(navn) + "</b><small>" + (on ? "Velkomsthallen" : "Offline") + "</small></span>" +
+      "<button class='skriv' data-skriv='" + tegnTilHtml(navn) + "' title='Send en besked'>💬" +
+      (typeof ulaestFra === "function" && ulaestFra(navn) ? "<i>" + ulaestFra(navn) + "</i>" : "") + "</button>" +
       (on ? "<button data-gaa='" + tegnTilHtml(navn) + "'" + (her ? " disabled" : "") + ">" + (her ? "Her" : "Gå til") + "</button>" : "") +
       "<button class='fjern' data-fjern='" + tegnTilHtml(navn) + "' title='Fjern ven'>✕</button></li>";
   }).join("");
   liste.querySelectorAll("[data-gaa]").forEach(function (k) {
     k.addEventListener("click", function () { if (rumValg !== "hal") skiftRum("hal"); });
+  });
+  liste.querySelectorAll("[data-skriv]").forEach(function (k) {
+    k.addEventListener("click", function () { aabnBeskeder(k.dataset.skriv); });
   });
   liste.querySelectorAll("[data-fjern]").forEach(function (k) {
     k.addEventListener("click", function () { fjernVen(k.dataset.fjern); });

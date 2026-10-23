@@ -2454,3 +2454,203 @@ footer {
 #venner-liste button.fjern:hover {
   color: #b33f3b;
 }
+
+/* ===== Private beskeder ===== */
+#chat-venner-knap {
+  position: relative;
+}
+
+#venner-ulaest {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  background: #c94a3f;
+  color: #fff;
+  border: 2px solid #fbf6ea;
+  border-radius: 9px;
+  font: bold 10px/13px Verdana, sans-serif;
+  text-align: center;
+}
+
+#venner-ulaest[hidden] {
+  display: none;
+}
+
+#venner-liste button.skriv {
+  position: relative;
+  padding: 2px 6px;
+  font-size: 14px;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+#venner-liste button.skriv i {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 14px;
+  height: 14px;
+  background: #c94a3f;
+  color: #fff;
+  border-radius: 7px;
+  font: bold 9px/14px Verdana, sans-serif;
+  font-style: normal;
+}
+
+#besked-vindue {
+  position: fixed;
+  top: 70px;
+  right: 290px;
+  z-index: 9;
+  width: 280px;
+  height: 340px;
+  display: flex;
+  flex-direction: column;
+  background: #fbf6ea;
+  border: 3px solid #4e7d4a;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font: 13px Verdana, sans-serif;
+  color: #33402c;
+  overflow: hidden;
+}
+
+#besked-vindue[hidden] {
+  display: none;
+}
+
+.besked-top {
+  display: flex;
+  align-items: center;
+  padding: 5px 6px 5px 10px;
+  background: #4e7d4a;
+  color: #fbf6ea;
+  font-weight: bold;
+  user-select: none;
+}
+
+.besked-top span {
+  flex: 1;
+}
+
+.besked-top button {
+  margin: 0;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  background: #6b9c62;
+  color: #fff;
+  border: 1px solid #d9edcc;
+  border-radius: 5px;
+  font: bold 12px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+#besked-liste {
+  flex: 1;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+#besked-liste li {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 7px;
+}
+
+#besked-liste li span {
+  max-width: 80%;
+  padding: 6px 9px;
+  border-radius: 10px;
+  line-height: 1.35;
+  word-wrap: break-word;
+}
+
+#besked-liste li small {
+  margin-top: 2px;
+  font-size: 10px;
+  color: #8f977f;
+}
+
+#besked-liste li.mig {
+  align-items: flex-end;
+}
+
+#besked-liste li.mig span {
+  background: #9ccc8f;
+  color: #1f3a1c;
+  border-bottom-right-radius: 3px;
+}
+
+#besked-liste li.dem {
+  align-items: flex-start;
+}
+
+#besked-liste li.dem span {
+  background: #fff;
+  border: 1px solid #e0d6bb;
+  border-bottom-left-radius: 3px;
+}
+
+#besked-liste li.besked-tom {
+  display: block;
+  margin-top: 40px;
+  text-align: center;
+  font-size: 12px;
+  color: #7f8a6f;
+}
+
+#besked-skriver {
+  margin: 0;
+  padding: 0 10px 4px;
+  font-size: 11px;
+  font-style: italic;
+  color: #6b9c62;
+}
+
+#besked-skriver[hidden] {
+  display: none;
+}
+
+#besked-form {
+  display: flex;
+  gap: 6px;
+  padding: 7px;
+  background: #e2efd3;
+  border-top: 1px solid #cfe3c3;
+}
+
+#besked-tekst {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #9ccc8f;
+  border-radius: 6px;
+  font: 12px Verdana, sans-serif;
+}
+
+#besked-form button {
+  margin: 0;
+  padding: 5px 10px;
+  background: linear-gradient(#bfe3b1, #9ccc8f 55%, #7fb56f);
+  color: #1f3a1c;
+  border: 1px solid #4e7d4a;
+  border-radius: 6px;
+  font: bold 12px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+/* Pixel-ikoner i chatbaren */
+#chat .knap-ikon {
+  width: 26px;
+  height: 26px;
+  image-rendering: pixelated;
+  vertical-align: middle;
+  pointer-events: none;
+}
