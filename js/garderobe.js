@@ -71,7 +71,7 @@ function kopi(x) {
 // pige eller dreng (tøj-mapperne), efter hvilken figur der er valgt
 function hvem(type) {
   const t = type || (kladde ? kladde.type : garderobe.type);
-  return t.indexOf("mand") === 0 ? "dreng" : "pige";
+  return t.indexOf("mand") === 0 || t.indexOf("dreng") === 0 ? "dreng" : "pige";
 }
 
 function toejSti(fil, type) {

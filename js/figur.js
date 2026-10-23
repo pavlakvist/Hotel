@@ -75,6 +75,54 @@ const FIGURER = {
       "ned-venstre": { fil: "billeder/figurer/pige-sidder-ned-venstre.png", anker: [27.5, 104.0], ingenLag: true },
     },
   },
+  dreng: {
+    navn: "Dreng",
+    skala: 0.96,
+    raekke: "alle",
+    staa: {
+      "ned": { fil: "billeder/figurer/dreng-staa-ned.png", anker: [24.0, 135.0], ingenLag: true },
+      "ned-hoejre": { fil: "billeder/figurer/dreng-staa-ned-hoejre.png", anker: [23.5, 134.0], ingenLag: true },
+      "hoejre": { fil: "billeder/figurer/dreng-staa-hoejre.png", anker: [18.5, 132.0], ingenLag: true },
+      "op-hoejre": { fil: "billeder/figurer/dreng-staa-op-hoejre.png", anker: [22.0, 133.0], ingenLag: true },
+      "op": { fil: "billeder/figurer/dreng-staa-op.png", anker: [23.5, 133.0], ingenLag: true },
+      "op-venstre": { fil: "billeder/figurer/dreng-staa-op-venstre.png", anker: [20.0, 133.0], ingenLag: true },
+      "venstre": { fil: "billeder/figurer/dreng-staa-venstre.png", anker: [19.5, 133.0], ingenLag: true },
+      "ned-venstre": { fil: "billeder/figurer/dreng-staa-ned-venstre.png", anker: [20.5, 135.0], ingenLag: true },
+    },
+    gaa: {
+      "ned": [{ fil: "billeder/figurer/dreng-gaa-ned-1.png", anker: [26.5, 135.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-ned-2.png", anker: [28.5, 135.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-ned-3.png", anker: [27.0, 135.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-ned-4.png", anker: [28.5, 135.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-ned-5.png", anker: [32.0, 135.0], ingenLag: true }],
+      "ned-hoejre": [{ fil: "billeder/figurer/dreng-gaa-hoejre-1.png", anker: [31.5, 131.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-2.png", anker: [33.0, 131.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-3.png", anker: [34.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-4.png", anker: [31.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-5.png", anker: [30.0, 130.0], ingenLag: true }],
+      "hoejre": [{ fil: "billeder/figurer/dreng-gaa-hoejre-1.png", anker: [31.5, 131.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-2.png", anker: [33.0, 131.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-3.png", anker: [34.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-4.png", anker: [31.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-hoejre-5.png", anker: [30.0, 130.0], ingenLag: true }],
+      "op-hoejre": [{ fil: "billeder/figurer/dreng-gaa-op-1.png", anker: [28.5, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-2.png", anker: [26.5, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-3.png", anker: [25.5, 132.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-4.png", anker: [27.0, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-5.png", anker: [26.5, 134.0], ingenLag: true }],
+      "op": [{ fil: "billeder/figurer/dreng-gaa-op-1.png", anker: [28.5, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-2.png", anker: [26.5, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-3.png", anker: [25.5, 132.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-4.png", anker: [27.0, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-5.png", anker: [26.5, 134.0], ingenLag: true }],
+      "op-venstre": [{ fil: "billeder/figurer/dreng-gaa-op-1.png", anker: [28.5, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-2.png", anker: [26.5, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-3.png", anker: [25.5, 132.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-4.png", anker: [27.0, 134.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-op-5.png", anker: [26.5, 134.0], ingenLag: true }],
+      "venstre": [{ fil: "billeder/figurer/dreng-gaa-venstre-1.png", anker: [27.5, 131.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-venstre-2.png", anker: [32.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-venstre-3.png", anker: [32.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-venstre-4.png", anker: [30.5, 130.0], ingenLag: true }],
+      "ned-venstre": [{ fil: "billeder/figurer/dreng-gaa-venstre-1.png", anker: [27.5, 131.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-venstre-2.png", anker: [32.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-venstre-3.png", anker: [32.5, 130.0], ingenLag: true }, { fil: "billeder/figurer/dreng-gaa-venstre-4.png", anker: [30.5, 130.0], ingenLag: true }],
+    },
+    poser: {
+      "neutral": { fil: "billeder/figurer/dreng-udtryk-neutral.png", anker: [25.0, 134.0], ingenLag: true },
+      "smil": { fil: "billeder/figurer/dreng-udtryk-smil.png", anker: [25.0, 134.0], ingenLag: true },
+      "glad": { fil: "billeder/figurer/dreng-udtryk-glad.png", anker: [25.0, 134.0], ingenLag: true },
+      "grin": { fil: "billeder/figurer/dreng-udtryk-grin.png", anker: [25.0, 134.0], ingenLag: true },
+      "vred": { fil: "billeder/figurer/dreng-udtryk-vred.png", anker: [25.0, 134.0], ingenLag: true },
+      "ked": { fil: "billeder/figurer/dreng-udtryk-ked.png", anker: [25.0, 134.0], ingenLag: true },
+      "overrasket": { fil: "billeder/figurer/dreng-udtryk-overrasket.png", anker: [25.0, 134.0], ingenLag: true },
+      "blink": { fil: "billeder/figurer/dreng-udtryk-blink.png", anker: [25.0, 134.0], ingenLag: true },
+      "flirt": { fil: "billeder/figurer/dreng-udtryk-flirt.png", anker: [25.0, 134.0], ingenLag: true },
+      "traet": { fil: "billeder/figurer/dreng-udtryk-traet.png", anker: [25.0, 134.0], ingenLag: true },
+    },
+    // sidde: skamlerne er fjernet; mod venstre er billedet spejlet
+    sidder: {
+      "ned": { fil: "billeder/figurer/dreng-sidder-ned-hoejre.png", anker: [17.0, 91.0], ingenLag: true },
+      "ned-hoejre": { fil: "billeder/figurer/dreng-sidder-ned-hoejre.png", anker: [17.0, 91.0], ingenLag: true },
+      "hoejre": { fil: "billeder/figurer/dreng-sidder-ned-hoejre.png", anker: [17.0, 91.0], ingenLag: true },
+      "op-hoejre": { fil: "billeder/figurer/dreng-sidder-ned-hoejre.png", anker: [17.0, 91.0], ingenLag: true },
+      "op": { fil: "billeder/figurer/dreng-sidder-ned-venstre.png", anker: [66.0, 91.0], ingenLag: true },
+      "op-venstre": { fil: "billeder/figurer/dreng-sidder-ned-venstre.png", anker: [66.0, 91.0], ingenLag: true },
+      "venstre": { fil: "billeder/figurer/dreng-sidder-ned-venstre.png", anker: [66.0, 91.0], ingenLag: true },
+      "ned-venstre": { fil: "billeder/figurer/dreng-sidder-ned-venstre.png", anker: [66.0, 91.0], ingenLag: true },
+    },
+  },
   kvinde: {
     navn: "Pige (gammel)",
     skala: 0.87,
@@ -101,7 +149,7 @@ const FIGURER = {
     },
   },
   mand: {
-    navn: "Mand",
+    navn: "Dreng (gammel)",
     skala: 0.79,
     raekke: "alle",                   // alle hans gå-billeder vises efter hinanden
     gaa: {

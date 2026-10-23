@@ -62,10 +62,10 @@ const HAL_FARVER = {
 
 // De andre gæster
 const HAL_GAESTER = [
-  { navn: "Ida", valg: { type: "kvinde", frisure: { kvinde: "langt-boelget" }, farver: { kvinde: { bukser: "jeans" } } }, x: 2, y: 6 },
-  { navn: "Noah", valg: { type: "mand", farver: { mand: { bukser: "chinos" } } }, x: 7, y: 2 },
-  { navn: "Freja", valg: { type: "kvinde", frisure: { kvinde: "fletninger" } }, x: 7, y: 8 },
-  { navn: "Oliver", valg: { type: "mand" }, x: 11, y: 5 },
+  { navn: "Ida", valg: { type: "pige" }, x: 2, y: 6 },
+  { navn: "Noah", valg: { type: "dreng" }, x: 7, y: 2 },
+  { navn: "Freja", valg: { type: "pige" }, x: 7, y: 8 },
+  { navn: "Oliver", valg: { type: "dreng" }, x: 11, y: 5 },
 ];
 HAL_GAESTER.forEach(function (g) {
   g.rute = [];

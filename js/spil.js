@@ -875,6 +875,8 @@ try {
   if (gemt && alleFigurer()[gemt.type]) garderobe.type = gemt.type;
   // den nye pige (23/10) afløser den gamle én gang
   if (gemt && gemt.type === "kvinde" && !gemt.nyPige) garderobe.type = "pige";
+  if (gemt && gemt.type === "mand" && !gemt.nyDreng) garderobe.type = "dreng";
+  garderobe.nyDreng = true;
   garderobe.nyPige = true;
   if (gemt && gemt.farver) Object.assign(garderobe.farver, gemt.farver);
   if (gemt && gemt.ting) garderobe.ting = gemt.ting;

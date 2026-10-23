@@ -61,14 +61,14 @@ const LOBBY_MOEBLER = [
 
 // Gæsterne, der går rundt
 const GAESTER = [
-  { valg: { type: "kvinde" }, x: 4, y: 3 },
-  { valg: { type: "mand" }, x: 7, y: 6 },
-  { valg: { type: "kvinde", frisure: { kvinde: "langt-boelget" }, farver: { kvinde: { bukser: "jeans" } } }, x: 5, y: 7 },
-  { valg: { type: "mand", farver: { mand: { bukser: "chinos" } } }, x: 10, y: 4 },
+  { valg: { type: "pige" }, x: 4, y: 3 },
+  { valg: { type: "dreng" }, x: 7, y: 6 },
+  { valg: { type: "pige" }, x: 5, y: 7 },
+  { valg: { type: "dreng" }, x: 10, y: 4 },
 ];
 
 // Receptionisten står bag disken
-const RECEPTIONIST = { valg: { type: "kvinde", frisure: { kvinde: "hoej-bun" } }, x: 5, y: 0, retning: "ned-venstre" };
+const RECEPTIONIST = { valg: { type: "pige" }, x: 5, y: 0, retning: "ned-venstre" };
 
 
 // =============================================================
