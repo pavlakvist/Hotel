@@ -57,3 +57,5 @@ goerFlytbar(document.getElementById("chatlog"), document.querySelector(".chatlog
 goerFlytbar(document.getElementById("nav-vindue"), document.querySelector(".nav-top"), "mit-hotel-vindue-nav");
 goerFlytbar(document.getElementById("venner-vindue"), document.querySelector(".venner-top"), "mit-hotel-vindue-venner");
 goerFlytbar(document.getElementById("besked-vindue"), document.querySelector(".besked-top"), "mit-hotel-vindue-besked");
+goerFlytbar(document.getElementById("shop-vindue"), document.querySelector("#shop-vindue .butik-top"), "mit-hotel-vindue-shop");
+goerFlytbar(document.getElementById("lager-vindue"), document.querySelector("#lager-vindue .butik-top"), "mit-hotel-vindue-lager");

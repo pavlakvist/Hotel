@@ -726,6 +726,7 @@ function drejValgt() {
 
 function samlOpValgt() {
   if (!valgtMoebel || rumValg === "hal") return;
+  if (typeof tilLager === "function") tilLager(valgtMoebel.type);   // den kommer i "Mine ting"
   moeblerIRummet = moeblerIRummet.filter(function (m) { return m !== valgtMoebel; });
   valgtMoebel = null;
   gem();
@@ -735,6 +736,7 @@ function samlOpValgt() {
 document.getElementById("knap-drej").addEventListener("click", drejValgt);
 document.getElementById("knap-saml").addEventListener("click", samlOpValgt);
 document.getElementById("knap-ryd").addEventListener("click", function () {
+  if (typeof tilLager === "function" && rumValg !== "hal") moeblerIRummet.forEach(function (m) { tilLager(m.type); });
   moeblerIRummet = [];
   valgtMoebel = null;
   gem();
@@ -871,6 +873,9 @@ const garderobe = { type: FIGUR.type, farver: { kvinde: {}, mand: {} }, frisure:
 try {
   const gemt = JSON.parse(localStorage.getItem(GARDEROBE_NOEGLE));
   if (gemt && alleFigurer()[gemt.type]) garderobe.type = gemt.type;
+  // den nye pige (23/10) afløser den gamle én gang
+  if (gemt && gemt.type === "kvinde" && !gemt.nyPige) garderobe.type = "pige";
+  garderobe.nyPige = true;
   if (gemt && gemt.farver) Object.assign(garderobe.farver, gemt.farver);
   if (gemt && gemt.ting) garderobe.ting = gemt.ting;
   if (gemt && gemt.frisure) garderobe.frisure = gemt.frisure;

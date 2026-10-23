@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hotelven – Hotellet</title>
-  <link rel="stylesheet" href="css/stil.css">
+  <link rel="stylesheet" href="css/stil.css?v=25">
 </head>
 <body>
   <header>
@@ -194,6 +194,50 @@
     </form>
   </div>
 
+  <!-- Shop (js/shop.js) -->
+  <div id="shop-vindue" class="butik" hidden>
+    <div class="butik-top"><span>🛒 Shop</span><b class="butik-penge"><img src="billeder/glimt.png" alt=""><i id="shop-glimt">0</i><img src="billeder/krystal.png" alt=""><i id="shop-stella">0</i></b><button id="shop-luk" title="Luk">✕</button></div>
+    <nav id="shop-faner" class="butik-faner">
+      <button data-fane="moebler" class="aktiv">Møbler</button>
+      <button data-fane="toej">Tøj</button>
+      <button data-fane="dyr">Kæledyr</button>
+      <button data-fane="items">Items</button>
+    </nav>
+    <div class="butik-krop">
+      <aside id="shop-kat" class="butik-kat"></aside>
+      <div id="shop-gitter" class="butik-gitter"></div>
+    </div>
+    <div id="shop-valgt" class="butik-valgt" hidden>
+      <canvas id="shop-valgt-billede" width="72" height="72"></canvas>
+      <div><b id="shop-valgt-navn"></b><span id="shop-valgt-pris"></span></div>
+      <button id="shop-koeb">Køb</button>
+    </div>
+  </div>
+
+  <!-- Mine ting / Lager (js/shop.js) -->
+  <div id="lager-vindue" class="butik" hidden>
+    <div class="butik-top"><span>📦 Mine ting / Lager</span><button id="lager-luk" title="Luk">✕</button></div>
+    <div class="butik-krop">
+      <aside id="lager-kat" class="butik-kat"></aside>
+      <div class="lager-midte">
+        <div class="lager-soeg">
+          <input id="lager-soeg" placeholder="🔍 Søg i dine ting …">
+          <select id="lager-sorter">
+            <option value="nyeste">Nyeste først</option>
+            <option value="aeldste">Ældste først</option>
+            <option value="navn">Navn A–Å</option>
+          </select>
+        </div>
+        <div id="lager-gitter" class="butik-gitter"></div>
+      </div>
+    </div>
+    <div id="lager-valgt" class="butik-valgt" hidden>
+      <canvas id="lager-valgt-billede" width="72" height="72"></canvas>
+      <div><b id="lager-valgt-navn"></b><span id="lager-valgt-antal"></span></div>
+      <button id="lager-saet">Sæt i mit værelse</button>
+    </div>
+  </div>
+
   <!-- Chatlog for alle (js/chatlog.js) -->
   <div id="chatlog">
     <div class="chatlog-top"><span>💬 Chatlog</span><button id="chatlog-luk" title="Skjul chatloggen">–</button></div>
@@ -256,6 +300,8 @@
     <button type="button" id="chat-farve-knap" class="chat-lille" title="Farve på din taleboble"></button>
     <button type="button" id="chat-nav-knap" class="chat-lille" title="Hotellets navigatør"><img class="knap-ikon" src="billeder/ikon-navigator.png" alt="Navigatør"></button>
     <button type="button" id="chat-venner-knap" class="chat-lille" title="Venneliste"><img class="knap-ikon" src="billeder/ikon-venner.png" alt="Venner"><span id="venner-ulaest" hidden></span></button>
+    <button type="button" id="chat-shop-knap" class="chat-lille" title="Shop"><img class="knap-ikon" src="billeder/ikon-shop.png" alt="Shop"></button>
+    <button type="button" id="chat-lager-knap" class="chat-lille" title="Mine ting"><img class="knap-ikon" src="billeder/ikon-lager.png" alt="Mine ting"></button>
     <button type="button" id="chat-log-knap" class="chat-lille" title="Vis eller skjul chatloggen">📜</button>
     <button type="button" id="chat-ejer-knap" class="chat-lille" title="Ejerpanel (mod tools)">🛡️</button>
     <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
@@ -274,26 +320,27 @@
   </form>
 
   <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->
-  <script src="js/indstillinger.js"></script>
-  <script src="js/moebel-katalog.js"></script>
-  <script src="js/figur.js"></script>
-  <script src="js/toej.js"></script>
-  <script src="js/toej-farver.js"></script>
-  <script src="js/frisurer.js"></script>
-  <script src="js/bukser.js"></script>
-  <script src="js/spil.js"></script>
-  <script src="js/velkomsthal.js"></script>
-  <script src="js/chat.js"></script>
-  <script src="js/garderobe.js"></script>
-  <script src="js/min-menu.js"></script>
-  <script src="js/ejer.js"></script>
-  <script src="js/glimt.js"></script>
-  <script src="js/kommandoer.js"></script>
-  <script src="js/gaest-menu.js"></script>
-  <script src="js/chatlog.js"></script>
-  <script src="js/venner.js"></script>
-  <script src="js/beskeder.js"></script>
-  <script src="js/navigator.js"></script>
-  <script src="js/flyt-vindue.js"></script>
+  <script src="js/indstillinger.js?v=26"></script>
+  <script src="js/moebel-katalog.js?v=24"></script>
+  <script src="js/figur.js?v=26"></script>
+  <script src="js/toej.js?v=24"></script>
+  <script src="js/toej-farver.js?v=24"></script>
+  <script src="js/frisurer.js?v=24"></script>
+  <script src="js/bukser.js?v=24"></script>
+  <script src="js/spil.js?v=26"></script>
+  <script src="js/velkomsthal.js?v=24"></script>
+  <script src="js/chat.js?v=24"></script>
+  <script src="js/garderobe.js?v=24"></script>
+  <script src="js/min-menu.js?v=24"></script>
+  <script src="js/ejer.js?v=24"></script>
+  <script src="js/glimt.js?v=24"></script>
+  <script src="js/kommandoer.js?v=24"></script>
+  <script src="js/gaest-menu.js?v=24"></script>
+  <script src="js/chatlog.js?v=24"></script>
+  <script src="js/venner.js?v=24"></script>
+  <script src="js/beskeder.js?v=24"></script>
+  <script src="js/shop.js?v=25"></script>
+  <script src="js/navigator.js?v=24"></script>
+  <script src="js/flyt-vindue.js?v=25"></script>
 </body>
 </html>

@@ -5,12 +5,12 @@
 //  Navnet kan udelades (:Glimt100), så får du det selv.
 //  (Indtil hotellet får en server, tjekkes "kun ejeren" i browseren.)
 // =============================================================
-const KOMMANDO = /^:(glimt|stella)([a-zæøå]*?)(\d+)$/i;
+const KOMMANDO = /^[:：]\s*(glimt|stella)\s*([a-zæøå]*?)\s*(\d+)$/i;
 
 document.addEventListener("submit", function (e) {
   if (e.target !== chatForm) return;
   const tekst = chatTekst.value.trim();
-  if (tekst[0] !== ":") return;
+  if (tekst[0] !== ":" && tekst[0] !== "：") return;
   const m = tekst.match(KOMMANDO);
   if (!m) return;                      // fx :) er en smiley, ikke en kommando
 

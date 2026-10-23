@@ -669,7 +669,7 @@ footer {
   z-index: 6;
   display: flex;
   gap: 6px;
-  width: min(520px, calc(100vw - 32px));
+  width: min(680px, calc(100vw - 32px));
   padding: 6px;
   border-radius: 14px;
   background: #3a2116;
@@ -2662,4 +2662,348 @@ footer {
   image-rendering: pixelated;
   vertical-align: middle;
   pointer-events: none;
+}
+
+/* ===== Shop og Mine ting ===== */
+.butik {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  margin-left: -280px;
+  z-index: 10;
+  width: 560px;
+  height: min(520px, calc(100vh - 170px));
+  display: flex;
+  flex-direction: column;
+  background: #fbf6ea;
+  border: 3px solid #4e7d4a;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  font: 13px Verdana, sans-serif;
+  color: #33402c;
+  overflow: hidden;
+}
+
+#lager-vindue {
+  margin-left: -250px;
+  top: 100px;
+}
+
+.butik[hidden] {
+  display: none;
+}
+
+.butik-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  background: #4e7d4a;
+  color: #fbf6ea;
+  font-weight: bold;
+  font-size: 15px;
+  user-select: none;
+}
+
+.butik-top > span {
+  flex: 1;
+}
+
+.butik-penge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #fbf6ea;
+  color: #4e7d4a;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.butik-penge img {
+  width: 15px;
+  height: 15px;
+  image-rendering: pixelated;
+}
+
+.butik-penge i {
+  font-style: normal;
+  margin-right: 4px;
+}
+
+.butik-top button {
+  margin: 0;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  background: #6b9c62;
+  color: #fff;
+  border: 1px solid #d9edcc;
+  border-radius: 5px;
+  font: bold 12px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+.butik-faner {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px 0;
+  background: #e2efd3;
+  border-bottom: 2px solid #4e7d4a;
+}
+
+.butik-faner button {
+  flex: 1;
+  margin: 0;
+  padding: 6px 4px;
+  background: #fbf6ea;
+  color: #4e7d4a;
+  border: 1px solid #9ccc8f;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  font: bold 13px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+.butik-faner button.aktiv {
+  background: #4e7d4a;
+  color: #fbf6ea;
+  border-color: #4e7d4a;
+}
+
+.butik-krop {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.butik-kat {
+  flex: none;
+  width: 150px;
+  padding: 6px;
+  background: #f3ecd9;
+  border-right: 1px solid #e0d6bb;
+  overflow-y: auto;
+}
+
+.butik-kat[hidden] {
+  display: none;
+}
+
+.butik-kat button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin: 0 0 3px;
+  padding: 6px 7px;
+  background: none;
+  color: #33402c;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: 12px Verdana, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.butik-kat button span {
+  width: 20px;
+  font-size: 15px;
+  text-align: center;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.butik-kat button b {
+  font-weight: bold;
+}
+
+.butik-kat button small {
+  display: block;
+  font-weight: normal;
+  font-size: 11px;
+  color: #7f8a6f;
+}
+
+.butik-kat button:hover {
+  background: #e2efd3;
+}
+
+.butik-kat button.aktiv {
+  background: #9ccc8f;
+  border-color: #4e7d4a;
+  font-weight: bold;
+}
+
+.butik-gitter {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  grid-auto-rows: 96px;
+  gap: 8px;
+  padding: 10px;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.butik-ting {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 4px;
+  background: #fff;
+  border: 2px solid #e0d6bb;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.butik-ting:hover {
+  border-color: #9ccc8f;
+  transform: translateY(-1px);
+}
+
+.butik-ting.aktiv {
+  border-color: #4e7d4a;
+  background: #eef7e6;
+  box-shadow: 0 0 0 2px #9ccc8f;
+}
+
+.butik-ting.stella {
+  background: linear-gradient(#fff, #f2e9ff);
+}
+
+.butik-pris {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font: bold 12px Verdana, sans-serif;
+  color: #4e7d4a;
+}
+
+.butik-pris img,
+.butik-valgt span img {
+  width: 14px;
+  height: 14px;
+  image-rendering: pixelated;
+  vertical-align: -2px;
+}
+
+.lager-tal {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  padding: 0 5px;
+  background: #4e7d4a;
+  color: #fbf6ea;
+  border-radius: 8px;
+  font: bold 10px/16px Verdana, sans-serif;
+}
+
+.butik-tom {
+  grid-column: 1 / -1;
+  margin: 50px 0 0;
+  text-align: center;
+  color: #7f8a6f;
+  line-height: 1.7;
+}
+
+.butik-tom small {
+  font-style: italic;
+  color: #a39a80;
+}
+
+.butik-valgt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #e2efd3;
+  border-top: 2px solid #9ccc8f;
+}
+
+.butik-valgt[hidden] {
+  display: none;
+}
+
+.butik-valgt canvas {
+  width: 56px;
+  height: 56px;
+  background: #fff;
+  border: 1px solid #cfe3c3;
+  border-radius: 8px;
+}
+
+.butik-valgt div {
+  flex: 1;
+  min-width: 0;
+}
+
+.butik-valgt b {
+  display: block;
+  font-size: 14px;
+}
+
+.butik-valgt span {
+  font-size: 12px;
+  color: #4e7d4a;
+}
+
+.butik-valgt > button {
+  margin: 0;
+  padding: 8px 16px;
+  background: linear-gradient(#bfe3b1, #9ccc8f 55%, #7fb56f);
+  color: #1f3a1c;
+  border: 2px solid #4e7d4a;
+  border-radius: 8px;
+  font: bold 13px Verdana, sans-serif;
+  cursor: pointer;
+}
+
+.butik-valgt > button:disabled {
+  background: #ece3cb;
+  color: #9a8f72;
+  border-color: #d6cbae;
+  cursor: default;
+}
+
+.lager-midte {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lager-soeg {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px 0;
+}
+
+.lager-soeg input,
+.lager-soeg select {
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #9ccc8f;
+  border-radius: 6px;
+  font: 12px Verdana, sans-serif;
+  color: #33402c;
+}
+
+.lager-soeg input {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .butik {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    margin-left: 0;
+  }
+  .butik-kat {
+    width: 110px;
+  }
 }

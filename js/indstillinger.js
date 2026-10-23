@@ -27,7 +27,7 @@ const RUM = {
 //  Figurerne er lavet af billeder i mappen "billeder" (se js/figur.js).
 const FIGUR = {
   navn: "Pavla",
-  type: "kvinde",          // "kvinde" eller "mand"
+  type: "pige",            // "pige", "kvinde" (den gamle pige) eller "mand"
   billede: "",             // et helt andet billede af figuren (bruges i stedet, hvis du skriver et her)
   fart: 3,                 // hvor mange felter figuren går pr. sekund
 };

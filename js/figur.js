@@ -10,6 +10,7 @@
 //
 //  gaa:    fire billeder pr. retning, som vises efter hinanden, når figuren går.
 //          Det første billede bruges også, når figuren står stille.
+//  staa:   (kan udelades) ét billede pr. retning af figuren, der står stille.
 //  sidder: ét billede pr. retning af figuren, der sidder.
 //  anker:  det punkt på billedet (i pixels), der skal stå på gulvet.
 //          For "sidder" er det numsen, som skal ramme sædet.
@@ -22,8 +23,46 @@
 //  Ligger navnet med "mand" først, bruger outfittet drengens tøj-farver.
 
 const FIGURER = {
+  pige: {
+    navn: "Pige",
+    skala: 0.83,
+    raekke: "alle",
+    // stående: ét billede pr. retning (fra den øverste række på dit ark)
+    staa: {
+      "ned": { fil: "billeder/figurer/pige-staa-ned.png", anker: [25.5, 157.0], ingenLag: true },
+      "ned-hoejre": { fil: "billeder/figurer/pige-staa-ned-hoejre.png", anker: [25.5, 157.0], ingenLag: true },
+      "hoejre": { fil: "billeder/figurer/pige-staa-hoejre.png", anker: [27.0, 154.0], ingenLag: true },
+      "op-hoejre": { fil: "billeder/figurer/pige-staa-op-hoejre.png", anker: [25.0, 154.0], ingenLag: true },
+      "op": { fil: "billeder/figurer/pige-staa-op.png", anker: [24.0, 155.0], ingenLag: true },
+      "op-venstre": { fil: "billeder/figurer/pige-staa-op-venstre.png", anker: [23.0, 154.0], ingenLag: true },
+      "venstre": { fil: "billeder/figurer/pige-staa-venstre.png", anker: [23.0, 154.0], ingenLag: true },
+      "ned-venstre": { fil: "billeder/figurer/pige-staa-ned-venstre.png", anker: [24.0, 157.0], ingenLag: true },
+    },
+    // gå: arket har gang forfra, højre, bagfra og venstre. De skrå retninger låner dem.
+    gaa: {
+      "ned": [{ fil: "billeder/figurer/pige-gaa-ned-1.png", anker: [29.5, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-ned-2.png", anker: [31.0, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-ned-3.png", anker: [26.0, 158.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-ned-4.png", anker: [32.0, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-ned-5.png", anker: [30.5, 157.0], ingenLag: true }],
+      "ned-hoejre": [{ fil: "billeder/figurer/pige-gaa-hoejre-1.png", anker: [35.5, 156.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-2.png", anker: [34.0, 153.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-3.png", anker: [29.5, 150.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-4.png", anker: [33.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-5.png", anker: [34.5, 151.0], ingenLag: true }],
+      "hoejre": [{ fil: "billeder/figurer/pige-gaa-hoejre-1.png", anker: [35.5, 156.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-2.png", anker: [34.0, 153.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-3.png", anker: [29.5, 150.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-4.png", anker: [33.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-hoejre-5.png", anker: [34.5, 151.0], ingenLag: true }],
+      "op-hoejre": [{ fil: "billeder/figurer/pige-gaa-op-1.png", anker: [31.5, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-2.png", anker: [20.5, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-3.png", anker: [32.0, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-4.png", anker: [25.0, 157.0], ingenLag: true }],
+      "op": [{ fil: "billeder/figurer/pige-gaa-op-1.png", anker: [31.5, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-2.png", anker: [20.5, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-3.png", anker: [32.0, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-4.png", anker: [25.0, 157.0], ingenLag: true }],
+      "op-venstre": [{ fil: "billeder/figurer/pige-gaa-op-1.png", anker: [31.5, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-2.png", anker: [20.5, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-3.png", anker: [32.0, 157.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-op-4.png", anker: [25.0, 157.0], ingenLag: true }],
+      "venstre": [{ fil: "billeder/figurer/pige-gaa-venstre-1.png", anker: [29.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-2.png", anker: [26.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-3.png", anker: [30.0, 150.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-4.png", anker: [25.0, 155.0], ingenLag: true }],
+      "ned-venstre": [{ fil: "billeder/figurer/pige-gaa-venstre-1.png", anker: [29.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-2.png", anker: [26.5, 154.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-3.png", anker: [30.0, 150.0], ingenLag: true }, { fil: "billeder/figurer/pige-gaa-venstre-4.png", anker: [25.0, 155.0], ingenLag: true }],
+    },
+    // sidde: stolene er fjernet; mod venstre er billedet spejlet
+    sidder: {
+      "ned": { fil: "billeder/figurer/pige-sidder-ned.png", anker: [42.0, 101.0], ingenLag: true },
+      "ned-hoejre": { fil: "billeder/figurer/pige-sidder-ned-hoejre.png", anker: [41.5, 104.0], ingenLag: true },
+      "hoejre": { fil: "billeder/figurer/pige-sidder-hoejre.png", anker: [41.5, 102.0], ingenLag: true },
+      "op-hoejre": { fil: "billeder/figurer/pige-sidder-ned-hoejre.png", anker: [41.5, 104.0], ingenLag: true },
+      "op": { fil: "billeder/figurer/pige-sidder-ned.png", anker: [42.0, 101.0], ingenLag: true },
+      "op-venstre": { fil: "billeder/figurer/pige-sidder-ned-venstre.png", anker: [27.5, 104.0], ingenLag: true },
+      "venstre": { fil: "billeder/figurer/pige-sidder-venstre.png", anker: [26.5, 102.0], ingenLag: true },
+      "ned-venstre": { fil: "billeder/figurer/pige-sidder-ned-venstre.png", anker: [27.5, 104.0], ingenLag: true },
+    },
+  },
   kvinde: {
-    navn: "Kvinde",
+    navn: "Pige (gammel)",
     skala: 0.87,
     raekke: "alle",                   // alle hendes gå-billeder vises efter hinanden
     gaa: {
@@ -125,7 +164,7 @@ function tegnMenneske(c, x, y, valg, retning, gaarTrin, sidde) {
   } else {
     const billeder = f.gaa[retning] || f.gaa.ned;
     if (gaarTrin === null) {
-      del = billeder[0];
+      del = (f.staa && f.staa[retning]) || billeder[0];
     } else if (f.raekke === "alle") {
       del = billeder[Math.floor(gaarTrin) % billeder.length];
     } else {
@@ -167,7 +206,7 @@ function figurDel(valg, del) {
   const b = figurBillede(del.fil);
   if (!klar(b)) return null;
   return { img: b, x: 0, y: 0, w: b.naturalWidth, h: b.naturalHeight, ax: del.anker[0], ay: del.anker[1],
-    lag: figurBillede(del.fil.replace("billeder/figurer/", "billeder/figurer/farvelag/")), lagX: 0, lagY: 0, noegle: del.fil,
+    lag: del.ingenLag ? null : figurBillede(del.fil.replace("billeder/figurer/", "billeder/figurer/farvelag/")), lagX: 0, lagY: 0, noegle: del.fil,
     knae: knaeFor(del.fil) };
 }
 
