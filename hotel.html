@@ -16,11 +16,18 @@
     <!-- Selve spillet bliver tegnet på dette "lærred" -->
     <canvas id="spil" width="900" height="600"></canvas>
 
-    <!-- Glimt: hotellets penge (js/glimt.js) -->
-    <div id="glimt" title="Glimt er hotellets penge. Dem kan du bruge i shoppen.">
-      <img src="billeder/glimt.png" alt="">
-      <b id="glimt-tal">0</b>
-      <span id="glimt-navn">Glimt</span>
+    <!-- Hotellets penge: Glimt og Krystaller (js/glimt.js) -->
+    <div id="glimt">
+      <span class="penge" title="Glimt er hotellets penge. Dem kan du bruge i shoppen.">
+        <img src="billeder/glimt.png" alt="">
+        <b id="glimt-tal">0</b>
+        <span id="glimt-navn">Glimt</span>
+      </span>
+      <span class="penge krystal" title="Krystaller er sjældne. Dem kan du bruge til de fineste ting i shoppen.">
+        <img src="billeder/krystal.png" alt="">
+        <b id="krystal-tal">0</b>
+        <span>Krystaller</span>
+      </span>
     </div>
 
     <aside id="panel" class="lukket">

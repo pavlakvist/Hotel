@@ -1,10 +1,13 @@
 // =============================================================
-//  Glimt ⭐ — hotellets penge
+//  Glimt ⭐ og Krystaller 💎 — hotellets penge
 //  Vises øverst til højre ved siden af panelet.
-//  Senere kan man bruge dem i en shop: brug  brugGlimt(pris)
-//  (giver true, hvis man havde råd) og  faaGlimt(antal).
+//  Glimt er de almindelige penge, Krystaller er de sjældne.
+//  Senere kan man bruge dem i en shop: brugGlimt(pris) og
+//  brugKrystaller(pris) giver true, hvis man havde råd.
+//  faaGlimt(antal) og faaKrystaller(antal) giver nogle.
 // =============================================================
 const GLIMT_NOEGLE = "mit-hotel-glimt";
+const KRYSTAL_NOEGLE = "mit-hotel-krystaller";
 const glimtBoks = document.getElementById("glimt");
 const glimtTal = document.getElementById("glimt-tal");
 
@@ -13,18 +16,42 @@ try { glimt = localStorage.getItem(GLIMT_NOEGLE); } catch (e) {}
 // nye spillere starter med det beløb, der står i ejerpanelet
 glimt = glimt === null ? system.startBeloeb : Math.max(0, parseInt(glimt, 10) || 0);
 
+let krystaller = null;
+try { krystaller = localStorage.getItem(KRYSTAL_NOEGLE); } catch (e) {}
+krystaller = krystaller === null ? system.startKrystaller : Math.max(0, parseInt(krystaller, 10) || 0);
+
 function visGlimt() {
   glimtTal.textContent = glimt.toLocaleString("da-DK");
   document.getElementById("glimt-navn").textContent = system.valutaNavn;
-  try { localStorage.setItem(GLIMT_NOEGLE, String(glimt)); } catch (e) {}
+  document.getElementById("krystal-tal").textContent = krystaller.toLocaleString("da-DK");
+  try {
+    localStorage.setItem(GLIMT_NOEGLE, String(glimt));
+    localStorage.setItem(KRYSTAL_NOEGLE, String(krystaller));
+  } catch (e) {}
+}
+
+function blink(boks) {
+  boks.classList.remove("blink");
+  void boks.offsetWidth;               // så animationen starter forfra
+  boks.classList.add("blink");
 }
 
 function faaGlimt(antal) {
   glimt = Math.max(0, glimt + antal);
   visGlimt();
-  glimtBoks.classList.remove("blink");
-  void glimtBoks.offsetWidth;          // så animationen starter forfra
-  glimtBoks.classList.add("blink");
+  blink(glimtBoks.querySelector(".penge"));
+}
+
+function faaKrystaller(antal) {
+  krystaller = Math.max(0, krystaller + antal);
+  visGlimt();
+  blink(glimtBoks.querySelector(".krystal"));
+}
+
+function brugKrystaller(pris) {
+  if (krystaller < pris) return false;
+  faaKrystaller(-pris);
+  return true;
 }
 
 function brugGlimt(pris) {

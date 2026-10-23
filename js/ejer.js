@@ -44,7 +44,7 @@ const SYSTEM_NOEGLE = "mit-hotel-system";
 
 let adminLog = hentListe(ADMINLOG_NOEGLE);
 let nyheder = hentListe(NYHED_NOEGLE);
-const system = { velkomst: "", filterTil: true, ekstraOrd: "", timeoutMin: 5, valutaNavn: "Glimt", startBeloeb: 100 };
+const system = { velkomst: "", filterTil: true, ekstraOrd: "", timeoutMin: 5, valutaNavn: "Glimt", startBeloeb: 100, startKrystaller: 5 };
 try { Object.assign(system, JSON.parse(localStorage.getItem(SYSTEM_NOEGLE) || "{}")); } catch (e) {}
 if (system.valutaNavn === "Mønter") system.valutaNavn = "Glimt";
 function gemSystem() {
@@ -453,28 +453,35 @@ function visRum() {
 
 // ----- 7. Valuta og økonomi -----
 function visValuta() {
-  ejerIndhold.innerHTML = "<div class='ejer-kort-raekke'><div class='ejer-kort'><span class='ikon'><img src='billeder/glimt.png' alt='' width='22'></span>" +
-    "<b>" + glimt.toLocaleString("da-DK") + "</b><span>Dine " + rens(system.valutaNavn) + "</span></div></div>" +
-    "<label class='ejer-felt'>Giv eller tag " + rens(system.valutaNavn) + " (minus tager)<input id='v-antal' type='number' value='100'></label>" +
-    "<button id='v-giv' class='lv-knap'>⭐ Giv til mig</button>" +
+  ejerIndhold.innerHTML = "<div class='ejer-kort-raekke'>" +
+    "<div class='ejer-kort'><span class='ikon'><img src='billeder/glimt.png' alt='' width='22'></span>" +
+    "<b>" + glimt.toLocaleString("da-DK") + "</b><span>Dine " + rens(system.valutaNavn) + "</span></div>" +
+    "<div class='ejer-kort'><span class='ikon'><img src='billeder/krystal.png' alt='' width='22'></span>" +
+    "<b>" + krystaller.toLocaleString("da-DK") + "</b><span>Dine Krystaller</span></div></div>" +
+    "<label class='ejer-felt'>Giv eller tag (minus tager)<input id='v-antal' type='number' value='100'></label>" +
+    "<div class='sp-handlinger'><button id='v-giv'>⭐ Giv " + rens(system.valutaNavn) + "</button><button id='v-giv-k'>💎 Giv Krystaller</button></div>" +
     "<h4>Indstillinger</h4>" +
     "<label class='ejer-felt'>Navn på valutaen<input id='v-navn' type='text' maxlength='20' value='" + rens(system.valutaNavn) + "'></label>" +
-    "<label class='ejer-felt'>Nye spillere starter med<input id='v-start' type='number' min='0' max='100000' value='" + system.startBeloeb + "'></label>" +
+    "<label class='ejer-felt'>Nye spillere starter med " + rens(system.valutaNavn) + "<input id='v-start' type='number' min='0' max='100000' value='" + system.startBeloeb + "'></label>" +
+    "<label class='ejer-felt'>Nye spillere starter med Krystaller<input id='v-start-k' type='number' min='0' max='100000' value='" + system.startKrystaller + "'></label>" +
     "<button id='v-gem' class='lv-knap'>Gem</button>" +
-    "<p class='ejer-info'>⭐ " + rens(system.valutaNavn) + " er hotellets penge. De kan bruges, når der kommer en shop. At give andre spillere " + rens(system.valutaNavn) + " kræver en server.</p>";
-  document.getElementById("v-giv").addEventListener("click", function () {
+    "<p class='ejer-info'>⭐ " + rens(system.valutaNavn) + " er hotellets almindelige penge, og 💎 Krystaller er de sjældne. Begge kan bruges, når der kommer en shop. At give andre spillere penge kræver en server.</p>";
+  function giv(hvad) {
     const antal = parseInt(document.getElementById("v-antal").value, 10) || 0;
     if (!antal) return;
-    faaGlimt(antal);
-    adminSkriv((antal > 0 ? "Gav " : "Tog ") + Math.abs(antal) + " " + system.valutaNavn + (antal > 0 ? " til " : " fra ") + FIGUR.navn);
+    if (hvad === "Krystaller") faaKrystaller(antal); else faaGlimt(antal);
+    adminSkriv((antal > 0 ? "Gav " : "Tog ") + Math.abs(antal) + " " + hvad + (antal > 0 ? " til " : " fra ") + FIGUR.navn);
     visValuta();
-  });
+  }
+  document.getElementById("v-giv").addEventListener("click", function () { giv(system.valutaNavn); });
+  document.getElementById("v-giv-k").addEventListener("click", function () { giv("Krystaller"); });
   document.getElementById("v-gem").addEventListener("click", function () {
     system.valutaNavn = document.getElementById("v-navn").value.trim() || "Glimt";
     system.startBeloeb = Math.max(0, +document.getElementById("v-start").value || 0);
+    system.startKrystaller = Math.max(0, +document.getElementById("v-start-k").value || 0);
     gemSystem();
     visGlimt();
-    adminSkriv("Valuta: " + system.valutaNavn + ", start " + system.startBeloeb);
+    adminSkriv("Valuta: " + system.valutaNavn + ", start " + system.startBeloeb + " og " + system.startKrystaller + " Krystaller");
     visValuta();
   });
 }

@@ -1449,7 +1449,23 @@ footer {
   color: #f7c65a;
 }
 
-#glimt.blink img {
+#glimt .penge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#glimt .krystal {
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid #7a4313;
+}
+
+#glimt .krystal b {
+  color: #8cdcfa;
+}
+
+#glimt .blink img {
   animation: glimt-blink 0.6s;
 }
 
