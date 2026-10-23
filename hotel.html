@@ -91,7 +91,16 @@
     <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
     <button type="submit">Send</button>
     <div id="chat-smileyer" class="chat-valg" hidden></div>
-    <div id="chat-farver" class="chat-valg farver" hidden></div>
+    <div id="chat-farver" class="chat-valg boble-vindue" hidden>
+      <h3>Din taleboble</h3>
+      <canvas id="boble-forhaand"></canvas>
+      <h4>Boblens farve</h4>
+      <div id="boble-farver" class="farve-gitter"></div>
+      <h4>Navnets farve</h4>
+      <div id="navne-farver" class="farve-gitter"></div>
+      <h4>Pynt</h4>
+      <div id="boble-pynt" class="pynt-gitter"></div>
+    </div>
   </form>
 
   <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->
