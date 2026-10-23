@@ -143,6 +143,31 @@
     </div>
   </div>
 
+  <!-- Byt med en anden gæst (js/gaest-menu.js) -->
+  <div id="byt-vindue" class="lille-vindue" hidden>
+    <div class="lv-boks">
+      <div class="lv-top"><h2 id="byt-titel">Byt</h2><button id="byt-luk" class="su-luk" title="Luk">✕</button></div>
+      <div class="byt-indhold">
+        <div class="byt-side">
+          <h3>Du giver</h3>
+          <label><img src="billeder/glimt.png" alt=""> Glimt <input id="byt-glimt" type="number" min="0" step="50" value="0"></label>
+          <label><img src="billeder/krystal.png" alt=""> Krystaller <input id="byt-krystal" type="number" min="0" value="0"></label>
+        </div>
+        <div class="byt-pil">⇄</div>
+        <div class="byt-side">
+          <h3 id="byt-hende">Gæsten giver</h3>
+          <p id="byt-faar"></p>
+        </div>
+      </div>
+      <p class="byt-kurs">50 Glimt = 1 Krystal</p>
+      <p id="byt-svar" class="byt-svar"></p>
+      <div class="byt-knapper">
+        <button id="byt-ok" class="lv-knap">🤝 Byt</button>
+        <button id="byt-annuller" class="lv-knap graa">Annuller</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Ejerpanel / mod tools (js/ejer.js) -->
   <div id="ejer-vindue" hidden>
     <div class="ejer-boks">
@@ -203,6 +228,7 @@
   <script src="js/min-menu.js"></script>
   <script src="js/ejer.js"></script>
   <script src="js/glimt.js"></script>
+  <script src="js/gaest-menu.js"></script>
   <script src="js/flyt-vindue.js"></script>
 </body>
 </html>

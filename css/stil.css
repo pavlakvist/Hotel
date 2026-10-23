@@ -1472,3 +1472,83 @@ footer {
 @keyframes glimt-blink {
   50% { transform: scale(1.4) rotate(20deg); }
 }
+
+/* ===== Byt med en anden gæst ===== */
+.byt-indhold {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px 16px 0;
+}
+
+.byt-side {
+  flex: 1;
+  padding: 10px;
+  background: #fff;
+  border: 2px solid #b5d0e6;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.byt-side h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: #2f4a63;
+}
+
+.byt-side label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.byt-side input {
+  width: 70px;
+  margin-left: auto;
+  padding: 4px 6px;
+  border: 2px solid #b5d0e6;
+  border-radius: 6px;
+  font: 13px Verdana, sans-serif;
+}
+
+.byt-side img {
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+
+.byt-side p {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.byt-pil {
+  align-self: center;
+  font-size: 24px;
+  color: #4f7698;
+}
+
+.byt-kurs,
+.byt-svar {
+  margin: 8px 16px 0;
+  font-size: 12px;
+  color: #6b8296;
+}
+
+.byt-svar {
+  color: #b33f3b;
+  font-weight: bold;
+}
+
+.byt-knapper {
+  display: flex;
+  gap: 8px;
+  padding: 4px 16px 16px;
+}
+
+.lv-knap.graa {
+  background: #e5f0f9;
+  border-color: #b5d0e6;
+}

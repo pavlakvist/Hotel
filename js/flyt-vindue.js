@@ -52,3 +52,4 @@ goerFlytbar(document.getElementById("ejer-vindue"), document.querySelector(".eje
 goerFlytbar(document.querySelector("#profil-vindue .lv-boks"), document.querySelector("#profil-vindue .lv-top"), "mit-hotel-vindue-profil");
 goerFlytbar(document.querySelector("#rapport-vindue .lv-boks"), document.querySelector("#rapport-vindue .lv-top"), "mit-hotel-vindue-rapport");
 goerFlytbar(document.querySelector("#garderobe-vindue .su-boks"), document.querySelector("#garderobe-vindue .su-top"), "mit-hotel-vindue-garderobe");
+goerFlytbar(document.querySelector("#byt-vindue .lv-boks"), document.querySelector("#byt-vindue .lv-top"), "mit-hotel-vindue-byt");

@@ -4,6 +4,7 @@
 // =============================================================
 const minMenu = document.getElementById("min-menu");
 const minMenuKnapper = document.getElementById("min-menu-knapper");
+let menuHvem = figur;     // hvem menuen står over (dig eller en anden gæst, se js/gaest-menu.js)
 const profilVindue = document.getElementById("profil-vindue");
 const rapportVindue = document.getElementById("rapport-vindue");
 
@@ -24,8 +25,8 @@ try {
 // Små tegn, der svæver op over hovedet (fx 👋 når man vinker)
 const svaevere = [];
 
-function svaev(tegn) {
-  const hoved = hovedPaa(figur);
+function svaev(tegn, hvem) {
+  const hoved = hovedPaa(hvem || figur);
   svaevere.push({ tegn: tegn, x: hoved.x + (Math.random() - 0.5) * 30, y: hoved.y + 20, alder: 0 });
 }
 
@@ -123,6 +124,7 @@ function findPlads() {
 }
 
 function aabnMinMenu() {
+  menuHvem = figur;
   visHovedmenu();
   minMenu.hidden = false;
   placerMinMenu();
@@ -136,7 +138,7 @@ function lukMinMenu() {
 function placerMinMenu() {
   if (minMenu.hidden) return;
   const r = laerred.getBoundingClientRect();
-  const hoved = hovedPaa(figur);
+  const hoved = hovedPaa(menuHvem);
   const x = r.left + hoved.x * ZOOM;
   const y = r.top + (hoved.y + 22) * ZOOM;
   minMenu.style.left = Math.max(80, Math.min(window.innerWidth - 80, x)) + "px";
