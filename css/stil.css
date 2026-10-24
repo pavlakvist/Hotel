@@ -3549,3 +3549,49 @@ footer {
 .yt-aaben { display: inline-block; background: #fff; color: #3d6b39; border-color: #9ccc8f; }
 .yt-aaben[hidden] { display: none; }
 #yt-tekst.fejl { color: #b23b3b; font-weight: bold; }
+
+
+/* ----- Elevatoren 🛗 (js/elevator.js) – mørkerødt træ og guld ----- */
+#elevator {
+  position: fixed; z-index: 14;
+  left: max(10px, calc(50% - 170px)); top: max(10px, calc(50% - 220px));
+  width: 300px;
+  background: linear-gradient(#6b1c16, #4a120e); border: 3px solid #e0a73c; border-radius: 14px;
+  box-shadow: 0 6px 0 #2a0a07, 0 14px 30px rgba(0,0,0,0.45);
+  font: 13px Verdana, sans-serif; color: #fbe6c2;
+}
+#elevator[hidden], #elevator-tur[hidden] { display: none; }
+.elev-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 2px solid #e0a73c; color: #f7c65a; }
+.elev-top button { width: 26px; height: 26px; border: 2px solid #e0a73c; border-radius: 7px; background: #3a0f0c; color: #f7c65a; cursor: pointer; }
+.elev-etager { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 4px; max-height: 60vh; overflow-y: auto; }
+.elev-etage { display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 10px; padding: 7px 10px; text-align: left;
+  border: 2px solid #b98153; border-radius: 10px; background: #3a0f0c; color: #fbe6c2; cursor: pointer; font: 13px Verdana, sans-serif; }
+.elev-etage:hover { border-color: #f7c65a; background: #4d1510; }
+.elev-etage.valgt { border-color: #f7c65a; }
+.elev-nr { grid-row: span 2; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(#fff1c4, #e0a73c); color: #3a0f0c; font-weight: bold; box-shadow: 0 0 6px rgba(247,198,90,0.6); }
+.elev-etage small { color: #d9b48a; font-size: 11px; }
+.elev-etage.laast { opacity: 0.7; }
+.elev-etage.laast .elev-nr { background: #6b5a52; box-shadow: none; }
+.elev-etage.hemmelig { border-color: #9b7fd1; background: #2b1838; }
+.elev-rum { display: flex; flex-direction: column; gap: 4px; padding: 0 0 4px 44px; }
+.elev-rum button { padding: 5px 9px; border: 2px solid #b98153; border-radius: 8px; background: #fbe6c2; color: #4a120e; font: bold 12px Verdana, sans-serif; cursor: pointer; text-align: left; }
+.elev-rum button:disabled { opacity: 0.55; cursor: default; }
+.elev-tekst { margin: 4px 12px 10px; min-height: 1em; font-size: 12px; color: #f7c65a; }
+#elevator-tur { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+.et-doer { position: absolute; top: 0; bottom: 0; width: 50%; background:
+  linear-gradient(90deg, rgba(0,0,0,0.15), transparent 20%, transparent 80%, rgba(0,0,0,0.2)),
+  repeating-linear-gradient(90deg, #7a2a20 0 18px, #6b231b 18px 20px); border: 6px solid #e0a73c; transition: transform 0.75s ease-in-out; }
+.et-v { left: 0; transform: translateX(-100%); border-right-width: 3px; }
+.et-h { right: 0; transform: translateX(100%); border-left-width: 3px; }
+#elevator-tur.lukket .et-v, #elevator-tur.lukket .et-h { transform: translateX(0); }
+#elevator-tur.aaben .et-v { transform: translateX(-100%); }
+#elevator-tur.aaben .et-h { transform: translateX(100%); }
+.et-skaerm { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); padding: 10px 22px; border: 4px solid #e0a73c; border-radius: 12px;
+  background: #1a0d08; color: #f7c65a; text-align: center; font: bold 28px Verdana, sans-serif; opacity: 0; transition: opacity 0.3s; display: flex; flex-direction: column; align-items: center; }
+.et-skaerm small { font-size: 13px; color: #fbe6c2; }
+#et-pil { font-size: 18px; animation: et-blink 0.5s steps(2) infinite; }
+@keyframes et-blink { 50% { opacity: 0.3; } }
+#elevator-tur.lukket .et-skaerm { opacity: 1; transition-delay: 0.6s; }
+.elev-noegler { margin-top: 14px; }
+.elev-noegler li { display: flex; align-items: center; gap: 8px; }

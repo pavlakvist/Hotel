@@ -21,7 +21,7 @@ const HAL_MOEBLER = [
   { type: "lobby-16", x: 0, y: 2, spejlet: true },
   { type: "lobby-02", x: 0, y: 4, spejlet: true },
   { type: "lobby-31", x: 1, y: 5 },
-  { type: "lobby-07", x: 0, y: 8, spejlet: true },
+  { type: "lobby-07", x: 0, y: 9, spejlet: true },   // elevatoren står ved y 6–7 (js/elevator.js)
   { type: "lobby-05", x: 0, y: 11, spejlet: true },
   { type: "lobby-11", x: 0, y: 14, spejlet: true },
   { type: "reception-07", x: 0, y: 17, spejlet: true },
@@ -149,14 +149,27 @@ function lavForm(formId, b, d) {
   return function (x, y) { return f.felt(x, y, b, d); };
 }
 
+// Den hemmelige etage (elevatoren, js/elevator.js). Kræver en nøgle fra events – ejeren kommer altid ind.
+const HEMMELIG_RUM = { id: "hemmelig", navn: "Den hemmelige etage", ejer: EJER_NAVNE[0], form: "ring", bredde: 12, dybde: 12,
+  vaeg: "#3f2d5c", gulv1: "#5a4680", gulv2: "#4b3a6e", vaegHoejde: 170, doer: null };
+const HEMMELIG_MOEBLER = [
+  { type: "lobby-16", x: 0, y: 0 }, { type: "lobby-11", x: 3, y: 0 }, { type: "lobby-11", x: 8, y: 0 }, { type: "lobby-16", x: 11, y: 0 },
+  { type: "lobby-16", x: 0, y: 11, spejlet: true }, { type: "lobby-11", x: 0, y: 6, spejlet: true },
+  { type: "taepper-03", x: 6, y: 2 }, { type: "lobby-26", x: 2, y: 6 }, { type: "lobby-24", x: 10, y: 9 },
+];
+
 function vaerelseInfo(id) {
   if (id === "mit") return RUM_FARVER;
+  if (id === "hemmelig") return HEMMELIG_RUM;
   return mineRum.find(function (r) { return r.id === id; }) || RUM_FARVER;
 }
 function vaerelseMoebler(id) {
   if (id === "mit") return mitVaerelse;
   if (!andreVaerelser[id]) {
-    try { andreVaerelser[id] = JSON.parse(localStorage.getItem("mit-hotel-rum-" + id) || "[]"); } catch (e) { andreVaerelser[id] = []; }
+    try { andreVaerelser[id] = JSON.parse(localStorage.getItem("mit-hotel-rum-" + id) || "null"); } catch (e) { andreVaerelser[id] = null; }
+    if (!Array.isArray(andreVaerelser[id])) {
+      andreVaerelser[id] = id === "hemmelig" ? HEMMELIG_MOEBLER.map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; }) : [];
+    }
   }
   return andreVaerelser[id];
 }
@@ -183,7 +196,7 @@ function skiftRum(navn) {
   }
   if (navn === "vaerelse") {
     aktivtVaerelse = naesteVaerelse || (rumValg === "hal" ? "mit" : aktivtVaerelse);
-    if (aktivtVaerelse !== "mit" && !mineRum.some(function (r) { return r.id === aktivtVaerelse; })) aktivtVaerelse = "mit";
+    if (aktivtVaerelse !== "mit" && aktivtVaerelse !== "hemmelig" && !mineRum.some(function (r) { return r.id === aktivtVaerelse; })) aktivtVaerelse = "mit";
   }
   naesteVaerelse = null;
   const v = vaerelseInfo(aktivtVaerelse);
