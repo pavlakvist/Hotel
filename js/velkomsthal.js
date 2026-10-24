@@ -6,49 +6,68 @@
 
 // Møblerne i velkomsthallen.  spejlet: true = møblet vender mod højre
 const HAL_MOEBLER = [
-  // langs højre væg (bagerst til højre)
-  { type: "reception-17", x: 1, y: 0 },
-  { type: "lobby-11", x: 2, y: 0 },
-  { type: "reception-16", x: 3, y: 0 },
-  { type: "lobby-11", x: 10, y: 0 },
-  { type: "reception-12", x: 11, y: 0 },
-  { type: "reception-07", x: 12, y: 0 },
-  { type: "lobby-16", x: 13, y: 0 },
+  // langs højre væg (bagerst), på hver side af døren
+  { type: "lobby-16", x: 1, y: 0 },
+  { type: "reception-17", x: 5, y: 0 },
+  { type: "lobby-11", x: 6, y: 0 },
+  { type: "reception-16", x: 7, y: 0 },
+  { type: "lobby-11", x: 9, y: 0 },
+  { type: "lobby-11", x: 14, y: 0 },
+  { type: "reception-12", x: 16, y: 0 },
+  { type: "reception-07", x: 17, y: 0 },
+  { type: "lobby-11", x: 20, y: 0 },
+  { type: "lobby-16", x: 23, y: 0 },
   // langs venstre væg
-  { type: "lobby-16", x: 0, y: 1, spejlet: true },
-  { type: "lobby-02", x: 0, y: 3, spejlet: true },
-  { type: "lobby-31", x: 1, y: 4 },
-  { type: "lobby-07", x: 0, y: 5, spejlet: true },
-  { type: "lobby-05", x: 0, y: 7, spejlet: true },
-  { type: "lobby-11", x: 0, y: 9, spejlet: true },
-  { type: "reception-07", x: 0, y: 10, spejlet: true },
-  // sofagruppen i midten
-  { type: "taepper-08", x: 6, y: 6 },
-  { type: "lobby-12", x: 6, y: 4 },
-  { type: "lobby-15", x: 6, y: 5 },
-  { type: "lobby-03", x: 5, y: 5 },
-  { type: "lobby-20", x: 7, y: 4 },
+  { type: "lobby-16", x: 0, y: 2, spejlet: true },
+  { type: "lobby-02", x: 0, y: 4, spejlet: true },
+  { type: "lobby-31", x: 1, y: 5 },
+  { type: "lobby-07", x: 0, y: 8, spejlet: true },
+  { type: "lobby-05", x: 0, y: 11, spejlet: true },
+  { type: "lobby-11", x: 0, y: 14, spejlet: true },
+  { type: "reception-07", x: 0, y: 17, spejlet: true },
+  { type: "lobby-02", x: 0, y: 20, spejlet: true },
+  { type: "lobby-11", x: 0, y: 23, spejlet: true },
+  // den store sofagruppe i midten
+  { type: "taepper-08", x: 11, y: 11 },
+  { type: "lobby-12", x: 11, y: 9 },
+  { type: "lobby-15", x: 11, y: 10 },
+  { type: "lobby-03", x: 10, y: 10 },
+  { type: "lobby-20", x: 12, y: 9 },
+  // sofagruppe nummer to, forrest til venstre
+  { type: "taepper-08", x: 6, y: 18 },
+  { type: "lobby-12", x: 6, y: 16 },
+  { type: "lobby-15", x: 6, y: 17 },
+  { type: "lobby-03", x: 5, y: 17 },
+  { type: "lobby-20", x: 7, y: 16 },
   // hyggekrog til højre
-  { type: "taepper-03", x: 10, y: 3 },
-  { type: "lobby-23", x: 10, y: 7 },
-  { type: "lobby-26", x: 12, y: 5 },
-  { type: "lobby-24", x: 13, y: 7 },
-  { type: "lobby-30", x: 12, y: 9 },
-  { type: "lobby-01", x: 13, y: 10 },
-  // forrest til venstre
-  { type: "lobby-08", x: 3, y: 9 },
-  { type: "lobby-32", x: 2, y: 8 },
-  { type: "lobby-29", x: 8, y: 10 },
+  { type: "taepper-03", x: 19, y: 6 },
+  { type: "lobby-23", x: 19, y: 10 },
+  { type: "lobby-26", x: 21, y: 8 },
+  { type: "lobby-24", x: 22, y: 10 },
+  { type: "lobby-30", x: 21, y: 12 },
+  { type: "lobby-01", x: 22, y: 13 },
+  // hyggekrog forrest til højre
+  { type: "taepper-03", x: 17, y: 18 },
+  { type: "lobby-23", x: 17, y: 21 },
+  { type: "lobby-26", x: 20, y: 19 },
+  { type: "lobby-24", x: 21, y: 21 },
+  { type: "lobby-30", x: 19, y: 22 },
+  { type: "lobby-01", x: 22, y: 22 },
+  // forrest
+  { type: "lobby-08", x: 3, y: 21 },
+  { type: "lobby-32", x: 2, y: 20 },
+  { type: "lobby-29", x: 13, y: 22 },
+  { type: "lobby-29", x: 9, y: 23 },
 ];
 
 // Hvor stor velkomsthallen er (dit værelse har sin egen størrelse i indstillinger.js)
-const HAL_STOERRELSE = { bredde: 14, dybde: 11 };
+const HAL_STOERRELSE = { bredde: 24, dybde: 24, vaegHoejde: 240 };
 
 // Felter, man ikke kan gå på, selvom der ikke står et møbel (fx hvis et stort møbel fylder flere felter)
 const HAL_BLOKERET = [];
 
 // Døren til værelserne (på højre væg) og feltet foran den
-const HAL_DOER = { fra: 6.1, til: 6.9, hoejde: 80, felt: { x: 6, y: 0 } };
+const HAL_DOER = { fra: 11.1, til: 11.9, hoejde: 100, felt: { x: 11, y: 0 } };
 
 // Farver i velkomsthallen
 const HAL_FARVER = {
@@ -62,10 +81,10 @@ const HAL_FARVER = {
 
 // De andre gæster
 const HAL_GAESTER = [
-  { navn: "Ida", valg: { type: "pige" }, x: 2, y: 6 },
-  { navn: "Noah", valg: { type: "dreng" }, x: 7, y: 2 },
-  { navn: "Freja", valg: { type: "pige" }, x: 7, y: 8 },
-  { navn: "Oliver", valg: { type: "dreng" }, x: 11, y: 5 },
+  { navn: "Ida", valg: { type: "pige" }, x: 4, y: 12 },
+  { navn: "Noah", valg: { type: "dreng" }, x: 13, y: 4 },
+  { navn: "Freja", valg: { type: "pige" }, x: 13, y: 15 },
+  { navn: "Oliver", valg: { type: "dreng" }, x: 17, y: 9 },
 ];
 HAL_GAESTER.forEach(function (g) {
   g.rute = [];
@@ -176,7 +195,7 @@ function skiftRum(navn) {
   RUM.bredde = navn === "hal" ? HAL_STOERRELSE.bredde : v.bredde;
   RUM.dybde = navn === "hal" ? HAL_STOERRELSE.dybde : v.dybde;
   RUM.form = navn === "hal" ? null : v.felter ? feltForm(v.felter) : v.form ? lavForm(v.form, v.bredde, v.dybde) : null;
-  RUM.vaegHoejde = navn === "hal" ? null : v.vaegHoejde || null;
+  RUM.vaegHoejde = navn === "hal" ? HAL_STOERRELSE.vaegHoejde : v.vaegHoejde || null;
   RUM.doer = navn === "hal" ? null : v.doer || null;
   document.body.classList.toggle("i-hallen", navn === "hal");
 
@@ -231,6 +250,7 @@ function halVaegStykke(a, b, h1, h2, farve) {
 }
 
 function halVaeg(a, b, laengde, moerk) {
+  const VAEG_HOEJDE = RUM.vaegHoejde || 110;   // hallens vægge er højere (HAL_STOERRELSE)
   halVaegStykke(a, b, 0, VAEG_HOEJDE, HAL_FARVER.tapet);
   for (let i = 0; i < laengde * 2; i += 2) {
     const t1 = i / (laengde * 2), t2 = (i + 1) / (laengde * 2);
@@ -271,7 +291,7 @@ function tegnHalVaegge() {
   // skiltet over døren
   const s = punkt((HAL_DOER.fra + HAL_DOER.til) / 2, 0);
   ctx.save();
-  ctx.translate(s.x, s.y - 96);
+  ctx.translate(s.x, s.y - 128);
   ctx.transform(1, 0.5, 0, 1, 0, 0);
   ctx.fillStyle = "#3a1d0e";
   ctx.fillRect(-62, -13, 124, 24);

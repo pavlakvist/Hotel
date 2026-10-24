@@ -442,6 +442,8 @@ function tegnFigur(c) {
   if (typeof EJERE !== "undefined" && EJERE.indexOf(FIGUR.navn) >= 0 && billedeKlar(ejerSkilt)) {
     const sw = ejerSkilt.naturalWidth * 0.85, sh = ejerSkilt.naturalHeight * 0.85;
     c.drawImage(ejerSkilt, Math.round(p.x - sw / 2), Math.round(p.y - hoejde - 30 - sh), sw, sh);
+  } else if (typeof rolleSkilt === "function" && rolleSkilt(FIGUR.navn)) {
+    tegnRolleSkilt(rolleSkilt(FIGUR.navn), p.x, p.y - hoejde - 28);   // skilt fra Ansættelse (js/ansaettelse.js)
   }
 
   // profilbilledet (frisuren fra garderoben) til venstre for navnet
@@ -529,23 +531,18 @@ function diamant(x, y) {
 }
 
 function tegnVaegge() {
+  // væggene tegnes felt for felt med pixel-tapet, så de passer til figurerne
   const vh = RUM.vaegHoejde || VAEG_HOEJDE;   // væggens højde kan ændres med :floor (js/gulvplan.js)
-  const op = function (p) { return { x: p.x, y: p.y - vh }; };
-  if (RUM.form) { tegnFormVaegge(op); tegnDoer(); return; }
-  const hjoerne = punkt(0, 0);
-  const venstre = punkt(0, RUM.dybde);
-  const hoejre = punkt(RUM.bredde, 0);
-  polygon(ctx, [venstre, hjoerne, op(hjoerne), op(venstre)], nuance(RUM.vaegFarve, 0.85));
-  polygon(ctx, [hjoerne, hoejre, op(hoejre), op(hjoerne)], RUM.vaegFarve);
-  // en lys kant øverst på væggene
-  ctx.strokeStyle = nuance(RUM.vaegFarve, 1.25);
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(op(venstre).x, op(venstre).y);
-  ctx.lineTo(op(hjoerne).x, op(hjoerne).y);
-  ctx.lineTo(op(hoejre).x, op(hoejre).y);
-  ctx.stroke();
-  ctx.lineWidth = 1;
+  for (let y = 0; y < RUM.dybde; y++) {
+    for (let x = 0; x < RUM.bredde; x++) {
+      if (erIRummet(x, y)) { pixelVaeg(punkt(x, y + 1), punkt(x, y), vh, true); break; }
+    }
+  }
+  for (let x = 0; x < RUM.bredde; x++) {
+    for (let y = 0; y < RUM.dybde; y++) {
+      if (erIRummet(x, y)) { pixelVaeg(punkt(x, y), punkt(x + 1, y), vh, false); break; }
+    }
+  }
   tegnDoer();
 }
 
@@ -568,29 +565,133 @@ function tegnDoer() {
   ctx.fill();
 }
 
-// Vægge til rum med en særlig form: de følger gulvets bagerste kant
-function tegnFormVaegge(op) {
-  const kant = nuance(RUM.vaegFarve, 1.25);
-  function stykke(a, b, farve) {
-    polygon(ctx, [a, b, op(b), op(a)], farve);
-    ctx.strokeStyle = kant;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(op(a).x, op(a).y);
-    ctx.lineTo(op(b).x, op(b).y);
-    ctx.stroke();
-    ctx.lineWidth = 1;
-  }
-  for (let y = 0; y < RUM.dybde; y++) {
-    for (let x = 0; x < RUM.bredde; x++) {
-      if (erIRummet(x, y)) { stykke(punkt(x, y + 1), punkt(x, y), nuance(RUM.vaegFarve, 0.85)); break; }
+// =============================================================
+//  Pixel-gulv og pixel-tapet
+//  Gulv og vægge tegnes som små pixel-billeder (1 pixel = 1 spil-punkt,
+//  ligesom figurerne), så rummet passer til pixel-figurerne.
+//  Billederne laves én gang for hver farve og huskes.
+// =============================================================
+const PIXEL_MOENSTRE = {};
+
+// et fast "tilfældigt" tal mellem 0 og 1 for hver pixel (samme hver gang)
+function pixelStoej(x, y, s) {
+  const n = Math.sin(x * 12.9898 + y * 78.233 + s * 37.719) * 43758.5453;
+  return n - Math.floor(n);
+}
+function hexRGB(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function rgbTone(rgb, f) {
+  return [Math.min(255, rgb[0] * f), Math.min(255, rgb[1] * f), Math.min(255, rgb[2] * f)];
+}
+// er farven brun/træ-agtig? så bliver gulvet til planker
+function erTrae(hex) {
+  const c = hexRGB(hex), mx = Math.max.apply(null, c), mn = Math.min.apply(null, c);
+  const maetning = mx ? (mx - mn) / mx : 0;
+  return c[0] >= c[1] && c[1] >= c[2] && maetning > 0.2 && maetning < 0.6 && c[0] - c[1] < 70;
+}
+
+// Et gulvfelt: 64 x 32 pixels, rudeformet
+function gulvMoenster(farve1, farve2, variant) {
+  const noegle = "g" + farve1 + farve2 + variant;
+  if (PIXEL_MOENSTRE[noegle]) return PIXEL_MOENSTRE[noegle];
+  const c = document.createElement("canvas");
+  c.width = FLISE_B; c.height = FLISE_H;
+  const g = c.getContext("2d");
+  const data = g.createImageData(c.width, c.height);
+  const trae = erTrae(farve1);
+  const base = hexRGB(variant % 2 && !trae ? farve2 : farve1);
+  const anden = hexRGB(farve2);
+  for (let py = 0; py < c.height; py++) {
+    for (let px = 0; px < c.width; px++) {
+      const sx = (px + 0.5 - FLISE_B / 2) / (FLISE_B / 2), sy = (py + 0.5) / (FLISE_H / 2);
+      const fx = (sx + sy) / 2, fy = (sy - sx) / 2;      // hvor på feltet (0–1)
+      if (fx < -0.01 || fy < -0.01 || fx > 1.01 || fy > 1.01) continue;
+      let rgb, f = 1;
+      if (trae) {
+        // fire planker pr. felt med fuger og årer
+        const nr = Math.min(3, Math.floor(fy * 4));
+        const iPlanke = fy * 4 - nr;
+        rgb = (nr + variant) % 2 ? anden : base;
+        f = 0.95 + pixelStoej(nr, variant, 3) * 0.1;
+        f += (pixelStoej(Math.floor(fx * 18), nr + variant * 4, 1) - 0.5) * 0.08;   // årer
+        if (iPlanke < 0.1) f *= 0.8;                                             // fuge
+        else if (iPlanke < 0.24) f *= 1.06;                                        // lys kant
+        const samling = (0.35 + nr * 0.27 + variant * 0.19) % 1;
+        if (Math.abs(fx - samling) < 0.025) f *= 0.82;                             // plankens ende
+      } else {
+        // fliser med en lille 3D-kant
+        rgb = base;
+        f = 0.97 + (pixelStoej(px, py, variant) - 0.5) * 0.06;
+        if (fx < 0.06 || fy < 0.06) f *= 1.08;
+        else if (fx > 0.94 || fy > 0.94) f *= 0.84;
+      }
+      f += (pixelStoej(px, py, 9) - 0.5) * 0.04;
+      const t = rgbTone(rgb, f), i = (py * c.width + px) * 4;
+      data.data[i] = t[0]; data.data[i + 1] = t[1]; data.data[i + 2] = t[2]; data.data[i + 3] = 255;
     }
   }
-  for (let x = 0; x < RUM.bredde; x++) {
-    for (let y = 0; y < RUM.dybde; y++) {
-      if (erIRummet(x, y)) { stykke(punkt(x, y), punkt(x + 1, y), RUM.vaegFarve); break; }
+  g.putImageData(data, 0, 0);
+  PIXEL_MOENSTRE[noegle] = c;
+  return c;
+}
+
+// Et stykke væg (ét felt bredt): tapet med striber, fodpanel og en kant foroven
+function vaegMoenster(farve, hoejde, moerk) {
+  const noegle = "v" + farve + hoejde + moerk;
+  if (PIXEL_MOENSTRE[noegle]) return PIXEL_MOENSTRE[noegle];
+  const B = FLISE_B / 2;
+  const c = document.createElement("canvas");
+  c.width = B; c.height = hoejde;
+  const g = c.getContext("2d");
+  const data = g.createImageData(B, hoejde);
+  const tapet = rgbTone(hexRGB(farve), moerk ? 0.84 : 1);
+  const panel = rgbTone([122, 74, 38], moerk ? 0.85 : 1);
+  const panelH = 9, kantH = 4;
+  for (let py = 0; py < hoejde; py++) {
+    for (let px = 0; px < B; px++) {
+      let rgb, f = 1;
+      if (py < kantH) {
+        rgb = tapet; f = py === 0 ? 0.6 : 1.22;                              // kanten foroven
+      } else if (py >= hoejde - panelH) {
+        rgb = panel;                                                          // fodpanel af træ
+        const r = py - (hoejde - panelH);
+        f = r === 0 ? 0.65 : r === 1 ? 1.25 : r === panelH - 1 ? 0.7 : 1;
+        f += (pixelStoej(Math.floor(px / 3), r, 4) - 0.5) * 0.08;
+      } else {
+        rgb = tapet;
+        const s = px % 8;
+        f = s === 0 ? 0.9 : s === 1 || s === 2 ? 1.05 : 1;                   // striber
+        if ((px + py) % 16 === 4 && s > 3 && s < 7 && (py >> 3) % 2) f *= 1.07;   // lille mønster
+        f += (pixelStoej(px, py, 7) - 0.5) * 0.035;
+        if (py === hoejde - panelH - 1) f *= 0.8;                             // skygge over panelet
+      }
+      if (px === 0) f *= 0.88;                                                // samling mellem felterne
+      const t = rgbTone(rgb, f), i = (py * B + px) * 4;
+      data.data[i] = t[0]; data.data[i + 1] = t[1]; data.data[i + 2] = t[2]; data.data[i + 3] = 255;
     }
   }
+  g.putImageData(data, 0, 0);
+  PIXEL_MOENSTRE[noegle] = c;
+  return c;
+}
+
+// Tegn ét stykke væg fra a til b (a er det venstre punkt på skærmen)
+function pixelVaeg(a, b, vh, venstreVaeg) {
+  const bil = vaegMoenster(RUM.vaegFarve, Math.round(vh), venstreVaeg);
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.transform((b.x - a.x) / bil.width, (b.y - a.y) / bil.width, 0, 1, a.x, a.y - vh);
+  ctx.drawImage(bil, 0, 0, bil.width + 0.4, bil.height);   // + lidt, så der ikke kommer sprækker
+  ctx.restore();
+  // mørk streg langs toppen, ligesom omridset på figurerne
+  ctx.strokeStyle = "rgba(40,24,14,0.55)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y - vh);
+  ctx.lineTo(b.x, b.y - vh);
+  ctx.stroke();
 }
 
 function tegnGulv() {
@@ -602,8 +703,13 @@ function tegnGulv() {
         const p = punkt(x, y);
         ctx.drawImage(gulvBillede, p.x - FLISE_B / 2, p.y, FLISE_B, FLISE_H);
       } else {
-        const farve = (x + y) % 2 === 0 ? RUM.gulvFarve1 : RUM.gulvFarve2;
-        polygon(ctx, diamant(x, y), farve, "rgba(0,0,0,0.08)");
+        // pixel-gulv (se gulvMoenster). Først en flade i samme farve, så der ikke kommer sprækker.
+        polygon(ctx, diamant(x, y), (x + y) % 2 && !erTrae(RUM.gulvFarve1) ? RUM.gulvFarve2 : RUM.gulvFarve1);
+        const p = punkt(x, y);
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(gulvMoenster(RUM.gulvFarve1, RUM.gulvFarve2, (x * 3 + y * 5) % 4), p.x - FLISE_B / 2, p.y, FLISE_B, FLISE_H);
+        ctx.restore();
       }
     }
   }
