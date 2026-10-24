@@ -205,7 +205,8 @@ function visElevator() {
     k.className = "elev-etage" + (e.laast ? " laast" : "") + (e.hemmelig ? " hemmelig" : "") + (elevValgtEtage === e.id ? " valgt" : "");
     const her = e.rum.length === 1 && erHer(e.rum[0]);
     k.innerHTML = "<span class='elev-nr'>" + e.knap + "</span><b>" + e.ikon + " " + e.navn + "</b><small>" +
-      (e.laast ? "🔒 Kræver en nøgle fra events" : her ? "Du er her" : e.hemmelig ? "🗝️ Åben for dig" : e.rum.length > 1 ? e.rum.length + " rum" : rens(e.rum[0].navn)) + "</small>";
+      (e.laast ? "🔒 Kræver en nøgle fra events" : her ? "Du er her" : e.hemmelig ? "🗝️ Åben for dig" : e.rum.length > 1 ? e.rum.length + " rum" : rens(e.rum[0].navn)) +
+      (e.hemmelig ? "" : " · 👤 " + e.rum.reduce(function (sum, r) { return sum + antalIRum(r); }, 0)) + "</small>";
     k.addEventListener("click", function () {
       if (e.laast) { document.getElementById("elev-tekst").textContent = "🔒 Den hemmelige etage er låst. Nøglen kan vindes til events ✨"; return; }
       if (e.rum.length === 1) { if (!her) koerTil(e, e.rum[0]); return; }
@@ -218,7 +219,7 @@ function visElevator() {
       under.className = "elev-rum";
       e.rum.forEach(function (r) {
         const rk = document.createElement("button");
-        rk.textContent = (r.laast ? "🔒 " : "") + r.navn + (erHer(r) ? " (du er her)" : "");
+        rk.textContent = (r.laast ? "🔒 " : "") + r.navn + " · 👤 " + antalIRum(r) + (erHer(r) ? " (du er her)" : "");
         rk.disabled = r.laast || erHer(r);
         rk.title = r.laast ? "Rummet er låst. Brug navigatøren, hvis det har en kode." : "";
         rk.addEventListener("click", function () { koerTil(e, r); });

@@ -3647,3 +3647,8 @@ footer {
 
 /* Ingen forbindelse til serveren (js/rigtige-spillere.js): prikken bliver rød */
 #online-tal.ingen-server .online-prik { background: #c0392b; box-shadow: none; }
+
+/* Søgefelt i Ejerpanel → Ansættelse (js/rigtige-ejer.js) */
+.an-spillere button[hidden] { display: none; }
+.an-soeg { padding: 6px 9px; margin-bottom: 4px; border: 2px solid #d6e8c8; border-radius: 9px; font: 12px Verdana, sans-serif; background: #fff; }
+.an-soeg:focus { outline: none; border-color: #4e7d4a; }
