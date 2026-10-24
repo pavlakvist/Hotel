@@ -7,6 +7,7 @@
 // =============================================================
 const ANSAT_NOEGLE = "mit-hotel-ansatte";
 const SKILTE = [
+  { id: "mod", navn: "Mod", tekst: "Moderator. Holder øje med chatten og hjælper med at holde ro." },
   { id: "staff", navn: "Staff", tekst: "Personalet. Holder hotellet sikkert og hyggeligt." },
   { id: "hjaelper", navn: "Hjælper", tekst: "Hjælper nye gæster og svarer på spørgsmål." },
   { id: "vip", navn: "VIP", tekst: "Særlige fordele. Eksklusivt skilt." },
