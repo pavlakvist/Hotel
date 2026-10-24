@@ -3529,3 +3529,23 @@ footer {
 .an-liste img { height: 26px; }
 .an-liste span { color: #7a8a70; font-size: 12px; }
 .cl-skilt { height: 15px; vertical-align: -3px; margin-right: 3px; }
+
+
+/* ----- YouTube 📺 (js/youtube.js) ----- */
+#youtube-vindue {
+  position: fixed; z-index: 14;
+  left: max(10px, calc(50% - 260px)); top: max(10px, calc(50% - 250px));
+  width: min(520px, calc(100vw - 20px));
+  background: #fbf6ea; border: 3px solid #4e7d4a; border-radius: 14px;
+  box-shadow: 0 6px 0 #33562f, 0 14px 30px rgba(0,0,0,0.35);
+  font: 13px Verdana, sans-serif; color: #33402c;
+}
+#youtube-vindue[hidden] { display: none; }
+.yt-skaerm { border: 8px solid #2b2b2b; border-radius: 12px; background: #000; aspect-ratio: 16 / 9; overflow: hidden; }
+.yt-skaerm iframe { width: 100%; height: 100%; border: 0; display: block; }
+.yt-form { display: flex; gap: 6px; }
+.yt-form input { flex: 1; padding: 6px 9px; border: 2px solid #d6e8c8; border-radius: 9px; font: 13px Verdana, sans-serif; }
+.yt-form button, .yt-aaben { padding: 6px 12px; border: 2px solid #33562f; border-radius: 9px; background: #4e7d4a; color: #fff; font: bold 12px Verdana, sans-serif; cursor: pointer; text-decoration: none; }
+.yt-aaben { display: inline-block; background: #fff; color: #3d6b39; border-color: #9ccc8f; }
+.yt-aaben[hidden] { display: none; }
+#yt-tekst.fejl { color: #b23b3b; font-weight: bold; }
