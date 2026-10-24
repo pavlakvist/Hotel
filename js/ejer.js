@@ -135,8 +135,67 @@ sig = function (hvem, navn, tekst) {
 };
 
 // Bannede gæster er væk fra hallen, og gæster med timeout kan ikke skrive
-function erBannet(navn) { return !!(sanktioner[navn] && sanktioner[navn].bannet); }
-function harTimeout(navn) { return !!(sanktioner[navn] && sanktioner[navn].timeoutTil > Date.now()); }
+// Straffe: advarsel, timeout (kan ikke skrive), frys (kan hverken gå eller skrive) og ban.
+// Hver straf har et "til"-tidspunkt; ban kan også være for altid (bannet: true).
+function erBannet(navn) { const d = sanktioner[navn]; return !!(d && (d.bannet || d.bannetTil > Date.now())); }
+function erFrosset(navn) { const d = sanktioner[navn]; return !!(d && d.frysTil > Date.now()); }
+function harTimeout(navn) { const d = sanktioner[navn]; return !!(d && (d.timeoutTil > Date.now() || erFrosset(navn))); }
+function erAdvaret(navn) { const d = sanktioner[navn]; return !!(d && d.advarselTil > Date.now()); }
+// Hvor lang tid der er tilbage, fx "4:05" eller "2 t 15 min"
+function tidTilbage(til) {
+  const sek = Math.max(0, Math.ceil((til - Date.now()) / 1000));
+  if (sek >= 3600) return Math.floor(sek / 3600) + " t " + Math.floor(sek % 3600 / 60) + " min";
+  return Math.floor(sek / 60) + ":" + String(sek % 60).padStart(2, "0");
+}
+// Varighederne man kan vælge (i minutter)
+const STRAF_TIDER = [[1, "1 min"], [5, "5 min"], [10, "10 min"], [15, "15 min"], [30, "30 min"], [60, "1 time"],
+  [120, "2 timer"], [180, "3 timer"], [360, "6 timer"], [720, "12 timer"], [1440, "24 timer"]];
+let valgtStrafTid = system.timeoutMin;
+
+// Frosne gæster står helt stille
+const opdaterHalFoer = opdaterHal;
+opdaterHal = function (dt) {
+  HAL_GAESTER.forEach(function (g) {
+    if (erFrosset(g.navn)) { g.rute = []; g.vent = 1; g.frosset = true; }
+    else if (g.frosset) { g.frosset = false; g.vent = 0.5; }
+  });
+  opdaterHalFoer(dt);
+  HAL_GAESTER.forEach(function (g) { if (g.frosset && !g.sidder) g.vent = 1; });
+};
+
+// Straffe vises over hovedet på gæsterne, så alle kan se det
+function strafSkilt(navn) {
+  const d = sanktioner[navn];
+  if (!d) return null;
+  if (erFrosset(navn)) return { tekst: "🧊 Frosset " + tidTilbage(d.frysTil), farve: "#3f7fb0" };
+  if (d.timeoutTil > Date.now()) return { tekst: "🔇 Timeout " + tidTilbage(d.timeoutTil), farve: "#c98a1c" };
+  if (erAdvaret(navn)) return { tekst: "⚠️ Advaret", farve: "#c0392b" };
+  return null;
+}
+const tegnHalGaestFoer = tegnHalGaest;
+tegnHalGaest = function (g) {
+  tegnHalGaestFoer(g);
+  const skilt = strafSkilt(g.navn);
+  if (!skilt) return;
+  const p = punkt(g.x + 0.5, g.y + 0.5);
+  p.x += gaestPlads(g);
+  const sidde = g.sidder ? MOEBEL_TYPER[g.saede.type].saede : 0;
+  const hoejde = figurHoejde(g.valg) - 10 + (g.sidder ? -sidde + 10 : 0);
+  const y = p.y - hoejde - 30;
+  ctx.font = "bold 11px Verdana, sans-serif";
+  ctx.textAlign = "center";
+  const w = ctx.measureText(skilt.tekst).width + 14;
+  ctx.fillStyle = skilt.farve;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(p.x - w / 2, y - 14, w, 18, 9); else ctx.rect(p.x - w / 2, y - 14, w, 18);
+  ctx.fill();
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(skilt.tekst, p.x, y);
+};
 
 const halTingFoer = halTing;
 halTing = function (ting) {
@@ -336,14 +395,16 @@ function visSpillere() {
   const s = spillere.find(function (x) { return x.navn === valgtSpiller; });
   const d = spillerData(s.navn);
   const mig = s.navn === FIGUR.navn;
-  const status = d.bannet ? "⛔ Bannet" : harTimeout(s.navn) ? "⏱️ Timeout til " + tidTekst(d.timeoutTil) : erOnline(s.navn) ? "🟢 Online" : "⚪ Offline";
+  const status = d.bannet ? "⛔ Bannet for altid" : erBannet(s.navn) ? "⛔ Bannet i " + tidTilbage(d.bannetTil) :
+    erFrosset(s.navn) ? "🧊 Frosset i " + tidTilbage(d.frysTil) : harTimeout(s.navn) ? "🔇 Timeout i " + tidTilbage(d.timeoutTil) :
+    erAdvaret(s.navn) ? "⚠️ Advaret" : erOnline(s.navn) ? "🟢 Online" : "⚪ Offline";
   const beskeder = chatLog.filter(function (l) { return l.navn === s.navn; });
   const omHam = rapporter().filter(function (r) { return r.hvem === s.navn; });
   const sidst = senestSet(s.navn);
 
   let html = "<div class='ejer-spillere'><aside><input id='sp-soeg' type='text' placeholder='Slå spiller op …'><ul id='sp-liste'>" +
     spillere.map(function (x) {
-      const prik = erBannet(x.navn) ? "🔴" : harTimeout(x.navn) ? "🟡" : erOnline(x.navn) ? "🟢" : "⚪";
+      const prik = erBannet(x.navn) ? "⛔" : erFrosset(x.navn) ? "🧊" : harTimeout(x.navn) ? "🔇" : erAdvaret(x.navn) ? "⚠️" : erOnline(x.navn) ? "🟢" : "⚪";
       return "<li><button data-navn='" + rens(x.navn) + "'" + (x.navn === s.navn ? " class='valgt'" : "") + ">" + prik + " " + rens(x.navn) + "</button></li>";
     }).join("") + "</ul></aside><div class='sp-detaljer'>" +
     "<h3>" + rens(s.navn) + " <small>" + s.hvad + "</small></h3>" +
@@ -356,11 +417,29 @@ function visSpillere() {
   if (mig) {
     html += "<p class='tom'>Du kan ikke straffe dig selv 😄</p>";
   } else {
-    html += "<div class='sp-handlinger'><input id='sp-grund' type='text' maxlength='80' placeholder='Grund (fx grimt sprog)'>" +
-      "<button data-handling='Advarsel'>⚠️ Advar</button>" +
-      "<button data-handling='Timeout'>⏱️ Timeout " + system.timeoutMin + " min</button>" +
-      (d.bannet ? "<button data-handling='Ophæv ban' class='groen'>✅ Ophæv ban</button>" : "<button data-handling='Ban' class='roed'>⛔ Ban</button>") +
-      "</div>";
+    html += "<h4>Straf " + rens(s.navn) + "</h4><div class='sp-straf'>" +
+      "<input id='sp-grund' type='text' maxlength='80' placeholder='Grund (fx grimt sprog)'>" +
+      "<label class='sp-tid'>Hvor længe<select id='sp-tid'>" + STRAF_TIDER.map(function (t) {
+        return "<option value='" + t[0] + "'" + (t[0] === valgtStrafTid ? " selected" : "") + ">" + t[1] + "</option>";
+      }).join("") + "</select></label>" +
+      "<label class='sp-altid'><input id='sp-altid' type='checkbox'> Ban for altid</label>" +
+      "<div class='sp-straf-knapper'>" +
+      "<button data-handling='Advarsel' title='Et ⚠️ over hovedet, så alle kan se det'>⚠️ Advar</button>" +
+      "<button data-handling='Timeout' title='Kan ikke skrive i chatten'>🔇 Timeout</button>" +
+      "<button data-handling='Frys' title='Punish: kan hverken gå eller skrive'>🧊 Frys</button>" +
+      "<button data-handling='Ban' class='roed' title='Bliver smidt ud af hotellet'>⛔ Ban</button>" +
+      "</div></div>";
+    // de straffe der gælder lige nu, med en knap til at ophæve dem
+    const aktive = [];
+    if (erAdvaret(s.navn)) aktive.push(["advarselTil", "⚠️ Advarsel", tidTilbage(d.advarselTil)]);
+    if (d.timeoutTil > Date.now()) aktive.push(["timeoutTil", "🔇 Timeout", tidTilbage(d.timeoutTil)]);
+    if (erFrosset(s.navn)) aktive.push(["frysTil", "🧊 Frosset", tidTilbage(d.frysTil)]);
+    if (d.bannet) aktive.push(["bannet", "⛔ Ban", "for altid"]);
+    else if (erBannet(s.navn)) aktive.push(["bannetTil", "⛔ Ban", tidTilbage(d.bannetTil)]);
+    html += "<h4>Aktive straffe</h4>" + liste(aktive.map(function (a) {
+      return "<b>" + a[1] + "</b><span>" + (a[2] === "for altid" ? "for altid" : a[2] + " tilbage") + "</span>" +
+        "<button class='lille groen' data-ophaev='" + a[0] + "'>✅ Ophæv</button>";
+    }), "Ingen lige nu");
   }
 
   html += "<h4>Tidligere straffe</h4>" + liste(d.historik.slice().reverse().map(function (h) {
@@ -387,7 +466,14 @@ function visSpillere() {
     });
   });
   ejerIndhold.querySelectorAll("[data-handling]").forEach(function (k) {
-    k.addEventListener("click", function () { straf(s.navn, k.dataset.handling, document.getElementById("sp-grund").value.trim()); });
+    k.addEventListener("click", function () {
+      valgtStrafTid = +document.getElementById("sp-tid").value;
+      const altid = k.dataset.handling === "Ban" && document.getElementById("sp-altid").checked;
+      straf(s.navn, k.dataset.handling, document.getElementById("sp-grund").value.trim(), altid ? 0 : valgtStrafTid);
+    });
+  });
+  ejerIndhold.querySelectorAll("[data-ophaev]").forEach(function (k) {
+    k.addEventListener("click", function () { ophaevStraf(s.navn, k.dataset.ophaev); });
   });
   document.getElementById("sp-omdoeb").addEventListener("click", function () {
     omdoeb(s.navn, document.getElementById("sp-nytnavn").value.trim());
@@ -431,22 +517,41 @@ function omdoeb(gammelt, nyt) {
   visFane();
 }
 
-function straf(navn, handling, grund) {
+// minutter = 0 betyder "for altid" (kun ban)
+function straf(navn, handling, grund, minutter) {
   const d = spillerData(navn);
-  d.historik.push({ handling: handling, grund: grund, tid: Date.now() });
+  const til = Date.now() + minutter * 60000;
+  const varighed = minutter ? (STRAF_TIDER.find(function (t) { return t[0] === minutter; }) || [0, minutter + " min"])[1] : "for altid";
+  d.historik.push({ handling: handling + " (" + varighed + ")", grund: grund, tid: Date.now() });
   const g = HAL_GAESTER.find(function (x) { return x.navn === navn; });
-  if (handling === "Advarsel" && g) {
-    setTimeout(function () { gaestSkriverFoer(g, "Undskyld! Det skal ikke ske igen 😳"); }, 300);
+  if (handling === "Advarsel") {
+    d.advarselTil = til;
+    if (g) setTimeout(function () { gaestSkriverFoer(g, "Undskyld! Det skal ikke ske igen 😳"); }, 300);
   }
-  if (handling === "Timeout") d.timeoutTil = Date.now() + system.timeoutMin * 60000;
+  if (handling === "Timeout") d.timeoutTil = til;
+  if (handling === "Frys") {
+    d.frysTil = til;
+    if (g) { g.rute = []; g.skriver = false; }
+  }
   if (handling === "Ban") {
-    d.bannet = true;
-    if (g) { g.saede = null; g.sidder = false; g.skriver = false; }
+    if (minutter) d.bannetTil = til; else d.bannet = true;
+    if (g) { g.saede = null; g.sidder = false; g.skriver = false; g.rute = []; }
   }
-  if (handling === "Ophæv ban") d.bannet = false;
   gemSanktioner();
-  adminSkriv(handling + " til " + navn + (grund ? " (" + grund + ")" : ""));
-  besked.textContent = handling + ": " + navn + (grund ? " (" + grund + ")" : "");
+  adminSkriv(handling + " til " + navn + " (" + varighed + ")" + (grund ? ": " + grund : ""));
+  besked.textContent = handling + ": " + navn + " (" + varighed + ")" + (grund ? ": " + grund : "");
+  visFane();
+}
+
+function ophaevStraf(navn, felt) {
+  const d = spillerData(navn);
+  d[felt] = felt === "bannet" ? false : 0;
+  if (felt === "bannetTil" || felt === "bannet") { d.bannet = false; d.bannetTil = 0; }
+  const navne = { advarselTil: "Advarsel", timeoutTil: "Timeout", frysTil: "Frys", bannet: "Ban", bannetTil: "Ban" };
+  d.historik.push({ handling: "Ophævet: " + navne[felt], grund: "", tid: Date.now() });
+  gemSanktioner();
+  adminSkriv("Ophævede " + navne[felt] + " for " + navn);
+  besked.textContent = navne[felt] + " ophævet for " + navn + " ✅";
   visFane();
 }
 

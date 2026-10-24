@@ -3206,3 +3206,37 @@ footer {
 @media (max-width: 900px) {
   #banner { max-width: calc(100vw - 32px); top: 64px; }
 }
+
+/* ----- Straffe i ejerpanelet → Spillere (js/ejer.js) ----- */
+.sp-straf {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid #9ccc8f;
+  border-radius: 10px;
+  background: #fffdf6;
+}
+.sp-straf input[type="text"], .sp-straf select {
+  padding: 6px 8px;
+  border: 2px solid #cfe3c7;
+  border-radius: 8px;
+  font: 13px Verdana, sans-serif;
+  background: #fff;
+}
+.sp-tid { display: flex; align-items: center; gap: 8px; font: bold 12px Verdana, sans-serif; color: #3d6b39; }
+.sp-tid select { flex: 1; }
+.sp-altid { display: flex; align-items: center; gap: 6px; font: 12px Verdana, sans-serif; color: #7a3b38; }
+.sp-straf-knapper { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sp-straf-knapper button {
+  padding: 7px 8px;
+  background: #e7f3e2;
+  color: #2f4d2c;
+  border: 2px solid #9ccc8f;
+  border-radius: 8px;
+  font: bold 12px Verdana, sans-serif;
+  cursor: pointer;
+}
+.sp-straf-knapper button:hover { background: #d6ebcd; }
+.sp-straf-knapper button.roed { background: #d9534f; border-color: #b33f3b; color: #fff; }
+#ejer-indhold button.lille.groen { background: #5cb85c; border-color: #449d44; color: #fff; }
