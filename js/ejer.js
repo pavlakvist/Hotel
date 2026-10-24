@@ -19,7 +19,7 @@ HAL_GAESTER.forEach(function (g) {
   g.oprNavn = g.navn;
   if (nyeNavne[g.navn]) g.navn = nyeNavne[g.navn];
 });
-if (nyeNavne.__mig) {
+if (nyeNavne.__mig && !aktivKonto()) {
   if (EJERE.indexOf(FIGUR.navn) >= 0 && EJERE.indexOf(nyeNavne.__mig) < 0) EJERE.push(nyeNavne.__mig);
   FIGUR.navn = nyeNavne.__mig;
 }
@@ -406,8 +406,12 @@ function omdoeb(gammelt, nyt) {
   }
   if (gammelt === FIGUR.navn) {
     if (EJERE.indexOf(gammelt) >= 0 && EJERE.indexOf(nyt) < 0) EJERE.push(nyt);   // du er stadig ejer
+    if (aktivKonto()) {
+      if (!omdoebKonto(gammelt, nyt)) { besked.textContent = "Navnet " + nyt + " er taget af en anden profil."; return; }
+    } else {
+      nyeNavne.__mig = nyt;
+    }
     FIGUR.navn = nyt;
-    nyeNavne.__mig = nyt;
   } else {
     const g = HAL_GAESTER.find(function (x) { return x.navn === gammelt; });
     if (!g) return;

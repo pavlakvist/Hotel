@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hotelven – Dit hjem, dit hotel, din historie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/lobby.css?v=32">
+</head>
+<body>
+
+  <!-- ===== Menuen øverst ===== -->
+  <nav class="menu">
+    <a href="index.html" class="logo">
+      <img src="billeder/forside/krone.png" alt="">
+      <span>Hotelven</span>
+    </a>
+    <a href="hotel.html" id="menu-tjek-ind" class="knap guld lille">Tjek ind</a>
+  </nav>
+
+  <!-- ===== Overskrift ===== -->
+  <header class="overskrift">
+    <p class="lille-tekst">Dit hjem · Dit hotel · Din historie</p>
+    <h1>Velkommen til Hotelven</h1>
+  </header>
+
+  <!-- ===== Den levende lobby ===== -->
+  <main class="lobby-ramme">
+    <canvas id="lobby" width="760" height="470" aria-label="Lobbyen i Hotelven, hvor gæsterne går rundt"></canvas>
+    <div id="lobby-tip" class="tip">Tjek ind her</div>
+  </main>
+
+  <div class="bund">
+    <!-- ikke logget ind -->
+    <div id="ud-knapper" class="konto-knapper">
+      <button type="button" id="knap-log-ind" class="knap guld stor">Log ind <span class="pil">&rarr;</span></button>
+      <button type="button" id="knap-opret" class="knap lys">Opret mig</button>
+    </div>
+    <!-- logget ind -->
+    <div id="ind-knapper" class="konto-knapper" hidden>
+      <a href="hotel.html" class="knap guld stor">Tjek ind <span class="pil">&rarr;</span></a>
+      <p class="hjaelp">Logget ind som <b id="konto-hvem"></b> · <button type="button" id="knap-log-ud" class="link-knap">Log ud</button></p>
+    </div>
+  </div>
+
+  <!-- Log ind / Opret mig (js/konto-forside.js) -->
+  <div id="konto-vindue" class="konto-baggrund" hidden>
+    <div class="konto-boks" role="dialog" aria-labelledby="konto-titel">
+      <button type="button" id="konto-luk" class="konto-luk" title="Luk">✕</button>
+      <img src="billeder/forside/krone.png" alt="" class="konto-krone">
+      <h2 id="konto-titel">Log ind</h2>
+      <p id="konto-undertekst" class="konto-under"></p>
+      <form id="konto-form" autocomplete="on">
+        <label>Brugernavn<input id="konto-navn" type="text" maxlength="16" autocomplete="username" required></label>
+        <label>Adgangskode<input id="konto-kode" type="password" maxlength="64" required></label>
+        <label id="konto-kode2-felt">Gentag adgangskode<input id="konto-kode2" type="password" maxlength="64" autocomplete="new-password"></label>
+        <p id="konto-fejl" class="konto-fejl" role="alert"></p>
+        <button type="submit" id="konto-send" class="knap guld lille">Log ind</button>
+      </form>
+      <p id="konto-skift" class="konto-skift"></p>
+      <p class="konto-note">Din profil gemmes på denne computer.</p>
+    </div>
+  </div>
+
+  <script src="js/indstillinger.js?v=32"></script>
+  <script src="js/konto.js?v=32"></script>
+  <script src="js/moebel-katalog.js"></script>
+  <script src="js/figur.js?v=31"></script>
+  <script src="js/frisurer.js"></script>
+  <script src="js/bukser.js"></script>
+  <script src="js/lobby.js?v=32"></script>
+  <script src="js/konto-forside.js?v=32"></script>
+</body>
+</html>

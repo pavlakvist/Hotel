@@ -1,0 +1,310 @@
+/* =============================================================
+   Hotelven — forsiden med Pavlas billede af hotellet
+   Farverne står samlet her øverst, så de er nemme at ændre.
+   De varme guld- og brune farver er taget fra HOTEL-skiltet.
+   ============================================================= */
+:root {
+  --guld-lys: #ffe08a;
+  --guld: #f5b938;
+  --guld-moerk: #c9821c;
+  --brun: #6b3f1f;
+  --brun-moerk: #3f2412;
+  --creme: #fff6e3;
+  --creme-moerk: #f1dfb8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: "Nunito", "Trebuchet MS", sans-serif;
+  color: var(--brun-moerk);
+  background: var(--brun-moerk);
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+
+/* ----- Billedet af hotellet ----- */
+.hotel-billede {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: url("../billeder/forside/hotel-forside.jpg") center 30% / cover no-repeat;
+  animation: kom-ind 1.2s ease-out;
+}
+
+/* lidt mørkere i bunden, så boksen kan læses */
+.hotel-billede::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 60%, rgba(40, 22, 10, 0.55));
+}
+
+@keyframes kom-ind {
+  from { transform: scale(1.06); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* små glimt der blinker hen over billedet */
+.glimt-lag {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 12% 22%, #fff, transparent),
+    radial-gradient(2px 2px at 78% 14%, #fff, transparent),
+    radial-gradient(3px 3px at 64% 40%, #fff8d0, transparent),
+    radial-gradient(2px 2px at 30% 48%, #fff, transparent),
+    radial-gradient(3px 3px at 88% 52%, #fff8d0, transparent),
+    radial-gradient(2px 2px at 46% 8%, #fff, transparent);
+  animation: blink 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes blink {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+
+
+/* ----- Menuen ----- */
+.menu {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 32px;
+  background: linear-gradient(rgba(63, 36, 18, 0.85), rgba(63, 36, 18, 0.55));
+  border-bottom: 2px solid rgba(245, 185, 56, 0.6);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "Poppins", sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--guld-lys);
+  text-shadow: 0 2px 0 var(--brun-moerk), 0 0 12px rgba(255, 200, 80, 0.4);
+}
+
+.logo img {
+  height: 30px;
+}
+
+
+/* ----- Velkomst-boksen ----- */
+.velkomst {
+  margin: auto auto 28px;
+  width: min(440px, calc(100% - 32px));
+  padding: 18px 26px 22px;
+  border-radius: 22px;
+  text-align: center;
+  background: rgba(255, 246, 227, 0.94);
+  border: 3px solid var(--brun);
+  box-shadow: 0 6px 0 var(--brun-moerk), 0 18px 40px rgba(0, 0, 0, 0.45);
+  animation: hop-op 0.7s 0.4s ease-out both;
+}
+
+@keyframes hop-op {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.lille-tekst {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--guld-moerk);
+}
+
+.velkomst h1 {
+  margin: 4px 0 14px;
+  font-family: "Poppins", sans-serif;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  color: var(--brun);
+}
+
+
+/* ----- Knapperne ----- */
+.knap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+button.knap {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.knap:hover {
+  transform: translateY(-2px);
+}
+
+.knap.guld {
+  background: linear-gradient(var(--guld-lys), var(--guld) 55%, var(--guld-moerk));
+  color: var(--brun-moerk);
+  border: 2px solid var(--brun);
+  box-shadow: 0 4px 0 var(--brun);
+}
+
+.knap.guld:hover {
+  box-shadow: 0 6px 0 var(--brun), 0 10px 20px rgba(245, 185, 56, 0.45);
+}
+
+.knap.lille {
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.knap.stor {
+  padding: 14px 54px;
+  border-radius: 30px;
+  font-size: 20px;
+}
+
+.knap.lys {
+  padding: 10px 40px;
+  border-radius: 24px;
+  font-size: 15px;
+  background: #fff;
+  color: var(--brun);
+  border: 2px solid var(--guld-moerk);
+  box-shadow: 0 3px 0 var(--brun);
+}
+
+.pil {
+  font-size: 22px;
+}
+
+.konto-knapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.konto-knapper[hidden] {
+  display: none;
+}
+
+.hjaelp {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--brun);
+}
+
+.link-knap {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--guld-moerk);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+
+/* ----- Log ind og Opret mig (js/konto-forside.js) ----- */
+.konto-baggrund {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(40, 22, 10, 0.6);
+}
+
+.konto-baggrund[hidden] {
+  display: none;
+}
+
+.konto-boks {
+  position: relative;
+  width: min(360px, 100%);
+  padding: 26px 26px 18px;
+  border-radius: 18px;
+  background: var(--creme);
+  border: 3px solid var(--brun);
+  box-shadow: 0 8px 0 var(--brun-moerk), 0 20px 40px rgba(0, 0, 0, 0.4);
+  color: var(--brun-moerk);
+  text-align: center;
+}
+
+.konto-krone { width: 46px; image-rendering: pixelated; }
+.konto-boks h2 { margin: 4px 0 2px; font-family: "Poppins", sans-serif; font-size: 26px; color: var(--brun); }
+.konto-under { margin: 0 0 14px; color: var(--brun); font-size: 14px; }
+
+.konto-luk {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--guld-moerk);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--brun);
+  cursor: pointer;
+}
+
+#konto-form { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+#konto-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px; }
+#konto-form label[hidden] { display: none; }
+#konto-form input {
+  padding: 9px 11px;
+  border: 2px solid var(--creme-moerk);
+  border-radius: 10px;
+  font: 600 15px "Nunito", sans-serif;
+  color: var(--brun-moerk);
+  background: #fff;
+}
+#konto-form input:focus { outline: none; border-color: var(--guld); box-shadow: 0 0 0 3px rgba(245, 185, 56, 0.35); }
+#konto-form .knap { align-self: center; margin-top: 4px; }
+.konto-fejl { min-height: 1em; margin: 0; color: #b23b3b; font-size: 13px; font-weight: 700; text-align: center; }
+.konto-skift { margin: 14px 0 4px; font-size: 14px; }
+.konto-skift button {
+  border: none;
+  background: none;
+  color: var(--guld-moerk);
+  font: 800 14px "Nunito", sans-serif;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.konto-note { margin: 6px 0 0; font-size: 12px; color: #8a6a4c; }
+
+@media (max-width: 600px) {
+  .menu { padding: 10px 16px; }
+  .logo { font-size: 22px; }
+  .knap.stor { padding: 12px 36px; font-size: 18px; }
+}

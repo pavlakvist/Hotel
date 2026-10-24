@@ -201,3 +201,94 @@ a {
     font-size: 22px;
   }
 }
+
+/* ----- Log ind og Opret mig (js/konto-forside.js) ----- */
+.konto-knapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.konto-knapper[hidden] { display: none; }
+.knap.lys {
+  padding: 10px 40px;
+  border-radius: 24px;
+  font-size: 15px;
+  background: var(--creme);
+  color: var(--blaa-dyb);
+  border: 2px solid var(--blaa-lys);
+  box-shadow: 0 3px 0 var(--blaa-moerk);
+  cursor: pointer;
+  font-family: inherit;
+}
+button.knap { cursor: pointer; font-family: inherit; }
+.link-knap {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--blaa-lys);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.konto-baggrund {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(20, 32, 44, 0.6);
+}
+.konto-baggrund[hidden] { display: none; }
+.konto-boks {
+  position: relative;
+  width: min(360px, 100%);
+  padding: 26px 26px 18px;
+  border-radius: 18px;
+  background: var(--creme);
+  border: 3px solid var(--blaa-moerk);
+  box-shadow: 0 8px 0 var(--blaa-dyb), 0 20px 40px rgba(0, 0, 0, 0.4);
+  color: var(--blaa-dyb);
+  text-align: center;
+}
+.konto-krone { width: 46px; image-rendering: pixelated; }
+.konto-boks h2 { margin: 4px 0 2px; font-family: "Poppins", sans-serif; font-size: 26px; }
+.konto-under { margin: 0 0 14px; color: var(--blaa-moerk); font-size: 14px; }
+.konto-luk {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--blaa-lys);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--blaa-dyb);
+  cursor: pointer;
+}
+#konto-form { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+#konto-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: 14px; }
+#konto-form label[hidden] { display: none; }
+#konto-form input {
+  padding: 9px 11px;
+  border: 2px solid var(--blaa-lys);
+  border-radius: 10px;
+  font: 600 15px "Nunito", sans-serif;
+  color: var(--blaa-dyb);
+  background: #fff;
+}
+#konto-form input:focus { outline: none; border-color: var(--blaa); box-shadow: 0 0 0 3px rgba(120, 172, 214, 0.35); }
+#konto-form .knap { align-self: center; margin-top: 4px; }
+.konto-fejl { min-height: 1em; margin: 0; color: #b23b3b; font-size: 13px; font-weight: 700; text-align: center; }
+.konto-skift { margin: 14px 0 4px; font-size: 14px; }
+.konto-skift button {
+  border: none;
+  background: none;
+  color: var(--blaa-moerk);
+  font: 800 14px "Nunito", sans-serif;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.konto-note { margin: 6px 0 0; font-size: 12px; color: #6d8296; }

@@ -453,7 +453,10 @@ lobbyLaerred.addEventListener("mouseleave", function () {
 });
 
 lobbyLaerred.addEventListener("click", function (e) {
-  if (erOverReceptionen(musILobbyen(e))) window.location.href = "hotel.html";
+  if (erOverReceptionen(musILobbyen(e))) {
+    if (typeof aktivKonto === "function" && !aktivKonto()) aabnKonto("ind");
+    else window.location.href = "hotel.html";
+  }
 });
 
 
