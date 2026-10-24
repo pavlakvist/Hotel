@@ -544,25 +544,41 @@ function visValuta() {
 function visEvents() {
   ejerIndhold.innerHTML = "<label class='ejer-felt'>Overskrift<input id='n-titel' type='text' maxlength='40' placeholder='fx Fest i hallen i aften!'></label>" +
     "<label class='ejer-felt'>Tekst<input id='n-tekst' type='text' maxlength='100' placeholder='fx Kl. 19, alle er velkomne'></label>" +
+    "<label class='ejer-felt ejer-flueben'><input id='n-banner' type='checkbox' checked> Vis som stort banner øverst for alle</label>" +
     "<button id='n-send' class='lv-knap'>📢 Udsend</button>" +
     "<h4>Udsendte nyheder</h4>" + liste(nyheder.map(function (n, i) { return { n: n, i: i }; }).reverse().map(function (x) {
-      return "<b>" + rens(x.n.titel) + "</b><span>" + rens(x.n.tekst) + " · " + tidTekst(x.n.tid) + "</span>" +
+      const erBanner = x.n.banner !== false;
+      return "<b>" + (erBanner ? "📢 " : "") + rens(x.n.titel) + "</b><span>" + rens(x.n.tekst) + " · " + tidTekst(x.n.tid) + "</span>" +
+        "<button class='lille' data-banner='" + x.i + "'>" + (erBanner ? "Fjern banner for alle" : "Vis som banner") + "</button>" +
         "<button class='lille' data-slet='" + x.i + "'>Slet</button>";
     }), "Ingen nyheder endnu");
   document.getElementById("n-send").addEventListener("click", function () {
     const titel = document.getElementById("n-titel").value.trim();
     if (!titel) return;
-    nyheder.push({ titel: titel, tekst: document.getElementById("n-tekst").value.trim(), tid: Date.now() });
+    const somBanner = document.getElementById("n-banner").checked;
+    nyheder.push({ titel: titel, tekst: document.getElementById("n-tekst").value.trim(), tid: Date.now(), banner: somBanner });
     gemListe(NYHED_NOEGLE, nyheder, 50);
-    adminSkriv("Nyhed udsendt: " + titel);
+    adminSkriv("Nyhed udsendt: " + titel + (somBanner ? " (banner)" : ""));
     hallensBesked();
+    if (typeof visBanner === "function") visBanner();
     visEvents();
+  });
+  ejerIndhold.querySelectorAll("[data-banner]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      const n = nyheder[+k.dataset.banner];
+      n.banner = n.banner === false;
+      gemListe(NYHED_NOEGLE, nyheder);
+      adminSkriv((n.banner ? "Banner vist igen: " : "Banner fjernet for alle: ") + n.titel);
+      if (typeof visBanner === "function") visBanner();
+      visEvents();
+    });
   });
   ejerIndhold.querySelectorAll("[data-slet]").forEach(function (k) {
     k.addEventListener("click", function () {
       const n = nyheder.splice(+k.dataset.slet, 1)[0];
       gemListe(NYHED_NOEGLE, nyheder);
       adminSkriv("Nyhed slettet: " + n.titel);
+      if (typeof visBanner === "function") visBanner();
       visEvents();
     });
   });

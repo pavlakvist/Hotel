@@ -3125,3 +3125,84 @@ footer {
   cursor: pointer;
 }
 #mention-forslag button:hover { background: #eef7e6; }
+
+
+/* ----- Banner øverst på skærmen (js/banner.js) ----- */
+#banner {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: max-content;
+  max-width: min(720px, calc(100vw - 460px));
+  min-width: 280px;
+  padding: 12px 46px 12px 22px;
+  border-radius: 18px;
+  background: linear-gradient(#fffaf0, #fbf6ea 60%, #f1e9d2);
+  border: 3px solid #4e7d4a;
+  box-shadow: 0 0 0 3px #9ccc8f, 0 6px 0 #33562f, 0 14px 30px rgba(0, 0, 0, 0.35);
+  color: #2f4d2c;
+  text-align: center;
+  pointer-events: auto;
+}
+#banner[hidden] { display: none; }
+#banner.hop { animation: banner-hop 0.6s ease-out; }
+@keyframes banner-hop {
+  0% { transform: translate(-50%, -40px); opacity: 0; }
+  70% { transform: translate(-50%, 4px); opacity: 1; }
+  100% { transform: translate(-50%, 0); }
+}
+.banner-tekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#banner-titel {
+  font-family: "Poppins", "Trebuchet MS", sans-serif;
+  font-size: clamp(20px, 2.4vw, 30px);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #3d6b39;
+  text-shadow: 0 2px 0 #d9ecd2;
+  overflow-wrap: anywhere;
+}
+#banner-under { font-size: 15px; font-weight: 700; color: #55704f; overflow-wrap: anywhere; }
+#banner-under:empty { display: none; }
+.banner-stjerne { font-size: 22px; color: #e0a92b; animation: banner-blink 1.6s ease-in-out infinite alternate; }
+@keyframes banner-blink { from { opacity: 0.35; } to { opacity: 1; } }
+#banner-luk {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border: 2px solid #9ccc8f;
+  border-radius: 8px;
+  background: #fff;
+  color: #4e7d4a;
+  font-weight: 800;
+  cursor: pointer;
+}
+#banner-luk:hover { background: #e7f3e2; }
+#banner-igen {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 4px 12px;
+  border: 2px solid #4e7d4a;
+  border-radius: 0 0 12px 12px;
+  border-top: none;
+  top: 0;
+  background: #fbf6ea;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #33562f;
+}
+#banner-igen[hidden] { display: none; }
+#banner-igen:hover { background: #e7f3e2; }
+.ejer-flueben { flex-direction: row !important; align-items: center; gap: 8px; }
+@media (max-width: 900px) {
+  #banner { max-width: calc(100vw - 32px); top: 64px; }
+}
