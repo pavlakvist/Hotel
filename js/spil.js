@@ -33,7 +33,7 @@ function skarptLaerred() {
     // (ligesom i Habbo ligger panelet ovenpå rummet, så rummet bruger hele skærmen)
     const panelB = 0;
     const rumB = (RUM.bredde + RUM.dybde) * FLISE_B / 2 + 60;
-    const rumH = (RUM.bredde + RUM.dybde) * FLISE_H / 2 + VAEG_HOEJDE + 110;
+    const rumH = (RUM.bredde + RUM.dybde) * FLISE_H / 2 + (RUM.vaegHoejde || VAEG_HOEJDE) + 110;
     const passer = Math.min((r.width - panelB) / rumB, (r.height - 20) / rumH);
     ZOOM = Math.min(MAKS_ZOOM, passer * RUM_ZOOM * brugerZoom);
     BREDDE = r.width / ZOOM;
@@ -44,7 +44,7 @@ function skarptLaerred() {
     KAMERA.x = Math.max(-maksX, Math.min(maksX, KAMERA.x));
     KAMERA.y = Math.max(-maksY, Math.min(maksY, KAMERA.y));
     START.x = (BREDDE - panelB / ZOOM) / 2 + (RUM.dybde - RUM.bredde) * FLISE_B / 4 + KAMERA.x / ZOOM;
-    START.y = (HOEJDE - rumH) / 2 + VAEG_HOEJDE + 90 + KAMERA.y / ZOOM;
+    START.y = (HOEJDE - rumH) / 2 + (RUM.vaegHoejde || VAEG_HOEJDE) + 90 + KAMERA.y / ZOOM;
   }
   ctx.setTransform(laerred.width / BREDDE, 0, 0, laerred.height / HOEJDE, 0, 0);
   ctx.imageSmoothingEnabled = true;
@@ -529,8 +529,9 @@ function diamant(x, y) {
 }
 
 function tegnVaegge() {
-  const op = function (p) { return { x: p.x, y: p.y - VAEG_HOEJDE }; };
-  if (RUM.form) { tegnFormVaegge(op); return; }
+  const vh = RUM.vaegHoejde || VAEG_HOEJDE;   // væggens højde kan ændres med :floor (js/gulvplan.js)
+  const op = function (p) { return { x: p.x, y: p.y - vh }; };
+  if (RUM.form) { tegnFormVaegge(op); tegnDoer(); return; }
   const hjoerne = punkt(0, 0);
   const venstre = punkt(0, RUM.dybde);
   const hoejre = punkt(RUM.bredde, 0);
@@ -545,6 +546,26 @@ function tegnVaegge() {
   ctx.lineTo(op(hoejre).x, op(hoejre).y);
   ctx.stroke();
   ctx.lineWidth = 1;
+  tegnDoer();
+}
+
+// Døren i væggen (sættes med :floor). Den står på venstre væg eller bagvæggen ved dørens felt.
+function tegnDoer() {
+  const d = RUM.doer;
+  if (!d || !erIRummet(d.x, d.y)) return;
+  let venstreVaeg = true;
+  for (let x = 0; x < d.x; x++) if (erIRummet(x, d.y)) venstreVaeg = false;
+  const a = venstreVaeg ? punkt(d.x, d.y + 1) : punkt(d.x, d.y);
+  const b = venstreVaeg ? punkt(d.x, d.y) : punkt(d.x + 1, d.y);
+  const mellem = function (t, h) { return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t - h }; };
+  const dh = Math.min(78, (RUM.vaegHoejde || VAEG_HOEJDE) - 12);
+  polygon(ctx, [mellem(0.12, 0), mellem(0.88, 0), mellem(0.88, dh + 6), mellem(0.12, dh + 6)], "#5a3a22");
+  polygon(ctx, [mellem(0.2, 0), mellem(0.8, 0), mellem(0.8, dh), mellem(0.2, dh)], "#2a1a10");
+  const h = mellem(0.68, dh * 0.45);
+  ctx.beginPath();
+  ctx.arc(h.x, h.y, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = "#f2b134";
+  ctx.fill();
 }
 
 // Vægge til rum med en særlig form: de følger gulvets bagerste kant
@@ -1011,12 +1032,20 @@ function gem() {
   }
 }
 
+// dit værelse kan være tegnet om med :floor (js/gulvplan.js)
+function iGemtPlan(x, y) {
+  let plan = {};
+  try { plan = JSON.parse(localStorage.getItem("mit-hotel-rum-plan") || "{}"); } catch (e) {}
+  if (!plan.felter) return erIRummet(x, y);
+  return !!plan.felter[y] && plan.felter[y][x] === "x";
+}
+
 function hent() {
   try {
     const data = JSON.parse(localStorage.getItem(GEMME_NOEGLE));
     if (Array.isArray(data)) {
       moeblerIRummet = data.filter(function (m) {
-        return MOEBEL_TYPER[m.type] && erIRummet(m.x, m.y);
+        return MOEBEL_TYPER[m.type] && iGemtPlan(m.x, m.y);
       });
       return;
     }

@@ -3439,3 +3439,66 @@ footer {
 .or-farver { display: flex; flex-wrap: wrap; gap: 5px; }
 .or-farver button { width: 28px; height: 28px; border-radius: 8px; border: 2px solid #d6e8c8; cursor: pointer; padding: 0; }
 .or-farver button.valgt { border-color: #2f4d2c; box-shadow: 0 0 0 2px #9ccc8f; transform: scale(1.1); }
+
+
+/* ----- Gulvplan :floor (js/gulvplan.js) ----- */
+#gulvplan {
+  position: fixed; z-index: 14;
+  left: max(10px, calc(50% - 320px)); top: max(10px, calc(50% - 260px));
+  width: min(640px, calc(100vw - 20px));
+  background: #fbf6ea; border: 3px solid #4e7d4a; border-radius: 14px;
+  box-shadow: 0 6px 0 #33562f, 0 14px 30px rgba(0,0,0,0.35);
+  font: 13px Verdana, sans-serif; color: #33402c;
+}
+#gulvplan[hidden] { display: none; }
+.gp-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #4e7d4a; color: #fff; border-radius: 10px 10px 0 0; }
+.gp-top button { width: 26px; height: 26px; border: 2px solid #9ccc8f; border-radius: 7px; background: #fbf6ea; color: #3d6b39; cursor: pointer; }
+.gp-krop { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.gp-vaerktoej { display: flex; gap: 6px; flex-wrap: wrap; }
+.gp-vaerktoej button, .gp-knapper button { padding: 6px 12px; border: 2px solid #9ccc8f; border-radius: 9px; background: #fff; font: bold 12px Verdana, sans-serif; color: #3d6b39; cursor: pointer; }
+.gp-vaerktoej button.valgt { background: #e7f3e2; border-color: #4e7d4a; }
+#gp-tegning { width: 100%; background: #eef6e8; border: 2px solid #d6e8c8; border-radius: 10px; cursor: crosshair; }
+.gp-hjaelp { margin: 0; min-height: 1.2em; font-size: 12px; color: #3d6b39; }
+.gp-hjaelp.fejl { color: #b23b3b; font-weight: bold; }
+.gp-maal { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.gp-maal label { display: flex; align-items: center; gap: 6px; font-weight: bold; color: #3d6b39; }
+.gp-maal input[type=number] { width: 54px; padding: 4px; border: 2px solid #d6e8c8; border-radius: 7px; }
+.gp-knapper { display: flex; gap: 6px; align-items: center; }
+.gp-luft { flex: 1; }
+.gp-knapper .gp-gem { background: #4e7d4a; border-color: #33562f; color: #fff; }
+
+
+/* ----- Kamera 📷 (js/kamera.js) ----- */
+#chat { width: min(728px, calc(100vw - 32px)); }
+#kamera, #foto-viser {
+  position: fixed; z-index: 14;
+  left: max(10px, calc(50% - 180px)); top: max(10px, calc(50% - 230px));
+  width: 360px;
+  background: #fbf6ea; border: 3px solid #4e7d4a; border-radius: 14px;
+  box-shadow: 0 6px 0 #33562f, 0 14px 30px rgba(0,0,0,0.35);
+  font: 13px Verdana, sans-serif; color: #33402c;
+}
+#foto-viser { width: min(520px, calc(100vw - 20px)); left: max(10px, calc(50% - 260px)); }
+#kamera[hidden], #foto-viser[hidden] { display: none; }
+.kam-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #4e7d4a; color: #fff; border-radius: 10px 10px 0 0; }
+.kam-top button { width: 26px; height: 26px; border: 2px solid #9ccc8f; border-radius: 7px; background: #fbf6ea; color: #3d6b39; cursor: pointer; }
+.kam-krop { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.kam-soeger { position: relative; border: 6px solid #2b2b2b; border-radius: 10px; overflow: hidden; background: #1b2536; }
+#kam-billede { display: block; width: 100%; cursor: grab; }
+.kam-hj { position: absolute; width: 18px; height: 18px; border: 0 solid rgba(255,255,255,0.85); pointer-events: none; }
+.kam-hj.h1 { left: 8px; top: 8px; border-left-width: 3px; border-top-width: 3px; }
+.kam-hj.h2 { right: 8px; top: 8px; border-right-width: 3px; border-top-width: 3px; }
+.kam-hj.h3 { left: 8px; bottom: 8px; border-left-width: 3px; border-bottom-width: 3px; }
+.kam-hj.h4 { right: 8px; bottom: 8px; border-right-width: 3px; border-bottom-width: 3px; }
+#kam-blitz { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+#kam-blitz.blink { animation: kam-blitz 0.5s ease-out; }
+@keyframes kam-blitz { from { opacity: 1; } to { opacity: 0; } }
+.kam-tekst { margin: 0; min-height: 1.2em; font-size: 12px; color: #3d6b39; }
+.kam-knapper { display: flex; gap: 8px; justify-content: flex-end; }
+.kam-knapper button { padding: 7px 14px; border: 2px solid #9ccc8f; border-radius: 9px; background: #fff; font: bold 13px Verdana, sans-serif; color: #3d6b39; cursor: pointer; }
+.kam-knapper .kam-tag { background: #4e7d4a; border-color: #33562f; color: #fff; }
+#fv-billede { width: 100%; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+.foto-ting canvas { width: 64px; height: 50px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+#lager-haeng[hidden], #lager-foto-slet[hidden], #lager-saet[hidden] { display: none; }
+#lager-foto-slet { margin-left: 6px; }
+#lager-foto-slet.sikker { background: #d9534f; border-color: #b33f3b; color: #fff; }

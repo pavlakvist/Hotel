@@ -80,6 +80,8 @@ let mitVaerelse = [];          // møblerne i dit eget værelse
 let halVilGaaUd = false;       // figuren er på vej hen til døren
 let halMus = null;             // hvor musen er på lærredet (i spillets punkter)
 const RUM_FARVER = { vaeg: RUM.vaegFarve, gulv1: RUM.gulvFarve1, gulv2: RUM.gulvFarve2, bredde: RUM.bredde, dybde: RUM.dybde };
+// dit værelses gulvplan fra :floor (js/gulvplan.js)
+try { Object.assign(RUM_FARVER, JSON.parse(localStorage.getItem("mit-hotel-rum-plan") || "{}")); } catch (e) {}
 
 
 // =============================================================
@@ -118,6 +120,10 @@ const RUM_MODELLER = [];
   });
 });
 RUM_MODELLER.forEach(function (m, i) { m.nr = i + 1; });
+// Et rum tegnet i gulvplanen (:floor) har sine felter som tekst: "x" = gulv, "." = intet
+function feltForm(felter) {
+  return function (x, y) { return !!felter[y] && felter[y][x] === "x"; };
+}
 function lavForm(formId, b, d) {
   const f = RUM_FORMER.find(function (x) { return x.id === formId; });
   if (!f || formId === "firkant" || formId === "aflang" || formId === "dyb") return null;
@@ -169,12 +175,15 @@ function skiftRum(navn) {
   RUM.gulvFarve2 = navn === "hal" ? HAL_FARVER.gulv2 : v.gulv2;
   RUM.bredde = navn === "hal" ? HAL_STOERRELSE.bredde : v.bredde;
   RUM.dybde = navn === "hal" ? HAL_STOERRELSE.dybde : v.dybde;
-  RUM.form = navn === "hal" || !v.form ? null : lavForm(v.form, v.bredde, v.dybde);
+  RUM.form = navn === "hal" ? null : v.felter ? feltForm(v.felter) : v.form ? lavForm(v.form, v.bredde, v.dybde) : null;
+  RUM.vaegHoejde = navn === "hal" ? null : v.vaegHoejde || null;
+  RUM.doer = navn === "hal" ? null : v.doer || null;
   document.body.classList.toggle("i-hallen", navn === "hal");
 
   // figuren kommer ind gennem døren
   figur.x = navn === "hal" ? HAL_DOER.felt.x : 2;
   figur.y = navn === "hal" ? HAL_DOER.felt.y + 1 : 2;
+  if (navn !== "hal" && v.doer) { figur.x = v.doer.x; figur.y = v.doer.y; }   // man kommer ind ad døren
   // i rum med en særlig form: stil figuren på det nærmeste gulv
   if (!erIRummet(figur.x, figur.y)) {
     let bedst = null;
