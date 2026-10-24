@@ -10,6 +10,8 @@
 
 // Hvem må åbne ejerpanelet? Skriv flere navne for at gøre dem til moderatorer.
 const EJERE = ["Pall", "Pavla"];
+// Er ejeren logget ind, husker computeren det til ejer-knappen på forsiden
+if (typeof aktivKonto === "function" && aktivKonto() && EJERE.includes(aktivKonto())) huskEjerGenvej(aktivKonto());
 
 // Navne, ejeren har ændret i panelet (Spillere → Skift navn): { "Ida": "Isa", "__mig": "Pall" }
 const NAVNE_NOEGLE = "mit-hotel-navne";

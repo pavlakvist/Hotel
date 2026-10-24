@@ -88,6 +88,31 @@ function omdoebKonto(gammelt, nyt) {
   konti[nyt.toLowerCase()] = k;
   gemKonti(konti);
   if (aktivKonto() === null || localStorage.getItem(KONTO_AKTIV_NOEGLE) === gammelt) saetAktivKonto(nyt);
+  if (localStorage.getItem("mit-hotel-ejer-genvej") === gammelt) localStorage.setItem("mit-hotel-ejer-genvej", nyt);
+  return true;
+}
+
+// Ejer-genvej 👑: når ejeren har været logget ind på denne computer én gang,
+// husker computeren det, og forsiden viser en knap kun for ejeren.
+// Den findes kun i denne browser, så andre computere ser den aldrig.
+const EJER_GENVEJ_NOEGLE = "mit-hotel-ejer-genvej";
+function ejerGenvej() {
+  try {
+    const navn = localStorage.getItem(EJER_GENVEJ_NOEGLE);
+    const k = navn && hentKonti()[navn.toLowerCase()];
+    return k ? k.navn : null;
+  } catch (e) { return null; }
+}
+function huskEjerGenvej(navn) {
+  try { localStorage.setItem(EJER_GENVEJ_NOEGLE, navn); } catch (e) {}
+}
+function glemEjerGenvej() {
+  try { localStorage.removeItem(EJER_GENVEJ_NOEGLE); } catch (e) {}
+}
+function ejerGenvejLogInd() {
+  const navn = ejerGenvej();
+  if (!navn) return false;
+  saetAktivKonto(navn);
   return true;
 }
 

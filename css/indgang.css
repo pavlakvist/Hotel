@@ -308,3 +308,35 @@ button.knap {
   .logo { font-size: 22px; }
   .knap.stor { padding: 12px 36px; font-size: 18px; }
 }
+
+
+/* ----- Ejer-knappen (kun på ejerens egen computer) ----- */
+.ejer-genvej {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.ejer-genvej[hidden] { display: none; }
+.knap.ejer {
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  background: linear-gradient(#7a4a26, var(--brun) 60%, var(--brun-moerk));
+  color: var(--guld-lys);
+  border: 2px solid var(--guld);
+  box-shadow: 0 3px 0 var(--brun-moerk), 0 0 12px rgba(245, 185, 56, 0.45);
+  gap: 8px;
+}
+.knap.ejer img { height: 18px; }
+.ejer-glem {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #a07a55;
+  cursor: pointer;
+  font-size: 12px;
+}
+.ejer-glem:hover { background: var(--creme-moerk); }

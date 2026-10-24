@@ -6,7 +6,7 @@
   <title>Hotelven – Dit hjem, dit hotel, din historie</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&display=swap">
-  <link rel="stylesheet" href="css/indgang.css?v=33">
+  <link rel="stylesheet" href="css/indgang.css?v=34">
 </head>
 <body>
 
@@ -32,6 +32,11 @@
     <div id="ud-knapper" class="konto-knapper">
       <button type="button" id="knap-log-ind" class="knap guld stor">Log ind <span class="pil">&rarr;</span></button>
       <button type="button" id="knap-opret" class="knap lys">Opret mig</button>
+      <!-- kun på ejerens egen computer (js/konto-forside.js) -->
+      <div id="ejer-genvej" class="ejer-genvej" hidden>
+        <button type="button" id="knap-ejer" class="knap ejer"><img src="billeder/forside/krone.png" alt=""> Gå ind som <span id="ejer-navn"></span></button>
+        <button type="button" id="knap-ejer-glem" class="ejer-glem" title="Fjern ejer-knappen fra denne computer">✕</button>
+      </div>
     </div>
     <!-- logget ind -->
     <div id="ind-knapper" class="konto-knapper" hidden>
@@ -60,7 +65,7 @@
   </div>
 
   <script src="js/indstillinger.js?v=32"></script>
-  <script src="js/konto.js?v=32"></script>
-  <script src="js/konto-forside.js?v=33"></script>
+  <script src="js/konto.js?v=34"></script>
+  <script src="js/konto-forside.js?v=34"></script>
 </body>
 </html>

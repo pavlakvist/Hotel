@@ -56,7 +56,18 @@ function visKontoKnapper() {
   document.getElementById("ud-knapper").hidden = !!navn;
   document.getElementById("ind-knapper").hidden = !navn;
   if (navn) document.getElementById("konto-hvem").textContent = navn;
+  // Ejer-knappen vises kun, hvis ejeren har været logget ind på denne computer
+  const ejer = ejerGenvej();
+  document.getElementById("ejer-genvej").hidden = !ejer;
+  if (ejer) document.getElementById("ejer-navn").textContent = ejer;
 }
+document.getElementById("knap-ejer").addEventListener("click", function () {
+  if (ejerGenvejLogInd()) window.location.href = "hotel.html";
+});
+document.getElementById("knap-ejer-glem").addEventListener("click", function () {
+  glemEjerGenvej();
+  visKontoKnapper();
+});
 document.getElementById("knap-log-ind").addEventListener("click", function () { aabnKonto("ind"); });
 document.getElementById("knap-opret").addEventListener("click", function () { aabnKonto("opret"); });
 document.getElementById("knap-log-ud").addEventListener("click", function () { logUd(); visKontoKnapper(); });
