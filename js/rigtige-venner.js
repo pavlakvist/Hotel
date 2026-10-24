@@ -39,13 +39,18 @@ gaestUnderMus = function (e) {
   return fundet;
 };
 
-// Byt virker kun med computer-gæsterne indtil videre
+// Byt virker kun med computer-gæsterne indtil videre.
+// "Tilføj ven" viser, hvis en anmodning allerede er sendt eller venter på dit svar.
 const aabnGaestMenuRigtig = aabnGaestMenu;
 aabnGaestMenu = function (g) {
   aabnGaestMenuRigtig(g);
   if (!erRigtigSpiller(g)) return;
   minMenuKnapper.querySelectorAll("button").forEach(function (k) {
     if (k.textContent.indexOf("🔄") === 0) k.remove();
+    if (k.textContent.indexOf("➕ Tilføj ven") === 0) {
+      if (anmodninger.tilMig.indexOf(g.navn) >= 0) k.textContent = "✅ Sig ja til ven";
+      else if (anmodninger.fraMig.indexOf(g.navn) >= 0) { k.textContent = "⏳ Anmodning sendt"; k.disabled = true; }
+    }
   });
   placerMinMenu();
 };
@@ -85,7 +90,15 @@ tilfoejVen = function (g) {
     besked.textContent = "Venner med rigtige spillere virker, når database-2-venner.sql er kørt i Supabase.";
     return;
   }
-  serverKald("hv_ven_tilfoej", { p_token: mitToken(), p_navn: g.navn }).then(function () {
+  serverKald("hv_ven_tilfoej", { p_token: mitToken(), p_navn: g.navn }).then(function (svar) {
+    if (svar && svar.status === "sendt") {
+      // den anden skal sige ja først
+      if (anmodninger.fraMig.indexOf(g.navn) < 0) anmodninger.fraMig.push(g.navn);
+      svaev("📨", g);
+      besked.textContent = "📨 Venneanmodning sendt til " + g.navn + ". Når " + g.navn + " siger ja, bliver I venner.";
+      return;
+    }
+    anmodninger.tilMig = anmodninger.tilMig.filter(function (n) { return n !== g.navn; });
     if (!erVen(g.navn)) venner.push(g.navn);
     svaev("💚", g);
     besked.textContent = "Du og " + g.navn + " er nu venner! 💚";
@@ -135,8 +148,70 @@ function venPuls(svar) {
   let sidste = beskedEfterId();
   (svar.beskeder || []).forEach(function (m) {
     if (m.id <= sidste) return;
-    tilfoejBeskedRigtig(m.fra, m.fra, m.tekst);
+    tilfoejBesked(m.fra, m.fra, m.tekst);   // fra en anden, så den sendes ikke videre
     sidste = m.id;
   });
   try { localStorage.setItem(beskedEfterNoegle(), sidste); } catch (e) {}
 }
+
+
+// -------------------------------------------------------------
+//  Venneanmodninger 📨 — den anden skal sige ja, før I bliver venner
+// -------------------------------------------------------------
+let anmodninger = { tilMig: [], fraMig: [] };
+
+function hentAnmodninger() {
+  const token = mitToken();
+  if (!SERVER.til || !token || !serverHarVenner) return;
+  serverKald("hv_anmodninger_hent", { p_token: token }).then(function (svar) {
+    const nye = svar.tilMig.filter(function (n) { return anmodninger.tilMig.indexOf(n) < 0; });
+    const foer = JSON.stringify(anmodninger);
+    anmodninger = svar;
+    if (nye.length) besked.textContent = "📨 " + nye.join(", ") + " vil gerne være din ven! Åbn vennelisten 👫 for at svare.";
+    if (JSON.stringify(anmodninger) !== foer) { visVenner(); visUlaest(); }
+  }).catch(function () {});   // database-3-anmodninger-og-mentions.sql er ikke kørt endnu
+}
+hentAnmodninger();
+setInterval(hentAnmodninger, 4000);
+
+function svarAnmodning(navn, ja) {
+  serverKald("hv_ven_svar", { p_token: mitToken(), p_navn: navn, p_ja: ja }).then(function () {
+    anmodninger.tilMig = anmodninger.tilMig.filter(function (n) { return n !== navn; });
+    if (ja && !erVen(navn)) venner.push(navn);
+    besked.textContent = ja ? "Du og " + navn + " er nu venner! 💚" : "Du sagde nej tak til " + navn + ".";
+    visVenner();
+    visUlaest();
+  }).catch(function (e) { besked.textContent = e.message; });
+}
+
+// Anmodningerne står øverst i vennelisten med Ja / Nej
+const visVennerAnmod = visVenner;
+visVenner = function () {
+  visVennerAnmod();
+  if (vennerVindue.hidden || !anmodninger.tilMig.length) return;
+  const liste = document.getElementById("venner-liste");
+  const tom = liste.querySelector(".venner-tom");
+  if (tom) tom.remove();
+  anmodninger.tilMig.slice().reverse().forEach(function (navn) {
+    const li = document.createElement("li");
+    li.className = "ven-anmodning";
+    li.innerHTML = "<span class='ven-prik on'></span><span class='ven-navn'><b>" + tegnTilHtml(navn) + "</b><small>📨 Vil gerne være din ven</small></span>" +
+      "<button class='ja'>✓ Ja</button><button class='fjern'>✕ Nej</button>";
+    li.querySelector(".ja").addEventListener("click", function () { svarAnmodning(navn, true); });
+    li.querySelector(".fjern").addEventListener("click", function () { svarAnmodning(navn, false); });
+    liste.prepend(li);
+  });
+};
+
+// Det røde tal på 👫-knappen tæller også anmodninger
+const visUlaestAnmod = visUlaest;
+visUlaest = function () {
+  visUlaestAnmod();
+  const n = anmodninger.tilMig.length;
+  if (!n) return;
+  const tal = document.getElementById("venner-ulaest");
+  const foer = parseInt(tal.textContent, 10) || 0;
+  const alle = (tal.hidden ? 0 : foer) + n;
+  tal.textContent = alle > 9 ? "9+" : alle;
+  tal.hidden = false;
+};

@@ -3645,6 +3645,21 @@ footer {
 @keyframes hjaelp-blink { 50% { opacity: 0.35; } }
 @keyframes hjaelp-hop { to { transform: scale(1.18) rotate(-8deg); } }
 
+
+/* ----- Dit avatar-billede (js/avatar-billede.js) ----- */
+#avatar-billede {
+  position: fixed; top: 56px; left: 172px; z-index: 5;
+  width: 74px; padding: 0; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center;
+  border: 3px solid #4e7d4a; border-radius: 14px;
+  background: radial-gradient(circle at 50% 35%, #fbf6ea 0 55%, #e7f3e2 100%);
+  box-shadow: 0 3px 0 #33562f, 0 4px 10px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+#avatar-billede:hover { transform: translateY(-1px); }
+#avatar-billede canvas { width: 68px; height: 68px; display: block; }
+#avatar-navn { width: 100%; padding: 1px 4px 2px; background: #4e7d4a; color: #fff; font: bold 11px Verdana, sans-serif; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Ingen forbindelse til serveren (js/rigtige-spillere.js): prikken bliver rød */
 #online-tal.ingen-server .online-prik { background: #c0392b; box-shadow: none; }
 
@@ -3652,3 +3667,7 @@ footer {
 .an-spillere button[hidden] { display: none; }
 .an-soeg { padding: 6px 9px; margin-bottom: 4px; border: 2px solid #d6e8c8; border-radius: 9px; font: 12px Verdana, sans-serif; background: #fff; }
 .an-soeg:focus { outline: none; border-color: #4e7d4a; }
+
+/* Venneanmodninger øverst i vennelisten (js/rigtige-venner.js) */
+#venner-liste li.ven-anmodning { background: #fff7dc; border-color: #e9c96a; }
+#venner-liste button.ja { background: #4e7d4a; color: #fff; border-color: #3d6b39; }
