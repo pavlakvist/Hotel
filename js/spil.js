@@ -780,6 +780,7 @@ function tegnAlt() {
   });
   ting.push({ dybde: figur.x + figur.y + 0.1 + figurPlads() / 1000, tegn: function () { tegnFigur(ctx); } });
   if (rumValg === "hal") halTing(ting);
+  if (typeof andreSpillereTing === "function") andreSpillereTing(ting);   // rigtige spillere (js/rigtige-spillere.js)
 
   // Et "spøgelse" af møblet, man er ved at stille
   if (valgtType && musFelt && erIRummet(musFelt.x, musFelt.y) && !moebelPaa(musFelt.x, musFelt.y)) {

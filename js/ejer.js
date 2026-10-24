@@ -754,7 +754,7 @@ function visAdminlog() {
 
 // ----- 10. Systemindstillinger -----
 function visSystem() {
-  ejerIndhold.innerHTML = "<label class='ejer-felt'>Velkomstbesked i hallen<input id='s-velkomst' type='text' maxlength='120' placeholder='Velkommen til Hotelven! …' value='" + rens(system.velkomst) + "'></label>" +
+  ejerIndhold.innerHTML = "<label class='ejer-felt'>Velkomstbesked i hallen<input id='s-velkomst' type='text' maxlength='120' placeholder='Velkommen til HELLO VERA! …' value='" + rens(system.velkomst) + "'></label>" +
     "<label class='ejer-tjek'><input id='s-filter' type='checkbox'" + (system.filterTil ? " checked" : "") + "> Chatfilter er slået til</label>" +
     "<label class='ejer-felt'>Ekstra grimme ord (adskil med komma)<input id='s-ord' type='text' value='" + rens(system.ekstraOrd) + "'></label>" +
     "<label class='ejer-felt'>Timeout varer (minutter)<input id='s-timeout' type='number' min='1' max='1440' value='" + system.timeoutMin + "'></label>" +

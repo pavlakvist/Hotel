@@ -3644,3 +3644,6 @@ footer {
 @keyframes hjaelp-lys { 50% { box-shadow: 0 0 0 6px rgba(255, 225, 77, 0.5), 0 0 40px 10px rgba(255, 60, 40, 0.8); filter: brightness(1.15); } }
 @keyframes hjaelp-blink { 50% { opacity: 0.35; } }
 @keyframes hjaelp-hop { to { transform: scale(1.18) rotate(-8deg); } }
+
+/* Ingen forbindelse til serveren (js/rigtige-spillere.js): prikken bliver rød */
+#online-tal.ingen-server .online-prik { background: #c0392b; box-shadow: none; }

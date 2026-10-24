@@ -13,7 +13,7 @@ function aabnKonto(maade) {
   kontoMaade = maade;
   const opret = maade === "opret";
   document.getElementById("konto-titel").textContent = opret ? "Opret mig" : "Log ind";
-  document.getElementById("konto-undertekst").textContent = opret ? "Vælg et brugernavn og en adgangskode." : "Velkommen tilbage til Hotelven!";
+  document.getElementById("konto-undertekst").textContent = opret ? "Vælg et brugernavn og en adgangskode." : "Velkommen tilbage til HELLO VERA!";
   document.getElementById("konto-kode2-felt").hidden = !opret;
   document.getElementById("konto-send").textContent = opret ? "Opret mig" : "Log ind";
   document.getElementById("konto-skift").innerHTML = opret
@@ -67,13 +67,13 @@ kontoForm.addEventListener("submit", async function (e) {
   if (fejl) {
     kontoFejl.textContent = fejl;
     // Findes profilen ikke, kan man oprette den med det samme
-    if (kontoMaade === "ind" && navn && !hentKonti()[navn.toLowerCase()]) {
+    if (kontoMaade === "ind" && navn && /ingen profil/.test(fejl)) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "konto-opret-nu";
       b.textContent = "Opret profilen " + navn + " nu";
       b.addEventListener("click", function () { aabnKonto("opret"); kontoNavn.value = navn; kontoKode.focus(); });
-      kontoFejl.textContent = "Der er ingen profil med navnet " + navn + " på denne computer endnu. ";
+      kontoFejl.textContent = "Der er ingen profil med navnet " + navn + " endnu. ";
       kontoFejl.appendChild(b);
     }
     return;

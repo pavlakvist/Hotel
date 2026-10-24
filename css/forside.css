@@ -1,5 +1,5 @@
 /* =============================================================
-   Hotelven — forsiden
+   HELLO VERA — forsiden
    Farverne står samlet her øverst, så de er nemme at ændre.
    ============================================================= */
 :root {
@@ -61,10 +61,6 @@ img {
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--brun);
-}
-
-.logo img {
-  height: 34px;
 }
 
 .links {
@@ -389,7 +385,6 @@ img {
     padding: 10px 16px;
   }
 
-  .logo span,
   .konto .lys {
     display: none;
   }

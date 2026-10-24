@@ -3,7 +3,7 @@
 //  Skriv @navn og en besked nede i chatten, fx "@Ida hej!".
 //  Beskeden kommer frem, selv om I er i hvert sit rum.
 //  Det, andre skriver til dig med @, kan ses under "@ Mentions"
-//  ved Hotelven øverst. Computer-gæsterne svarer selv.
+//  ved HELLO VERA øverst. Computer-gæsterne svarer selv.
 //  (@-beskeder mellem rigtige spillere kræver en server.)
 // =============================================================
 const MENTION_NOEGLE = "mit-hotel-mentions";

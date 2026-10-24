@@ -254,7 +254,7 @@ function skiftRum(navn) {
   document.getElementById("rum-navn").textContent = navn === "hal" ? "Velkomsthallen" : vaerelseNavn(aktivtVaerelse);
   opdaterPanel();
   besked.textContent = navn === "hal"
-    ? "Velkommen til Hotelven! Gå gennem døren for at komme til dit værelse."
+    ? "Velkommen til HELLO VERA! Gå gennem døren for at komme til dit værelse."
     : aktivtVaerelse === "mit" ? "Velkommen hjem! Klik på gulvet for at gå, og stil møbler fra panelet."
     : "Velkommen til " + vaerelseNavn(aktivtVaerelse) + "! Stil møbler fra panelet eller dit lager.";
 }

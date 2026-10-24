@@ -1,2 +1,5 @@
 .DS_Store
 Thumbs.db
+
+# hemmelige koder til serveren (må ikke på GitHub)
+database-til-supabase.sql

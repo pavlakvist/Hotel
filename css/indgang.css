@@ -1,5 +1,5 @@
 /* =============================================================
-   Hotelven — forsiden med Pavlas billede af hotellet
+   HELLO VERA — forsiden med Pavlas billede af hotellet
    Farverne står samlet her øverst, så de er nemme at ændre.
    De varme guld- og brune farver er taget fra HOTEL-skiltet.
    ============================================================= */
@@ -356,3 +356,4 @@ button.knap {
 }
 .konto-profiler button:hover, .konto-opret-nu:hover { background: var(--guld-lys); }
 .konto-opret-nu { display: block; margin: 6px auto 0; }
+.hotel-navn { white-space: nowrap; }
