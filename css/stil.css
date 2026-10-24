@@ -3382,3 +3382,51 @@ footer {
 .or-knapper .or-gem { background: #4e7d4a; border-color: #33562f; color: #fff; }
 .nav-slet { margin-top: 4px; padding: 3px 8px; border: 2px solid #e6cfc9; border-radius: 8px; background: #fff; font-size: 12px; cursor: pointer; }
 .nav-slet.sikker { background: #d9534f; border-color: #b33f3b; color: #fff; font-weight: bold; }
+
+/* ----- Møbel-boksen nederst til højre (js/moebel-info.js) ----- */
+#moebel-info {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 8;
+  width: 280px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fbf6ea;
+  border: 3px solid #4e7d4a;
+  box-shadow: 0 0 0 2px #9ccc8f, 0 5px 0 #33562f, 0 12px 26px rgba(0, 0, 0, 0.35);
+  color: #2f4d2c;
+  font: 13px Verdana, sans-serif;
+}
+#moebel-info[hidden] { display: none; }
+#mi-luk {
+  position: absolute; top: 6px; right: 6px;
+  width: 24px; height: 24px;
+  border: 2px solid #9ccc8f; border-radius: 7px; background: #fff; color: #4e7d4a;
+  font-weight: bold; cursor: pointer;
+}
+.mi-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-right: 22px; }
+#mi-billede { width: 90px; height: 90px; border-radius: 10px; background: #eaf4df; border: 2px solid #d6e8c8; image-rendering: pixelated; flex: none; }
+.mi-top b { display: block; font-size: 14px; color: #3d6b39; overflow-wrap: anywhere; }
+.mi-top small { display: block; margin-top: 3px; color: #6f7f69; }
+.mi-knapper { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.mi-knapper[hidden] { display: none; }
+.mi-knapper button {
+  padding: 8px 4px;
+  border: 2px solid #9ccc8f; border-radius: 9px;
+  background: #e7f3e2; color: #2f4d2c;
+  font: bold 12px Verdana, sans-serif; cursor: pointer; white-space: nowrap;
+  box-shadow: 0 2px 0 #7fb56f;
+}
+.mi-knapper button:hover { background: #d6ebcd; }
+.mi-knapper button.aktiv { background: #4e7d4a; border-color: #33562f; color: #fff; }
+
+/* ----- Låste rum og adgangskode (js/navigator.js) ----- */
+.or-adgang { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font: 12px Verdana, sans-serif; color: #33402c; }
+.or-adgang b { width: 100%; color: #3d6b39; }
+.or-adgang label { display: flex !important; flex-direction: row !important; align-items: center; gap: 4px; font-weight: normal !important; color: #33402c !important; }
+#or-kode-felt[hidden] { display: none !important; }
+.nav-adgang { margin-top: 4px; padding: 3px 4px; border: 2px solid #d6e8c8; border-radius: 8px; background: #fff; font: 11px Verdana, sans-serif; color: #33402c; }
+.nav-kode { display: flex; flex-direction: column; gap: 4px; align-items: stretch; margin-top: 4px; }
+.nav-kode input { width: 120px; padding: 5px 7px; border: 2px solid #cfe3c7; border-radius: 8px; font: 12px Verdana, sans-serif; }
+.nav-kode small { color: #b23b3b; font: bold 11px Verdana, sans-serif; min-height: 1em; }

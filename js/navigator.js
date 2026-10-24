@@ -13,6 +13,7 @@ const ETAGER = [
   { id: "sal2", navn: "2. sal", ikon: "🎵" },
   { id: "tag", navn: "Taghaven", ikon: "🌳" },
   { id: "privat", navn: "Mine rum", ikon: "🔑" },
+  { id: "andres", navn: "Andres rum", ikon: "🚪" },
   { id: "hemmelig", navn: "Hemmelige rum", ikon: "🔮" },
 ];
 
@@ -92,7 +93,13 @@ function rumKort(r) {
     ? "<div class='nav-billede hemmelig'><span>?</span></div>"
     : "<div class='nav-billede" + (r.rum ? "" : " laast") + "'><img src='" + r.billede + "' alt=''>" + (r.rum ? "" : "<span>🔒</span>") + "</div>";
   let knap;
-  if (her) knap = "<button class='nav-besoeg' disabled>Du er her</button>";
+  const m = r.egetRum ? mineRum.find(function (x) { return x.id === r.vaerelse; }) : null;
+  if (m && !her && !kanGaaInd(m)) {
+    if (adgangAf(m) === "laast") knap = "<button class='nav-besoeg laast' disabled>🔒 Låst</button>";
+    else if (kodeAaben === m.id) knap = "<div class='nav-kode'><input id='nk-kode' type='password' maxlength='30' placeholder='Adgangskode'>" +
+      "<button class='nav-besoeg' data-kode-ind='" + m.id + "'>Gå ind</button><small id='nk-fejl'></small></div>";
+    else knap = "<button class='nav-besoeg' data-kode='" + m.id + "'>🔑 Skriv kode</button>";
+  } else if (her) knap = "<button class='nav-besoeg' disabled>Du er her</button>";
   else if (r.rum) knap = "<button class='nav-besoeg' data-besoeg='" + r.id + "'>Besøg rum</button>";
   else knap = "<button class='nav-besoeg laast' disabled>🔒 Låst</button>";
   return "<div class='nav-kort" + (r.hemmelig ? " hemmelig" : "") + "'>" + billede +
@@ -100,7 +107,7 @@ function rumKort(r) {
     (r.hemmelig ? "<span class='nav-antal'>👤 ? / ?</span>" : "<span class='nav-antal'>👤 " + antalIRum(r) + " / " + r.maks + "</span>") + "</div>" +
     "<div class='nav-hoejre'>" + (r.hemmelig ? "<span class='nav-hjerte tom'>✧</span>" :
       "<button class='nav-hjerte" + (fav ? " valgt" : "") + "' data-fav='" + r.id + "' title='Favorit'>" + (fav ? "♥" : "♡") + "</button>") +
-    knap + (r.egetRum ? "<button class='nav-slet' data-slet-rum='" + r.vaerelse + "' title='Slet rummet'>🗑</button>" : "") + "</div></div>";
+    knap + (m && ejerAf(m) === FIGUR.navn ? adgangVaelger(m) + "<button class='nav-slet' data-slet-rum='" + r.vaerelse + "' title='Slet rummet'>🗑</button>" : "") + "</div></div>";
 }
 
 function visNav() {
@@ -193,6 +200,30 @@ const RUM_TEMAER = [
   { id: "lilla", navn: "Lilla", vaeg: "#7d62a8", gulv1: "#d9cdea", gulv2: "#c9badf" },
 ];
 let opretAaben = false;
+let kodeAaben = null;        // rummet man er ved at skrive adgangskode til
+let kodeRedigerer = null;    // dit eget rum, som du er ved at give en ny adgangskode
+
+// Adgang til rummene: "aaben", "laast" (kun ejeren) eller "kode" (adgangskode)
+const ADGANGE = [["aaben", "🔓 Åben"], ["laast", "🔒 Låst"], ["kode", "🔑 Adgangskode"]];
+function ejerAf(m) { return m.ejer || FIGUR.navn; }
+function adgangAf(m) { return m.adgang || "aaben"; }
+function kanGaaInd(m) {
+  if (ejerAf(m) === FIGUR.navn) return true;
+  if (typeof EJERE !== "undefined" && EJERE.indexOf(FIGUR.navn) >= 0) return true;   // hotellets ejer kommer altid ind
+  return adgangAf(m) === "aaben";
+}
+async function saetKode(m, kode) {
+  m.kodeSalt = nytSalt();
+  m.kodeHash = await hashKode(m.kodeSalt, kode);
+}
+function adgangVaelger(m) {
+  let html = "<select class='nav-adgang' data-adgang='" + m.id + "' title='Hvem må komme ind?'>" + ADGANGE.map(function (a) {
+    return "<option value='" + a[0] + "'" + (a[0] === adgangAf(m) ? " selected" : "") + ">" + a[1] + "</option>";
+  }).join("") + "</select>";
+  if (kodeRedigerer === m.id) html += "<div class='nav-kode'><input id='nk-ny' type='password' maxlength='30' placeholder='Ny adgangskode'>" +
+    "<button class='nav-besoeg' data-ny-kode='" + m.id + "'>Gem</button></div>";
+  return html;
+}
 let opretTema = "klassisk";
 let sletSikker = null;
 
@@ -201,7 +232,11 @@ function lavMineRumKort() {
   for (let i = NAV_RUM.length - 1; i >= 0; i--) if (NAV_RUM[i].egetRum) NAV_RUM.splice(i, 1);
   const plads = NAV_RUM.findIndex(function (r) { return r.id === "mit"; }) + 1;
   mineRum.forEach(function (m, i) {
-    NAV_RUM.splice(plads + i, 0, { id: "eget-" + m.id, etage: "privat", navn: m.navn, om: "Dit rum · " + m.bredde + " × " + m.dybde,
+    if (!m.ejer) m.ejer = FIGUR.navn;
+    const mit = ejerAf(m) === FIGUR.navn;
+    const laas = { aaben: "", laast: " 🔒", kode: " 🔑" }[adgangAf(m)];
+    NAV_RUM.splice(plads + i, 0, { id: "eget-" + m.id, etage: mit ? "privat" : "andres", navn: m.navn + laas,
+      om: (mit ? "Dit rum" : "Ejer: " + ejerAf(m)) + " · " + m.bredde + " × " + m.dybde,
       billede: "billeder/rum/vaerelse.png", maks: 25, rum: "vaerelse", vaerelse: m.id, egetRum: true });
   });
 }
@@ -218,6 +253,10 @@ function opretRumHtml() {
       return "<button type='button' data-tema='" + t.id + "' class='" + (t.id === opretTema ? "valgt" : "") + "' title='" + t.navn + "'>" +
         "<i style='background:" + t.vaeg + "'></i><i style='background:" + t.gulv1 + "'></i>" + t.navn + "</button>";
     }).join("") + "</div>" +
+    "<div class='or-adgang'><b>Hvem må komme ind?</b>" + ADGANGE.map(function (a, i) {
+      return "<label><input type='radio' name='or-adgang' value='" + a[0] + "'" + (i === 0 ? " checked" : "") + "> " + a[1] + "</label>";
+    }).join("") + "</div>" +
+    "<label id='or-kode-felt' hidden>Adgangskode<input id='or-kode' type='password' maxlength='30' placeholder='Den skal gæsterne skrive'></label>" +
     "<p id='or-fejl' class='or-fejl'></p>" +
     "<div class='or-knapper'><button id='or-annuller' type='button'>Annuller</button><button id='or-opret' type='button' class='or-gem'>Opret rum</button></div></div>";
 }
@@ -233,14 +272,22 @@ function lytOpretRum() {
       navVindue.querySelectorAll("[data-tema]").forEach(function (x) { x.classList.toggle("valgt", x === k); });
     });
   });
+  navVindue.querySelectorAll("[name='or-adgang']").forEach(function (k) {
+    k.addEventListener("change", function () { document.getElementById("or-kode-felt").hidden = k.value !== "kode" || !k.checked; });
+  });
   const opret = document.getElementById("or-opret");
-  if (opret) opret.addEventListener("click", function () {
+  if (opret) opret.addEventListener("click", async function () {
     const navn = document.getElementById("or-navn").value.trim().replace(/[<>]/g, "");
     if (!navn) { document.getElementById("or-fejl").textContent = "Giv dit rum et navn."; return; }
+    const adgang = (navVindue.querySelector("[name='or-adgang']:checked") || {}).value || "aaben";
+    const kode = document.getElementById("or-kode").value;
+    if (adgang === "kode" && kode.length < 3) { document.getElementById("or-fejl").textContent = "Adgangskoden skal være mindst 3 tegn."; return; }
     const s = RUM_STOERRELSER.find(function (x) { return x.id === document.getElementById("or-stoerrelse").value; });
     const t = RUM_TEMAER.find(function (x) { return x.id === opretTema; });
     const id = "r" + Date.now().toString(36);
-    mineRum.push({ id: id, navn: navn, bredde: s.bredde, dybde: s.dybde, vaeg: t.vaeg, gulv1: t.gulv1, gulv2: t.gulv2, oprettet: Date.now() });
+    const nyt = { id: id, navn: navn, ejer: FIGUR.navn, adgang: adgang, bredde: s.bredde, dybde: s.dybde, vaeg: t.vaeg, gulv1: t.gulv1, gulv2: t.gulv2, oprettet: Date.now() };
+    if (adgang === "kode") await saetKode(nyt, kode);
+    mineRum.push(nyt);
     gemMineRum();
     opretAaben = false;
     gaaTilVaerelse(id);
@@ -249,8 +296,51 @@ function lytOpretRum() {
   });
   const navnFelt = document.getElementById("or-navn");
   if (navnFelt) navnFelt.addEventListener("keydown", function (e) { if (e.key === "Enter") opret.click(); });
+  // låste rum og adgangskode
+  navVindue.querySelectorAll("[data-kode]").forEach(function (k) {
+    k.addEventListener("click", function () { kodeAaben = k.dataset.kode; visNav(); document.getElementById("nk-kode").focus(); });
+  });
+  navVindue.querySelectorAll("[data-kode-ind]").forEach(function (k) {
+    async function proev() {
+      const m = mineRum.find(function (x) { return x.id === k.dataset.kodeInd; });
+      const kode = document.getElementById("nk-kode").value;
+      if (m && m.kodeHash && (await hashKode(m.kodeSalt, kode)) === m.kodeHash) {
+        kodeAaben = null;
+        gaaTilVaerelse(m.id);
+        visNav();
+      } else {
+        document.getElementById("nk-fejl").textContent = "Forkert kode";
+      }
+    }
+    k.addEventListener("click", proev);
+    document.getElementById("nk-kode").addEventListener("keydown", function (e) { if (e.key === "Enter") proev(); });
+  });
+  navVindue.querySelectorAll("[data-adgang]").forEach(function (k) {
+    k.addEventListener("change", function () {
+      const m = mineRum.find(function (x) { return x.id === k.dataset.adgang; });
+      if (k.value === "kode" && !m.kodeHash) { kodeRedigerer = m.id; m.adgang = "kode"; visNav(); document.getElementById("nk-ny").focus(); return; }
+      m.adgang = k.value;
+      kodeRedigerer = k.value === "kode" ? m.id : null;
+      gemMineRum();
+      visNav();
+    });
+  });
+  navVindue.querySelectorAll("[data-ny-kode]").forEach(function (k) {
+    k.addEventListener("click", async function () {
+      const m = mineRum.find(function (x) { return x.id === k.dataset.nyKode; });
+      const kode = document.getElementById("nk-ny").value;
+      if (kode.length < 3) { document.getElementById("nk-ny").placeholder = "Mindst 3 tegn"; document.getElementById("nk-ny").value = ""; return; }
+      await saetKode(m, kode);
+      m.adgang = "kode";
+      kodeRedigerer = null;
+      gemMineRum();
+      besked.textContent = "Adgangskoden til " + m.navn + " er gemt 🔑";
+      visNav();
+    });
+  });
+
   navVindue.querySelectorAll("[data-slet-rum]").forEach(function (k) {
-    if (sletSikker === k.dataset.sletRum) { k.textContent = "Er du sikker?"; k.classList.add("sikker"); }
+    if (sletSikker === k.dataset.sletRum) { k.textContent = "Er du sikker? Tryk igen"; k.classList.add("sikker"); }
     k.addEventListener("click", function () {
       const id = k.dataset.sletRum;
       if (sletSikker !== id) { sletSikker = id; visNav(); return; }
@@ -287,4 +377,4 @@ document.getElementById("nav-luk").addEventListener("click", function () { navVi
 window.addEventListener("keydown", function (e) { if (e.key === "Escape") navVindue.hidden = true; });
 
 // antallet i rummene ændrer sig, mens navigatøren er åben
-setInterval(function () { if (!navVindue.hidden && !opretAaben && document.activeElement.id !== "nav-soeg") visNav(); }, 3000);
+setInterval(function () { if (!navVindue.hidden && !opretAaben && !kodeAaben && !kodeRedigerer && document.activeElement.id !== "nav-soeg") visNav(); }, 3000);
