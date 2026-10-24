@@ -2,20 +2,20 @@
 -- Kopiér ALT herfra og indsæt i Supabase → SQL Editor → Run (ligesom sidst).
 alter table public.hv_spillere add column if not exists aktiv timestamptz not null default now();
 
-create table public.hv_venner (
+create table if not exists public.hv_venner (
   a text not null,
   b text not null,
   oprettet timestamptz not null default now(),
   primary key (a, b)
 );
-create table public.hv_beskeder (
+create table if not exists public.hv_beskeder (
   id bigint generated always as identity primary key,
   fra text not null,
   til text not null,
   tekst text not null,
   tid timestamptz not null default now()
 );
-create index hv_beskeder_til on public.hv_beskeder (til, id);
+create index if not exists hv_beskeder_til on public.hv_beskeder (til, id);
 alter table public.hv_venner enable row level security;
 alter table public.hv_beskeder enable row level security;
 revoke all on public.hv_venner, public.hv_beskeder from anon, authenticated;
