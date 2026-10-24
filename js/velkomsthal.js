@@ -96,6 +96,34 @@ let aktivtVaerelse = "mit";     // hvilket af dine rum du er i
 let naesteVaerelse = null;      // sættes af gaaTilVaerelse()
 const andreVaerelser = {};      // møblerne i de rum du har oprettet
 
+// Rummenes former. Hver form siger, om der er gulv på feltet (x, y) i et rum på b × d felter.
+const RUM_FORMER = [
+  { id: "firkant", navn: "Firkant", felt: function () { return true; } },
+  { id: "aflang", navn: "Aflang", felt: function () { return true; }, maal: function (s) { return [s + 4, Math.max(4, Math.round(s * 0.55))]; } },
+  { id: "dyb", navn: "Lang gang", felt: function () { return true; }, maal: function (s) { return [Math.max(4, Math.round(s * 0.55)), s + 4]; } },
+  { id: "l", navn: "L-form", felt: function (x, y, b, d) { return !(x >= Math.ceil(b / 2) && y >= Math.ceil(d / 2)); } },
+  { id: "omvendt-l", navn: "Omvendt L", felt: function (x, y, b, d) { return !(x < Math.floor(b / 2) && y >= Math.ceil(d / 2)); } },
+  { id: "t", navn: "T-form", felt: function (x, y, b, d) { return y < Math.ceil(d / 2) || (x >= Math.floor(b / 3) && x < Math.ceil(b * 2 / 3)); } },
+  { id: "u", navn: "U-form", felt: function (x, y, b, d) { return !(x >= Math.floor(b / 3) && x < Math.ceil(b * 2 / 3) && y >= Math.ceil(d / 2)); } },
+  { id: "kors", navn: "Kors", felt: function (x, y, b, d) { return (x >= Math.floor(b / 3) && x < Math.ceil(b * 2 / 3)) || (y >= Math.floor(d / 3) && y < Math.ceil(d * 2 / 3)); } },
+  { id: "trappe", navn: "Trappe", felt: function (x, y, b, d) { return x + y < Math.round((b + d) * 0.72); } },
+  { id: "ring", navn: "Med gårdhave", felt: function (x, y, b, d) { return !(x >= Math.floor(b / 3) && x < Math.ceil(b * 2 / 3) && y >= Math.floor(d / 3) && y < Math.ceil(d * 2 / 3)); } },
+];
+// 50 rummodeller: 10 former i 5 størrelser
+const RUM_MODELLER = [];
+[["Lille", 6], ["Mellem", 8], ["Stor", 10], ["Kæmpe", 12], ["Gigant", 14]].forEach(function (str) {
+  RUM_FORMER.forEach(function (f) {
+    const maal = f.maal ? f.maal(str[1]) : [str[1], str[1]];
+    RUM_MODELLER.push({ id: f.id + "-" + str[1], form: f.id, navn: str[0] + " " + (/^[A-ZÆØÅ][a-zæøå]/.test(f.navn) ? f.navn[0].toLowerCase() + f.navn.slice(1) : f.navn), bredde: maal[0], dybde: maal[1] });
+  });
+});
+RUM_MODELLER.forEach(function (m, i) { m.nr = i + 1; });
+function lavForm(formId, b, d) {
+  const f = RUM_FORMER.find(function (x) { return x.id === formId; });
+  if (!f || formId === "firkant" || formId === "aflang" || formId === "dyb") return null;
+  return function (x, y) { return f.felt(x, y, b, d); };
+}
+
 function vaerelseInfo(id) {
   if (id === "mit") return RUM_FARVER;
   return mineRum.find(function (r) { return r.id === id; }) || RUM_FARVER;
@@ -141,11 +169,20 @@ function skiftRum(navn) {
   RUM.gulvFarve2 = navn === "hal" ? HAL_FARVER.gulv2 : v.gulv2;
   RUM.bredde = navn === "hal" ? HAL_STOERRELSE.bredde : v.bredde;
   RUM.dybde = navn === "hal" ? HAL_STOERRELSE.dybde : v.dybde;
+  RUM.form = navn === "hal" || !v.form ? null : lavForm(v.form, v.bredde, v.dybde);
   document.body.classList.toggle("i-hallen", navn === "hal");
 
   // figuren kommer ind gennem døren
   figur.x = navn === "hal" ? HAL_DOER.felt.x : 2;
   figur.y = navn === "hal" ? HAL_DOER.felt.y + 1 : 2;
+  // i rum med en særlig form: stil figuren på det nærmeste gulv
+  if (!erIRummet(figur.x, figur.y)) {
+    let bedst = null;
+    for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) {
+      if (erIRummet(x, y) && (!bedst || Math.hypot(x - 2, y - 2) < Math.hypot(bedst.x - 2, bedst.y - 2))) bedst = { x: x, y: y };
+    }
+    if (bedst) { figur.x = bedst.x; figur.y = bedst.y; }
+  }
   figur.rute = [];
   figur.sidde = null;
   figur.skalSidde = null;

@@ -13,7 +13,6 @@ const ETAGER = [
   { id: "sal2", navn: "2. sal", ikon: "🎵" },
   { id: "tag", navn: "Taghaven", ikon: "🌳" },
   { id: "privat", navn: "Mine rum", ikon: "🔑" },
-  { id: "andres", navn: "Andres rum", ikon: "🚪" },
   { id: "hemmelig", navn: "Hemmelige rum", ikon: "🔮" },
 ];
 
@@ -185,20 +184,46 @@ function visNav() {
 // -------------------------------------------------------------
 //  Mine rum: opret dine egne rum 🔑
 // -------------------------------------------------------------
-const RUM_STOERRELSER = [
-  { id: "lille", navn: "Lille (6 × 6)", bredde: 6, dybde: 6 },
-  { id: "mellem", navn: "Mellem (8 × 8)", bredde: 8, dybde: 8 },
-  { id: "stor", navn: "Stor (10 × 10)", bredde: 10, dybde: 10 },
-  { id: "kaempe", navn: "Kæmpe (12 × 12)", bredde: 12, dybde: 12 },
+// Farver til væggen og gulvet, når man opretter et rum
+const VAEG_FARVER = [
+  ["Himmelblå", "#86b3dd"], ["Rosa", "#e3a9c0"], ["Mint", "#8fc9a6"], ["Natblå", "#3f4d72"], ["Træ", "#8a5a3b"], ["Lilla", "#7d62a8"],
+  ["Creme", "#efe2c4"], ["Fersken", "#f2b48c"], ["Rød", "#b8483f"], ["Skovgrøn", "#4e7d4a"], ["Grå", "#9aa3ab"], ["Sort", "#2c2b33"],
 ];
-const RUM_TEMAER = [
-  { id: "klassisk", navn: "Klassisk", vaeg: "#86b3dd", gulv1: "#d8b47a", gulv2: "#c9a46c" },
-  { id: "rosa", navn: "Rosa", vaeg: "#e3a9c0", gulv1: "#f4dde6", gulv2: "#ebcbd8" },
-  { id: "mint", navn: "Mint", vaeg: "#8fc9a6", gulv1: "#e4f2e7", gulv2: "#d1e8d6" },
-  { id: "nat", navn: "Nat", vaeg: "#3f4d72", gulv1: "#6b7593", gulv2: "#5c6684" },
-  { id: "trae", navn: "Træ", vaeg: "#8a5a3b", gulv1: "#c9a27a", gulv2: "#b88f68" },
-  { id: "lilla", navn: "Lilla", vaeg: "#7d62a8", gulv1: "#d9cdea", gulv2: "#c9badf" },
+const GULVE = [
+  ["Lyst træ", "#d8b47a", "#c9a46c"], ["Mørkt træ", "#9b6a43", "#8a5c38"], ["Hvide fliser", "#f2f0ea", "#e2ded4"], ["Skakbræt", "#f3f3f3", "#3a3a3a"],
+  ["Lyserød", "#f4dde6", "#ebcbd8"], ["Mint", "#e4f2e7", "#d1e8d6"], ["Græs", "#8fc46f", "#7fb560"], ["Sand", "#ecd7a6", "#e0c992"],
+  ["Lilla", "#d9cdea", "#c9badf"], ["Nat", "#6b7593", "#5c6684"], ["Marmor", "#e9e6e1", "#d6d2cb"], ["Rødt tæppe", "#b4473d", "#a33f36"],
 ];
+let opretModel = "firkant-8";
+let opretVaeg = "#86b3dd";
+let opretGulv = 0;
+
+// En lille tegning af rummets form, så man kan se den, før man opretter rummet
+function tegnModelForhaand() {
+  const c = document.getElementById("or-forhaand");
+  if (!c) return;
+  const g = c.getContext("2d");
+  const m = RUM_MODELLER.find(function (x) { return x.id === opretModel; });
+  const form = lavForm(m.form, m.bredde, m.dybde);
+  const felt = function (x, y) { return x >= 0 && y >= 0 && x < m.bredde && y < m.dybde && (!form || form(x, y)); };
+  g.clearRect(0, 0, c.width, c.height);
+  const fb = Math.min(150 / (m.bredde + m.dybde), 16) * 2, fh = fb / 2;
+  const ox = c.width / 2 + (m.dybde - m.bredde) * fb / 4, oy = 28;
+  const p = function (x, y) { return { x: ox + (x - y) * fb / 2, y: oy + (x + y) * fh / 2 }; };
+  const poly = function (pt, farve) { g.beginPath(); g.moveTo(pt[0].x, pt[0].y); pt.forEach(function (q) { g.lineTo(q.x, q.y); }); g.closePath(); g.fillStyle = farve; g.fill(); };
+  const vh = 18;
+  for (let y = 0; y < m.dybde; y++) for (let x = 0; x < m.bredde; x++) if (felt(x, y)) {
+    const a = p(x, y + 1), b = p(x, y); poly([a, b, { x: b.x, y: b.y - vh }, { x: a.x, y: a.y - vh }], nuance(opretVaeg, 0.85)); break;
+  }
+  for (let x = 0; x < m.bredde; x++) for (let y = 0; y < m.dybde; y++) if (felt(x, y)) {
+    const a = p(x, y), b = p(x + 1, y); poly([a, b, { x: b.x, y: b.y - vh }, { x: a.x, y: a.y - vh }], opretVaeg); break;
+  }
+  const gulv = GULVE[opretGulv];
+  for (let x = 0; x < m.bredde; x++) for (let y = 0; y < m.dybde; y++) if (felt(x, y)) {
+    poly([p(x, y), p(x + 1, y), p(x + 1, y + 1), p(x, y + 1)], (x + y) % 2 ? gulv[2] : gulv[1]);
+  }
+}
+
 let opretAaben = false;
 let kodeAaben = null;        // rummet man er ved at skrive adgangskode til
 let kodeRedigerer = null;    // dit eget rum, som du er ved at give en ny adgangskode
@@ -224,7 +249,6 @@ function adgangVaelger(m) {
     "<button class='nav-besoeg' data-ny-kode='" + m.id + "'>Gem</button></div>";
   return html;
 }
-let opretTema = "klassisk";
 let sletSikker = null;
 
 // dine oprettede rum som kort i navigatøren
@@ -235,8 +259,8 @@ function lavMineRumKort() {
     if (!m.ejer) m.ejer = FIGUR.navn;
     const mit = ejerAf(m) === FIGUR.navn;
     const laas = { aaben: "", laast: " 🔒", kode: " 🔑" }[adgangAf(m)];
-    NAV_RUM.splice(plads + i, 0, { id: "eget-" + m.id, etage: mit ? "privat" : "andres", navn: m.navn + laas,
-      om: (mit ? "Dit rum" : "Ejer: " + ejerAf(m)) + " · " + m.bredde + " × " + m.dybde,
+    NAV_RUM.splice(plads + i, 0, { id: "eget-" + m.id, etage: mit ? "privat" : "sal1", navn: m.navn + laas,   // andres rum står på 1. sal
+      om: (mit ? "Dit rum" : "Ejer: " + ejerAf(m)) + " · " + (m.model ? m.model + ", " : "") + m.bredde + " × " + m.dybde,
       billede: "billeder/rum/vaerelse.png", maks: 25, rum: "vaerelse", vaerelse: m.id, egetRum: true });
   });
 }
@@ -246,12 +270,14 @@ function opretRumHtml() {
   if (!opretAaben) return "<button id='nav-opret-rum' class='nav-opret'>➕ Opret rum</button>";
   return "<div class='nav-opret-boks'><h4>➕ Opret et nyt rum</h4>" +
     "<label>Navn<input id='or-navn' type='text' maxlength='24' placeholder='fx Min hule'></label>" +
-    "<label>Størrelse<select id='or-stoerrelse'>" + RUM_STOERRELSER.map(function (s) {
-      return "<option value='" + s.id + "'" + (s.id === "mellem" ? " selected" : "") + ">" + s.navn + "</option>";
-    }).join("") + "</select></label>" +
-    "<div class='or-temaer'>" + RUM_TEMAER.map(function (t) {
-      return "<button type='button' data-tema='" + t.id + "' class='" + (t.id === opretTema ? "valgt" : "") + "' title='" + t.navn + "'>" +
-        "<i style='background:" + t.vaeg + "'></i><i style='background:" + t.gulv1 + "'></i>" + t.navn + "</button>";
+    "<div class='or-model'><label>Rummodel (" + RUM_MODELLER.length + " at vælge imellem)<select id='or-model'>" + RUM_MODELLER.map(function (m) {
+      return "<option value='" + m.id + "'" + (m.id === opretModel ? " selected" : "") + ">" + m.nr + ". " + m.navn + " (" + m.bredde + " × " + m.dybde + ")</option>";
+    }).join("") + "</select></label><canvas id='or-forhaand' width='190' height='130'></canvas></div>" +
+    "<b class='or-titel'>Væg</b><div class='or-farver'>" + VAEG_FARVER.map(function (v) {
+      return "<button type='button' data-vaeg='" + v[1] + "' class='" + (v[1] === opretVaeg ? "valgt" : "") + "' title='" + v[0] + "' style='background:" + v[1] + "'></button>";
+    }).join("") + "</div>" +
+    "<b class='or-titel'>Gulv</b><div class='or-farver'>" + GULVE.map(function (gv, i) {
+      return "<button type='button' data-gulv='" + i + "' class='" + (i === opretGulv ? "valgt" : "") + "' title='" + gv[0] + "' style='background:linear-gradient(135deg," + gv[1] + " 50%," + gv[2] + " 50%)'></button>";
     }).join("") + "</div>" +
     "<div class='or-adgang'><b>Hvem må komme ind?</b>" + ADGANGE.map(function (a, i) {
       return "<label><input type='radio' name='or-adgang' value='" + a[0] + "'" + (i === 0 ? " checked" : "") + "> " + a[1] + "</label>";
@@ -266,10 +292,23 @@ function lytOpretRum() {
   if (aabn) aabn.addEventListener("click", function () { opretAaben = true; visNav(); document.getElementById("or-navn").focus(); });
   const annuller = document.getElementById("or-annuller");
   if (annuller) annuller.addEventListener("click", function () { opretAaben = false; visNav(); });
-  navVindue.querySelectorAll("[data-tema]").forEach(function (k) {
+  const modelValg = document.getElementById("or-model");
+  if (modelValg) {
+    modelValg.addEventListener("change", function () { opretModel = modelValg.value; tegnModelForhaand(); });
+    tegnModelForhaand();
+  }
+  navVindue.querySelectorAll("[data-vaeg]").forEach(function (k) {
     k.addEventListener("click", function () {
-      opretTema = k.dataset.tema;
-      navVindue.querySelectorAll("[data-tema]").forEach(function (x) { x.classList.toggle("valgt", x === k); });
+      opretVaeg = k.dataset.vaeg;
+      navVindue.querySelectorAll("[data-vaeg]").forEach(function (x) { x.classList.toggle("valgt", x === k); });
+      tegnModelForhaand();
+    });
+  });
+  navVindue.querySelectorAll("[data-gulv]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      opretGulv = +k.dataset.gulv;
+      navVindue.querySelectorAll("[data-gulv]").forEach(function (x) { x.classList.toggle("valgt", x === k); });
+      tegnModelForhaand();
     });
   });
   navVindue.querySelectorAll("[name='or-adgang']").forEach(function (k) {
@@ -282,10 +321,11 @@ function lytOpretRum() {
     const adgang = (navVindue.querySelector("[name='or-adgang']:checked") || {}).value || "aaben";
     const kode = document.getElementById("or-kode").value;
     if (adgang === "kode" && kode.length < 3) { document.getElementById("or-fejl").textContent = "Adgangskoden skal være mindst 3 tegn."; return; }
-    const s = RUM_STOERRELSER.find(function (x) { return x.id === document.getElementById("or-stoerrelse").value; });
-    const t = RUM_TEMAER.find(function (x) { return x.id === opretTema; });
+    const mdl = RUM_MODELLER.find(function (x) { return x.id === opretModel; });
+    const gulv = GULVE[opretGulv];
     const id = "r" + Date.now().toString(36);
-    const nyt = { id: id, navn: navn, ejer: FIGUR.navn, adgang: adgang, bredde: s.bredde, dybde: s.dybde, vaeg: t.vaeg, gulv1: t.gulv1, gulv2: t.gulv2, oprettet: Date.now() };
+    const nyt = { id: id, navn: navn, ejer: FIGUR.navn, adgang: adgang, form: mdl.form, model: mdl.navn, bredde: mdl.bredde, dybde: mdl.dybde,
+      vaeg: opretVaeg, gulv1: gulv[1], gulv2: gulv[2], oprettet: Date.now() };
     if (adgang === "kode") await saetKode(nyt, kode);
     mineRum.push(nyt);
     gemMineRum();

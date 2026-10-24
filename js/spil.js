@@ -132,7 +132,9 @@ function skaermTilFelt(sx, sy) {
 }
 
 function erIRummet(x, y) {
-  return x >= 0 && y >= 0 && x < RUM.bredde && y < RUM.dybde;
+  if (!(x >= 0 && y >= 0 && x < RUM.bredde && y < RUM.dybde)) return false;
+  // rum med en særlig form (L, T, U …) har felter uden gulv (js/velkomsthal.js)
+  return !RUM.form || RUM.form(x, y);
 }
 
 function moebelPaa(x, y) {
@@ -528,6 +530,7 @@ function diamant(x, y) {
 
 function tegnVaegge() {
   const op = function (p) { return { x: p.x, y: p.y - VAEG_HOEJDE }; };
+  if (RUM.form) { tegnFormVaegge(op); return; }
   const hjoerne = punkt(0, 0);
   const venstre = punkt(0, RUM.dybde);
   const hoejre = punkt(RUM.bredde, 0);
@@ -544,10 +547,36 @@ function tegnVaegge() {
   ctx.lineWidth = 1;
 }
 
+// Vægge til rum med en særlig form: de følger gulvets bagerste kant
+function tegnFormVaegge(op) {
+  const kant = nuance(RUM.vaegFarve, 1.25);
+  function stykke(a, b, farve) {
+    polygon(ctx, [a, b, op(b), op(a)], farve);
+    ctx.strokeStyle = kant;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(op(a).x, op(a).y);
+    ctx.lineTo(op(b).x, op(b).y);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+  }
+  for (let y = 0; y < RUM.dybde; y++) {
+    for (let x = 0; x < RUM.bredde; x++) {
+      if (erIRummet(x, y)) { stykke(punkt(x, y + 1), punkt(x, y), nuance(RUM.vaegFarve, 0.85)); break; }
+    }
+  }
+  for (let x = 0; x < RUM.bredde; x++) {
+    for (let y = 0; y < RUM.dybde; y++) {
+      if (erIRummet(x, y)) { stykke(punkt(x, y), punkt(x + 1, y), RUM.vaegFarve); break; }
+    }
+  }
+}
+
 function tegnGulv() {
   const gulvBillede = hentBillede(RUM.gulvBillede);
   for (let x = 0; x < RUM.bredde; x++) {
     for (let y = 0; y < RUM.dybde; y++) {
+      if (!erIRummet(x, y)) continue;
       if (billedeKlar(gulvBillede)) {
         const p = punkt(x, y);
         ctx.drawImage(gulvBillede, p.x - FLISE_B / 2, p.y, FLISE_B, FLISE_H);
@@ -558,6 +587,22 @@ function tegnGulv() {
     }
   }
   // gulvets kant forrest
+  if (RUM.form) {
+    for (let x = 0; x < RUM.bredde; x++) {
+      for (let y = 0; y < RUM.dybde; y++) {
+        if (!erIRummet(x, y)) continue;
+        if (!erIRummet(x, y + 1)) {
+          const a = punkt(x, y + 1), c = punkt(x + 1, y + 1);
+          polygon(ctx, [a, c, { x: c.x, y: c.y + 8 }, { x: a.x, y: a.y + 8 }], nuance(RUM.gulvFarve2, 0.7));
+        }
+        if (!erIRummet(x + 1, y)) {
+          const a = punkt(x + 1, y + 1), c = punkt(x + 1, y);
+          polygon(ctx, [a, c, { x: c.x, y: c.y + 8 }, { x: a.x, y: a.y + 8 }], nuance(RUM.gulvFarve2, 0.55));
+        }
+      }
+    }
+    return;
+  }
   const v = punkt(0, RUM.dybde), b = punkt(RUM.bredde, RUM.dybde), h = punkt(RUM.bredde, 0);
   polygon(ctx, [v, b, { x: b.x, y: b.y + 8 }, { x: v.x, y: v.y + 8 }], nuance(RUM.gulvFarve2, 0.7));
   polygon(ctx, [b, h, { x: h.x, y: h.y + 8 }, { x: b.x, y: b.y + 8 }], nuance(RUM.gulvFarve2, 0.55));
