@@ -137,7 +137,9 @@ function sendAdvarsel(navn, grund, varighed) {
   s.advarsel = true;
   tilfoejBesked(navn, FIGUR.navn, "⚠️ Advarsel fra hotellet" + (grund ? ": " + grund : "") + ". Advarslen gælder i " + varighed + ".", { advarsel: true });
   aabnBeskeder(navn);
-  venSvarer(navn, tilfaeldig(ADVARSEL_SVAR));
+  // advarslen dukker op på modtagerens skærm (js/advarsel-popup.js)
+  if (typeof nyAdvarselPopup === "function") nyAdvarselPopup(navn, grund, varighed);
+  if (HAL_GAESTER.some(function (g) { return g.navn === navn; })) venSvarer(navn, tilfaeldig(ADVARSEL_SVAR));
 }
 
 visUlaest();

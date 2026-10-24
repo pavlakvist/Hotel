@@ -254,7 +254,12 @@ document.querySelectorAll("#ejer-faner button").forEach(function (k) {
 });
 
 function alleSpillere() {
-  return [{ navn: FIGUR.navn, hvad: "Ejer (dig)" }].concat(HAL_GAESTER.map(function (g) {
+  // profiler der er oprettet på denne computer (Opret mig på forsiden)
+  const profiler = typeof hentKonti === "function" ? Object.values(hentKonti()).map(function (k) { return k.navn; })
+    .filter(function (n) { return n !== FIGUR.navn; }) : [];
+  return [{ navn: FIGUR.navn, hvad: "Ejer (dig)" }].concat(profiler.map(function (n) {
+    return { navn: n, hvad: "Profil på denne computer" };
+  }), HAL_GAESTER.map(function (g) {
     return { navn: g.navn, hvad: "Computer-gæst" };
   }));
 }
