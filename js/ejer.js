@@ -9,7 +9,7 @@
 // =============================================================
 
 // Hvem må åbne ejerpanelet? Skriv flere navne for at gøre dem til moderatorer.
-const EJERE = ["Pall", "Pavla"];
+const EJERE = typeof EJER_NAVNE !== "undefined" ? EJER_NAVNE.slice() : ["Pall", "Pavla"];   // navnene står i js/konto.js
 // Er ejeren logget ind, husker computeren det til ejer-knappen på forsiden
 if (typeof aktivKonto === "function" && aktivKonto() && EJERE.includes(aktivKonto())) huskEjerGenvej(aktivKonto());
 
@@ -583,7 +583,7 @@ function visSystem() {
     "<label class='ejer-felt'>Ekstra grimme ord (adskil med komma)<input id='s-ord' type='text' value='" + rens(system.ekstraOrd) + "'></label>" +
     "<label class='ejer-felt'>Timeout varer (minutter)<input id='s-timeout' type='number' min='1' max='1440' value='" + system.timeoutMin + "'></label>" +
     "<button id='s-gem' class='lv-knap'>Gem</button>" +
-    "<p class='ejer-info'>Ejere: " + rens(EJERE.join(", ")) + " (ændres øverst i js/ejer.js)</p>";
+    "<p class='ejer-info'>Ejere: " + rens(EJERE.join(", ")) + " (ændres øverst i js/konto.js)</p>";
   document.getElementById("s-gem").addEventListener("click", function () {
     system.velkomst = document.getElementById("s-velkomst").value.trim();
     system.filterTil = document.getElementById("s-filter").checked;

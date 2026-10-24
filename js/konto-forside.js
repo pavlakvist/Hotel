@@ -22,10 +22,28 @@ function aabnKonto(maade) {
   document.querySelector("#konto-skift button").addEventListener("click", function () { aabnKonto(this.dataset.maade); });
   kontoKode.autocomplete = opret ? "new-password" : "current-password";
   kontoFejl.textContent = "";
+  visProfiler();
   kontoKode.value = "";
   kontoKode2.value = "";
   kontoVindue.hidden = false;
   kontoNavn.focus();
+}
+
+// Profilerne på denne computer vises som små knapper, så man kan se sit navn
+function visProfiler() {
+  const boks = document.getElementById("konto-profiler");
+  const navne = Object.values(hentKonti()).map(function (k) { return k.navn; });
+  boks.innerHTML = "";
+  if (kontoMaade !== "ind" || !navne.length) { boks.hidden = true; return; }
+  boks.hidden = false;
+  boks.appendChild(document.createTextNode("Profiler her: "));
+  navne.forEach(function (n) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = n;
+    b.addEventListener("click", function () { kontoNavn.value = n; kontoKode.focus(); });
+    boks.appendChild(b);
+  });
 }
 
 function lukKonto() {
@@ -37,13 +55,30 @@ kontoForm.addEventListener("submit", async function (e) {
   const navn = kontoNavn.value.trim();
   const kode = kontoKode.value;
   let fejl;
-  if (kontoMaade === "opret") {
-    fejl = kode !== kontoKode2.value ? "De to adgangskoder er ikke ens." : await opretKonto(navn, kode);
-  } else {
-    fejl = await logInd(navn, kode);
+  try {
+    if (kontoMaade === "opret") {
+      fejl = kode !== kontoKode2.value ? "De to adgangskoder er ikke ens." : await opretKonto(navn, kode);
+    } else {
+      fejl = await logInd(navn, kode);
+    }
+  } catch (fejlen) {
+    fejl = "Noget gik galt: " + fejlen.message;
   }
-  if (fejl) { kontoFejl.textContent = fejl; return; }
-  window.location.href = "hotel.html";
+  if (fejl) {
+    kontoFejl.textContent = fejl;
+    // Findes profilen ikke, kan man oprette den med det samme
+    if (kontoMaade === "ind" && navn && !hentKonti()[navn.toLowerCase()]) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "konto-opret-nu";
+      b.textContent = "Opret profilen " + navn + " nu";
+      b.addEventListener("click", function () { aabnKonto("opret"); kontoNavn.value = navn; kontoKode.focus(); });
+      kontoFejl.textContent = "Der er ingen profil med navnet " + navn + " på denne computer endnu. ";
+      kontoFejl.appendChild(b);
+    }
+    return;
+  }
+  window.location.href = hotelAdresse();
 });
 
 document.getElementById("konto-luk").addEventListener("click", lukKonto);
@@ -53,16 +88,19 @@ window.addEventListener("keydown", function (e) { if (e.key === "Escape") lukKon
 // Knapperne på forsiden skifter, alt efter om man er logget ind
 function visKontoKnapper() {
   const navn = aktivKonto();
+  if (navn && EJER_NAVNE.includes(navn)) huskEjerGenvej(navn);
   document.getElementById("ud-knapper").hidden = !!navn;
   document.getElementById("ind-knapper").hidden = !navn;
   if (navn) document.getElementById("konto-hvem").textContent = navn;
+  // Tjek ind-knapperne tager navnet med ind i hotellet
+  document.querySelectorAll("#menu-tjek-ind, #knap-tjek-ind").forEach(function (a) { a.href = hotelAdresse(); });
   // Ejer-knappen vises kun, hvis ejeren har været logget ind på denne computer
   const ejer = ejerGenvej();
   document.getElementById("ejer-genvej").hidden = !ejer;
   if (ejer) document.getElementById("ejer-navn").textContent = ejer;
 }
 document.getElementById("knap-ejer").addEventListener("click", function () {
-  if (ejerGenvejLogInd()) window.location.href = "hotel.html";
+  if (ejerGenvejLogInd()) window.location.href = hotelAdresse();
 });
 document.getElementById("knap-ejer-glem").addEventListener("click", function () {
   glemEjerGenvej();

@@ -6,7 +6,7 @@
   <title>Hotelven – Dit hjem, dit hotel, din historie</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&display=swap">
-  <link rel="stylesheet" href="css/indgang.css?v=34">
+  <link rel="stylesheet" href="css/indgang.css?v=36">
 </head>
 <body>
 
@@ -34,13 +34,13 @@
       <button type="button" id="knap-opret" class="knap lys">Opret mig</button>
       <!-- kun på ejerens egen computer (js/konto-forside.js) -->
       <div id="ejer-genvej" class="ejer-genvej" hidden>
-        <button type="button" id="knap-ejer" class="knap ejer"><img src="billeder/forside/krone.png" alt=""> Gå ind som <span id="ejer-navn"></span></button>
+        <button type="button" id="knap-ejer" class="knap ejer"><img src="billeder/forside/krone.png" alt=""><span>Gå ind som <b id="ejer-navn"></b></span></button>
         <button type="button" id="knap-ejer-glem" class="ejer-glem" title="Fjern ejer-knappen fra denne computer">✕</button>
       </div>
     </div>
     <!-- logget ind -->
     <div id="ind-knapper" class="konto-knapper" hidden>
-      <a href="hotel.html" class="knap guld stor">Tjek ind <span class="pil">&rarr;</span></a>
+      <a href="hotel.html" id="knap-tjek-ind" class="knap guld stor">Tjek ind <span class="pil">&rarr;</span></a>
       <p class="hjaelp">Logget ind som <b id="konto-hvem"></b> · <button type="button" id="knap-log-ud" class="link-knap">Log ud</button></p>
     </div>
   </main>
@@ -56,6 +56,7 @@
         <label>Brugernavn<input id="konto-navn" type="text" maxlength="16" autocomplete="username" required></label>
         <label>Adgangskode<input id="konto-kode" type="password" maxlength="64" required></label>
         <label id="konto-kode2-felt">Gentag adgangskode<input id="konto-kode2" type="password" maxlength="64" autocomplete="new-password"></label>
+        <p id="konto-profiler" class="konto-profiler" hidden></p>
         <p id="konto-fejl" class="konto-fejl" role="alert"></p>
         <button type="submit" id="konto-send" class="knap guld lille">Log ind</button>
       </form>
@@ -65,7 +66,7 @@
   </div>
 
   <script src="js/indstillinger.js?v=32"></script>
-  <script src="js/konto.js?v=34"></script>
-  <script src="js/konto-forside.js?v=34"></script>
+  <script src="js/konto.js?v=37"></script>
+  <script src="js/konto-forside.js?v=38"></script>
 </body>
 </html>

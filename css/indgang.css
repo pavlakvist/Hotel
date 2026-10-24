@@ -340,3 +340,19 @@ button.knap {
   font-size: 12px;
 }
 .ejer-glem:hover { background: var(--creme-moerk); }
+
+/* profilerne på denne computer + "Opret profilen nu" */
+.konto-profiler { margin: 0; font-size: 13px; color: var(--brun); text-align: center; }
+.konto-profiler[hidden] { display: none; }
+.konto-profiler button, .konto-opret-nu {
+  margin: 2px 3px;
+  padding: 3px 10px;
+  border: 2px solid var(--guld-moerk);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--brun);
+  font: 800 13px "Nunito", sans-serif;
+  cursor: pointer;
+}
+.konto-profiler button:hover, .konto-opret-nu:hover { background: var(--guld-lys); }
+.konto-opret-nu { display: block; margin: 6px auto 0; }

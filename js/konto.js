@@ -6,6 +6,8 @@
 // =============================================================
 const KONTI_NOEGLE = "mit-hotel-konti";
 const KONTO_AKTIV_NOEGLE = "mit-hotel-logget-ind";
+// Hotellets ejere (bruges også af ejerpanelet i js/ejer.js)
+const EJER_NAVNE = ["Pall", "Pavla"];
 
 function hentKonti() {
   try { return JSON.parse(localStorage.getItem(KONTI_NOEGLE) || "{}"); } catch (e) { return {}; }
@@ -16,8 +18,23 @@ function gemKonti(konti) {
 function aktivKonto() {
   try {
     const navn = localStorage.getItem(KONTO_AKTIV_NOEGLE);
-    return navn && hentKonti()[navn.toLowerCase()] ? navn : null;
-  } catch (e) { return null; }
+    if (navn && hentKonti()[navn.toLowerCase()]) return navn;
+  } catch (e) {}
+  // Firefox giver hver fil på computeren sin egen hukommelse, så hotel.html
+  // kan ikke se profilerne fra forsiden. Så sender forsiden navnet med i
+  // adressen (hotel.html#konto=Navn), og det bruges her.
+  if (Object.keys(hentKonti()).length === 0) return kontoFraAdresse();
+  return null;
+}
+function kontoFraAdresse() {
+  const m = location.hash.match(/konto=([^&]+)/);
+  if (!m) return null;
+  try { return decodeURIComponent(m[1]); } catch (e) { return null; }
+}
+// Adressen til hotellet, med navnet på den der er logget ind
+function hotelAdresse() {
+  const navn = aktivKonto();
+  return navn ? "hotel.html#konto=" + encodeURIComponent(navn) : "hotel.html";
 }
 function saetAktivKonto(navn) {
   try {
@@ -27,12 +44,14 @@ function saetAktivKonto(navn) {
 }
 
 // Fingeraftryk af adgangskoden (SHA-256 med et tilfældigt "salt" pr. konto)
-async function hashKode(salt, kode) {
+async function hashKode(salt, kode, maade) {
   const tekst = salt + ":" + kode;
-  if (window.crypto && crypto.subtle) {
-    const data = new TextEncoder().encode(tekst);
-    const h = await crypto.subtle.digest("SHA-256", data);
-    return Array.from(new Uint8Array(h)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  if (maade !== "fnv" && window.crypto && crypto.subtle) {
+    try {
+      const data = new TextEncoder().encode(tekst);
+      const h = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(h)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+    } catch (e) {}
   }
   // reserve, hvis browseren ikke kan SHA-256
   let h = 2166136261;
@@ -64,13 +83,18 @@ async function opretKonto(navn, kode) {
   konti[navn.toLowerCase()] = { navn: navn, salt: salt, hash: await hashKode(salt, kode), oprettet: Date.now() };
   gemKonti(konti);
   saetAktivKonto(navn);
+  if (EJER_NAVNE.includes(navn)) huskEjerGenvej(navn);
   return "";
 }
 
 async function logInd(navn, kode) {
+  if (!navn) return "Skriv dit brugernavn.";
   const k = hentKonti()[navn.toLowerCase()];
-  if (!k || (await hashKode(k.salt, kode)) !== k.hash) return "Forkert brugernavn eller adgangskode.";
+  if (!k) return "Der er ingen profil med navnet \"" + navn + "\" på denne computer. Tryk Opret mig nederst.";
+  const maade = String(k.hash).indexOf("fnv") === 0 ? "fnv" : "sha";
+  if ((await hashKode(k.salt, kode, maade)) !== k.hash) return "Forkert adgangskode. Prøv igen.";
   saetAktivKonto(k.navn);
+  if (EJER_NAVNE.includes(k.navn)) huskEjerGenvej(k.navn);
   return "";
 }
 
