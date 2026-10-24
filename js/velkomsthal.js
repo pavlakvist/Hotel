@@ -158,9 +158,24 @@ const HEMMELIG_MOEBLER = [
   { type: "taepper-03", x: 6, y: 2 }, { type: "lobby-26", x: 2, y: 6 }, { type: "lobby-24", x: 10, y: 9 },
 ];
 
+// Event-rummene på 1. sal (js/eventrum.js). Ejeren og Eventværter kan låse dem.
+const EVENT_RUM = [
+  { id: "event1", navn: "Event rum 1", vaeg: "#7d62a8", gulv1: "#d9cdea", gulv2: "#c9badf" },
+  { id: "event2", navn: "Event rum 2", vaeg: "#b8483f", gulv1: "#d8b47a", gulv2: "#c9a46c" },
+  { id: "event3", navn: "Event rum 3", vaeg: "#3f4d72", gulv1: "#e9e6e1", gulv2: "#d6d2cb" },
+  { id: "event4", navn: "Event rum 4", vaeg: "#4e7d4a", gulv1: "#ecd7a6", gulv2: "#e0c992" },
+].map(function (r) { return Object.assign({ ejer: EJER_NAVNE[0], bredde: 14, dybde: 14, vaegHoejde: 170, doer: { x: 0, y: 7 }, event: true }, r); });
+const EVENT_MOEBLER = [
+  { type: "taepper-08", x: 7, y: 7 }, { type: "lobby-11", x: 2, y: 0 }, { type: "lobby-11", x: 11, y: 0 },
+  { type: "lobby-16", x: 0, y: 0 }, { type: "lobby-16", x: 13, y: 0 }, { type: "lobby-16", x: 0, y: 13, spejlet: true },
+  { type: "lobby-12", x: 4, y: 3 }, { type: "lobby-20", x: 5, y: 3 }, { type: "lobby-12", x: 9, y: 3 }, { type: "lobby-20", x: 10, y: 3 },
+];
+const INDBYGGEDE_RUM = { hemmelig: HEMMELIG_RUM };
+EVENT_RUM.forEach(function (r) { INDBYGGEDE_RUM[r.id] = r; });
+
 function vaerelseInfo(id) {
   if (id === "mit") return RUM_FARVER;
-  if (id === "hemmelig") return HEMMELIG_RUM;
+  if (INDBYGGEDE_RUM[id]) return INDBYGGEDE_RUM[id];
   return mineRum.find(function (r) { return r.id === id; }) || RUM_FARVER;
 }
 function vaerelseMoebler(id) {
@@ -168,7 +183,7 @@ function vaerelseMoebler(id) {
   if (!andreVaerelser[id]) {
     try { andreVaerelser[id] = JSON.parse(localStorage.getItem("mit-hotel-rum-" + id) || "null"); } catch (e) { andreVaerelser[id] = null; }
     if (!Array.isArray(andreVaerelser[id])) {
-      andreVaerelser[id] = id === "hemmelig" ? HEMMELIG_MOEBLER.map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; }) : [];
+      andreVaerelser[id] = INDBYGGEDE_RUM[id] ? (id === "hemmelig" ? HEMMELIG_MOEBLER : EVENT_MOEBLER).map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; }) : [];
     }
   }
   return andreVaerelser[id];
@@ -196,7 +211,7 @@ function skiftRum(navn) {
   }
   if (navn === "vaerelse") {
     aktivtVaerelse = naesteVaerelse || (rumValg === "hal" ? "mit" : aktivtVaerelse);
-    if (aktivtVaerelse !== "mit" && aktivtVaerelse !== "hemmelig" && !mineRum.some(function (r) { return r.id === aktivtVaerelse; })) aktivtVaerelse = "mit";
+    if (aktivtVaerelse !== "mit" && !INDBYGGEDE_RUM[aktivtVaerelse] && !mineRum.some(function (r) { return r.id === aktivtVaerelse; })) aktivtVaerelse = "mit";
   }
   naesteVaerelse = null;
   const v = vaerelseInfo(aktivtVaerelse);

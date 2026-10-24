@@ -3595,3 +3595,15 @@ footer {
 #elevator-tur.lukket .et-skaerm { opacity: 1; transition-delay: 0.6s; }
 .elev-noegler { margin-top: 14px; }
 .elev-noegler li { display: flex; align-items: center; gap: 8px; }
+
+
+/* ----- Event-rum 🎉 (js/eventrum.js) ----- */
+.event-laase { margin-top: 14px; }
+.event-raekke { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 7px 0; border-bottom: 1px solid #e6efdc; }
+.event-raekke b { min-width: 100px; }
+.event-status { padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+.event-status.aaben { background: #e7f3e2; color: #3d6b39; }
+.event-status.laast { background: #f6dcd8; color: #b23b3b; }
+.event-raekke button { padding: 5px 10px; border: 2px solid #9ccc8f; border-radius: 8px; background: #fff; color: #3d6b39; font: bold 12px Verdana, sans-serif; cursor: pointer; }
+.event-raekke button:disabled { opacity: 0.4; cursor: default; }
+.event-laas { display: block; }

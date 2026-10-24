@@ -182,7 +182,7 @@ function elevEtager() {
     if (e.id === "hemmelig") return;
     const rum = NAV_RUM.filter(function (r) { return r.etage === e.id && r.rum; }).map(function (r) {
       const m = r.vaerelse && r.vaerelse !== "mit" ? mineRum.find(function (x) { return x.id === r.vaerelse; }) : null;
-      return { navn: r.navn, rum: r.rum, vaerelse: r.vaerelse, laast: m ? !kanGaaInd(m) : false };
+      return { navn: r.navn, rum: r.rum, vaerelse: r.vaerelse, laast: m ? !kanGaaInd(m) : typeof eventLaastFor === "function" && eventLaastFor(r.vaerelse) };
     });
     if (rum.length) liste.push({ id: e.id, navn: e.navn, ikon: e.ikon, knap: e.id === "stue" ? "S" : e.id === "privat" ? "🔑" : String(i), rum: rum });
   });
