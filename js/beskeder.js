@@ -40,15 +40,16 @@ function klokken(tid) {
   return new Date(tid).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
 }
 
-function tilfoejBesked(navn, fra, tekst) {
+function tilfoejBesked(navn, fra, tekst, ekstra) {
   const s = samtale(navn);
-  s.linjer.push({ fra: fra, tekst: tekst, tid: Date.now() });
+  s.linjer.push(Object.assign({ fra: fra, tekst: tekst, tid: Date.now() }, ekstra || {}));
   if (s.linjer.length > 100) s.linjer.shift();
   if (fra !== FIGUR.navn && !(beskedMed === navn && !beskedVindue.hidden)) s.ulaest++;
   gemBeskeder();
   visUlaest();
   visBeskeder();
   visVenner();
+  if (typeof ejerFane !== "undefined" && ejerFane === "beskeder" && !ejerVindue.hidden) visAlleBeskeder();
 }
 
 
@@ -64,7 +65,7 @@ function visBeskeder() {
   }
   beskedListe.innerHTML = s.linjer.map(function (l) {
     const mig = l.fra === FIGUR.navn;
-    return "<li class='" + (mig ? "mig" : "dem") + "'><span>" + tegnTilHtml(l.tekst) + "</span><small>" +
+    return "<li class='" + (l.advarsel ? "advarsel " : "") + (mig ? "mig" : "dem") + "'><span>" + tegnTilHtml(l.tekst) + "</span><small>" +
       (mig ? "" : tegnTilHtml(l.fra) + " · ") + klokken(l.tid) + "</small></li>";
   }).join("");
   beskedListe.scrollTop = beskedListe.scrollHeight;
@@ -74,7 +75,7 @@ function aabnBeskeder(navn) {
   beskedMed = navn;
   samtale(navn).ulaest = 0;
   gemBeskeder();
-  document.getElementById("besked-hvem").textContent = "💬 " + navn + (venOnline(navn) ? "" : " (offline)");
+  document.getElementById("besked-hvem").textContent = (samtale(navn).advarsel ? "⚠️ " : "💬 ") + navn + (venOnline(navn) ? "" : " (offline)");
   beskedSkriver.hidden = true;
   beskedVindue.hidden = false;
   visBeskeder();
@@ -95,7 +96,7 @@ function venSvarer(navn, tekst) {
     }
     setTimeout(function () {
       if (beskedMed === navn) beskedSkriver.hidden = true;
-      if (erVen(navn)) tilfoejBesked(navn, navn, tekst);
+      if (erVen(navn) || samtale(navn).advarsel) tilfoejBesked(navn, navn, tekst);
     }, 1000 + tekst.length * 50);
   }, 500 + Math.random() * 900);
 }
@@ -107,7 +108,7 @@ document.getElementById("besked-form").addEventListener("submit", function (e) {
   if (!tekst || !beskedMed) return;
   tilfoejBesked(beskedMed, FIGUR.navn, tekst);
   // computer-gæsterne svarer, hvis de er online
-  if (venOnline(beskedMed)) {
+  if (venOnline(beskedMed) || (samtale(beskedMed).advarsel && !(typeof erBannet === "function" && erBannet(beskedMed)))) {
     const regel = SVAR.find(function (s) { return s.naar.test(tekst); });
     venSvarer(beskedMed, tilfaeldig(regel.svar).replace("{mig}", FIGUR.navn));
   }
@@ -124,5 +125,19 @@ tilfoejVen = function (g) {
     }, 6000);
   }
 };
+
+// Advarsler fra ejerpanelet kommer som privat besked, og man kan skrive sammen om dem
+const ADVARSEL_SVAR = [
+  "Undskyld 😳 Jeg skal nok opføre mig ordentligt.",
+  "Okay, jeg forstår. Det sker ikke igen 🙏",
+  "Undskyld! Jeg vidste ikke, at det ikke var okay."
+];
+function sendAdvarsel(navn, grund, varighed) {
+  const s = samtale(navn);
+  s.advarsel = true;
+  tilfoejBesked(navn, FIGUR.navn, "⚠️ Advarsel fra hotellet" + (grund ? ": " + grund : "") + ". Advarslen gælder i " + varighed + ".", { advarsel: true });
+  aabnBeskeder(navn);
+  venSvarer(navn, tilfaeldig(ADVARSEL_SVAR));
+}
 
 visUlaest();

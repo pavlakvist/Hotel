@@ -278,6 +278,7 @@ function visFane() {
   document.getElementById("ejer-rapport-tal").textContent = nye ? nye : "";
   if (ejerFane === "oversigt") visOversigt();
   if (ejerFane === "chat") visChatlog();
+  if (ejerFane === "beskeder") visAlleBeskeder();
   if (ejerFane === "spillere") visSpillere();
   if (ejerFane === "rapporter") visRapporter();
   if (ejerFane === "ip") visIp();
@@ -444,7 +445,7 @@ function visSpillere() {
 
   html += "<h4>Tidligere straffe</h4>" + liste(d.historik.slice().reverse().map(function (h) {
     return "<b>" + rens(h.handling) + "</b><span>" + rens(h.grund || "ingen grund") + " · " + tidTekst(h.tid) + "</span>";
-  }), "Ingen endnu");
+  }), "Ingen endnu") + (d.historik.length ? "<button id='sp-slet-historik' class='lille'>🗑 Slet historik</button>" : "");
   html += "<h4>Rapporter om " + rens(s.navn) + "</h4>" + liste(omHam.map(function (r) {
     return "<b>" + rens(r.grund) + "</b><span>" + rens(r.tekst || "") + " · " + tidTekst(r.tid) + "</span>";
   }), "Ingen rapporter");
@@ -471,6 +472,20 @@ function visSpillere() {
       const altid = k.dataset.handling === "Ban" && document.getElementById("sp-altid").checked;
       straf(s.navn, k.dataset.handling, document.getElementById("sp-grund").value.trim(), altid ? 0 : valgtStrafTid);
     });
+  });
+  // Slet historik: første klik spørger "Er du sikker?", andet klik sletter
+  const sletHistorik = document.getElementById("sp-slet-historik");
+  if (sletHistorik) sletHistorik.addEventListener("click", function () {
+    if (!sletHistorik.classList.contains("sikker")) {
+      sletHistorik.classList.add("sikker");
+      sletHistorik.textContent = "Er du sikker?";
+      return;
+    }
+    d.historik = [];
+    gemSanktioner();
+    adminSkriv("Slettede straf-historikken for " + s.navn);
+    besked.textContent = "Historikken for " + s.navn + " er slettet 🗑";
+    visFane();
   });
   ejerIndhold.querySelectorAll("[data-ophaev]").forEach(function (k) {
     k.addEventListener("click", function () { ophaevStraf(s.navn, k.dataset.ophaev); });
@@ -527,6 +542,8 @@ function straf(navn, handling, grund, minutter) {
   if (handling === "Advarsel") {
     d.advarselTil = til;
     if (g) setTimeout(function () { gaestSkriverFoer(g, "Undskyld! Det skal ikke ske igen 😳"); }, 300);
+    // advarslen sendes også som privat besked, så I kan skrive sammen om den
+    if (typeof sendAdvarsel === "function") sendAdvarsel(navn, grund, varighed);
   }
   if (handling === "Timeout") d.timeoutTil = til;
   if (handling === "Frys") {
@@ -553,6 +570,39 @@ function ophaevStraf(navn, felt) {
   adminSkriv("Ophævede " + navne[felt] + " for " + navn);
   besked.textContent = navne[felt] + " ophævet for " + navn + " ✅";
   visFane();
+}
+
+// ----- Private beskeder: ejeren kan se alle samtaler -----
+let valgtSamtale = null;
+function visAlleBeskeder() {
+  const navne = typeof beskeder === "undefined" ? [] : Object.keys(beskeder).filter(function (n) { return beskeder[n].linjer.length; })
+    .sort(function (a, b) { return sidsteTid(b) - sidsteTid(a); });
+  function sidsteTid(n) { const l = beskeder[n].linjer; return l[l.length - 1].tid; }
+  if (valgtSamtale && navne.indexOf(valgtSamtale) < 0) valgtSamtale = null;
+  if (!valgtSamtale) valgtSamtale = navne[0] || null;
+  let html = "<p class='ejer-antal'>Alle private beskeder, også advarsler. Tryk på en samtale for at læse den.</p>" +
+    "<div class='ejer-spillere'><aside><ul id='pb-liste'>" + navne.map(function (n) {
+      const s = beskeder[n];
+      return "<li><button data-samtale='" + rens(n) + "'" + (n === valgtSamtale ? " class='valgt'" : "") + ">" +
+        (s.advarsel ? "⚠️ " : "💬 ") + rens(n) + " <small>(" + s.linjer.length + ")</small></button></li>";
+    }).join("") + "</ul></aside><div class='sp-detaljer'>";
+  if (!valgtSamtale) {
+    html += "<p class='tom'>Ingen private beskeder endnu</p>";
+  } else {
+    html += "<h3>" + rens(valgtSamtale) + (beskeder[valgtSamtale].advarsel ? " <small>har fået en advarsel</small>" : "") + "</h3>" +
+      "<ul class='pb-samtale'>" + beskeder[valgtSamtale].linjer.map(function (l) {
+        return "<li class='" + (l.advarsel ? "advarsel" : l.fra === FIGUR.navn ? "mig" : "dem") + "'><b>" + rens(l.fra) + "</b> " + rens(l.tekst) +
+          "<span>" + tidTekst(l.tid) + "</span></li>";
+      }).join("") + "</ul><button id='pb-aabn' class='lv-knap'>✉️ Skriv til " + rens(valgtSamtale) + "</button>";
+  }
+  ejerIndhold.innerHTML = html + "</div></div>";
+  ejerIndhold.querySelectorAll("[data-samtale]").forEach(function (k) {
+    k.addEventListener("click", function () { valgtSamtale = k.dataset.samtale; visAlleBeskeder(); });
+  });
+  const aabn = document.getElementById("pb-aabn");
+  if (aabn) aabn.addEventListener("click", function () { aabnBeskeder(valgtSamtale); });
+  const liste = ejerIndhold.querySelector(".pb-samtale");
+  if (liste) liste.scrollTop = liste.scrollHeight;
 }
 
 // ----- 4. Rapporter -----

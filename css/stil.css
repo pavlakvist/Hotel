@@ -1303,7 +1303,7 @@ footer {
   width: 100%;
 }
 
-#sp-liste button {
+#sp-liste button, #pb-liste button {
   width: 100%;
   margin: 3px 0 0;
   padding: 6px 8px;
@@ -1316,13 +1316,13 @@ footer {
   cursor: pointer;
 }
 
-#sp-liste button.valgt {
+#sp-liste button.valgt, #pb-liste button.valgt {
   background: #4f7698;
   color: #fff;
   border-color: #4f7698;
 }
 
-#sp-liste li {
+#sp-liste li, #pb-liste li {
   padding: 0;
   border: 0;
 }
@@ -1709,7 +1709,7 @@ footer {
 .ejer-kort,
 .ejer-to section,
 .sp-fakta span,
-#sp-liste button {
+#sp-liste button, #pb-liste button {
   border-color: #d6e8c8;
 }
 
@@ -1735,7 +1735,7 @@ footer {
   border-bottom-color: #ece3cb;
 }
 
-#sp-liste button.valgt {
+#sp-liste button.valgt, #pb-liste button.valgt {
   background: #9ccc8f;
   border-color: #7fb56f;
   color: #1f3a1c;
@@ -3240,3 +3240,25 @@ footer {
 .sp-straf-knapper button:hover { background: #d6ebcd; }
 .sp-straf-knapper button.roed { background: #d9534f; border-color: #b33f3b; color: #fff; }
 #ejer-indhold button.lille.groen { background: #5cb85c; border-color: #449d44; color: #fff; }
+
+
+/* ----- Advarsler som private beskeder + Ejerpanel → Private beskeder ----- */
+#besked-liste li.advarsel span { background: #fbe3df; border: 2px solid #d9534f; color: #7a2622; font-weight: bold; }
+.pb-samtale {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  border: 2px solid #cfe3c7;
+  border-radius: 10px;
+  background: #fff;
+}
+.pb-samtale li { padding: 5px 8px; margin: 4px 0; border-radius: 8px; font-size: 13px; background: #f3f8f0; }
+.pb-samtale li.mig { background: #e3f1dd; }
+.pb-samtale li.advarsel { background: #fbe3df; border: 1px solid #d9534f; }
+.pb-samtale li span { display: block; font-size: 11px; color: #7a8a76; }
+#pb-liste { list-style: none; margin: 0; padding: 0; }
+#pb-liste small { color: #7a8a76; }
+#ejer-indhold button.lille.sikker { background: #d9534f; border-color: #b33f3b; color: #fff; }
+#besked-vindue { z-index: 13; }
