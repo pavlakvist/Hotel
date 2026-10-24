@@ -12,7 +12,7 @@ const ETAGER = [
   { id: "sal1", navn: "1. sal", ikon: "☕" },
   { id: "sal2", navn: "2. sal", ikon: "🎵" },
   { id: "tag", navn: "Taghaven", ikon: "🌳" },
-  { id: "privat", navn: "Private rum", ikon: "👥" },
+  { id: "privat", navn: "Mine rum", ikon: "🔑" },
   { id: "hemmelig", navn: "Hemmelige rum", ikon: "🔮" },
 ];
 
@@ -23,7 +23,7 @@ const NAV_RUM = [
   { id: "spil", etage: "stue", navn: "Spillehjørnet", om: "Spil og underholdning", billede: "billeder/rum/spillehjoernet.png", maks: 30 },
   { id: "laese", etage: "stue", navn: "Læsehjørnet", om: "Rolig zone", billede: "billeder/rum/laesehjoernet.png", maks: 20 },
   { id: "event", etage: "sal1", navn: "Event rummet", om: "Fester og events", billede: "billeder/rum/event.png", maks: 40 },
-  { id: "mit", etage: "privat", navn: FIGUR.navn + "s værelse", om: "Dit eget værelse", billede: "billeder/rum/vaerelse.png", maks: 25, rum: "vaerelse" },
+  { id: "mit", etage: "privat", navn: FIGUR.navn + "s værelse", om: "Dit eget værelse", billede: "billeder/rum/vaerelse.png", maks: 25, rum: "vaerelse", vaerelse: "mit" },
   { id: "hemmelig1", etage: "hemmelig", navn: "???", om: "Ingen ved, hvad der er derinde …", maks: 0, hemmelig: true },
   { id: "hemmelig2", etage: "hemmelig", navn: "???", om: "Man siger, der er en nøgle et sted …", maks: 0, hemmelig: true },
 ];
@@ -49,7 +49,7 @@ function antalIRum(r) {
     const gaester = HAL_GAESTER.filter(function (g) { return !(typeof erBannet === "function" && erBannet(g.navn)); }).length;
     return gaester + (rumValg === "hal" ? 1 : 0);
   }
-  if (r.rum === "vaerelse") return rumValg === "vaerelse" ? 1 : 0;
+  if (r.rum === "vaerelse") return rumValg === "vaerelse" && aktivtVaerelse === r.vaerelse ? 1 : 0;
   return 0;
 }
 
@@ -87,7 +87,7 @@ skiftRum = function (navn) {
 // -------------------------------------------------------------
 function rumKort(r) {
   const fav = favoritter.indexOf(r.id) >= 0;
-  const her = r.rum && r.rum === rumValg;
+  const her = r.rum && r.rum === rumValg && (r.rum !== "vaerelse" || r.vaerelse === aktivtVaerelse);
   const billede = r.hemmelig
     ? "<div class='nav-billede hemmelig'><span>?</span></div>"
     : "<div class='nav-billede" + (r.rum ? "" : " laast") + "'><img src='" + r.billede + "' alt=''>" + (r.rum ? "" : "<span>🔒</span>") + "</div>";
@@ -100,7 +100,7 @@ function rumKort(r) {
     (r.hemmelig ? "<span class='nav-antal'>👤 ? / ?</span>" : "<span class='nav-antal'>👤 " + antalIRum(r) + " / " + r.maks + "</span>") + "</div>" +
     "<div class='nav-hoejre'>" + (r.hemmelig ? "<span class='nav-hjerte tom'>✧</span>" :
       "<button class='nav-hjerte" + (fav ? " valgt" : "") + "' data-fav='" + r.id + "' title='Favorit'>" + (fav ? "♥" : "♡") + "</button>") +
-    knap + "</div></div>";
+    knap + (r.egetRum ? "<button class='nav-slet' data-slet-rum='" + r.vaerelse + "' title='Slet rummet'>🗑</button>" : "") + "</div></div>";
 }
 
 function visNav() {
@@ -130,6 +130,7 @@ function visNav() {
     rum = senest.map(function (id) { return NAV_RUM.find(function (r) { return r.id === id; }); }).filter(Boolean);
     titel = "Senest besøgte"; ikon = "🕒";
   } else {
+    lavMineRumKort();
     const e = ETAGER.find(function (x) { return x.id === navEtage; });
     rum = NAV_RUM.filter(function (r) { return r.etage === navEtage; });
     titel = e.navn; ikon = e.ikon;
@@ -137,6 +138,7 @@ function visNav() {
   const tom = { venner: "Ingen af dine venner er online. Klik på en gæst og vælg ➕ Tilføj ven.", favoritter: "Tryk på ♡ ved et rum for at gøre det til favorit.", senest: "Du har ikke besøgt nogen rum endnu." }[navFilter];
   document.getElementById("nav-midte").innerHTML =
     "<div class='nav-titel'><span>" + ikon + "</span><div><h3>" + navHtml(titel) + "</h3><small>" + rum.length + (rum.length === 1 ? " rum" : " rum") + "</small></div></div>" +
+    (navEtage === "privat" && navFilter === "alle" && !q ? opretRumHtml() : "") +
     (rum.length ? rum.map(rumKort).join("") : "<p class='nav-tom'>" + (tom || (navEtage === "hemmelig" ? "…" : "Her er stille … Der er ingen rum endnu.")) + "</p>");
 
   // filtre
@@ -146,20 +148,23 @@ function visNav() {
 
   // populære lige nu
   const pop = NAV_RUM.filter(function (r) { return r.rum; }).sort(function (a, b) { return antalIRum(b) - antalIRum(a); }).slice(0, 3);
-  document.getElementById("nav-populaere").innerHTML = pop.map(function (r) {
+  const popBoks = document.getElementById("nav-populaere");
+  if (popBoks) popBoks.innerHTML = pop.map(function (r) {
     return "<button data-besoeg='" + r.id + "'><img src='" + r.billede + "' alt=''><span><b>" + navHtml(r.navn) + "</b><small>👤 " + antalIRum(r) + " / " + r.maks + "</small></span><i>›</i></button>";
   }).join("");
 
   // klik
   navVindue.querySelectorAll("[data-etage]").forEach(function (k) {
-    k.addEventListener("click", function () { navEtage = k.dataset.etage; navFilter = "alle"; navSoeg = ""; document.getElementById("nav-soeg").value = ""; visNav(); });
+    k.addEventListener("click", function () { navEtage = k.dataset.etage; navFilter = "alle"; navSoeg = ""; const soegFelt = document.getElementById("nav-soeg"); if (soegFelt) soegFelt.value = ""; visNav(); });
   });
   navVindue.querySelectorAll("[data-besoeg]").forEach(function (k) {
     k.addEventListener("click", function () {
       const r = NAV_RUM.find(function (x) { return x.id === k.dataset.besoeg; });
-      if (r && r.rum && r.rum !== rumValg) skiftRum(r.rum);
+      if (r && r.vaerelse) { if (!(rumValg === "vaerelse" && aktivtVaerelse === r.vaerelse)) gaaTilVaerelse(r.vaerelse); }
+      else if (r && r.rum && r.rum !== rumValg) skiftRum(r.rum);
     });
   });
+  lytOpretRum();
   navVindue.querySelectorAll("[data-fav]").forEach(function (k) {
     k.addEventListener("click", function () {
       const id = k.dataset.fav;
@@ -170,15 +175,109 @@ function visNav() {
   });
 }
 
+// -------------------------------------------------------------
+//  Mine rum: opret dine egne rum 🔑
+// -------------------------------------------------------------
+const RUM_STOERRELSER = [
+  { id: "lille", navn: "Lille (6 × 6)", bredde: 6, dybde: 6 },
+  { id: "mellem", navn: "Mellem (8 × 8)", bredde: 8, dybde: 8 },
+  { id: "stor", navn: "Stor (10 × 10)", bredde: 10, dybde: 10 },
+  { id: "kaempe", navn: "Kæmpe (12 × 12)", bredde: 12, dybde: 12 },
+];
+const RUM_TEMAER = [
+  { id: "klassisk", navn: "Klassisk", vaeg: "#86b3dd", gulv1: "#d8b47a", gulv2: "#c9a46c" },
+  { id: "rosa", navn: "Rosa", vaeg: "#e3a9c0", gulv1: "#f4dde6", gulv2: "#ebcbd8" },
+  { id: "mint", navn: "Mint", vaeg: "#8fc9a6", gulv1: "#e4f2e7", gulv2: "#d1e8d6" },
+  { id: "nat", navn: "Nat", vaeg: "#3f4d72", gulv1: "#6b7593", gulv2: "#5c6684" },
+  { id: "trae", navn: "Træ", vaeg: "#8a5a3b", gulv1: "#c9a27a", gulv2: "#b88f68" },
+  { id: "lilla", navn: "Lilla", vaeg: "#7d62a8", gulv1: "#d9cdea", gulv2: "#c9badf" },
+];
+let opretAaben = false;
+let opretTema = "klassisk";
+let sletSikker = null;
+
+// dine oprettede rum som kort i navigatøren
+function lavMineRumKort() {
+  for (let i = NAV_RUM.length - 1; i >= 0; i--) if (NAV_RUM[i].egetRum) NAV_RUM.splice(i, 1);
+  const plads = NAV_RUM.findIndex(function (r) { return r.id === "mit"; }) + 1;
+  mineRum.forEach(function (m, i) {
+    NAV_RUM.splice(plads + i, 0, { id: "eget-" + m.id, etage: "privat", navn: m.navn, om: "Dit rum · " + m.bredde + " × " + m.dybde,
+      billede: "billeder/rum/vaerelse.png", maks: 25, rum: "vaerelse", vaerelse: m.id, egetRum: true });
+  });
+}
+lavMineRumKort();
+
+function opretRumHtml() {
+  if (!opretAaben) return "<button id='nav-opret-rum' class='nav-opret'>➕ Opret rum</button>";
+  return "<div class='nav-opret-boks'><h4>➕ Opret et nyt rum</h4>" +
+    "<label>Navn<input id='or-navn' type='text' maxlength='24' placeholder='fx Min hule'></label>" +
+    "<label>Størrelse<select id='or-stoerrelse'>" + RUM_STOERRELSER.map(function (s) {
+      return "<option value='" + s.id + "'" + (s.id === "mellem" ? " selected" : "") + ">" + s.navn + "</option>";
+    }).join("") + "</select></label>" +
+    "<div class='or-temaer'>" + RUM_TEMAER.map(function (t) {
+      return "<button type='button' data-tema='" + t.id + "' class='" + (t.id === opretTema ? "valgt" : "") + "' title='" + t.navn + "'>" +
+        "<i style='background:" + t.vaeg + "'></i><i style='background:" + t.gulv1 + "'></i>" + t.navn + "</button>";
+    }).join("") + "</div>" +
+    "<p id='or-fejl' class='or-fejl'></p>" +
+    "<div class='or-knapper'><button id='or-annuller' type='button'>Annuller</button><button id='or-opret' type='button' class='or-gem'>Opret rum</button></div></div>";
+}
+
+function lytOpretRum() {
+  const aabn = document.getElementById("nav-opret-rum");
+  if (aabn) aabn.addEventListener("click", function () { opretAaben = true; visNav(); document.getElementById("or-navn").focus(); });
+  const annuller = document.getElementById("or-annuller");
+  if (annuller) annuller.addEventListener("click", function () { opretAaben = false; visNav(); });
+  navVindue.querySelectorAll("[data-tema]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      opretTema = k.dataset.tema;
+      navVindue.querySelectorAll("[data-tema]").forEach(function (x) { x.classList.toggle("valgt", x === k); });
+    });
+  });
+  const opret = document.getElementById("or-opret");
+  if (opret) opret.addEventListener("click", function () {
+    const navn = document.getElementById("or-navn").value.trim().replace(/[<>]/g, "");
+    if (!navn) { document.getElementById("or-fejl").textContent = "Giv dit rum et navn."; return; }
+    const s = RUM_STOERRELSER.find(function (x) { return x.id === document.getElementById("or-stoerrelse").value; });
+    const t = RUM_TEMAER.find(function (x) { return x.id === opretTema; });
+    const id = "r" + Date.now().toString(36);
+    mineRum.push({ id: id, navn: navn, bredde: s.bredde, dybde: s.dybde, vaeg: t.vaeg, gulv1: t.gulv1, gulv2: t.gulv2, oprettet: Date.now() });
+    gemMineRum();
+    opretAaben = false;
+    gaaTilVaerelse(id);
+    besked.textContent = "Dit nye rum \"" + navn + "\" er klar! 🔑 Stil møbler fra panelet eller dit lager.";
+    visNav();
+  });
+  const navnFelt = document.getElementById("or-navn");
+  if (navnFelt) navnFelt.addEventListener("keydown", function (e) { if (e.key === "Enter") opret.click(); });
+  navVindue.querySelectorAll("[data-slet-rum]").forEach(function (k) {
+    if (sletSikker === k.dataset.sletRum) { k.textContent = "Er du sikker?"; k.classList.add("sikker"); }
+    k.addEventListener("click", function () {
+      const id = k.dataset.sletRum;
+      if (sletSikker !== id) { sletSikker = id; visNav(); return; }
+      sletSikker = null;
+      if (rumValg === "vaerelse" && aktivtVaerelse === id) gaaTilVaerelse("mit");
+      // møblerne i rummet kommer tilbage i dit lager
+      const moebler = vaerelseMoebler(id);
+      if (typeof tilLager === "function") moebler.forEach(function (m) { tilLager(m.type); });
+      mineRum = mineRum.filter(function (r) { return r.id !== id; });
+      delete andreVaerelser[id];
+      try { localStorage.removeItem("mit-hotel-rum-" + id); } catch (e) {}
+      gemMineRum();
+      visNav();
+    });
+  });
+}
+
 document.querySelectorAll("#nav-filtre button, #nav-genveje button").forEach(function (k) {
   k.addEventListener("click", function () {
     navFilter = k.dataset.filter;
     navSoeg = "";
-    document.getElementById("nav-soeg").value = "";
+    const soegFelt = document.getElementById("nav-soeg"); if (soegFelt) soegFelt.value = "";
     visNav();
   });
 });
-document.getElementById("nav-soeg").addEventListener("input", function () { navSoeg = this.value.trim(); visNav(); });
+const navSoegFelt = document.getElementById("nav-soeg");
+if (navSoegFelt) navSoegFelt.addEventListener("input", function () { navSoeg = this.value.trim(); visNav(); });
 
 document.getElementById("chat-nav-knap").addEventListener("click", function () {
   navVindue.hidden = !navVindue.hidden;
@@ -188,4 +287,4 @@ document.getElementById("nav-luk").addEventListener("click", function () { navVi
 window.addEventListener("keydown", function (e) { if (e.key === "Escape") navVindue.hidden = true; });
 
 // antallet i rummene ændrer sig, mens navigatøren er åben
-setInterval(function () { if (!navVindue.hidden && document.activeElement.id !== "nav-soeg") visNav(); }, 3000);
+setInterval(function () { if (!navVindue.hidden && !opretAaben && document.activeElement.id !== "nav-soeg") visNav(); }, 3000);

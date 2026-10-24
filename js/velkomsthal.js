@@ -83,17 +83,64 @@ const RUM_FARVER = { vaeg: RUM.vaegFarve, gulv1: RUM.gulvFarve1, gulv2: RUM.gulv
 
 
 // =============================================================
-//  Skift mellem velkomsthallen og dit værelse
+//  Mine rum: dit eget værelse ("mit") + de rum du selv opretter
+//  (oprettes i navigatøren under "Mine rum", js/navigator.js)
+// =============================================================
+const MINE_RUM_NOEGLE = "mit-hotel-mine-rum";
+let mineRum = [];               // [{ id, navn, bredde, dybde, vaeg, gulv1, gulv2, oprettet }]
+try { mineRum = JSON.parse(localStorage.getItem(MINE_RUM_NOEGLE) || "[]"); } catch (e) {}
+function gemMineRum() {
+  try { localStorage.setItem(MINE_RUM_NOEGLE, JSON.stringify(mineRum)); } catch (e) {}
+}
+let aktivtVaerelse = "mit";     // hvilket af dine rum du er i
+let naesteVaerelse = null;      // sættes af gaaTilVaerelse()
+const andreVaerelser = {};      // møblerne i de rum du har oprettet
+
+function vaerelseInfo(id) {
+  if (id === "mit") return RUM_FARVER;
+  return mineRum.find(function (r) { return r.id === id; }) || RUM_FARVER;
+}
+function vaerelseMoebler(id) {
+  if (id === "mit") return mitVaerelse;
+  if (!andreVaerelser[id]) {
+    try { andreVaerelser[id] = JSON.parse(localStorage.getItem("mit-hotel-rum-" + id) || "[]"); } catch (e) { andreVaerelser[id] = []; }
+  }
+  return andreVaerelser[id];
+}
+function vaerelseNavn(id) {
+  return id === "mit" ? "Dit værelse" : vaerelseInfo(id).navn;
+}
+// Gå ind i et af dine rum
+function gaaTilVaerelse(id) {
+  naesteVaerelse = id;
+  skiftRum("vaerelse");
+}
+
+
+// =============================================================
+//  Skift mellem velkomsthallen og dine rum
 // =============================================================
 function skiftRum(navn) {
-  if (rumValg === "vaerelse") mitVaerelse = moeblerIRummet;
+  if (rumValg === "vaerelse") {
+    // husk møblerne og farverne i det rum, du går ud af
+    const info = vaerelseInfo(aktivtVaerelse);
+    info.vaeg = RUM.vaegFarve; info.gulv1 = RUM.gulvFarve1; info.gulv2 = RUM.gulvFarve2;
+    if (aktivtVaerelse === "mit") mitVaerelse = moeblerIRummet;
+    else { andreVaerelser[aktivtVaerelse] = moeblerIRummet; gemMineRum(); }
+  }
+  if (navn === "vaerelse") {
+    aktivtVaerelse = naesteVaerelse || (rumValg === "hal" ? "mit" : aktivtVaerelse);
+    if (aktivtVaerelse !== "mit" && !mineRum.some(function (r) { return r.id === aktivtVaerelse; })) aktivtVaerelse = "mit";
+  }
+  naesteVaerelse = null;
+  const v = vaerelseInfo(aktivtVaerelse);
   rumValg = navn;
-  moeblerIRummet = navn === "hal" ? HAL_MOEBLER : mitVaerelse;
-  RUM.vaegFarve = navn === "hal" ? HAL_FARVER.tapet : RUM_FARVER.vaeg;
-  RUM.gulvFarve1 = navn === "hal" ? HAL_FARVER.gulv1 : RUM_FARVER.gulv1;
-  RUM.gulvFarve2 = navn === "hal" ? HAL_FARVER.gulv2 : RUM_FARVER.gulv2;
-  RUM.bredde = navn === "hal" ? HAL_STOERRELSE.bredde : RUM_FARVER.bredde;
-  RUM.dybde = navn === "hal" ? HAL_STOERRELSE.dybde : RUM_FARVER.dybde;
+  moeblerIRummet = navn === "hal" ? HAL_MOEBLER : vaerelseMoebler(aktivtVaerelse);
+  RUM.vaegFarve = navn === "hal" ? HAL_FARVER.tapet : v.vaeg;
+  RUM.gulvFarve1 = navn === "hal" ? HAL_FARVER.gulv1 : v.gulv1;
+  RUM.gulvFarve2 = navn === "hal" ? HAL_FARVER.gulv2 : v.gulv2;
+  RUM.bredde = navn === "hal" ? HAL_STOERRELSE.bredde : v.bredde;
+  RUM.dybde = navn === "hal" ? HAL_STOERRELSE.dybde : v.dybde;
   document.body.classList.toggle("i-hallen", navn === "hal");
 
   // figuren kommer ind gennem døren
@@ -111,11 +158,12 @@ function skiftRum(navn) {
 
   document.getElementById("moebel-sektion").hidden = navn === "hal";
   document.getElementById("hal-sektion").hidden = navn !== "hal";
-  document.getElementById("rum-navn").textContent = navn === "hal" ? "Velkomsthallen" : "Dit værelse";
+  document.getElementById("rum-navn").textContent = navn === "hal" ? "Velkomsthallen" : vaerelseNavn(aktivtVaerelse);
   opdaterPanel();
   besked.textContent = navn === "hal"
     ? "Velkommen til Hotelven! Gå gennem døren for at komme til dit værelse."
-    : "Velkommen hjem! Klik på gulvet for at gå, og stil møbler fra panelet.";
+    : aktivtVaerelse === "mit" ? "Velkommen hjem! Klik på gulvet for at gå, og stil møbler fra panelet."
+    : "Velkommen til " + vaerelseNavn(aktivtVaerelse) + "! Stil møbler fra panelet eller dit lager.";
 }
 
 function halBlokeret(x, y) {

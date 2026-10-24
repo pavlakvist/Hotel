@@ -797,6 +797,25 @@ laerred.addEventListener("click", function (e) {
   }
 }, true);
 
+// Ctrl + klik på et møbel = saml det op (det kommer i "Mine ting").
+// Virker i dine egne rum, ikke i velkomsthallen.
+laerred.addEventListener("click", function (e) {
+  if (!(e.ctrlKey || e.metaKey) || rumValg === "hal") return;
+  const f = musTilFelt(e);
+  const m = moebelPaa(f.x, f.y);
+  if (!m) return;
+  e.stopImmediatePropagation();
+  if (figur.sidde && figur.sidde.moebel === m) { figur.sidde = null; figur.skalSidde = null; }
+  valgtMoebel = m;
+  samlOpValgt();
+  besked.textContent = (MOEBEL_TYPER[m.type].navn || "Møblet") + " er lagt i Mine ting 📦";
+}, true);
+laerred.addEventListener("mousemove", function (e) {
+  if (rumValg === "hal" || traek.nede) return;
+  const f = musTilFelt(e);
+  laerred.style.cursor = (e.ctrlKey || e.metaKey) && moebelPaa(f.x, f.y) ? "copy" : "";
+});
+
 // Musehjulet zoomer ind og ud
 laerred.addEventListener("wheel", function (e) {
   e.preventDefault();
@@ -939,7 +958,9 @@ const GEMME_NOEGLE = "mit-hotel-rum";
 function gem() {
   if (rumValg === "hal") return;   // velkomsthallen gemmes ikke
   try {
-    localStorage.setItem(GEMME_NOEGLE, JSON.stringify(moeblerIRummet));
+    // dine egne oprettede rum gemmes hver for sig (js/velkomsthal.js)
+    const noegle = typeof aktivtVaerelse !== "undefined" && aktivtVaerelse !== "mit" ? "mit-hotel-rum-" + aktivtVaerelse : GEMME_NOEGLE;
+    localStorage.setItem(noegle, JSON.stringify(moeblerIRummet));
   } catch (fejl) {
     // Nogle browsere tillader ikke at gemme. Så virker spillet bare uden.
   }
