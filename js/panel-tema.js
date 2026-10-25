@@ -54,6 +54,19 @@ function drejGroen(tekst) {
     return (d.length > 3 ? "rgba(" : "rgb(") + ud.join(", ") + (d.length > 3 ? ", " + d[3] : "") + ")";
   });
 }
+// Tekst i mellemfarver (grå, lysegrøn …) bliver utydelig, når farverne vendes.
+// Den gøres mørk her, så den bliver lys og tydelig i det mørke tema.
+function tydeligTekst(tekst) {
+  return tekst.replace(/rgba?\(([^)]+)\)/g, function (hel, tal) {
+    const d = tal.split(",").map(function (x) { return parseFloat(x); });
+    const r = d[0] / 255, g = d[1] / 255, b = d[2] / 255;
+    const maks = Math.max(r, g, b), min = Math.min(r, g, b), l = (maks + min) / 2;
+    if (l <= 0.3 || l >= 0.86) return hel;       // allerede tydelig (eller hvid tekst på en knap)
+    const gang = 0.22 / l;
+    const ud = [r, g, b].map(function (v) { return Math.round(Math.min(1, v * gang) * 255); });
+    return (d.length > 3 ? "rgba(" : "rgb(") + ud.join(", ") + (d.length > 3 ? ", " + d[3] : "") + ")";
+  });
+}
 function farvEt(el) {
   if (panelOrigStil.has(el)) el.style.cssText = panelOrigStil.get(el);
   if (el.closest(".bs-farver, .bs-forhaand")) return;          // bannerets rigtige farver bliver, som de er
@@ -62,7 +75,8 @@ function farvEt(el) {
   FARVE_EGENSKABER.concat(["background-image", "box-shadow"]).forEach(function (eg) {
     const v = cs.getPropertyValue(eg);
     if (!v || v === "none" || v.indexOf("rgb") < 0 || v.indexOf("url(") >= 0) return;
-    const ny = drejGroen(v);
+    let ny = drejGroen(v);
+    if (eg === "color") ny = tydeligTekst(ny);
     if (ny !== v) nye.push([eg, ny]);
   });
   if (!nye.length) { panelOrigStil.delete(el); return; }
@@ -112,7 +126,7 @@ panelTemaStil.textContent =
   M + "#ejer-faner button.valgt { background: #3f5a6e; color: #f2f6fa; }" +
   M + "#ejer-faner::-webkit-scrollbar-thumb, " + M + "#ejer-indhold::-webkit-scrollbar-thumb { background: #46556a; }" +
   // Indholdet: alle farver vendes til mørke (billeder vendes tilbage, så de ser rigtige ud)
-  M + "#ejer-indhold:not(.sc-nat) { filter: invert(1) hue-rotate(180deg) contrast(0.82); }" +
+  M + "#ejer-indhold:not(.sc-nat) { filter: invert(1) hue-rotate(180deg) contrast(0.82); color: #22303a; }" +
   M + "#ejer-indhold:not(.sc-nat) img, " + M + "#ejer-indhold:not(.sc-nat) canvas { filter: contrast(1.22) hue-rotate(180deg) invert(1); }" +
   M + "#ejer-indhold.sc-nat { background: #262f3b; }" +
   M + ".ejer-greb-hjoerne { filter: invert(0.8); }";
