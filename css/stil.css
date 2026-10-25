@@ -3579,6 +3579,20 @@ footer {
 .elev-rum button:hover:not(:disabled) { background: linear-gradient(#c65047, #a83c33); border-color: #f7c65a; }
 .elev-rum button:disabled { background: linear-gradient(#7d2a24, #6c231e); border-color: #f7c65a; color: #ffe2a8; cursor: default; }
 .elev-tekst { margin: 4px 12px 10px; min-height: 1em; font-size: 12px; color: #f7c65a; }
+/* Lysere, varm rød elevator (Pavlas ønske 25/10) */
+#elevator { background: linear-gradient(#d65a50, #c04a42); border-color: #f2c46d; box-shadow: 0 6px 0 #8e2f29, 0 14px 30px rgba(0,0,0,0.35); color: #fff6ea; }
+#elevator .elev-top { color: #fff1c4; border-bottom-color: #f2c46d; }
+#elevator .elev-top button { background: #a83a33; border-color: #f2c46d; color: #fff1c4; }
+#elevator .elev-etage { background: #ad3b34; border-color: #f0b98a; color: #fff6ea; }
+#elevator .elev-etage:hover { background: #bb453d; border-color: #fff1c4; }
+#elevator .elev-etage.valgt { border-color: #fff1c4; }
+#elevator .elev-etage small { color: #ffd9c2; }
+#elevator .elev-nr { color: #8e2f29; }
+#elevator .elev-etage.hemmelig { background: #6d4a9a; border-color: #cdb6f0; }
+#elevator .elev-rum button { background: #e7867c; border-color: #fff1c4; color: #5a1813; box-shadow: none; }
+#elevator .elev-rum button:hover:not(:disabled) { background: #ee978e; }
+#elevator .elev-rum button:disabled { background: #8f2f29; border-color: #f2c46d; color: #fff1c4; }
+#elevator .elev-tekst { color: #fff1c4; }
 #elevator-tur { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
 .et-doer { position: absolute; top: 0; bottom: 0; width: 50%; background:
   linear-gradient(90deg, rgba(0,0,0,0.15), transparent 20%, transparent 80%, rgba(0,0,0,0.2)),
