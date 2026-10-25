@@ -115,7 +115,7 @@ EVENT_RUM.forEach(function (r) { INDBYGGEDE_RUM[r.id] = r; });
 function vaerelseInfo(id) {
   if (id === "mit") return RUM_FARVER;
   if (INDBYGGEDE_RUM[id]) return INDBYGGEDE_RUM[id];
-  return mineRum.find(function (r) { return r.id === id; }) || RUM_FARVER;
+  return mineRum.find(function (r) { return r.id === id; }) || (typeof lejInfo === "function" && lejInfo(id)) || RUM_FARVER;   // lejInfo: andres lejligheder (js/lejligheder.js)
 }
 function vaerelseMoebler(id) {
   if (id === "mit") return mitVaerelse;
@@ -150,7 +150,7 @@ function skiftRum(navn) {
   }
   if (navn === "vaerelse") {
     aktivtVaerelse = naesteVaerelse || (rumValg === "hal" ? "mit" : aktivtVaerelse);
-    if (aktivtVaerelse !== "mit" && !INDBYGGEDE_RUM[aktivtVaerelse] && !mineRum.some(function (r) { return r.id === aktivtVaerelse; })) aktivtVaerelse = "mit";
+    if (aktivtVaerelse !== "mit" && !INDBYGGEDE_RUM[aktivtVaerelse] && !mineRum.some(function (r) { return r.id === aktivtVaerelse; }) && !(typeof lejInfo === "function" && lejInfo(aktivtVaerelse))) aktivtVaerelse = "mit";
   }
   naesteVaerelse = null;
   const v = vaerelseInfo(aktivtVaerelse);
