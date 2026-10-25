@@ -149,8 +149,11 @@ function tidTilbage(til) {
 }
 // Varighederne man kan vælge (i minutter)
 const STRAF_TIDER = [[1, "1 min"], [5, "5 min"], [10, "10 min"], [15, "15 min"], [30, "30 min"], [60, "1 time"],
-  [120, "2 timer"], [180, "3 timer"], [360, "6 timer"], [720, "12 timer"], [1440, "24 timer"]];
+  [120, "2 timer"], [180, "3 timer"], [360, "6 timer"], [720, "12 timer"], [1440, "24 timer"], [2880, "48 timer"]];
 let valgtStrafTid = system.timeoutMin;
+let spInfoFane = "straffe";       // hvilken lille fane der er åben under en spiller
+const STRAF_FARVE = { Advarsel: "advarsel", Mute: "mute", Timeout: "mute", Frys: "frys", Ban: "ban" };
+const STRAF_IKON = { Advarsel: "⚠️", Mute: "🔇", Timeout: "🔇", Frys: "🧊", Ban: "⛔" };
 
 // Frosne gæster står helt stille
 const opdaterHalFoer = opdaterHal;
@@ -168,7 +171,7 @@ function strafSkilt(navn) {
   const d = sanktioner[navn];
   if (!d) return null;
   if (erFrosset(navn)) return { tekst: "🧊 Frosset " + tidTilbage(d.frysTil), farve: "#3f7fb0" };
-  if (d.timeoutTil > Date.now()) return { tekst: "🔇 Timeout " + tidTilbage(d.timeoutTil), farve: "#c98a1c" };
+  if (d.timeoutTil > Date.now()) return { tekst: "🔇 Mute " + tidTilbage(d.timeoutTil), farve: "#c98a1c" };
   if (erAdvaret(navn)) return { tekst: "⚠️ Advaret", farve: "#c0392b" };
   return null;
 }
@@ -402,7 +405,7 @@ function visSpillere() {
   const d = spillerData(s.navn);
   const mig = s.navn === FIGUR.navn;
   const status = d.bannet ? "⛔ Bannet for altid" : erBannet(s.navn) ? "⛔ Bannet i " + tidTilbage(d.bannetTil) :
-    erFrosset(s.navn) ? "🧊 Frosset i " + tidTilbage(d.frysTil) : harTimeout(s.navn) ? "🔇 Timeout i " + tidTilbage(d.timeoutTil) :
+    erFrosset(s.navn) ? "🧊 Frosset i " + tidTilbage(d.frysTil) : harTimeout(s.navn) ? "🔇 Mutet i " + tidTilbage(d.timeoutTil) :
     erAdvaret(s.navn) ? "⚠️ Advaret" : erOnline(s.navn) ? "🟢 Online" : "⚪ Offline";
   const beskeder = chatLog.filter(function (l) { return l.navn === s.navn; });
   const omHam = rapporter().filter(function (r) { return r.hvem === s.navn; });
@@ -431,14 +434,14 @@ function visSpillere() {
       "<label class='sp-altid'><input id='sp-altid' type='checkbox'> Ban for altid</label>" +
       "<div class='sp-straf-knapper'>" +
       "<button data-handling='Advarsel' title='Et ⚠️ over hovedet, så alle kan se det'>⚠️ Advar</button>" +
-      "<button data-handling='Timeout' title='Kan ikke skrive i chatten'>🔇 Timeout</button>" +
+      "<button data-handling='Mute' title='Kan ikke skrive i chatten'>🔇 Mute</button>" +
       "<button data-handling='Frys' title='Punish: kan hverken gå eller skrive'>🧊 Frys</button>" +
       "<button data-handling='Ban' class='roed' title='Bliver smidt ud af hotellet'>⛔ Ban</button>" +
       "</div></div>";
     // de straffe der gælder lige nu, med en knap til at ophæve dem
     const aktive = [];
     if (erAdvaret(s.navn)) aktive.push(["advarselTil", "⚠️ Advarsel", tidTilbage(d.advarselTil)]);
-    if (d.timeoutTil > Date.now()) aktive.push(["timeoutTil", "🔇 Timeout", tidTilbage(d.timeoutTil)]);
+    if (d.timeoutTil > Date.now()) aktive.push(["timeoutTil", "🔇 Mute", tidTilbage(d.timeoutTil)]);
     if (erFrosset(s.navn)) aktive.push(["frysTil", "🧊 Frosset", tidTilbage(d.frysTil)]);
     if (d.bannet) aktive.push(["bannet", "⛔ Ban", "for altid"]);
     else if (erBannet(s.navn)) aktive.push(["bannetTil", "⛔ Ban", tidTilbage(d.bannetTil)]);
@@ -448,19 +451,52 @@ function visSpillere() {
     }), "Ingen lige nu");
   }
 
-  html += "<h4>Tidligere straffe</h4>" + liste(d.historik.slice().reverse().map(function (h) {
-    return "<b>" + rens(h.handling) + "</b><span>" + rens(h.grund || "ingen grund") + " · " + tidTekst(h.tid) + "</span>";
-  }), "Ingen endnu") + (d.historik.length ? "<button id='sp-slet-historik' class='lille'>🗑 Slet historik</button>" : "");
-  html += "<h4>Rapporter om " + rens(s.navn) + "</h4>" + liste(omHam.map(function (r) {
-    return "<b>" + rens(r.grund) + "</b><span>" + rens(r.tekst || "") + " · " + tidTekst(r.tid) + "</span>";
-  }), "Ingen rapporter");
-  html += "<h4>Seneste beskeder</h4>" + liste(beskeder.slice(-5).reverse().map(function (l) {
-    return rens(l.tekst) + "<span>" + rumNavn(l.rum) + " · " + tidTekst(l.tid) + "</span>";
-  }), "Har ikke skrevet noget");
-  html += "<h4>Moderator-note</h4><textarea id='sp-note' rows='3' placeholder='Kun du kan se den her note …'>" + rens(d.note) + "</textarea></div></div>";
+  // Straffe, rapporter, beskeder og note ligger i hver sin lille fane, så det er til at overskue
+  const historik = d.historik.slice().reverse();
+  const fanerInfo = [["straffe", "⚖️ Straffe", historik.length], ["rapporter", "🚩 Rapporter", omHam.length],
+    ["beskeder", "💬 Beskeder", beskeder.length], ["note", "📝 Note", d.note ? "✓" : ""]];
+  html += "<div class='sp-info'><div class='sp-info-faner'>" + fanerInfo.map(function (f) {
+    return "<button data-info='" + f[0] + "'" + (f[0] === spInfoFane ? " class='valgt'" : "") + ">" + f[1] +
+      (f[2] !== "" && f[2] !== 0 ? " <small>" + f[2] + "</small>" : "") + "</button>";
+  }).join("") + "</div>";
+
+  html += "<div class='sp-info-side' data-side='straffe'" + (spInfoFane === "straffe" ? "" : " hidden") + ">" +
+    (historik.length ? "<ul class='sp-kort-liste'>" + historik.map(function (h) {
+      const m = /^(Ophævet: )?([^(]+?)\s*(?:\((.*)\))?$/.exec(h.handling) || [];
+      const type = (m[2] || h.handling).trim();
+      const slags = m[1] ? "ophaevet" : STRAF_FARVE[type] || "andet";
+      return "<li class='sp-kort'><span class='sp-maerke " + slags + "'>" + (m[1] ? "✅ Ophævet " : "") + (STRAF_IKON[type] || "") + " " + rens(type) + "</span>" +
+        (m[3] ? "<span class='sp-varighed'>⏱ " + rens(m[3]) + "</span>" : "") + "<span class='sp-dato'>" + tidTekst(h.tid) + "</span>" +
+        "<p>" + (h.grund ? rens(h.grund) : "<i>ingen grund skrevet</i>") + "</p></li>";
+    }).join("") + "</ul><button id='sp-slet-historik' class='lille'>🗑 Slet historik</button>" : "<p class='tom'>Ingen straffe endnu 😊</p>") + "</div>";
+
+  html += "<div class='sp-info-side' data-side='rapporter'" + (spInfoFane === "rapporter" ? "" : " hidden") + ">" +
+    (omHam.length ? "<ul class='sp-kort-liste'>" + omHam.slice().reverse().map(function (r) {
+      return "<li class='sp-kort'><span class='sp-maerke rapport'>🚩 " + rens(r.grund) + "</span>" +
+        (r.fra ? "<span class='sp-varighed'>fra " + rens(r.fra) + "</span>" : "") +
+        "<span class='sp-dato'>" + tidTekst(r.tid) + "</span>" +
+        (r.behandlet ? "<span class='sp-varighed groen'>✓ Behandlet</span>" : "") +
+        "<p>" + (r.tekst ? rens(r.fra ? r.tekst.replace(" (fra " + r.fra + ")", "") : r.tekst) : "<i>ingen tekst</i>") + "</p></li>";
+    }).join("") + "</ul>" : "<p class='tom'>Ingen rapporter om " + rens(s.navn) + "</p>") + "</div>";
+
+  html += "<div class='sp-info-side' data-side='beskeder'" + (spInfoFane === "beskeder" ? "" : " hidden") + ">" +
+    (beskeder.length ? "<ul class='sp-chat-liste'>" + beskeder.slice(-30).reverse().map(function (l) {
+      return "<li><span class='sp-chat-tid'>" + tidTekst(l.tid) + " · " + rens(rumNavn(l.rum)) + "</span>" +
+        "<span class='sp-chat-tekst'><b>" + rens(l.navn) + ":</b> " + rens(l.tekst) + "</span></li>";
+    }).join("") + "</ul>" : "<p class='tom'>Har ikke skrevet noget</p>") + "</div>";
+
+  html += "<div class='sp-info-side' data-side='note'" + (spInfoFane === "note" ? "" : " hidden") + ">" +
+    "<textarea id='sp-note' rows='4' placeholder='Kun ejeren og MOD kan se den her note …'>" + rens(d.note) + "</textarea></div></div></div></div>";
 
   ejerIndhold.innerHTML = html;
 
+  ejerIndhold.querySelectorAll("[data-info]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      spInfoFane = k.dataset.info;
+      ejerIndhold.querySelectorAll("[data-info]").forEach(function (x) { x.classList.toggle("valgt", x === k); });
+      ejerIndhold.querySelectorAll(".sp-info-side").forEach(function (s) { s.hidden = s.dataset.side !== spInfoFane; });
+    });
+  });
   ejerIndhold.querySelectorAll("#sp-liste button").forEach(function (k) {
     k.addEventListener("click", function () { valgtSpiller = k.dataset.navn; visSpillere(); });
   });
@@ -550,7 +586,7 @@ function straf(navn, handling, grund, minutter) {
     // advarslen sendes også som privat besked, så I kan skrive sammen om den
     if (typeof sendAdvarsel === "function") sendAdvarsel(navn, grund, varighed);
   }
-  if (handling === "Timeout") d.timeoutTil = til;
+  if (handling === "Mute" || handling === "Timeout") d.timeoutTil = til;
   if (handling === "Frys") {
     d.frysTil = til;
     if (g) { g.rute = []; g.skriver = false; }
@@ -569,7 +605,7 @@ function ophaevStraf(navn, felt) {
   const d = spillerData(navn);
   d[felt] = felt === "bannet" ? false : 0;
   if (felt === "bannetTil" || felt === "bannet") { d.bannet = false; d.bannetTil = 0; }
-  const navne = { advarselTil: "Advarsel", timeoutTil: "Timeout", frysTil: "Frys", bannet: "Ban", bannetTil: "Ban" };
+  const navne = { advarselTil: "Advarsel", timeoutTil: "Mute", frysTil: "Frys", bannet: "Ban", bannetTil: "Ban" };
   d.historik.push({ handling: "Ophævet: " + navne[felt], grund: "", tid: Date.now() });
   gemSanktioner();
   adminSkriv("Ophævede " + navne[felt] + " for " + navn);
@@ -611,23 +647,59 @@ function visAlleBeskeder() {
 }
 
 // ----- 4. Rapporter -----
+let rapFilter = "aabne", rapSoeg = "";
 function visRapporter() {
   const alle = rapporter().map(function (r, i) { return { r: r, i: i }; }).reverse();
-  function linje(x) {
-    const r = x.r;
-    return "<b>" + rens(r.grund) + "</b>" +
-      (r.hvem ? " om <a href='#' data-spiller='" + rens(r.hvem) + "'>" + rens(r.hvem) + "</a>" : "") +
-      "<span>" + rens(r.tekst || "(ingen tekst)") + " · " + tidTekst(r.tid) + "</span>" +
-      (r.behandlet
-        ? "<span>Behandlet " + tidTekst(r.behandletTid || r.tid) + "</span><button class='lille' data-aabn='" + x.i + "'>Åbn igen</button>"
-        : "<button class='lille' data-behandl='" + x.i + "'>✅ Marker som behandlet</button>");
-  }
   const aabne = alle.filter(function (x) { return !x.r.behandlet; });
   const faerdige = alle.filter(function (x) { return x.r.behandlet; });
-  ejerIndhold.innerHTML = "<p class='ejer-antal'>Rapporter, som spillerne har sendt med \"Rapportere\".</p>" +
-    "<div class='ejer-to'><section><h3>🆕 Åbne (" + aabne.length + ")</h3>" + liste(aabne.map(linje), "Ingen åbne rapporter 🎉") + "</section>" +
-    "<section><h3>✅ Behandlet (" + faerdige.length + ")</h3>" + liste(faerdige.map(linje), "Ingen endnu") + "</section></div>";
+  const vis = rapFilter === "aabne" ? aabne : rapFilter === "behandlet" ? faerdige : alle;
+  function kort(x) {
+    const r = x.r;
+    const tekst = r.fra ? String(r.tekst || "").replace(" (fra " + r.fra + ")", "") : r.tekst;
+    const soeg = [r.grund, r.hvem, r.fra, tekst].join(" ").toLowerCase();
+    return "<li class='rap-kort" + (r.behandlet ? " faerdig" : "") + "' data-soeg='" + rens(soeg) + "'>" +
+      "<div class='rap-top'><span class='rap-status'>" + (r.behandlet ? "✅ Behandlet" : "🆕 Åben") + "</span>" +
+      "<b class='rap-grund'>🚩 " + rens(r.grund || "Rapport") + "</b><span class='rap-dato'>" + tidTekst(r.tid) + "</span></div>" +
+      "<div class='rap-hvem'>" + (r.fra ? "Fra <b>" + rens(r.fra) + "</b> " : "") +
+      (r.hvem ? "om <a href='#' data-spiller='" + rens(r.hvem) + "'>" + rens(r.hvem) + "</a>" : "<i>ingen bestemt spiller</i>") + "</div>" +
+      "<blockquote>" + (tekst ? "“" + rens(tekst) + "”" : "<i>Ingen tekst skrevet</i>") + "</blockquote>" +
+      "<div class='rap-knapper'>" +
+      (r.behandlet
+        ? "<small>Behandlet " + tidTekst(r.behandletTid || r.tid) + "</small><button class='lille' data-aabn='" + x.i + "'>↩ Åbn igen</button>"
+        : "<button class='lille groen' data-behandl='" + x.i + "'>✅ Behandl</button>") +
+      (r.hvem ? "<button class='lille' data-straf='" + rens(r.hvem) + "'>⚖️ Straf " + rens(r.hvem) + "</button>" : "") +
+      "</div></li>";
+  }
+  ejerIndhold.innerHTML = "<div class='rap-bjaelke'><div class='rap-filter'>" +
+    [["aabne", "🆕 Åbne", aabne.length], ["behandlet", "✅ Behandlet", faerdige.length], ["alle", "📋 Alle", alle.length]].map(function (f) {
+      return "<button data-rapfilter='" + f[0] + "'" + (f[0] === rapFilter ? " class='valgt'" : "") + ">" + f[1] + " <small>" + f[2] + "</small></button>";
+    }).join("") + "</div><input id='rap-soeg' type='text' placeholder='🔍 Søg i rapporter …' value='" + rens(rapSoeg) + "'></div>" +
+    (vis.length ? "<ul class='rap-liste'>" + vis.map(kort).join("") + "</ul>" : "<p class='tom'>" + (rapFilter === "aabne" ? "Ingen åbne rapporter 🎉" : "Ingen rapporter her") + "</p>") +
+    "<p class='tom rap-ingen' hidden>Ingen rapporter passer til søgningen.</p>";
   spillerLinks();
+  ejerIndhold.querySelectorAll("[data-rapfilter]").forEach(function (k) {
+    k.addEventListener("click", function () { rapFilter = k.dataset.rapfilter; visRapporter(); });
+  });
+  const soeg = document.getElementById("rap-soeg");
+  function filtrer() {
+    const q = rapSoeg.trim().toLowerCase();
+    let antal = 0;
+    ejerIndhold.querySelectorAll(".rap-kort").forEach(function (li) {
+      li.hidden = !!q && li.dataset.soeg.indexOf(q) < 0;
+      if (!li.hidden) antal++;
+    });
+    ejerIndhold.querySelector(".rap-ingen").hidden = !q || antal > 0 || !vis.length;
+  }
+  soeg.addEventListener("input", function () { rapSoeg = soeg.value; filtrer(); });
+  filtrer();
+  ejerIndhold.querySelectorAll("[data-straf]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      valgtSpiller = k.dataset.straf;
+      spInfoFane = "rapporter";
+      ejerFane = "spillere";
+      visFane();
+    });
+  });
   function knapper(attr, behandlet) {
     ejerIndhold.querySelectorAll("[" + attr + "]").forEach(function (k) {
       k.addEventListener("click", function () {
@@ -757,7 +829,7 @@ function visSystem() {
   ejerIndhold.innerHTML = "<label class='ejer-felt'>Velkomstbesked i hallen<input id='s-velkomst' type='text' maxlength='120' placeholder='Velkommen til HELLO VERA! …' value='" + rens(system.velkomst) + "'></label>" +
     "<label class='ejer-tjek'><input id='s-filter' type='checkbox'" + (system.filterTil ? " checked" : "") + "> Chatfilter er slået til</label>" +
     "<label class='ejer-felt'>Ekstra grimme ord (adskil med komma)<input id='s-ord' type='text' value='" + rens(system.ekstraOrd) + "'></label>" +
-    "<label class='ejer-felt'>Timeout varer (minutter)<input id='s-timeout' type='number' min='1' max='1440' value='" + system.timeoutMin + "'></label>" +
+    "<label class='ejer-felt'>Mute varer (minutter)<input id='s-timeout' type='number' min='1' max='2880' value='" + system.timeoutMin + "'></label>" +
     "<button id='s-gem' class='lv-knap'>Gem</button>" +
     "<p class='ejer-info'>Ejere: " + rens(EJERE.join(", ")) + " (ændres øverst i js/konto.js)</p>";
   document.getElementById("s-gem").addEventListener("click", function () {
@@ -772,3 +844,58 @@ function visSystem() {
     besked.textContent = "Gemt!";
   });
 }
+
+
+// Udseendet af de små faner under en spiller (Straffe, Rapporter, Beskeder, Note)
+const spInfoStil = document.createElement("style");
+spInfoStil.textContent =
+  "#ejer-indhold .sp-info { margin-top: 16px; border: 2px solid #9ccc8f; border-radius: 10px; background: #fff; overflow: hidden; }" +
+  "#ejer-indhold .sp-info-faner { display: grid; grid-template-columns: repeat(4, 1fr); background: #e8f2dc; border-bottom: 2px solid #9ccc8f; }" +
+  "#ejer-indhold .sp-info-faner button { padding: 8px 4px; border: 0; border-right: 1px solid #cfe4bf; background: none; color: #3d6b39;" +
+  " font: bold 12px Verdana, sans-serif; cursor: pointer; }" +
+  "#ejer-indhold .sp-info-faner button:last-child { border-right: 0; }" +
+  "#ejer-indhold .sp-info-faner button small { display: inline-block; min-width: 16px; padding: 0 5px; border-radius: 9px; background: #4e7d4a; color: #fff; font-size: 10px; }" +
+  "#ejer-indhold .sp-info-faner button.valgt { background: #fff; color: #1f3a1c; box-shadow: inset 0 -3px 0 #4e7d4a; }" +
+  "#ejer-indhold .sp-info-side { padding: 10px; max-height: 300px; overflow-y: auto; }" +
+  "#ejer-indhold .sp-info-side .tom { margin: 6px 0; }" +
+  "#ejer-indhold .sp-info-side textarea { width: 100%; box-sizing: border-box; }" +
+  "#ejer-indhold .sp-kort-liste, #ejer-indhold .sp-chat-liste { list-style: none; margin: 0 0 8px; padding: 0; }" +
+  "#ejer-indhold .sp-kort-liste li.sp-kort { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; padding: 8px; border: 1px solid #e3ead8; border-radius: 8px; background: #fbf6ea; }" +
+  "#ejer-indhold .sp-kort p { flex-basis: 100%; margin: 2px 0 0; color: #33402c; font-size: 13px; overflow-wrap: anywhere; }" +
+  "#ejer-indhold .sp-kort p i { color: #9a9a8a; }" +
+  "#ejer-indhold .sp-maerke { display: inline-block; padding: 2px 8px; border-radius: 10px; font: bold 12px Verdana, sans-serif; color: #fff; background: #7a8a76; }" +
+  "#ejer-indhold .sp-maerke.advarsel { background: #e0a526; color: #3a2a00; }" +
+  "#ejer-indhold .sp-maerke.mute { background: #c98a1c; }" +
+  "#ejer-indhold .sp-maerke.frys { background: #3f7fb0; }" +
+  "#ejer-indhold .sp-maerke.ban { background: #c0392b; }" +
+  "#ejer-indhold .sp-maerke.ophaevet { background: #b9c0b4; color: #3f4a3b; }" +
+  "#ejer-indhold .sp-maerke.rapport { background: #b5487a; }" +
+  "#ejer-indhold .sp-varighed { display: inline-block; padding: 2px 7px; border-radius: 10px; background: #e8f2dc; color: #3d6b39; font-size: 11px; }" +
+  "#ejer-indhold .sp-varighed.groen { background: #9ccc8f; color: #1f3a1c; }" +
+  "#ejer-indhold .sp-dato { display: inline-block; margin-left: auto; color: #8a8a7a; font-size: 11px; }" +
+  "#ejer-indhold .sp-chat-liste li { padding: 6px 2px; border-bottom: 1px solid #eef1e8; }" +
+  "#ejer-indhold .sp-chat-liste li:last-child { border-bottom: 0; }" +
+  "#ejer-indhold .sp-chat-tid { display: block; color: #8a8a7a; font-size: 11px; }" +
+  "#ejer-indhold .rap-bjaelke { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }" +
+  "#ejer-indhold .rap-filter { display: flex; gap: 4px; }" +
+  "#ejer-indhold .rap-filter button { padding: 6px 10px; border: 1px solid #9ccc8f; border-radius: 16px; background: #fff; color: #3d6b39; font: bold 12px Verdana, sans-serif; cursor: pointer; }" +
+  "#ejer-indhold .rap-filter button small { padding: 0 5px; border-radius: 9px; background: #e8f2dc; font-size: 10px; }" +
+  "#ejer-indhold .rap-filter button.valgt { background: #4e7d4a; color: #fff; border-color: #4e7d4a; }" +
+  "#ejer-indhold .rap-filter button.valgt small { background: #9ccc8f; color: #1f3a1c; }" +
+  "#ejer-indhold #rap-soeg { flex: 1; min-width: 140px; }" +
+  "#ejer-indhold .rap-liste { list-style: none; margin: 0; padding: 0; }" +
+  "#ejer-indhold .rap-liste li.rap-kort { display: block; margin: 0 0 10px; padding: 10px 12px; border: 2px solid #f0c9a0; border-left: 6px solid #e08a2e; border-radius: 10px; background: #fff; }" +
+  "#ejer-indhold .rap-liste li.rap-kort.faerdig { border-color: #d6e8c8; border-left-color: #7fb56f; background: #fbfdf8; }" +
+  "#ejer-indhold .rap-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }" +
+  "#ejer-indhold .rap-top span, #ejer-indhold .rap-knapper small { display: inline-block; }" +
+  "#ejer-indhold .rap-status { padding: 2px 8px; border-radius: 10px; background: #e08a2e; color: #fff; font: bold 11px Verdana, sans-serif; }" +
+  "#ejer-indhold .faerdig .rap-status { background: #7fb56f; }" +
+  "#ejer-indhold .rap-grund { font-size: 15px; color: #33402c; }" +
+  "#ejer-indhold .rap-dato { margin-left: auto; color: #8a8a7a; font-size: 11px; }" +
+  "#ejer-indhold .rap-hvem { margin: 6px 0; font-size: 13px; color: #55624f; }" +
+  "#ejer-indhold .rap-kort blockquote { margin: 0 0 8px; padding: 8px 10px; border-left: 3px solid #d6e8c8; background: #fbf6ea; border-radius: 6px; font-size: 13px; color: #33402c; overflow-wrap: anywhere; }" +
+  "#ejer-indhold .rap-kort blockquote i { color: #9a9a8a; }" +
+  "#ejer-indhold .rap-knapper { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }" +
+  "#ejer-indhold .rap-knapper small { color: #6f8a68; font-size: 11px; margin-right: auto; }" +
+  "#ejer-indhold .sp-chat-tekst { display: block; font-size: 13px; color: #33402c; overflow-wrap: anywhere; }";
+document.head.appendChild(spInfoStil);

@@ -248,7 +248,7 @@ window.addEventListener("submit", function (e) {
   const d = sanktioner[FIGUR.navn];
   besked.textContent = erFrosset(FIGUR.navn)
     ? "🧊 Du er frosset i " + tidTilbage(d.frysTil) + " og kan ikke skrive."
-    : "🔇 Du har timeout i " + tidTilbage(d.timeoutTil) + " og kan ikke skrive i chatten.";
+    : "🔇 Du er mutet i " + tidTilbage(d.timeoutTil) + " og kan ikke skrive i chatten.";
 }, true);
 
 // Frys: man kan ikke gå
