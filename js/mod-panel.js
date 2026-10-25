@@ -123,6 +123,23 @@ const visEventsFoerRolle = visEvents;
 visEvents = function () {
   visEventsFoerRolle();
   if (minRolle() !== "ejer") ejerIndhold.querySelectorAll(".elev-noegler").forEach(function (s) { s.remove(); });
+  // Eventværter kan også låse, åbne og gå ind i event-rummene herfra
+  if (minRolle() === "eventvaert") {
+    const nyheder = Array.prototype.slice.call(ejerIndhold.childNodes);
+    henterEventRum = true;
+    visSystem();
+    henterEventRum = false;
+    const sek = ejerIndhold.querySelector(".event-laase");
+    ejerIndhold.replaceChildren.apply(ejerIndhold, nyheder);
+    if (sek) ejerIndhold.appendChild(sek);
+  }
+};
+// Når en Eventvært låser et rum, tegnes Events-fanen igen (ikke Systemindstillinger)
+let henterEventRum = false;
+const visSystemFoerRolle = visSystem;
+visSystem = function () {
+  if (minRolle() === "eventvaert" && !henterEventRum) { visFane(); return; }
+  visSystemFoerRolle();
 };
 
 
