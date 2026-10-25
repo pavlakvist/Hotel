@@ -95,7 +95,7 @@ const alleSpillereFoerRolle = alleSpillere;
 alleSpillere = function () {
   const liste = alleSpillereFoerRolle();
   const r = minRolle();
-  if (r && r !== "ejer") liste.forEach(function (s) { if (s.navn === FIGUR.navn) s.hvad = r === "mod" ? "MOD (dig)" : "Eventvært (dig)"; });
+  if (r && r !== "ejer") liste.forEach(function (s) { if (s.navn === FIGUR.navn) s.hvad = r === "mod" ? "MOD (dig)" : r === "eventvaert" ? "Eventvært (dig)" : "Ansat (dig)"; });
   return liste;
 };
 

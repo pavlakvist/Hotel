@@ -3,7 +3,10 @@
 //  I Ejerpanel → Events og nyheder kan ejeren og Eventværter vælge:
 //  - en farve til banneret
 //  - pynt: stjerner, hjerter, balloner, blomster, konfetti, snefnug …
-//  - en dato (og et klokkeslæt), som står på banneret. Dagen efter forsvinder banneret af sig selv.
+//  - en dato (og et klokkeslæt), og evt. en slutdato, hvis det varer flere dage.
+//    Datoen står på banneret, og dagen efter (slut)datoen forsvinder banneret af sig selv.
+//  Der kan være flere bannere i gang på én gang: de skifter hver 7. sekund, og prikkerne
+//  under banneret viser, hvor mange der er. Spillerne kan lukke hvert banner med ✕.
 //  (Kræver database-12-banner.sql for at alle kan se det.)
 // =============================================================
 const BANNER_FARVER = {
@@ -30,21 +33,26 @@ const BANNER_PYNT = {
 };
 const UGEDAGE = ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"];
 
-function bannerDatoTekst(stil) {
-  if (!stil || !stil.dato) return "";
-  const d = new Date(stil.dato + "T12:00:00");
+function dagTekst(dato, stort) {
+  const d = new Date(dato + "T12:00:00");
   if (isNaN(d)) return "";
   const nu = new Date();
   const idag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate(), 12);
   const forskel = Math.round((d - idag) / 86400000);
-  const dag = forskel === 0 ? "I dag" : forskel === 1 ? "I morgen" :
-    UGEDAGE[d.getDay()][0].toUpperCase() + UGEDAGE[d.getDay()].slice(1) + " d. " + d.getDate() + ". " + MAANEDER[d.getMonth()];
-  return "📅 " + dag + (stil.kl ? " kl. " + stil.kl.replace(":", ".") : "");
+  const t = forskel === 0 ? "i dag" : forskel === 1 ? "i morgen" : UGEDAGE[d.getDay()] + " d. " + d.getDate() + ". " + MAANEDER[d.getMonth()];
+  return stort ? t[0].toUpperCase() + t.slice(1) : t;
 }
-// Er datoen gået? (banneret gælder hele dagen)
+function bannerDatoTekst(stil) {
+  if (!stil || !stil.dato) return "";
+  const fra = dagTekst(stil.dato, true);
+  if (!fra) return "";
+  const til = stil.til && stil.til > stil.dato ? dagTekst(stil.til, false) : "";
+  return "📅 " + (til ? fra + " til " + til : fra) + (stil.kl ? " kl. " + stil.kl.replace(":", ".") : "");
+}
+// Er (slut)datoen gået? (banneret gælder hele dagen)
 function bannerUdloebet(stil) {
   if (!stil || !stil.dato) return false;
-  const slut = new Date(stil.dato + "T23:59:59");
+  const slut = new Date((stil.til && stil.til > stil.dato ? stil.til : stil.dato) + "T23:59:59");
   return !isNaN(slut) && slut < new Date();
 }
 
@@ -56,12 +64,23 @@ const bannerDato = document.createElement("span");
 bannerDato.id = "banner-dato";
 document.getElementById("banner-under").after(bannerDato);
 
-// Bannere, hvis dato er gået, vises ikke længere
+// Alle bannere, der er i gang lige nu (nyeste først). Bannere, hvis dato er gået, er væk.
+function aktiveBannere() {
+  return nyheder.filter(function (n) { return n.banner !== false && !bannerUdloebet(n.stil); }).reverse();
+}
+const BANNERE_LUKKET_NOEGLE = "mit-hotel-bannere-lukket";
+function lukkedeBannere() {
+  try { return JSON.parse(localStorage.getItem(BANNERE_LUKKET_NOEGLE) || "[]"); } catch (e) { return []; }
+}
+function synligeBannere() {
+  const lukket = lukkedeBannere();
+  return aktiveBannere().filter(function (n) { return lukket.indexOf(String(n.tid)) < 0; });
+}
+let bannerNr = 0;                // hvilket af de synlige bannere der vises
+let bannerVist = null;           // tid på det banner, der står fremme
 aktivtBanner = function () {
-  for (let i = nyheder.length - 1; i >= 0; i--) {
-    if (nyheder[i].banner !== false && !bannerUdloebet(nyheder[i].stil)) return nyheder[i];
-  }
-  return null;
+  const s = synligeBannere();
+  return s.length ? s[Math.min(bannerNr, s.length - 1)] : null;
 };
 
 function malBanner(boks, stil, datoFelt) {
@@ -78,21 +97,83 @@ function malBanner(boks, stil, datoFelt) {
   if (datoFelt) { datoFelt.textContent = bannerDatoTekst(stil); datoFelt.hidden = !datoFelt.textContent; }
 }
 
-const visBannerFoerStil = visBanner;
+// Prikkerne under banneret (én pr. banner)
+const bannerPrikker = document.createElement("div");
+bannerPrikker.id = "banner-prikker";
+bannerBoks.appendChild(bannerPrikker);
+
 visBanner = function () {
-  visBannerFoerStil();
-  const b = aktivtBanner();
-  if (b) malBanner(bannerBoks, b.stil, bannerDato);
+  const synlige = synligeBannere();
+  const aktive = aktiveBannere();
+  if (bannerNr >= synlige.length) bannerNr = 0;
+  const b = synlige[bannerNr] || null;
+  bannerIgen.hidden = synlige.length === aktive.length;
+  bannerIgen.title = bannerIgen.hidden ? "" : "Vis bannerne igen";
+  if (!b) { bannerBoks.hidden = true; bannerVist = null; return; }
+  document.getElementById("banner-titel").textContent = b.titel;
+  document.getElementById("banner-under").textContent = b.tekst || "";
+  malBanner(bannerBoks, b.stil, bannerDato);
+  bannerPrikker.hidden = synlige.length < 2;
+  bannerPrikker.innerHTML = synlige.length < 2 ? "" : synlige.map(function (n, i) {
+    return "<button type='button' data-banner-nr='" + i + "'" + (i === bannerNr ? " class='valgt'" : "") + " title='" + rens(n.titel) + "'></button>";
+  }).join("");
+  bannerPrikker.querySelectorAll("[data-banner-nr]").forEach(function (k) {
+    k.addEventListener("click", function () { bannerNr = +k.dataset.bannerNr; bannerSkiftTid = Date.now(); visBanner(); });
+  });
+  const nyt = bannerBoks.hidden || bannerVist !== b.tid;
+  bannerBoks.hidden = false;
+  bannerVist = b.tid;
+  if (nyt) {
+    bannerBoks.classList.remove("hop");
+    void bannerBoks.offsetWidth;
+    bannerBoks.classList.add("hop");
+  }
 };
+
+// ✕ lukker kun det banner, man kigger på. 📢 viser dem alle igen.
+document.getElementById("banner-luk").addEventListener("click", function (e) {
+  e.stopImmediatePropagation();
+  const b = aktivtBanner();
+  if (b) {
+    const lukket = lukkedeBannere().filter(function (t) {
+      return nyheder.some(function (n) { return String(n.tid) === t; });     // ryd gamle væk
+    });
+    lukket.push(String(b.tid));
+    try { localStorage.setItem(BANNERE_LUKKET_NOEGLE, JSON.stringify(lukket)); } catch (e2) {}
+  }
+  visBanner();
+}, true);
+bannerIgen.addEventListener("click", function (e) {
+  e.stopImmediatePropagation();
+  try { localStorage.removeItem(BANNERE_LUKKET_NOEGLE); localStorage.removeItem(BANNER_LUKKET_NOEGLE); } catch (e2) {}
+  bannerNr = 0;
+  visBanner();
+}, true);
+
+// Flere bannere skifter hver 7. sekund (men ikke mens musen er over banneret)
+let bannerSkiftTid = Date.now();
+let musOverBanner = false;
+bannerBoks.addEventListener("mouseenter", function () { musOverBanner = true; });
+bannerBoks.addEventListener("mouseleave", function () { musOverBanner = false; bannerSkiftTid = Date.now(); });
+setInterval(function () {
+  const synlige = synligeBannere();
+  if (synlige.length > 1 && !musOverBanner && Date.now() - bannerSkiftTid > 7000) {
+    bannerNr = (bannerNr + 1) % synlige.length;
+    bannerSkiftTid = Date.now();
+    visBanner();
+  } else {
+    // nye eller udløbne bannere
+    const b = aktivtBanner();
+    if ((b ? b.tid : null) !== bannerVist || bannerPrikker.children.length !== (synlige.length > 1 ? synlige.length : 0)) visBanner();
+  }
+}, 1000);
 visBanner();
-// Når datoen er gået, forsvinder banneret (tjekkes hvert minut)
-setInterval(function () { if (!bannerBoks.hidden && !aktivtBanner()) visBanner(); }, 60000);
 
 
 // -------------------------------------------------------------
 //  Valgene i Events og nyheder
 // -------------------------------------------------------------
-let bsValg = { farve: "groen", pynt: "stjerner", dato: "", kl: "" };
+let bsValg = { farve: "groen", pynt: "stjerner", dato: "", kl: "", til: "" };
 let naesteStil = null;
 
 const visEventsFoerStil = visEvents;
@@ -111,9 +192,11 @@ visEvents = function () {
       const p = BANNER_PYNT[id];
       return "<button type='button' data-bs-pynt='" + id + "'" + (id === bsValg.pynt ? " class='valgt'" : "") + ">" + (p.tegn[0] || "🚫") + " " + p.navn + "</button>";
     }).join("") + "</div></div>" +
-    "<div class='bs-raekke'><span class='bs-lbl'>📅 Dato</span><input id='bs-dato' type='date' value='" + bsValg.dato + "'>" +
-    "<input id='bs-kl' type='time' value='" + bsValg.kl + "'><button type='button' id='bs-ingen-dato' class='lille'>Ingen dato</button></div>" +
-    "<p class='bs-hjaelp'>Med en dato står den på banneret, og dagen efter forsvinder banneret af sig selv.</p>" +
+    "<div class='bs-raekke'><span class='bs-lbl'>📅 Fra</span><input id='bs-dato' type='date' value='" + bsValg.dato + "'>" +
+    "<input id='bs-kl' type='time' value='" + bsValg.kl + "'></div>" +
+    "<div class='bs-raekke'><span class='bs-lbl'>🏁 Til</span><input id='bs-til' type='date' value='" + bsValg.til + "'>" +
+    "<small class='bs-hjaelp'>(kun hvis det varer flere dage)</small><button type='button' id='bs-ingen-dato' class='lille'>Ingen dato</button></div>" +
+    "<p class='bs-hjaelp'>Datoen står på banneret, og dagen efter (slut)datoen forsvinder banneret af sig selv. Du kan have flere bannere i gang på én gang: de skifter på skærmen.</p>" +
     "<div class='bs-lbl'>👀 Sådan kommer banneret til at se ud</div>" +
     "<div class='bs-forhaand'><span class='banner-stjerne'></span><div class='banner-tekst'><b class='bs-titel'></b><span class='bs-under'></span><span class='bs-dato'></span></div><span class='banner-stjerne'></span></div>";
   send.before(sek);
@@ -133,11 +216,12 @@ visEvents = function () {
   sek.querySelectorAll("[data-bs-pynt]").forEach(function (k) {
     k.addEventListener("click", function () { bsValg.pynt = k.dataset.bsPynt; opdater(); });
   });
-  const dato = document.getElementById("bs-dato"), kl = document.getElementById("bs-kl");
+  const dato = document.getElementById("bs-dato"), kl = document.getElementById("bs-kl"), til = document.getElementById("bs-til");
   dato.addEventListener("input", function () { bsValg.dato = dato.value; opdater(); });
   kl.addEventListener("input", function () { bsValg.kl = kl.value; opdater(); });
+  til.addEventListener("input", function () { bsValg.til = til.value; opdater(); });
   document.getElementById("bs-ingen-dato").addEventListener("click", function () {
-    bsValg.dato = ""; bsValg.kl = ""; dato.value = ""; kl.value = ""; opdater();
+    bsValg.dato = ""; bsValg.kl = ""; bsValg.til = ""; dato.value = ""; kl.value = ""; til.value = ""; opdater();
   });
   titel.addEventListener("input", opdater);
   tekst.addEventListener("input", opdater);
@@ -146,7 +230,11 @@ visEvents = function () {
   // Lige før nyheden gemmes, husker vi stilen, så den kommer med
   send.addEventListener("click", function () {
     naesteStil = { farve: bsValg.farve, pynt: bsValg.pynt };
-    if (bsValg.dato) { naesteStil.dato = bsValg.dato; if (bsValg.kl) naesteStil.kl = bsValg.kl; }
+    if (bsValg.dato) {
+      naesteStil.dato = bsValg.dato;
+      if (bsValg.kl) naesteStil.kl = bsValg.kl;
+      if (bsValg.til && bsValg.til > bsValg.dato) naesteStil.til = bsValg.til;
+    }
   }, true);
 
   // Udsendte nyheder: vis farve, pynt og dato ud for hver
@@ -159,6 +247,17 @@ visEvents = function () {
     m.className = "bs-maerke";
     m.innerHTML = "<i style='background:" + f.kant + "'></i>" + (p.tegn[0] || "") + " " + rens(bannerDatoTekst(n.stil)) +
       (bannerUdloebet(n.stil) ? " <em>(dato gået)</em>" : "");
+  });
+  // Hvilke bannere er i gang lige nu?
+  const aktive = aktiveBannere();
+  nyListe.forEach(function (k) {
+    const n = nyheder[+k.dataset.banner];
+    if (!n) return;
+    const m = document.createElement("span");
+    const kører = aktive.indexOf(n) >= 0;
+    m.className = "bs-status " + (kører ? "aktiv" : n.banner === false ? "slukket" : "slut");
+    m.textContent = kører ? "🟢 Vises nu" : n.banner === false ? "⚪ Ikke banner" : "⏹ Slut";
+    k.parentNode.insertBefore(m, k.parentNode.firstChild);
     k.parentNode.insertBefore(m, k);
   });
 };
@@ -183,7 +282,15 @@ bsStil.textContent =
   "#banner-titel { color: var(--banner-titel, #3d6b39); }" +
   "#banner-under { color: var(--banner-under, #55704f); }" +
   "#banner-dato { font-size: 13px; font-weight: 700; color: var(--banner-under, #55704f); }" +
-  "#banner-dato[hidden], .banner-stjerne[hidden] { display: none; }" +
+  "#banner-dato[hidden], .banner-stjerne[hidden], #banner-prikker[hidden] { display: none; }" +
+  "#banner { flex-wrap: wrap; justify-content: center; }" +
+  "#banner-prikker { flex-basis: 100%; display: flex; justify-content: center; gap: 6px; margin-top: -4px; }" +
+  "#banner-prikker button { width: 10px; height: 10px; padding: 0; border-radius: 50%; border: 0; background: var(--banner-under, #55704f); opacity: 0.35; cursor: pointer; }" +
+  "#banner-prikker button.valgt { opacity: 1; transform: scale(1.25); }" +
+  ".bs-status { display: inline-block !important; margin-right: 6px; padding: 1px 7px; border-radius: 9px; font: bold 11px Verdana, sans-serif; }" +
+  ".bs-status.aktiv { background: #9ccc8f; color: #1f3a1c; }" +
+  ".bs-status.slut { background: #eee6d2; color: #8a7a5a; }" +
+  ".bs-status.slukket { background: #eef1e8; color: #7a8a76; }" +
   ".bs-valg { margin: 4px 0 12px; padding: 10px; background: #fff; border: 2px solid #d6e8c8; border-radius: 10px; }" +
   ".bs-raekke { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }" +
   ".bs-lbl { font: bold 12px Verdana, sans-serif; color: #3d6b39; min-width: 64px; }" +
