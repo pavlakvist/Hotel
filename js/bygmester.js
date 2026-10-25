@@ -203,3 +203,21 @@ tilLager = function (type) {
   if (iFaellesRum()) return;
   tilLagerFoerByg(type);
 };
+
+
+// -------------------------------------------------------------
+//  Tomt katalog: sig det i Shoppen og i møbelpanelet
+// -------------------------------------------------------------
+function tomtKatalogTekst(hvor) {
+  const p = document.createElement("p");
+  p.className = "butik-tom";
+  p.innerHTML = "🛋️ Ingen møbler endnu<br><small>Nye møbler kommer snart …</small>";
+  hvor.appendChild(p);
+}
+if (!MOEBLER.length) tomtKatalogTekst(document.getElementById("moebel-knapper"));
+const visShopFoerTom = visShop;
+visShop = function () {
+  visShopFoerTom();
+  const gitter = document.getElementById("shop-gitter");
+  if (!shopVindue.hidden && shopFane === "moebler" && !MOEBLER.length && gitter && !gitter.children.length) tomtKatalogTekst(gitter);
+};

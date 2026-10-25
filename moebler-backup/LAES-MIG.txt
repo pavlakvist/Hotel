@@ -1,0 +1,10 @@
+BACKUP AF MØBLERNE (25/10)
+==========================
+Pavla bad om at slette alle møbler for at starte forfra. Det gamle ligger her, så det kan hentes tilbage:
+
+- moebel-katalog.js       = det gamle katalog med 327 møbler (billederne ligger stadig i billeder/moebler/katalog/)
+- basis-moebler.js        = de 6 første møbler (stol, bord, sofa, lampe, plante, tæppe) fra js/indstillinger.js
+- faste-rum-moebler.js    = møblerne, der stod fast i velkomsthallen, event-rummene og den hemmelige etage
+- Møblerne, som bygmestre havde stillet i de fælles rum, ligger i Supabase i tabellen hv_rum_moebler_backup
+
+Vil du have det hele tilbage, så bed Claude om at hente møblerne tilbage fra moebler-backup.

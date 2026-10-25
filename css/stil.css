@@ -3707,3 +3707,37 @@ footer {
   border-color: #4e7d4a;
 }
 #profil-vindue .lv-knap:hover { filter: brightness(1.06); }
+
+
+/* ===== Opret rum: formular til venstre, rummodeller til højre ===== */
+.or-ny .or-to { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 14px; align-items: start; }
+.or-venstre, .or-hoejre { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.or-ny textarea { padding: 7px 9px; border: 2px solid #cfe3c7; border-radius: 8px; font: 14px Verdana, sans-serif; resize: vertical; background: #fff; }
+.or-ny select { background: #fff; cursor: pointer; }
+.or-ny input:focus, .or-ny textarea:focus, .or-ny select:focus { outline: none; border-color: #4e7d4a; }
+.or-modeller {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 430px;
+  overflow-y: auto;
+  padding: 4px 6px 4px 2px;
+}
+.or-model-kort {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px 7px;
+  border: 2px solid #d6e8c8;
+  border-radius: 10px;
+  background: #f1ead6;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.12s;
+}
+.or-model-kort:hover { background: #e7f3e2; transform: translateY(-1px); }
+.or-model-kort canvas { width: 100%; max-width: 150px; height: auto; }
+.or-model-kort b { font: bold 12px Verdana, sans-serif; color: #2f4a2b; }
+.or-model-kort.valgt { background: #4e7d4a; border-color: #2f4d2c; box-shadow: 0 0 0 2px #9ccc8f; }
+.or-model-kort.valgt b { color: #fbf6ea; }
+@media (max-width: 700px) { .or-ny .or-to { grid-template-columns: 1fr; } }
