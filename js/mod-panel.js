@@ -430,7 +430,15 @@ function sendNyheder(liste) {
       return;
     }
     n.sender = true;
-    serverKald("hv_nyhed_send", { p_token: token, p_titel: n.titel, p_tekst: n.tekst || "", p_banner: n.banner !== false })
+    const data = { p_token: token, p_titel: n.titel, p_tekst: n.tekst || "", p_banner: n.banner !== false };
+    if (n.stil) data.p_stil = n.stil;      // farve, pynt og dato (database-12-banner.sql)
+    serverKald("hv_nyhed_send", data)
+      .catch(function (e) {
+        if (!data.p_stil) throw e;
+        // database-12 er ikke kørt endnu: så sendes nyheden uden farve og pynt
+        delete data.p_stil;
+        return serverKald("hv_nyhed_send", data);
+      })
       .then(function (id) { n.sid = id; delete n.sender; hentNyheder(); })
       .catch(function (e) { besked.textContent = e.message; });
   });
@@ -448,7 +456,7 @@ function hentNyheder() {
   serverKald("hv_nyheder_hent", { p_token: token }).then(function (svar) {
     nyhederHentet = true;
     if (nyheder.some(function (n) { return n.sender; })) return;     // en nyhed er på vej op
-    const ny = (svar || []).map(function (n) { return { sid: n.id, titel: n.titel, tekst: n.tekst || "", tid: n.tid, banner: n.banner, hvem: n.hvem }; });
+    const ny = (svar || []).map(function (n) { return { sid: n.id, titel: n.titel, tekst: n.tekst || "", tid: n.tid, banner: n.banner, hvem: n.hvem, stil: n.stil || null }; });
     if (stabil(ny) === stabil(nyheder)) return;
     serverNyheder = (svar || []).map(function (n) { return Object.assign({}, n); });
     nyheder.length = 0;
