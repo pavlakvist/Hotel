@@ -147,6 +147,7 @@ function opdaterStaff() {
 const visFaneFoerStaff = visFane;
 visFane = function () {
   visFaneFoerStaff();
+  ejerIndhold.classList.toggle("sc-nat", ejerFane === "staffchat");
   if (ejerVindue.hidden) return;
   if (ejerFane === "staffchat") visStaffChat();
   if (ejerFane === "beskeder" && beskederLaast()) visLaasteBeskeder();
@@ -330,3 +331,32 @@ staffStil.textContent =
   "#ejer-indhold .sc-laas { font-size: 46px; }" +
   "#ejer-indhold .sc-venter { color: #a0521a; font-weight: bold; }";
 document.head.appendChild(staffStil);
+
+// Staff chattens eget rolige tema: blød, mørk blågrå, rar at kigge på i mange timer
+const N = "#ejer-indhold.sc-nat ";
+const staffNatStil = document.createElement("style");
+staffNatStil.textContent =
+  "#ejer-indhold.sc-nat { background: #262f3b; color: #d5dde8; }" +
+  N + ".sc-krop aside { padding-right: 2px; }" +
+  N + "#sc-liste li.sc-rang { color: #9fbfd8; border-bottom-color: #3a4757; }" +
+  N + "#sc-liste button { background: #2f3a48; border-color: #3a4757; color: #d5dde8; }" +
+  N + "#sc-liste button:hover { background: #364353; }" +
+  N + "#sc-liste button small { color: #8c9aab; }" +
+  N + "#sc-liste button.valgt { background: #3f5a6e; border-color: #5f8199; color: #eef3f8; }" +
+  N + ".sc-flueben { background: #2b3542; color: #a9b6c6; }" +
+  N + ".sc-flueben.beder { background: #4a4230; color: #f0d58c; }" +
+  N + ".sc-samtale { background: #2b3542; border-color: #3a4757; }" +
+  N + ".sc-samtale h3 { background: #323f4f; color: #e3eaf2; }" +
+  N + "#sc-beskeder .tom { color: #8c9aab; }" +
+  N + ".sc-linje { background: #3a4657; }" +
+  N + ".sc-linje.mig { background: #3e5f58; }" +
+  N + ".sc-hvem { color: #93a3b5; }" +
+  N + ".sc-tekst { color: #e6ebf2; }" +
+  N + "#sc-form { border-top-color: #3a4757; background: #2f3a48; }" +
+  N + "#sc-form input { background: #232b36; border-color: #46556a; color: #e6ebf2; }" +
+  N + "#sc-form input::placeholder { color: #7f8da0; }" +
+  N + "#sc-form .lv-knap { background: linear-gradient(#6fa597, #5a8f82); border-color: #44766a; color: #f2f8f6; }" +
+  N + ".ejer-info { background: #2f3a48; color: #a9b6c6; }" +
+  N + "#sc-beskeder::-webkit-scrollbar { width: 8px; }" +
+  N + "#sc-beskeder::-webkit-scrollbar-thumb { background: #46556a; border-radius: 4px; }";
+document.head.appendChild(staffNatStil);
