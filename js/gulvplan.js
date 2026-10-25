@@ -5,7 +5,8 @@
 //  Virker i dine egne rum (ejeren af hotellet må i alle rum).
 // =============================================================
 const GULVPLAN_KOMMANDO = /^[:：]\s*floor$/i;
-const GP_MIN = 4, GP_MAKS = 24;               // rummets mindste og største mål
+const GP_MIN = 4, GP_MAKS = 64;               // rummets mindste og største mål
+const GP_KANT = 3;                            // ekstra felter rundt om rummet, hvor man kan tegne det større
 const GP_VAEG_MIN = 60, GP_VAEG_MAKS = 240;   // væggens højde
 
 const gpVindue = document.createElement("div");
@@ -29,6 +30,8 @@ gpVindue.innerHTML =
   '  <div class="gp-knapper">' +
   '    <button type="button" id="gp-fyld">Fyld alt</button>' +
   '    <button type="button" id="gp-ryd">Ryd alt</button>' +
+  '    <button type="button" id="gp-stoerre" title="2 felter mere i bredden og dybden">➕ Større</button>' +
+  '    <button type="button" id="gp-mindre" title="2 felter mindre i bredden og dybden">➖ Mindre</button>' +
   '    <span class="gp-luft"></span>' +
   '    <button type="button" id="gp-annuller">Annuller</button>' +
   '    <button type="button" id="gp-gem" class="gp-gem">💾 Gem</button>' +
@@ -100,7 +103,8 @@ function vaelgVaerk(vaerk) {
   gpHjaelpTekst(vaerk === "doer"
     ? "Klik på et gulvfelt ude ved væggen (venstre væg eller bagvæggen) for at sætte døren."
     : vaerk === "slet" ? "Klik eller træk hen over gulvet for at fjerne felter."
-    : "Klik eller træk for at tegne gulv. Gør rummet større med Bredde og Dybde.");
+    : "Træk for at tegne gulv. Tegn ude i de stiplede felter for at gøre rummet større (op til " + GP_MAKS + " × " + GP_MAKS + ").");
+  if (gp) tegnGulvplan();
 }
 
 function gpGulv(x, y) {
@@ -117,13 +121,13 @@ function vedVaeg(x, y) {
 }
 
 // Ændr rummets mål. Nye felter får gulv, så rummet bliver større.
-function gpNyeMaal(b, d) {
+function gpNyeMaal(b, d, fyld) {
   b = Math.max(GP_MIN, Math.min(GP_MAKS, b || gp.bredde));
   d = Math.max(GP_MIN, Math.min(GP_MAKS, d || gp.dybde));
   const nye = [];
   for (let y = 0; y < d; y++) {
     nye.push([]);
-    for (let x = 0; x < b; x++) nye[y].push(y < gp.dybde && x < gp.bredde ? gp.felter[y][x] : true);
+    for (let x = 0; x < b; x++) nye[y].push(y < gp.dybde && x < gp.bredde ? gp.felter[y][x] : fyld !== false);
   }
   gp.bredde = b;
   gp.dybde = d;
@@ -138,14 +142,18 @@ function gpNyeMaal(b, d) {
 // -------------------------------------------------------------
 //  Tegn planen skråt ovenfra, ligesom rummet
 // -------------------------------------------------------------
+// Hvor langt ud kan man tegne? (rummet + de stiplede felter, men aldrig over GP_MAKS)
+function gpUdeB() { return gpVaerk === "tegn" ? Math.min(GP_MAKS, gp.bredde + GP_KANT) : gp.bredde; }
+function gpUdeD() { return gpVaerk === "tegn" ? Math.min(GP_MAKS, gp.dybde + GP_KANT) : gp.dybde; }
 function gpMaalestok() {
-  const fw = Math.min(44, Math.floor((gpTegning.width - 20) * 2 / (gp.bredde + gp.dybde)));
+  const b = gpUdeB(), d = gpUdeD();
+  const fw = Math.min(44, (gpTegning.width - 20) * 2 / (b + d), (gpTegning.height - 30) * 4 / (b + d));
   const fh = fw / 2;
-  const hoejde = (gp.bredde + gp.dybde) * fh / 2;
+  const hoejde = (b + d) * fh / 2;
   return {
     fw: fw, fh: fh,
-    ox: gpTegning.width / 2 + (gp.dybde - gp.bredde) * fw / 4,
-    oy: (gpTegning.height - hoejde) / 2,
+    ox: gpTegning.width / 2 + (d - b) * fw / 4,
+    oy: (gpTegning.height - hoejde) / 2 + 10,
   };
 }
 function gpPunkt(m, x, y) {
@@ -159,7 +167,7 @@ function gpFelt(e) {
   const a = (sx - m.ox) / (m.fw / 2);
   const b = (sy - m.oy) / (m.fh / 2);
   const x = Math.floor((a + b) / 2), y = Math.floor((b - a) / 2);
-  if (x < 0 || y < 0 || x >= gp.bredde || y >= gp.dybde) return null;
+  if (x < 0 || y < 0 || x >= gpUdeB() || y >= gpUdeD()) return null;
   return { x: x, y: y };
 }
 
@@ -167,6 +175,19 @@ function tegnGulvplan() {
   if (!gp) return;
   const m = gpMaalestok();
   gpCtx.clearRect(0, 0, gpTegning.width, gpTegning.height);
+  // de stiplede felter udenfor, hvor man kan tegne rummet større
+  gpCtx.save();
+  gpCtx.setLineDash([3, 3]);
+  gpCtx.strokeStyle = "rgba(78,125,74,0.45)";
+  for (let y = 0; y < gpUdeD(); y++) for (let x = 0; x < gpUdeB(); x++) {
+    if (x < gp.bredde && y < gp.dybde) continue;
+    const p = [gpPunkt(m, x, y), gpPunkt(m, x + 1, y), gpPunkt(m, x + 1, y + 1), gpPunkt(m, x, y + 1)];
+    gpCtx.beginPath();
+    p.forEach(function (q, i) { if (i) gpCtx.lineTo(q.x, q.y); else gpCtx.moveTo(q.x, q.y); });
+    gpCtx.closePath();
+    gpCtx.stroke();
+  }
+  gpCtx.restore();
   for (let y = 0; y < gp.dybde; y++) {
     for (let x = 0; x < gp.bredde; x++) {
       const p = [gpPunkt(m, x, y), gpPunkt(m, x + 1, y), gpPunkt(m, x + 1, y + 1), gpPunkt(m, x, y + 1)];
@@ -219,7 +240,13 @@ function gpVaegStykke(a, b, vh) {
 //  Tegn med musen
 // -------------------------------------------------------------
 function gpMal(f) {
-  if (!f || gp.felter[f.y][f.x] === gpMaler) return;
+  if (!f) return;
+  // tegner man ude i de stiplede felter, bliver rummet større
+  if (f.x >= gp.bredde || f.y >= gp.dybde) {
+    if (!gpMaler) return;
+    gpNyeMaal(Math.max(gp.bredde, f.x + 1), Math.max(gp.dybde, f.y + 1), false);
+  }
+  if (gp.felter[f.y][f.x] === gpMaler) return;
   gp.felter[f.y][f.x] = gpMaler;
   if (gp.doer && !vedVaeg(gp.doer.x, gp.doer.y)) {
     gp.doer = null;
@@ -257,6 +284,8 @@ gpVaeg.addEventListener("input", function () {
   document.getElementById("gp-vaeg-tal").textContent = gp.vaegHoejde;
   tegnGulvplan();
 });
+document.getElementById("gp-stoerre").addEventListener("click", function () { gpNyeMaal(gp.bredde + 2, gp.dybde + 2); });
+document.getElementById("gp-mindre").addEventListener("click", function () { gpNyeMaal(gp.bredde - 2, gp.dybde - 2); });
 document.getElementById("gp-fyld").addEventListener("click", function () {
   gp.felter.forEach(function (r) { r.fill(true); });
   tegnGulvplan();
