@@ -307,9 +307,16 @@ function tegnGangDoere() {
     polygon(ctx, [m(0.14, 104), m(0.86, 104), m(0.86, 124), m(0.14, 124)], mig ? "#f7c65a" : "#3a1d0e");
     skraaTekst(m(0.5, 114), String(sal * 100 + nr), mig ? "#3a1d0e" : "#f7c65a", 11);
     // navneskilt på døren
-    polygon(ctx, [m(0.18, 62), m(0.82, 62), m(0.82, 76), m(0.18, 76)], l ? "#fbf6ea" : "rgba(255,255,255,0.5)");
     const navn = l ? l.ejer : "Ledig";
-    skraaTekst(m(0.5, 69), navn.length > 9 ? navn.slice(0, 8) + "…" : navn, l ? "#3a1d0e" : "#5a5048", 8);
+    if (l) {     // stort, tydeligt navneskilt, så alle i gangen kan se hvem der bor der
+      polygon(ctx, [m(-0.14, 56), m(1.14, 56), m(1.14, 80), m(-0.14, 80)], "#3a1d0e");
+      polygon(ctx, [m(-0.1, 58), m(1.1, 58), m(1.1, 78), m(-0.1, 78)], "#fbf6ea");
+      const kort = navn.length > 12 ? navn.slice(0, 11) + "…" : navn;
+      skraaTekst(m(0.5, 68), kort, "#3a1d0e", kort.length <= 6 ? 12 : kort.length <= 9 ? 9 : 7);
+    } else {
+      polygon(ctx, [m(0.18, 62), m(0.82, 62), m(0.82, 76), m(0.18, 76)], "rgba(255,255,255,0.5)");
+      skraaTekst(m(0.5, 69), navn, "#5a5048", 8);
+    }
     if (l && l.adgang !== "aaben") skraaTekst(m(0.5, 84), l.adgang === "laast" ? "🔒" : "🔑", "#fff", 10);
   }
   if (over) {
