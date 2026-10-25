@@ -135,3 +135,45 @@ gemAlarmer = function (liste) {
   });
   serverAlarmer = liste.slice();
 };
+
+
+// -------------------------------------------------------------
+//  ➡ Gå derhen: ind i det rigtige rum og hen ved siden af den, der kaldte
+// -------------------------------------------------------------
+function gaaHenVed(g) {
+  const gx = Math.round(g.x), gy = Math.round(g.y);
+  const fig = figurFelt();
+  if (Math.abs(fig.x - gx) <= 1 && Math.abs(fig.y - gy) <= 1) return true;
+  const naboer = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]
+    .sort(function (a, b) {
+      return Math.hypot(gx + a[0] - fig.x, gy + a[1] - fig.y) - Math.hypot(gx + b[0] - fig.x, gy + b[1] - fig.y);
+    });
+  for (const [dx, dy] of naboer) {
+    gaaTil(gx + dx, gy + dy);
+    if (figur.rute.length > 0) return true;
+  }
+  return false;
+}
+
+gaaTilAlarm = function (a) {
+  const g = ANDRE_SPILLERE[a.navn];
+  const rum = g ? g.rumId : a.rum;
+  const faelles = rum === "hal" || (typeof INDBYGGEDE_RUM !== "undefined" && INDBYGGEDE_RUM[rum]);
+  if (!g) {
+    besked.textContent = "🚨 " + a.navn + " er ikke online lige nu.";
+    return;
+  }
+  if (!faelles) {
+    // egne rum findes indtil videre kun på ejerens egen computer
+    besked.textContent = "🚨 " + a.navn + " er i sit eget rum, som andre ikke kan komme ind i endnu. Skriv @" + a.navn + " og bed om at mødes i Velkomsthallen.";
+    return;
+  }
+  if (mitRumId() !== rum) {
+    if (rum === "hal") skiftRum("hal"); else gaaTilVaerelse(rum);
+  }
+  besked.textContent = "🚨 Du er på vej hen til " + a.navn + " i " + (rum === "hal" ? "Velkomsthallen" : vaerelseNavn(rum)) + ".";
+  // når rummet er skiftet, går figuren hen ved siden af
+  setTimeout(function () {
+    if (mitRumId() === g.rumId && !gaaHenVed(g)) besked.textContent = "Du kan ikke komme helt hen til " + a.navn + " lige nu.";
+  }, 400);
+};
