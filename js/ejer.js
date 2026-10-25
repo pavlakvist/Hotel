@@ -282,7 +282,7 @@ function visFane() {
   const nye = rapporter().filter(function (r) { return !r.behandlet; }).length;
   document.getElementById("ejer-rapport-tal").textContent = nye ? nye : "";
   if (ejerFane === "oversigt") visOversigt();
-  if (ejerFane === "chat") visChatlog();
+  if (ejerFane === "chat") visEjerChatlog();
   if (ejerFane === "beskeder") visAlleBeskeder();
   if (ejerFane === "spillere") visSpillere();
   if (ejerFane === "rapporter") visRapporter();
@@ -348,7 +348,7 @@ function spillerLinks() {
 }
 
 // ----- 2. Chatlogs -----
-function visChatlog() {
+function visEjerChatlog() {
   const navne = alleSpillere().map(function (s) { return s.navn; });
   const f = chatFilter;
   let html = "<div class='ejer-filtre'>" +
@@ -383,7 +383,7 @@ function visChatlog() {
     const el = document.getElementById(id);
     el.addEventListener(hvordan, function () {
       chatFilter[felt] = el.type === "checkbox" ? el.checked : el.value;
-      visChatlog();
+      visEjerChatlog();
       if (hvordan === "input") { const ny = document.getElementById(id); ny.focus(); ny.setSelectionRange(ny.value.length, ny.value.length); }
     });
   }

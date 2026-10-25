@@ -275,6 +275,33 @@ function nuance(hex, faktor) {
   return "rgb(" + r + "," + g + "," + b + ")";
 }
 
+// Navneskiltet over figurerne: lille creme skilt med grøn kant og en spids ned mod hovedet
+function tegnNavneskilt(c, x, top, navn, mig) {
+  c.save();
+  c.font = "bold 11px Verdana, sans-serif";
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  const b = Math.round(c.measureText(navn).width + 16), h = 17;
+  const v = Math.round(x - b / 2), t = Math.round(top);
+  function form() {
+    c.beginPath();
+    if (c.roundRect) c.roundRect(v, t, b, h, 8); else c.rect(v, t, b, h);
+    c.moveTo(x - 4, t + h); c.lineTo(x, t + h + 4); c.lineTo(x + 4, t + h);
+  }
+  c.fillStyle = "rgba(0,0,0,0.22)";
+  c.translate(0, 2); form(); c.fill(); c.translate(0, -2);
+  form();
+  c.fillStyle = mig ? "#e7f3e2" : "#fbf6ea";
+  c.fill();
+  c.lineWidth = 1.5;
+  c.strokeStyle = "#4e7d4a";
+  c.stroke();
+  c.fillStyle = "#2f4a2b";
+  c.fillText(navn, x, t + h / 2 + 0.5);
+  c.restore();
+  return b;
+}
+
 function polygon(c, punkter, farve, kant) {
   c.beginPath();
   c.moveTo(punkter[0].x, punkter[0].y);
@@ -429,13 +456,7 @@ function tegnFigur(c) {
   }
 
   // navneskilt
-  c.font = "bold 12px Verdana, sans-serif";
-  c.textAlign = "center";
-  const tekstB = c.measureText(FIGUR.navn).width + 12;
-  c.fillStyle = "rgba(0,0,0,0.55)";
-  c.fillRect(p.x - tekstB / 2, p.y - hoejde - 26, tekstB, 18);
-  c.fillStyle = "#ffffff";
-  c.fillText(FIGUR.navn, p.x, p.y - hoejde - 13);
+  const tekstB = tegnNavneskilt(c, p.x, p.y - hoejde - 26, FIGUR.navn, true);
 
   // EJER-skiltet over navnet (kun for ejerne i js/ejer.js)
   const ejerSkilt = hentBillede("billeder/skilt-ejer.png");

@@ -482,13 +482,7 @@ function tegnHalGaest(g) {
 
   // navneskilt
   const hoejde = figurHoejde(g.valg) - 10 + (sidde ? -sidde.hoejde + 10 : 0);
-  ctx.font = "bold 11px Verdana, sans-serif";
-  ctx.textAlign = "center";
-  const w = ctx.measureText(g.navn).width + 10;
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(p.x - w / 2, p.y - hoejde - 22, w, 16);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText(g.navn, p.x, p.y - hoejde - 10);
+  tegnNavneskilt(ctx, p.x, p.y - hoejde - 24, g.navn, false);
 }
 
 // Kaldes fra tegnAlt(): læg gæsterne i listen over ting, der skal tegnes

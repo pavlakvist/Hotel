@@ -3671,3 +3671,39 @@ footer {
 /* Venneanmodninger øverst i vennelisten (js/rigtige-venner.js) */
 #venner-liste li.ven-anmodning { background: #fff7dc; border-color: #e9c96a; }
 #venner-liste button.ja { background: #4e7d4a; color: #fff; border-color: #3d6b39; }
+
+
+/* ===== Min profil i hotellets grøn/creme stil ===== */
+#profil-vindue { background: rgba(30, 45, 28, 0.4); }
+#profil-vindue .lv-boks {
+  background: #fbf6ea;
+  border-color: #4e7d4a;
+  color: #2f4a2b;
+}
+#profil-vindue .lv-top { background: #4e7d4a; }
+#profil-vindue .lv-top h2 { color: #fbf6ea; }
+#profil-vindue .su-luk {
+  background: #fbf6ea;
+  color: #4e7d4a;
+  border: 2px solid #2f4a2b;
+}
+#profil-figur {
+  background: radial-gradient(circle at 50% 70%, #fffdf5, #d9ecd2);
+  border-color: #9ccc8f;
+}
+#profil-vindue .profil-tekst h3 { color: #2f4a2b; }
+#profil-vindue .profil-tekst label { color: #4e7d4a; }
+#profil-vindue .profil-tekst input { border-color: #9ccc8f; background: #fffdf5; }
+#profil-vindue .profil-tekst input:focus { outline: none; border-color: #4e7d4a; }
+#profil-vindue .profil-tekst p {
+  padding: 4px 8px;
+  background: #f1ead6;
+  border-radius: 6px;
+}
+#profil-vindue .profil-tekst p b { color: #4e7d4a; }
+#profil-vindue .lv-knap {
+  background: linear-gradient(#b4dca8, #9ccc8f 55%, #7fb172);
+  color: #1f3a1c;
+  border-color: #4e7d4a;
+}
+#profil-vindue .lv-knap:hover { filter: brightness(1.06); }
