@@ -7,12 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&display=swap">
   <link rel="stylesheet" href="css/indgang.css?v=36">
+  <link rel="stylesheet" href="css/forside.css?v=1">
 </head>
-<body>
-
-  <!-- ===== Pavlas billede af hotellet fylder hele skærmen ===== -->
-  <div class="hotel-billede" aria-hidden="true"></div>
-  <div class="glimt-lag" aria-hidden="true"></div>
+<body class="ny-forside">
 
   <!-- ===== Menuen øverst ===== -->
   <nav class="menu">
@@ -20,54 +17,119 @@
       <img src="billeder/forside/krone.png" alt="">
       <span>HELLO VERA</span>
     </a>
-    <a href="hotel.html" id="menu-tjek-ind" class="knap guld lille">Tjek ind</a>
+    <div class="menu-links">
+      <a href="#nyt" class="menu-link">Nyt fra hotellet</a>
+      <a href="#om" class="menu-link">Om hotellet</a>
+      <a href="hotel.html" id="menu-tjek-ind" class="knap guld lille">Tjek ind</a>
+    </div>
   </nav>
 
-  <!-- ===== Velkomst-boksen nederst ===== -->
-  <main class="velkomst">
-    <p class="lille-tekst">Dit hjem · Dit hotel · Din historie</p>
-    <h1>Velkommen til HELLO VERA</h1>
+  <!-- ===== Toppen: velkomst + receptionen ===== -->
+  <header class="top">
+    <div class="top-billede" aria-hidden="true"></div>
+    <div class="glimt-lag" aria-hidden="true"></div>
 
-    <!-- ikke logget ind -->
-    <div id="ud-knapper" class="konto-knapper">
-      <button type="button" id="knap-log-ind" class="knap guld stor">Log ind <span class="pil">&rarr;</span></button>
-      <button type="button" id="knap-opret" class="knap lys">Opret mig</button>
-      <!-- kun på ejerens egen computer (js/konto-forside.js) -->
-      <div id="ejer-genvej" class="ejer-genvej" hidden>
-        <button type="button" id="knap-ejer" class="knap ejer"><img src="billeder/forside/krone.png" alt=""><span>Gå ind som <b id="ejer-navn"></b></span></button>
-        <button type="button" id="knap-ejer-glem" class="ejer-glem" title="Fjern ejer-knappen fra denne computer">✕</button>
+    <div class="top-indhold">
+      <!-- venstre: velkomst -->
+      <main class="velkomst">
+        <p id="online-pille" class="online-pille"><span class="prik"></span><span id="online-tekst">Hotellet er åbent</span></p>
+        <p class="lille-tekst">Dit hjem · Dit hotel · Din historie</p>
+        <h1>Velkommen til <span class="guld-tekst">HELLO VERA</span></h1>
+        <p class="indledning">Et hyggeligt pixel-hotel, hvor du får dit eget værelse, møder nye venner i velkomsthallen og hænger ud med dem, når det passer dig.</p>
+        <p class="indledning">Indret dine rum med møbler fra shoppen, tag billeder med kameraet, og find de hemmelige etager med elevatoren. Lyset er altid tændt i receptionen.</p>
+
+        <!-- ikke logget ind -->
+        <div id="ud-knapper" class="konto-knapper">
+          <div class="knap-raekke">
+            <button type="button" id="knap-opret" class="knap guld stor">Opret mig <span class="pil">&rarr;</span></button>
+            <button type="button" id="knap-log-ind" class="knap lys">Log ind</button>
+          </div>
+          <!-- kun på ejerens egen computer (js/konto-forside.js) -->
+          <div id="ejer-genvej" class="ejer-genvej" hidden>
+            <button type="button" id="knap-ejer" class="knap ejer"><img src="billeder/forside/krone.png" alt=""><span>Gå ind som <b id="ejer-navn"></b></span></button>
+            <button type="button" id="knap-ejer-glem" class="ejer-glem" title="Fjern ejer-knappen fra denne computer">✕</button>
+          </div>
+        </div>
+        <!-- logget ind -->
+        <div id="ind-knapper" class="konto-knapper" hidden>
+          <div class="knap-raekke">
+            <a href="hotel.html" id="knap-tjek-ind" class="knap guld stor">Tjek ind <span class="pil">&rarr;</span></a>
+          </div>
+          <p class="hjaelp">Logget ind som <b id="konto-hvem"></b> · <button type="button" id="knap-log-ud" class="link-knap">Log ud</button></p>
+        </div>
+      </main>
+
+      <!-- højre: receptionen med Log ind / Opret mig (js/konto-forside.js) -->
+      <div id="konto-vindue" class="konto-baggrund reception" hidden>
+        <div class="konto-boks" role="dialog" aria-labelledby="konto-titel">
+          <div class="noegle-skilt" aria-hidden="true">🔑 Receptionen</div>
+          <button type="button" id="konto-luk" class="konto-luk" title="Luk">✕</button>
+          <img src="billeder/forside/krone.png" alt="" class="konto-krone">
+          <h2 id="konto-titel">Log ind</h2>
+          <p id="konto-undertekst" class="konto-under"></p>
+          <form id="konto-form" autocomplete="on">
+            <label>Brugernavn<input id="konto-navn" type="text" maxlength="16" autocomplete="username" required></label>
+            <label>Adgangskode<input id="konto-kode" type="password" maxlength="64" required></label>
+            <label id="konto-kode2-felt">Gentag adgangskode<input id="konto-kode2" type="password" maxlength="64" autocomplete="new-password"></label>
+            <p id="konto-profiler" class="konto-profiler" hidden></p>
+            <p id="konto-fejl" class="konto-fejl" role="alert"></p>
+            <button type="submit" id="konto-send" class="knap guld lille">Log ind</button>
+          </form>
+          <p id="konto-skift" class="konto-skift"></p>
+          <p class="konto-note">Din profil gemmes på denne computer.</p>
+        </div>
+      </div>
+
+      <!-- højre, når man er logget ind -->
+      <div id="velkommen-tilbage" class="konto-boks velkommen-tilbage" hidden>
+        <div class="noegle-skilt" aria-hidden="true">🔑 Receptionen</div>
+        <img src="billeder/forside/krone.png" alt="" class="konto-krone">
+        <h2>Velkommen tilbage, <span id="tilbage-navn"></span>!</h2>
+        <p class="konto-under">Din nøgle ligger klar. Dit værelse venter på dig.</p>
+        <a href="hotel.html" id="tilbage-tjek-ind" class="knap guld lille">Tjek ind &rarr;</a>
       </div>
     </div>
-    <!-- logget ind -->
-    <div id="ind-knapper" class="konto-knapper" hidden>
-      <a href="hotel.html" id="knap-tjek-ind" class="knap guld stor">Tjek ind <span class="pil">&rarr;</span></a>
-      <p class="hjaelp">Logget ind som <b id="konto-hvem"></b> · <button type="button" id="knap-log-ud" class="link-knap">Log ud</button></p>
-    </div>
-  </main>
+  </header>
 
-  <!-- Log ind / Opret mig (js/konto-forside.js) -->
-  <div id="konto-vindue" class="konto-baggrund" hidden>
-    <div class="konto-boks" role="dialog" aria-labelledby="konto-titel">
-      <button type="button" id="konto-luk" class="konto-luk" title="Luk">✕</button>
-      <img src="billeder/forside/krone.png" alt="" class="konto-krone">
-      <h2 id="konto-titel">Log ind</h2>
-      <p id="konto-undertekst" class="konto-under"></p>
-      <form id="konto-form" autocomplete="on">
-        <label>Brugernavn<input id="konto-navn" type="text" maxlength="16" autocomplete="username" required></label>
-        <label>Adgangskode<input id="konto-kode" type="password" maxlength="64" required></label>
-        <label id="konto-kode2-felt">Gentag adgangskode<input id="konto-kode2" type="password" maxlength="64" autocomplete="new-password"></label>
-        <p id="konto-profiler" class="konto-profiler" hidden></p>
-        <p id="konto-fejl" class="konto-fejl" role="alert"></p>
-        <button type="submit" id="konto-send" class="knap guld lille">Log ind</button>
-      </form>
-      <p id="konto-skift" class="konto-skift"></p>
-      <p class="konto-note">Din profil gemmes på denne computer.</p>
+  <!-- ===== Nyt fra hotellet ===== -->
+  <section id="nyt" class="sektion">
+    <div class="sektion-top">
+      <h2>Nyt fra hotellet</h2>
+      <span class="sektion-maerke">✨ Hotellet vokser hele tiden</span>
     </div>
-  </div>
+    <div class="kort-gitter">
+      <article class="rum-kort">
+        <img src="billeder/forside/omraade-vaerelser.png" alt="">
+        <div class="rum-kort-tekst"><span class="maerke aabent">Åbent</span><h3>Dit eget værelse</h3><p>Indret det med møbler fra shoppen, og lav lige så mange rum, du vil.</p></div>
+      </article>
+      <article class="rum-kort">
+        <img src="billeder/forside/omraade-cafe.png" alt="">
+        <div class="rum-kort-tekst"><span class="maerke snart">Snart</span><h3>Caféen</h3><p>Varm kakao, levende lys og plads til en god snak.</p></div>
+      </article>
+      <article class="rum-kort">
+        <img src="billeder/forside/omraade-aktiviteter.png" alt="">
+        <div class="rum-kort-tekst"><span class="maerke snart">Snart</span><h3>Spillehjørnet</h3><p>Billard, dartskive og spillemaskiner til lange aftener.</p></div>
+      </article>
+      <article class="rum-kort">
+        <img src="billeder/forside/omraade-ude.png" alt="">
+        <div class="rum-kort-tekst"><span class="maerke hemmelig">???</span><h3>Tagterrassen</h3><p>Nogen siger, at elevatoren kan køre helt derop …</p></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===== Om hotellet ===== -->
+  <section id="om" class="sektion om">
+    <div class="om-boks"><span class="om-ikon">🛎️</span><h3>Velkomsthallen</h3><p>Her starter alle. Sig hej, find en sofa, og kig efter nye venner.</p></div>
+    <div class="om-boks"><span class="om-ikon">⭐</span><h3>Glimt og Stella</h3><p>Hotellets penge. Brug dem i shoppen, eller byt med de andre gæster.</p></div>
+    <div class="om-boks"><span class="om-ikon">🎉</span><h3>Events</h3><p>Personalet holder events i eventrummene. Hold øje med banneret.</p></div>
+  </section>
+
+  <footer class="fod">HELLO VERA · Dit hjem, dit hotel, din historie</footer>
 
   <script src="js/indstillinger.js?v=32"></script>
   <script src="js/konto.js?v=37"></script>
   <script src="js/server.js?v=1"></script>
   <script src="js/konto-forside.js?v=64"></script>
+  <script src="js/forside.js?v=1"></script>
 </body>
 </html>

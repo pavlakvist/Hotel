@@ -1,5 +1,5 @@
 // =============================================================
-//  Elevatoren 🛗 i velkomsthallen
+//  Elevatoren 🛗 i velkomsthallen og i alle fælles rum (event-rummene og den hemmelige etage)
 //  Klik på elevatoren: figuren går hen til den, dørene åbner,
 //  og man vælger en etage. Så lukker dørene, elevatoren kører,
 //  og man kommer ud på den valgte etage.
@@ -7,7 +7,7 @@
 //  Den hemmelige etage kræver en nøgle fra events (ejeren kommer altid ind).
 //  Elevatoren er tegnet med kode. Den kan skiftes til et billede senere.
 // =============================================================
-const ELEVATOR = { fra: 6, til: 8, hoejde: 150, felt: { x: 0, y: 7 } };   // på venstre væg, felterne y 6–7
+const ELEVATOR = { fra: 6, til: 8, hoejde: 150, felt: { x: 0, y: 7 }, skala: 1 };   // på venstre væg, felterne y 6–7
 const NOEGLE_NOEGLE = "mit-hotel-noegler";
 let elevAaben = 0;          // 0 = dørene er lukket, 1 = helt åbne
 let elevMaal = 0;           // hvor dørene er på vej hen
@@ -30,13 +30,45 @@ function maaHemmelig() {
   return erHotelEjer() || harNoegle(FIGUR.navn, "hemmelig");
 }
 
+// Er der en elevator i det rum, man står i? (hallen og de fælles rum)
+function elevatorRum() {
+  return rumValg === "hal" || (rumValg === "vaerelse" && typeof INDBYGGEDE_RUM !== "undefined" && !!INDBYGGEDE_RUM[aktivtVaerelse]);
+}
+// Find et sted på venstre væg til elevatoren: to felter med gulv, ikke ved døren og uden møbler foran
+function placerElevator() {
+  if (rumValg === "hal") {
+    ELEVATOR.fra = 6; ELEVATOR.til = 8; ELEVATOR.felt = { x: 0, y: 7 }; ELEVATOR.skala = 1;
+    return;
+  }
+  if (!elevatorRum()) return;
+  const doer = RUM.doer && RUM.doer.x === 0 ? RUM.doer.y : -10;
+  const ledig = function (x, y) { return erIRummet(x, y) && !moebelPaa(x, y); };
+  let bedst = null, bedstPoint = -1;
+  for (let y = 1; y + 1 < RUM.dybde; y++) {
+    if (!erIRummet(0, y) || !erIRummet(0, y + 1) || Math.abs(y - doer) < 2 || Math.abs(y + 1 - doer) < 2) continue;
+    let point = 0;
+    if (ledig(0, y)) point += 4;
+    if (ledig(0, y + 1)) point += 4;
+    if (ledig(1, y)) point += 1;
+    if (ledig(1, y + 1)) point += 1;
+    point -= Math.abs(y - RUM.dybde / 3) / 10;      // gerne lidt oppe ad væggen
+    if (point > bedstPoint) { bedstPoint = point; bedst = y; }
+  }
+  if (bedst === null) bedst = Math.max(0, Math.floor(RUM.dybde / 2) - 1);
+  ELEVATOR.fra = bedst; ELEVATOR.til = bedst + 2;
+  ELEVATOR.felt = { x: 0, y: bedst + 1 };
+  // lavere vægge giver en lidt lavere elevator
+  ELEVATOR.skala = Math.min(1, ((RUM.vaegHoejde || VAEG_HOEJDE) - 6) / 175);
+}
+
 
 // -------------------------------------------------------------
 //  Tegn elevatoren på venstre væg i hallen
 // -------------------------------------------------------------
 function elevHjoerner() {
   const a = punkt(0, ELEVATOR.til), b = punkt(0, ELEVATOR.fra);
-  return { a: a, b: b, poly: [a, b, { x: b.x, y: b.y - ELEVATOR.hoejde - 20 }, { x: a.x, y: a.y - ELEVATOR.hoejde - 20 }] };
+  const h = (ELEVATOR.hoejde + 20) * ELEVATOR.skala;
+  return { a: a, b: b, poly: [a, b, { x: b.x, y: b.y - h }, { x: a.x, y: a.y - h }] };
 }
 
 let elevSidst = performance.now();
@@ -49,7 +81,7 @@ function tegnElevator() {
   const h = elevHjoerner();
   const B = 64;
   ctx.save();
-  ctx.transform((h.b.x - h.a.x) / B, (h.b.y - h.a.y) / B, 0, 1, h.a.x, h.a.y);
+  ctx.transform((h.b.x - h.a.x) / B, (h.b.y - h.a.y) / B, 0, ELEVATOR.skala, h.a.x, h.a.y);
   const firkant = function (x, y, w, hh, farve) { ctx.fillStyle = farve; ctx.fillRect(x, y, w, hh); };
   // rammen af mørkerødt træ med guld
   firkant(-3, -162, 70, 162, "#e0a73c");                       // guldkant hele vejen rundt
@@ -69,7 +101,7 @@ function tegnElevator() {
   ctx.font = "bold 9px Verdana, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(rumValg === "hal" ? "▲ S ▼" : "▲ ▼", 32, -136.5);
+  ctx.fillText(rumValg === "hal" ? "▲ S ▼" : aktivtVaerelse === "hemmelig" ? "▲ ? ▼" : "▲ 1 ▼", 32, -136.5);
   // åbningen og det gyldne lys indeni
   firkant(7, -125, 50, 123, "#e0a73c");
   firkant(9, -123, 46, 121, "#2a1410");
@@ -102,6 +134,28 @@ tegnHalVaegge = function () {
   tegnHalVaeggeFoerElev();
   tegnElevator();
 };
+// ... og på venstre væg i de fælles rum
+const tegnVaeggeFoerElev = tegnVaegge;
+tegnVaegge = function () {
+  tegnVaeggeFoerElev();
+  if (rumValg !== "hal" && elevatorRum()) tegnElevator();
+};
+// elevatoren finder sin plads, hver gang man kommer ind i et rum
+const skiftRumFoerElev = skiftRum;
+skiftRum = function (navn) {
+  skiftRumFoerElev(navn);
+  placerElevator();
+};
+placerElevator();
+// man kan ikke stille møbler foran elevatoren
+laerred.addEventListener("click", function (e) {
+  if (!valgtType || !elevatorRum() || rumValg === "hal") return;
+  const f = musTilFelt(e);
+  if (f.x <= 1 && f.y >= ELEVATOR.fra && f.y < ELEVATOR.til) {
+    e.stopImmediatePropagation();
+    besked.textContent = "🛗 Der skal være plads foran elevatoren. Prøv et andet felt.";
+  }
+}, true);
 
 
 // -------------------------------------------------------------
@@ -115,7 +169,7 @@ function iPolygon(p, poly) {
   return inde;
 }
 laerred.addEventListener("click", function (e) {
-  if (rumValg !== "hal" || elevKoerer) return;
+  if (!elevatorRum() || elevKoerer) return;
   const r = laerred.getBoundingClientRect();
   const p = { x: (e.clientX - r.left) * (BREDDE / r.width), y: (e.clientY - r.top) * (HOEJDE / r.height) };
   if (!iPolygon(p, elevHjoerner().poly)) return;
@@ -127,7 +181,7 @@ laerred.addEventListener("click", function (e) {
   besked.textContent = "🛗 Du går hen til elevatoren …";
 }, true);
 laerred.addEventListener("mousemove", function (e) {
-  if (rumValg !== "hal") return;
+  if (!elevatorRum()) return;
   const r = laerred.getBoundingClientRect();
   const p = { x: (e.clientX - r.left) * (BREDDE / r.width), y: (e.clientY - r.top) * (HOEJDE / r.height) };
   if (iPolygon(p, elevHjoerner().poly)) laerred.style.cursor = "pointer";
@@ -136,7 +190,7 @@ laerred.addEventListener("mousemove", function (e) {
 // når figuren står ved elevatoren, åbner den
 setInterval(function () {
   if (!elevVenter) return;
-  if (rumValg !== "hal") { elevVenter = null; return; }
+  if (!elevatorRum()) { elevVenter = null; return; }
   const her = figurFelt();
   const fremme = Math.abs(her.x - ELEVATOR.felt.x) + Math.abs(her.y - ELEVATOR.felt.y) <= 1 && !figur.rute.length;
   if (fremme || (!figur.rute.length && Date.now() - elevVenter > 400) || Date.now() - elevVenter > 15000) {
@@ -241,43 +295,71 @@ elevTur.hidden = true;
 elevTur.innerHTML = '<div class="et-doer et-v"></div><div class="et-doer et-h"></div><div class="et-skaerm"><span id="et-pil">▲</span><b id="et-etage">S</b><small id="et-navn"></small></div>';
 document.body.appendChild(elevTur);
 
+// Etagens nummer i elevatoren: S = 0, 1. sal = 1 … (den hemmelige etage er "?")
+function etageNr(id) {
+  if (id === "stue") return 0;
+  if (id === "hemmelig") return null;
+  const i = ETAGER.findIndex(function (e) { return e.id === id; });
+  return i < 0 ? null : i;
+}
+function etageKnap(nr) { return nr === 0 ? "S" : String(nr); }
+function herEtage() {
+  if (rumValg === "hal") return "stue";
+  if (aktivtVaerelse === "hemmelig") return "hemmelig";
+  const r = NAV_RUM.find(function (x) { return x.vaerelse === aktivtVaerelse; });
+  return r ? r.etage : "privat";
+}
+
+// Turen tager ca. 4½ sekund: dørene lukker, etagerne tæller, dørene åbner
 function koerTil(etage, r) {
   if (elevKoerer) return;
   elevKoerer = true;
   elevVindue.hidden = true;
-  elevMaal = 0;                        // dørene i hallen lukker
-  const fra = rumValg === "hal" ? 0 : 1;
-  const tilNr = etage.id === "stue" ? 0 : etage.id === "hemmelig" ? 9 : 1;
-  document.getElementById("et-pil").textContent = tilNr >= fra ? "▲" : "▼";
-  document.getElementById("et-etage").textContent = rumValg === "hal" ? "S" : "…";
+  elevMaal = 0;                        // dørene i rummet lukker
+  const fraNr = etageNr(herEtage()), tilNr = etageNr(etage.id);
+  const op = tilNr === null ? true : fraNr === null ? false : tilNr >= fraNr;
+  const skaerm = document.getElementById("et-etage");
+  document.getElementById("et-pil").textContent = op ? "▲" : "▼";
+  skaerm.textContent = fraNr === null ? "?" : etageKnap(fraNr);
   document.getElementById("et-navn").textContent = "Til " + r.navn.replace(/ [🔒🔑]$/, "");
   setTimeout(function () {
     elevTur.hidden = false;
     elevTur.classList.remove("aaben");
     void elevTur.offsetWidth;
     elevTur.classList.add("lukket");
-  }, 450);
-  setTimeout(function () { document.getElementById("et-etage").textContent = etage.knap; }, 1500);
+  }, 600);
+  // etagetallet tæller op eller ned, mens elevatoren kører
+  const trin = [];
+  if (fraNr !== null && tilNr !== null && fraNr !== tilNr) {
+    for (let n = fraNr; n !== tilNr; n += op ? 1 : -1) trin.push(etageKnap(n + (op ? 1 : -1)));
+  } else {
+    trin.push("…", etage.knap);
+  }
+  const start = 1700, slut = 3400;
+  trin.forEach(function (t, i) {
+    setTimeout(function () { skaerm.textContent = t; }, start + (slut - start) * (i + 1) / (trin.length + 1));
+  });
+  setTimeout(function () { skaerm.textContent = etage.knap; }, slut);
   setTimeout(function () {
     // skift rum, mens dørene er lukkede
-    if (r.rum === "hal") {
-      skiftRum("hal");
-      figur.x = ELEVATOR.felt.x + 1; figur.y = ELEVATOR.felt.y;     // man kommer ud foran elevatoren
+    if (r.rum === "hal") skiftRum("hal"); else gaaTilVaerelse(r.vaerelse);
+    if (elevatorRum()) {
+      // man kommer ud foran elevatoren
+      figur.x = ELEVATOR.felt.x + 1; figur.y = ELEVATOR.felt.y;
       figur.retning = "ned-hoejre";
       elevAaben = 1; elevMaal = 1;
-      setTimeout(function () { elevMaal = 0; }, 1600);
-    } else {
-      gaaTilVaerelse(r.vaerelse);
+      setTimeout(function () { elevMaal = 0; }, 1800);
     }
     besked.textContent = "🛗 Ding! Du er på " + (etage.id === "hemmelig" ? "den hemmelige etage 🔮" : etage.navn) + ".";
+    if (typeof spilPling === "function") spilPling();
     elevTur.classList.remove("lukket");
     elevTur.classList.add("aaben");
-  }, 2300);
+  }, 3700);
   setTimeout(function () {
     elevTur.hidden = true;
     elevTur.classList.remove("aaben");
     elevKoerer = false;
-  }, 3100);
+  }, 4600);
 }
 
 

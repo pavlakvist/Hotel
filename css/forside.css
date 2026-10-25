@@ -1,400 +1,292 @@
 /* =============================================================
-   HELLO VERA — forsiden
-   Farverne står samlet her øverst, så de er nemme at ændre.
+   HELLO VERA — den nye forside (index.html)
+   Velkomst til venstre, receptionen (Log ind) til højre,
+   og "Nyt fra hotellet" nedenunder. Farverne kommer fra indgang.css.
    ============================================================= */
-:root {
-  --baggrund: #f7ebe0;
-  --creme: #fcf2e9;
-  --menu: #f2e3d7;
-  --kort: #fbf1e7;
-  --brun: #5b2c16;
-  --brun-lys: #924b2f;
-  --tekst: #4a2a1c;
-  --tekst-lys: #7a5a48;
-  --label: #a78a79;
+body.ny-forside {
+  display: block;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(245, 185, 56, 0.12), transparent 40%),
+    linear-gradient(#2b180b, #3f2412 520px, #4a2c16);
+  color: var(--creme);
 }
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: "Nunito", "Trebuchet MS", sans-serif;
-  background: var(--baggrund);
-  color: var(--tekst);
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-svg {
-  width: 20px;
-  height: 20px;
-  fill: currentColor;
-  flex-shrink: 0;
-}
-
-img {
-  image-rendering: auto;
-}
-
 
 /* ----- Menuen ----- */
-.menu {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 12px 32px;
-  background: var(--menu);
-  box-shadow: 0 1px 0 rgba(91, 44, 22, 0.08);
+.ny-forside .menu {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(43, 24, 11, 0.92);
+  backdrop-filter: blur(6px);
 }
-
-.logo {
+.menu-links {
   display: flex;
   align-items: center;
   gap: 22px;
-  font-family: "Poppins", sans-serif;
-  font-size: 32px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--brun);
 }
-
-.links {
-  display: flex;
-  gap: 30px;
-  margin: 0 auto;
+.menu-link {
+  font-weight: 800;
+  color: var(--creme-moerk);
 }
+.menu-link:hover { color: var(--guld-lys); }
 
-.links a {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  font-size: 14px;
-  text-transform: uppercase;
-  color: var(--tekst-lys);
-  border-bottom: 3px solid transparent;
-}
-
-.links a.aktiv {
-  color: var(--brun);
-  font-weight: 700;
-  border-bottom-color: var(--brun);
-}
-
-.links a:hover {
-  color: var(--brun);
-}
-
-.konto {
-  display: flex;
-  gap: 14px;
-}
-
-
-/* ----- Knapper ----- */
-.knap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 13px 26px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-
-.knap:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(91, 44, 22, 0.2);
-}
-
-.knap.moerk {
-  background: var(--brun);
-  color: #fff;
-}
-
-.knap.lys {
-  background: #fff;
-  border: 1.5px solid var(--brun);
-  color: var(--brun);
-}
-
-.knap.kant {
-  border: 1.5px solid #dcc3b2;
-  color: var(--brun);
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.knap.stor {
-  width: 335px;
-  padding: 15px 30px;
-  border-radius: 28px;
-  font-size: 19px;
-}
-
-.knap .pil {
-  margin-left: auto;
-  font-size: 22px;
-}
-
-.knap.stor svg {
-  width: 24px;
-  height: 24px;
-}
-
-
-/* ----- Den store sektion ----- */
-.hero {
+/* ----- Toppen ----- */
+.top {
   position: relative;
-  display: flex;
-  min-height: 520px;
-  background: var(--creme);
   overflow: hidden;
+  border-bottom: 3px solid var(--guld-moerk);
 }
+.top-billede {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url("../billeder/forside/hotel-forside.jpg") 70% 30% / cover no-repeat;
+  animation: kom-ind 1.2s ease-out;
+}
+/* billedet toner ud i brunt mod venstre, så teksten kan læses */
+.top-billede::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(43, 24, 11, 0.97) 0%, rgba(43, 24, 11, 0.88) 38%, rgba(43, 24, 11, 0.25) 70%, rgba(43, 24, 11, 0.1)),
+    linear-gradient(transparent 70%, rgba(43, 24, 11, 0.7));
+}
+.top .glimt-lag { position: absolute; z-index: 1; }
 
-.hero-tekst {
+.top-indhold {
   position: relative;
   z-index: 2;
-  flex: 0 0 42%;
-  padding: 44px 30px 40px 118px;
-}
-
-.lille-overskrift {
-  margin: 0;
-  font-family: "Poppins", sans-serif;
-  font-size: 16px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--tekst-lys);
-}
-
-.hero h1 {
-  margin: 10px 0 18px;
-  font-family: "Poppins", sans-serif;
-  font-size: 112px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--brun), var(--brun-lys) 60%, var(--brun));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.beskrivelse {
-  max-width: 460px;
-  margin: 0 0 30px;
-  font-size: 21px;
-  line-height: 1.45;
-  text-align: center;
-}
-
-.hero-tekst .knap {
-  display: flex;
-  margin: 0 0 14px 75px;
-}
-
-.hero-billede {
-  position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
-  width: 63%;
-  object-fit: cover;
-  object-position: left center;
-  /* blød overgang mod venstre, så billedet glider over i baggrunden */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%);
-  mask-image: linear-gradient(to right, transparent 0, #000 14%);
-}
-
-.blad {
-  position: absolute;
-  left: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.blad-top {
-  top: 0;
-  width: 112px;
-}
-
-.blad-bund {
-  bottom: 0;
-  width: 186px;
-}
-
-
-/* ----- Kortene ----- */
-.kort-raekke {
-  position: relative;
-  z-index: 3;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 64px 32px 72px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin: -6px 18px 0;
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 380px);
+  gap: 48px;
+  align-items: center;
 }
 
-.kort {
-  position: relative;
+/* ----- Velkomsten (venstre) ----- */
+.ny-forside .velkomst {
+  margin: 0;
+  width: auto;
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--creme);
+}
+.online-pille {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 224, 138, 0.14);
+  border: 1px solid rgba(245, 185, 56, 0.5);
+  color: var(--guld-lys);
+  font-size: 14px;
+  font-weight: 800;
+}
+.online-pille .prik {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--guld);
+}
+.online-pille.live .prik {
+  background: #7fd36b;
+  box-shadow: 0 0 0 0 rgba(127, 211, 107, 0.7);
+  animation: puls 1.8s infinite;
+}
+@keyframes puls {
+  to { box-shadow: 0 0 0 9px rgba(127, 211, 107, 0); }
+}
+.ny-forside .lille-tekst { color: var(--guld); }
+.ny-forside .velkomst h1 {
+  margin: 8px 0 18px;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.05;
+  color: var(--creme);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+.guld-tekst {
+  display: inline-block;
+  color: var(--guld-lys);
+  text-shadow: 0 3px 0 var(--brun-moerk), 0 0 24px rgba(255, 200, 80, 0.45);
+}
+.indledning {
+  max-width: 540px;
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #f3e3c4;
+}
+.ny-forside .konto-knapper {
+  align-items: flex-start;
+  margin-top: 26px;
+}
+.knap-raekke {
   display: flex;
-  min-height: 190px;
-  padding: 24px 20px;
-  background: var(--kort);
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(91, 44, 22, 0.08);
-  overflow: hidden;
-  transition: transform 0.15s;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
 }
-
-.kort:hover {
-  transform: translateY(-3px);
+.ny-forside .knap.stor { padding: 14px 34px; font-size: 18px; }
+.ny-forside .knap.lys {
+  padding: 13px 30px;
+  background: rgba(255, 246, 227, 0.08);
+  color: var(--creme);
+  border: 2px solid var(--creme-moerk);
+  box-shadow: none;
 }
+.ny-forside .knap.lys:hover { background: rgba(255, 246, 227, 0.18); }
+.ny-forside .hjaelp { color: var(--creme-moerk); }
+.ny-forside .link-knap { color: var(--guld-lys); }
+.ny-forside .ejer-glem:hover { background: rgba(255, 246, 227, 0.15); }
 
-.kort-tekst {
+/* ----- Receptionen (højre) ----- */
+.konto-baggrund.reception {
   position: relative;
-  z-index: 1;
-  max-width: 62%;
+  inset: auto;
+  z-index: auto;
+  padding: 0;
+  background: none;
+  display: block;
+}
+.konto-baggrund.reception[hidden] { display: none; }
+.reception .konto-luk { display: none; }
+.reception .konto-boks,
+.velkommen-tilbage {
+  position: relative;
+  width: 100%;
+  padding: 34px 26px 20px;
+  transform: rotate(0.6deg);
+  animation: hop-op 0.7s 0.3s ease-out both;
+}
+.velkommen-tilbage { color: var(--brun-moerk); background: var(--creme); border: 3px solid var(--brun); border-radius: 18px; box-shadow: 0 8px 0 var(--brun-moerk), 0 20px 40px rgba(0, 0, 0, 0.4); text-align: center; }
+.velkommen-tilbage[hidden] { display: none; }
+.velkommen-tilbage h2 { margin: 4px 0 6px; font-family: "Poppins", sans-serif; font-size: 24px; color: var(--brun); }
+.velkommen-tilbage .knap { margin-top: 6px; }
+
+/* nøgle-skiltet, der hænger på kanten af boksen */
+.noegle-skilt {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  padding: 6px 18px;
+  border-radius: 8px 8px 18px 18px;
+  background: linear-gradient(var(--guld-lys), var(--guld) 60%, var(--guld-moerk));
+  border: 2px solid var(--brun);
+  box-shadow: 0 3px 0 var(--brun);
+  color: var(--brun-moerk);
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
-.kort h3 {
+/* ----- Sektionerne ----- */
+.sektion {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px 32px 10px;
+}
+.sektion-top {
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin: 0 0 14px;
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: uppercase;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
 }
-
-.kort h3 svg {
-  width: 30px;
-  height: 30px;
-  color: var(--brun);
+.sektion-top h2 {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 28px;
+  color: var(--guld-lys);
 }
-
-.kort p {
-  margin: 0 0 18px 48px;
+.sektion-maerke {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(245, 185, 56, 0.5);
+  color: var(--creme-moerk);
   font-size: 13px;
-  line-height: 1.5;
+  font-weight: 700;
 }
-
-.kort .pil {
-  margin-left: 48px;
-  font-size: 24px;
-}
-
-.kort img {
-  position: absolute;
-  right: 12px;
-  bottom: 8px;
-  max-width: 52%;
-  max-height: 75%;
-}
-
-
-/* ----- Områderne ----- */
-.omraader {
+.kort-gitter {
   display: grid;
-  grid-template-columns: 1fr 0.97fr 1.09fr 1fr;
-  gap: 12px;
-  margin: 16px 18px 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
 }
-
-.omraade {
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
+.rum-kort {
   overflow: hidden;
-  background: var(--label);
-  box-shadow: 0 2px 10px rgba(91, 44, 22, 0.12);
-  transition: transform 0.15s;
+  border-radius: 16px;
+  background: var(--creme);
+  border: 3px solid var(--brun);
+  box-shadow: 0 6px 0 var(--brun-moerk);
+  color: var(--brun-moerk);
+  transition: transform 0.2s;
 }
-
-.omraade:hover {
-  transform: translateY(-3px);
-}
-
-.omraade img {
+.rum-kort:hover { transform: translateY(-4px) rotate(-0.5deg); }
+.rum-kort img {
+  display: block;
   width: 100%;
-  height: 150px;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
+  image-rendering: pixelated;
+  border-bottom: 3px solid var(--brun);
 }
-
-.omraade span {
-  padding: 11px;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
+.rum-kort-tekst { padding: 12px 14px 16px; }
+.rum-kort h3 { margin: 6px 0 4px; font-family: "Poppins", sans-serif; font-size: 18px; color: var(--brun); }
+.rum-kort p { margin: 0; font-size: 14px; line-height: 1.45; }
+.maerke {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
   text-transform: uppercase;
-  color: #fff;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+}
+.maerke.aabent { background: #cfe9c4; color: #2f5a28; }
+.maerke.snart { background: var(--guld-lys); color: var(--brun); }
+.maerke.hemmelig { background: #5a3a6e; color: #f3e3ff; }
+
+.om {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding-bottom: 40px;
+}
+.om-boks {
+  padding: 20px 22px;
+  border-radius: 16px;
+  background: rgba(255, 246, 227, 0.06);
+  border: 2px solid rgba(245, 185, 56, 0.35);
+}
+.om-ikon { font-size: 28px; }
+.om-boks h3 { margin: 8px 0 6px; font-family: "Poppins", sans-serif; color: var(--guld-lys); }
+.om-boks p { margin: 0; color: #f3e3c4; line-height: 1.5; }
+
+.fod {
+  padding: 22px 16px 30px;
+  text-align: center;
+  font-size: 13px;
+  color: #c9a77f;
+  border-top: 1px solid rgba(245, 185, 56, 0.25);
 }
 
-
-/* ----- Mindre skærme (fx telefon) ----- */
-@media (max-width: 1100px) {
-  .links {
-    display: none;
-  }
-
-  .konto {
-    margin-left: auto;
-  }
-
-  .hero {
-    flex-direction: column;
-  }
-
-  .hero-tekst {
-    padding: 30px 20px;
-  }
-
-  .hero-tekst .knap {
-    margin-left: 0;
-  }
-
-  .hero h1 {
-    font-size: 72px;
-  }
-
-  .hero-billede {
-    position: static;
-    width: 100%;
-    height: auto;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-
-  .kort-raekke,
-  .omraader {
-    grid-template-columns: 1fr 1fr;
-  }
+/* ----- Mindre skærme ----- */
+@media (max-width: 960px) {
+  .top-indhold { grid-template-columns: 1fr; padding: 40px 16px 56px; gap: 40px; }
+  .top-billede::after { background: linear-gradient(rgba(43, 24, 11, 0.85), rgba(43, 24, 11, 0.95)); }
+  .kort-gitter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .om { grid-template-columns: 1fr; }
+  .sektion { padding-left: 16px; padding-right: 16px; }
 }
-
 @media (max-width: 600px) {
-  .menu {
-    padding: 10px 16px;
-  }
-
-  .konto .lys {
-    display: none;
-  }
-
-  .knap.stor {
-    width: 100%;
-  }
-
-  .kort-raekke,
-  .omraader {
-    grid-template-columns: 1fr;
-  }
+  .menu-link { display: none; }
+  .kort-gitter { grid-template-columns: 1fr; }
 }
