@@ -15,7 +15,7 @@ function hentAlleSpillere() {
     const aktiv = document.activeElement;
     const skriver = aktiv && aktiv.tagName === "INPUT" && ejerVindue.contains(aktiv);
     if (JSON.stringify(serverAlle) !== foer && !ejerVindue.hidden && !skriver &&
-        (ejerFane === "spillere" || ejerFane === "ansaettelse")) visFane();
+        (ejerFane === "spillere" || ejerFane === "ansaettelse" || ejerFane === "valuta")) visFane();
   }).catch(function () {});   // databasen har ikke listen endnu (database-2-venner.sql)
 }
 hentAlleSpillere();
