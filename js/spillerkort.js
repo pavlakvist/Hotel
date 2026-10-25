@@ -175,7 +175,11 @@ function visKort() {
   let skilte = "";
   if (EJERE.indexOf(navn) >= 0) skilte += "<img src='billeder/skilt-ejer.png' alt='EJER' title='Ejer af hotellet'>";
   const sk = typeof rolleSkilt === "function" ? rolleSkilt(navn) : null;
-  if (sk) skilte += "<img src='" + sk.fil + "' alt='" + rens(sk.navn) + "' title='" + rens(sk.navn) + "'>";
+  if (sk) {
+    const kan = typeof jobKan === "function" ? jobKan(sk.id) : [];
+    skilte += "<img src='" + sk.fil + "' alt='" + rens(sk.navn) + "' title='" + rens(sk.navn + (kan.length ? "\n" + kan.join("\n") : "")) + "'>" +
+      "<span class='sk-job' title='" + rens(kan.join("\n")) + "'><b>" + rens(sk.navn) + "</b>" + rens(sk.tekst) + "</span>";
+  }
   spKort.querySelector(".sk-skilte").innerHTML = skilte;
 
   const svar = kortSvar[navn];
@@ -291,6 +295,8 @@ kortStil.textContent =
   "#spillerkort .sk-figur { width: 110px; height: 150px; background: linear-gradient(#e8f2dc, #cfe4bf); border: 1px solid #9ccc8f; border-radius: 8px; image-rendering: pixelated; }" +
   "#spillerkort .sk-skilte { display: flex; flex-direction: column; gap: 6px; align-items: center; flex: 1; padding-top: 6px; }" +
   "#spillerkort .sk-skilte img { max-width: 100px; max-height: 44px; image-rendering: pixelated; }" +
+  "#spillerkort .sk-job { font-size: 10px; line-height: 1.3; color: #55624f; text-align: center; cursor: help; }" +
+  "#spillerkort .sk-job b { display: block; font-size: 11px; color: #1f3a1c; }" +
   "#spillerkort .sk-raekker { padding: 0 8px 8px; }" +
   "#spillerkort .sk-raekker p { margin: 0 0 6px; }" +
   "#spillerkort .sk-motto { padding: 6px 8px; background: #fff; border: 1px solid #d6e8c8; border-radius: 6px; word-wrap: break-word; }" +

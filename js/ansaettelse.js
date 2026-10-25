@@ -22,6 +22,35 @@ const SKILTE = [
 ];
 SKILTE.forEach(function (s) { s.fil = "billeder/skilte/" + s.id + ".png"; });
 
+// Hvad jobbet indebærer, og hvad man får lov til (vises i Ansættelse og på spillerkortet)
+const PERSONALE_KAN = ["🚨 Kan trykke Tilkald hjælp", "🔒 Kan komme ind i låste event-rum"];
+const JOB_KAN = {
+  mod: ["🛡 Får mod-knappen med 7 faner: oversigt, spillere, chatlogs, private beskeder, rapporter, adminlog og system",
+    "⚠️ Kan advare, 🔇 mute, 🧊 fryse og ⛔ banne spillere (men aldrig ejeren)",
+    "💬 Kan skrive privat til alle, også dem der ikke er venner",
+    "🚩 Ser og behandler rapporter"].concat(PERSONALE_KAN),
+  staff: ["👀 Holder øje med hotellet og hjælper hvor der er brug for det"].concat(PERSONALE_KAN),
+  hjaelper: ["🙋 Byder nye velkommen og svarer på spørgsmål i hallen"].concat(PERSONALE_KAN),
+  eventvaert: ["🛡 Får mod-knappen med fanen Events og nyheder",
+    "📢 Kan sende nyheder og store bannere ud til alle",
+    "🎂 Ser fødselsdagskalenderen og kan lave fødselsdagsbannere",
+    "🔓 Kan låse og åbne event-rummene"].concat(PERSONALE_KAN),
+  bygmester: ["🔨 Hele møbelkataloget er gratis i de fælles rum (hallen, event-rummene og den hemmelige etage)",
+    "✋ Kan stille, flytte, dreje og fjerne møbler dér, og alle ser det",
+    "🏠 Gælder ikke i ens eget rum"].concat(PERSONALE_KAN),
+  support: ["🛠 Hjælper når noget driller, fx log ind eller ting der ikke virker"].concat(PERSONALE_KAN),
+  "content-creator": ["🎥 Laver videoer, billeder og opslag om hotellet"].concat(PERSONALE_KAN),
+  vip: ["✨ Et flot skilt over hovedet", "Ingen ekstra knapper"],
+  gaest: ["Et skilt over hovedet", "Ingen ekstra knapper"],
+  "ny-gaest": ["🌱 Viser at man er ny, så andre kan hjælpe", "Ingen ekstra knapper"],
+  veteran: ["🏅 Viser at man har været her længe", "Ingen ekstra knapper"],
+  "saeson-vinder": ["🏆 Til vinderen af et event eller en sæson", "Ingen ekstra knapper"],
+};
+function jobKan(id) { return JOB_KAN[id] || []; }
+function jobHtml(s) {
+  return "<ul class='an-kan'>" + jobKan(s.id).map(function (k) { return "<li>" + rens(k) + "</li>"; }).join("") + "</ul>";
+}
+
 let ansatte = {};     // navn → skiltets id
 try { ansatte = JSON.parse(localStorage.getItem(ANSAT_NOEGLE) || "{}"); } catch (e) {}
 function gemAnsatte() {
@@ -72,13 +101,19 @@ function visAnsaettelse() {
       (nu ? "<img src='" + nu.fil + "' alt=''>" : "") +
       "<button id='an-fyr' class='an-fyr" + (fyrSikker ? " sikker" : "") + "'" + (nu ? "" : " disabled") + ">" +
       (fyrSikker ? "Er du sikker? Tryk igen" : "🔥 Fyr") + "</button></div>" +
-      "<p class='an-hjaelp'>Klik på et skilt for at give det til " + rens(ansatValgt) + ":</p><div class='an-skilte'>";
+      (nu ? "<div class='an-job'><b>Det kan " + rens(ansatValgt) + " som " + rens(nu.navn) + ":</b>" + jobHtml(nu) + "</div>" : "") +
+      "<p class='an-hjaelp'>Klik på et skilt for at give det til " + rens(ansatValgt) + ". Hold musen over for at se, hvad jobbet kan:</p><div class='an-skilte'>";
     SKILTE.forEach(function (s) {
-      html += "<button data-skilt='" + s.id + "'" + (nu && nu.id === s.id ? " class='valgt'" : "") + " title='" + rens(s.tekst) + "'>" +
+      html += "<button data-skilt='" + s.id + "'" + (nu && nu.id === s.id ? " class='valgt'" : "") + " title='" + rens(s.tekst + "\n\n" + jobKan(s.id).join("\n")) + "'>" +
         "<img src='" + s.fil + "' alt=''><b>" + rens(s.navn) + "</b><small>" + rens(s.tekst) + "</small></button>";
     });
     html += "</div>";
   }
+
+  // alle jobbeskrivelser samlet
+  html += "<h4>📖 Jobbeskrivelser</h4><div class='an-beskrivelser'>" + SKILTE.map(function (s) {
+    return "<details class='an-beskrivelse'><summary><img src='" + s.fil + "' alt=''><b>" + rens(s.navn) + "</b><small>" + rens(s.tekst) + "</small></summary>" + jobHtml(s) + "</details>";
+  }).join("") + "</div>";
 
   // alle ansatte samlet
   const liste = Object.keys(ansatte).filter(function (n) { return rolleSkilt(n); });
@@ -163,3 +198,21 @@ sig = function (hvem, navn, tekst) {
   img.title = sk.navn;
   b.before(img);
 };
+
+
+// Udseendet af jobbeskrivelserne
+const jobStil = document.createElement("style");
+jobStil.textContent =
+  "#ejer-indhold .an-job { margin: 0 0 10px; padding: 8px 10px; background: #e8f2dc; border: 1px solid #9ccc8f; border-radius: 8px; font-size: 13px; color: #1f3a1c; }" +
+  "#ejer-indhold ul.an-kan { margin: 4px 0 0; padding-left: 18px; }" +
+  "#ejer-indhold ul.an-kan li { display: list-item; padding: 2px 0; border: 0; font-size: 12px; color: #33402c; }" +
+  "#ejer-indhold .an-beskrivelser { display: grid; gap: 6px; margin-bottom: 12px; }" +
+  "#ejer-indhold .an-beskrivelse { background: #fff; border: 1px solid #d6e8c8; border-radius: 8px; padding: 6px 10px; }" +
+  "#ejer-indhold .an-beskrivelse[open] { border-color: #9ccc8f; background: #fbfdf8; }" +
+  "#ejer-indhold .an-beskrivelse summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; }" +
+  "#ejer-indhold .an-beskrivelse summary::-webkit-details-marker { display: none; }" +
+  "#ejer-indhold .an-beskrivelse summary::after { content: '▸'; margin-left: auto; color: #4e7d4a; }" +
+  "#ejer-indhold .an-beskrivelse[open] summary::after { content: '▾'; }" +
+  "#ejer-indhold .an-beskrivelse summary img { height: 24px; image-rendering: pixelated; }" +
+  "#ejer-indhold .an-beskrivelse summary small { color: #7a8a76; font-size: 11px; }";
+document.head.appendChild(jobStil);
