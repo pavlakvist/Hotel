@@ -140,20 +140,50 @@ gemAlarmer = function (liste) {
 // -------------------------------------------------------------
 //  ➡ Gå derhen: ind i det rigtige rum og hen ved siden af den, der kaldte
 // -------------------------------------------------------------
+// Drej figuren, så den kigger på en anden
+function vendMod(fra, til) {
+  const dx = til.x - fra.x, dy = til.y - fra.y;
+  const lodret = dx + dy > 0.3 ? "ned" : dx + dy < -0.3 ? "op" : "";
+  const vandret = dx - dy > 0.3 ? "hoejre" : dx - dy < -0.3 ? "venstre" : "";
+  fra.retning = lodret && vandret ? lodret + "-" + vandret : lodret || vandret || fra.retning;
+  if (fra === figur) figur.vendt = dx - dy >= 0 ? 1 : -1;
+}
+
+let vendModNaarFremme = null;     // den, figuren skal kigge på, når den er gået hen
 function gaaHenVed(g) {
   const gx = Math.round(g.x), gy = Math.round(g.y);
   const fig = figurFelt();
-  if (Math.abs(fig.x - gx) <= 1 && Math.abs(fig.y - gy) <= 1) return true;
-  const naboer = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]
-    .sort(function (a, b) {
-      return Math.hypot(gx + a[0] - fig.x, gy + a[1] - fig.y) - Math.hypot(gx + b[0] - fig.x, gy + b[1] - fig.y);
-    });
+  // helst lige ved siden af på skærmen (venstre eller højre), så man står over for hinanden
+  const sideOmSide = [[1, -1], [-1, 1]], andre = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, -1]];
+  const afstand = function (a, b) {
+    return Math.hypot(gx + a[0] - fig.x, gy + a[1] - fig.y) - Math.hypot(gx + b[0] - fig.x, gy + b[1] - fig.y);
+  };
+  const naboer = sideOmSide.sort(afstand).concat(andre.sort(afstand));
   for (const [dx, dy] of naboer) {
+    if (fig.x === gx + dx && fig.y === gy + dy) { vendMod(figur, g); return true; }
     gaaTil(gx + dx, gy + dy);
-    if (figur.rute.length > 0) return true;
+    if (figur.rute.length > 0) { vendModNaarFremme = g; return true; }
   }
   return false;
 }
+
+// Fremme? Så kig på den anden. Og har du selv kaldt på hjælp, kigger du på den ansatte, der kommer.
+const vendtModAlarm = {};
+setInterval(function () {
+  if (vendModNaarFremme && figur.rute.length === 0) {
+    vendMod(figur, vendModNaarFremme);
+    vendModNaarFremme = null;
+  }
+  const mine = serverAlarmer.filter(function (a) { return a.navn === FIGUR.navn; });
+  if (!mine.length || figur.rute.length || figur.sidde) return;
+  Object.values(ANDRE_SPILLERE).forEach(function (g) {
+    if (g.rumId !== mitRumId() || g.rute.length || Math.abs(g.x - figur.x) > 1.5 || Math.abs(g.y - figur.y) > 1.5) return;
+    const noegle = mine[0].id + ":" + g.navn;
+    if (vendtModAlarm[noegle]) return;
+    vendtModAlarm[noegle] = true;
+    vendMod(figur, g);
+  });
+}, 250);
 
 gaaTilAlarm = function (a) {
   const g = ANDRE_SPILLERE[a.navn];
