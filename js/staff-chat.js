@@ -126,7 +126,7 @@ function opdaterTal() {
   staffTal.textContent = alle > 9 ? "9+" : alle;
   staffTal.hidden = !alle;
   const bf = document.querySelector('#ejer-faner [data-fane="beskeder"]');
-  if (bf) bf.classList.toggle("laast", !!beskederLaast());
+  if (bf) bf.classList.toggle("laast", !!beskederLaast() || erEjerMig());
 }
 setInterval(opdaterTal, 500);
 
@@ -150,6 +150,7 @@ visFane = function () {
   ejerIndhold.classList.toggle("sc-nat", ejerFane === "staffchat");
   if (ejerVindue.hidden) return;
   if (ejerFane === "staffchat") visStaffChat();
+  if (ejerFane === "beskeder" && erEjerMig()) visAdgangsBoks();
   if (ejerFane === "beskeder" && beskederLaast()) visLaasteBeskeder();
   else if (ejerFane === "beskeder" && !erModEllerEjer() && !serverBeskeder) {
     ejerIndhold.innerHTML = "<p class='tom'>Henter private beskeder …</p>";
@@ -176,6 +177,20 @@ function visLaasteBeskeder() {
   });
 }
 
+// Ejeren ser øverst i Private beskeder, hvem der har adgang
+function visAdgangsBoks() {
+  const har = staffAdgang.filter(function (a) { return a.beskeder; }).map(function (a) { return a.navn; });
+  const beder = staffAdgang.filter(function (a) { return a.beder; }).map(function (a) { return a.navn; });
+  const boks = document.createElement("div");
+  boks.className = "sc-adgang-info";
+  boks.innerHTML = "<b>🔒 Private beskeder er låst for de ansatte.</b>" +
+    "<span>" + (har.length ? "🔓 Har adgang: " + rens(har.join(", ")) : "Ingen ansatte har adgang lige nu.") + "</span>" +
+    (beder.length ? "<span class='beder'>🙋 Beder om adgang: " + rens(beder.join(", ")) + "</span>" : "") +
+    "<button type='button' class='lille'>💬 Giv adgang i Staff chat</button>";
+  boks.querySelector("button").addEventListener("click", function () { ejerFane = "staffchat"; visFane(); });
+  ejerIndhold.prepend(boks);
+}
+
 // Ejeren giver eller tager adgangen
 function saetAdgang(navn, til) {
   serverKald("hv_staff_adgang_saet", { p_token: mitToken(), p_navn: navn, p_beskeder: til }).then(function () {
@@ -186,22 +201,28 @@ function saetAdgang(navn, til) {
     opdaterStaff();
   }).catch(function (e) { besked.textContent = /hv_staff/.test(e.message) ? "Virker, når database-13-staff.sql er kørt." : e.message; });
 }
+// Én knap pr. ansat: giv eller tag adgangen til private beskeder med ét tryk
 function fluebenHtml(navn) {
   const a = adgangFor(navn);
-  return "<label class='sc-flueben" + (a.beder ? " beder" : "") + "' title='Må se spillernes private beskeder'>" +
-    "<input type='checkbox' data-sc-adgang='" + rens(navn) + "'" + (a.beskeder ? " checked" : "") + ">" +
-    (a.beder ? "🙋 Beder om adgang" : "✉️ Private beskeder") + "</label>";
+  const klasse = a.beskeder ? " har" : a.beder ? " beder" : "";
+  const tekst = a.beskeder ? "🔓 Har adgang til private beskeder <b>🔒 Lås private beskeder</b>" :
+    a.beder ? "🙋 Beder om adgang <b>🔓 Giv adgang</b>" : "🔒 Private beskeder er låst <b>🔓 Giv adgang</b>";
+  return "<button type='button' class='sc-flueben" + klasse + "' data-sc-adgang='" + rens(navn) + "'" +
+    " title='" + (a.beskeder ? "Tryk for at tage adgangen fra " : "Tryk for at give adgang til ") + rens(navn) + "'>" + tekst + "</button>";
 }
 function fluebenLyt(hvor) {
   hvor.querySelectorAll("[data-sc-adgang]").forEach(function (k) {
-    k.addEventListener("change", function () { saetAdgang(k.dataset.scAdgang, k.checked); });
+    k.addEventListener("click", function (e) {
+      e.stopPropagation();
+      saetAdgang(k.dataset.scAdgang, !adgangFor(k.dataset.scAdgang).beskeder);
+    });
   });
 }
 // I Ansættelse: flueben ud for hver ansat i "Alle med skilt"
 function tilfoejFlueben() {
   ejerIndhold.querySelectorAll(".an-liste li").forEach(function (li) {
     const a = li.querySelector("[data-an-vis]");
-    if (!a || !erAnsat(a.dataset.anVis) || li.querySelector(".sc-flueben")) return;
+    if (!a || !erAnsat(a.dataset.anVis) || erComputerGaest(a.dataset.anVis) || li.querySelector(".sc-flueben")) return;
     li.insertAdjacentHTML("afterbegin", fluebenHtml(a.dataset.anVis));
   });
   fluebenLyt(ejerIndhold);
@@ -245,7 +266,7 @@ function tegnSamtaler() {
   if (!liste) return;
   function knapHtml(id, titel, under) {
     const u = ulaeste(id);
-    const flueben = erEjerMig() && id !== "faelles" && erAnsat(id) ? fluebenHtml(id) : "";
+    const flueben = erEjerMig() && id !== "faelles" && erAnsat(id) && !erComputerGaest(id) ? fluebenHtml(id) : "";
     return "<li>" + flueben + "<button type='button' data-sc-samtale='" + rens(id) + "'" + (id === staffSamtale ? " class='valgt'" : "") + ">" +
       "<b>" + rens(titel) + "</b><small>" + rens(under) + "</small>" + (u ? "<span class='staff-fane-tal'>" + u + "</span>" : "") + "</button></li>";
   }
@@ -313,9 +334,20 @@ staffStil.textContent =
   "#ejer-indhold #sc-liste button .staff-fane-tal { position: absolute; top: 8px; right: 8px; }" +
   "#ejer-indhold #sc-liste button.valgt { background: #9ccc8f; border-color: #7fb56f; }" +
   "#ejer-indhold #sc-liste li.sc-rang { margin: 12px 0 4px; padding: 0 2px; border-bottom: 1px solid #d6e8c8; color: #3d6b39; font: bold 11px Verdana, sans-serif; text-transform: uppercase; letter-spacing: 0.5px; }" +
-  "#ejer-indhold .sc-flueben { display: flex !important; align-items: center; gap: 5px; margin: 0 0 3px; padding: 3px 6px; border-radius: 6px; background: #f3ecd9; color: #5a4a2a; font: 11px Verdana, sans-serif; cursor: pointer; }" +
-  "#ejer-indhold .sc-flueben.beder { background: #fff3cf; color: #a0521a; font-weight: bold; animation: paamind-puls 1.6s ease-in-out infinite; }" +
-  "#ejer-indhold .an-liste .sc-flueben { display: inline-flex !important; margin-right: 6px; }" +
+  "#ejer-indhold #sc-liste button.sc-flueben, #ejer-indhold button.sc-flueben { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; margin: 0 0 3px; padding: 4px 8px;" +
+  " border: 1px solid #e0d4b4; border-radius: 6px; background: #f3ecd9; color: #5a4a2a; font: 11px Verdana, sans-serif; cursor: pointer; text-align: left; }" +
+  "#ejer-indhold #sc-liste button.sc-flueben b { display: inline-block; }" +
+  "#ejer-indhold button.sc-flueben { flex-wrap: wrap; text-align: left; }" +
+  "#ejer-indhold #sc-liste button.sc-flueben b { max-width: 100%; white-space: normal; text-align: center; }" +
+  "#ejer-indhold button.sc-flueben b { padding: 2px 7px; border-radius: 10px; background: #4e7d4a; color: #fff; white-space: nowrap; }" +
+  "#ejer-indhold button.sc-flueben.har { background: #e3f1da; border-color: #9ccc8f; color: #2f4a2b; }" +
+  "#ejer-indhold button.sc-flueben.har b { background: #c0392b; }" +
+  "#ejer-indhold button.sc-flueben.beder { background: #fff3cf; border-color: #e3c86a; color: #a0521a; font-weight: bold; animation: paamind-puls 1.6s ease-in-out infinite; }" +
+  "#ejer-indhold .an-liste button.sc-flueben { display: inline-flex; width: auto; margin-right: 6px; }" +
+  "#ejer-indhold .sc-adgang-info { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 12px; padding: 10px 12px; background: #fff7e3; border: 2px solid #e3c86a; border-radius: 10px; color: #5a4313; font-size: 13px; }" +
+  "#ejer-indhold .sc-adgang-info b { flex-basis: 100%; }" +
+  "#ejer-indhold .sc-adgang-info .beder { color: #a0521a; font-weight: bold; }" +
+  "#ejer-indhold .sc-adgang-info button { margin-left: auto; }" +
   "#ejer-indhold .sc-samtale { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #fff; border: 2px solid #d6e8c8; border-radius: 10px; overflow: hidden; }" +
   "#ejer-indhold .sc-samtale h3 { margin: 0; padding: 8px 12px; background: #e8f2dc; color: #1f3a1c; font-size: 14px; }" +
   "#ejer-indhold #sc-beskeder { flex: 1; min-height: 200px; max-height: 420px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }" +
@@ -343,8 +375,11 @@ staffNatStil.textContent =
   N + "#sc-liste button:hover { background: #364353; }" +
   N + "#sc-liste button small { color: #8c9aab; }" +
   N + "#sc-liste button.valgt { background: #3f5a6e; border-color: #5f8199; color: #eef3f8; }" +
-  N + ".sc-flueben { background: #2b3542; color: #a9b6c6; }" +
-  N + ".sc-flueben.beder { background: #4a4230; color: #f0d58c; }" +
+  N + "#sc-liste button.sc-flueben { background: #2b3542; border-color: #3a4757; color: #a9b6c6; }" +
+  N + "#sc-liste button.sc-flueben b { background: #5a8f82; }" +
+  N + "#sc-liste button.sc-flueben.har { background: #2e4540; border-color: #44766a; color: #cfe6dc; }" +
+  N + "#sc-liste button.sc-flueben.har b { background: #a5524a; }" +
+  N + "#sc-liste button.sc-flueben.beder { background: #4a4230; border-color: #7a6a3a; color: #f0d58c; }" +
   N + ".sc-samtale { background: #2b3542; border-color: #3a4757; }" +
   N + ".sc-samtale h3 { background: #323f4f; color: #e3eaf2; }" +
   N + "#sc-beskeder .tom { color: #8c9aab; }" +
