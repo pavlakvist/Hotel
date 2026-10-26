@@ -495,7 +495,9 @@ function tegnSuFigur() {
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.imageSmoothingEnabled = false;
   c.translate(Math.round(SCENE_B / 2 * dpr), Math.round(SCENE_FOEDDER * dpr));
-  c.scale(pr / f.skala, pr / f.skala);
+  // alle figurer vises lige store (som i rummet): drengen har mindre billeder, men større skala
+  const k = pr * f.skala / (FIGURER.pige || f).skala;
+  c.scale(k / f.skala, k / f.skala);
   tegnMenneske(c, 0, 0, kladde, DREJ[suDrej], null, null);
   if (DREJ[suDrej] === "ned") tegnToejForfra(c, kladde);
   c.setTransform(1, 0, 0, 1, 0, 0);

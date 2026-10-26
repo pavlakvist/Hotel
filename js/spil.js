@@ -34,7 +34,11 @@ function skarptLaerred() {
     const panelB = 0;
     const rumB = (RUM.bredde + RUM.dybde) * FLISE_B / 2 + 60;
     const rumH = (RUM.bredde + RUM.dybde) * FLISE_H / 2 + (RUM.vaegHoejde || VAEG_HOEJDE) + 110;
-    const passer = Math.min((r.width - panelB) / rumB, (r.height - 20) / rumH);
+    // zoomen regnes ud fra de gamle små felter (64x32), så figurerne har samme størrelse
+    // på skærmen som før; de større felter gør bare rummet større (træk med musen)
+    const passB = (RUM.bredde + RUM.dybde) * 64 / 2 + 60;
+    const passH = (RUM.bredde + RUM.dybde) * 32 / 2 + (RUM.vaegHoejde || VAEG_HOEJDE) + 110;
+    const passer = Math.min((r.width - panelB) / passB, (r.height - 20) / passH);
     ZOOM = Math.min(MAKS_ZOOM, passer * RUM_ZOOM * brugerZoom);
     BREDDE = r.width / ZOOM;
     HOEJDE = r.height / ZOOM;
@@ -51,9 +55,9 @@ function skarptLaerred() {
   ctx.imageSmoothingQuality = "high";
 }
 
-// Et felt på gulvet er en "rude" (diamant), 64 pixels bred og 32 høj.
-const FLISE_B = 64;
-const FLISE_H = 32;
+// Et felt på gulvet er en "rude" (diamant), 96 pixels bred og 48 høj.
+const FLISE_B = 96;
+const FLISE_H = 48;
 const VAEG_HOEJDE = 110;
 const START = { x: BREDDE / 2, y: 170 };   // hvor det bagerste hjørne af gulvet står (regnes ud i skarptLaerred)
 
@@ -510,7 +514,7 @@ function tegnMoebel(c, type, cx, cy, spejlet, retning) {
 // hvor mange pixels figuren rykker tilbage mod ryglænet, når den sidder
 const SIDDE_BAGUD = 6;
 // hvor langt under figurens felt-midte fødderne skal nå for at stå på gulvet foran sofaen
-const FODKANT = 19;
+const FODKANT = 14;
 
 // Når figuren sidder i et af de nye møbler, rykkes den lidt frem og ned,
 // så fødderne når gulvet. Figurer med korte ben (pigen) rykkes mere end drengen.
@@ -878,8 +882,23 @@ function tegnMarkering() {
   }
 }
 
+// Passer sædet stadig? Er møblet taget op, drejet eller flyttet (måske af en anden),
+// så rejser figuren sig eller følger med sin plads i sofaen.
+function tjekSaede() {
+  if (!figur.sidde) return;
+  const m = figur.sidde.moebel;
+  const t = MOEBEL_TYPER[m.type] || {};
+  if (moeblerIRummet.indexOf(m) < 0 || (t.klipper && (m.retning || 0) >= 2)) { figur.sidde = null; return; }
+  if (!t.klipper) return;
+  const felt = pladsFelt(m, figur.sidde.plads);
+  figur.x = felt.x;
+  figur.y = felt.y;
+  figur.retning = venderHoejre(m) ? "ned-hoejre" : "ned-venstre";
+}
+
 function tegnAlt() {
   skarptLaerred();
+  tjekSaede();
   ctx.clearRect(0, 0, BREDDE, HOEJDE);
   if (rumValg === "hal") tegnHalVaegge();
   else tegnVaegge();
@@ -1061,12 +1080,27 @@ function drejValgt() {
 
 function samlOpValgt() {
   if (!valgtMoebel || rumValg === "hal") return;
+  if (figur.sidde && figur.sidde.moebel === valgtMoebel) { figur.sidde = null; figur.skalSidde = null; }   // rejs dig først
   if (typeof tilLager === "function") tilLager(valgtMoebel.type);   // den kommer i "Mine ting"
   moeblerIRummet = moeblerIRummet.filter(function (m) { return m !== valgtMoebel; });
   valgtMoebel = null;
   gem();
   opdaterPanel();
 }
+
+// Klik på en, der sidder i et møbel: vælg også møblet, så boksen med Drej og Tag op
+// kommer frem (ellers dækker personen møblet, og så kan man ikke vælge det).
+// Den kører før klikket på personen (js/min-menu.js og js/gaest-menu.js).
+laerred.addEventListener("click", function (e) {
+  if (rumValg === "hal" || valgtType) return;
+  let m = null;
+  if (figur.sidde && typeof musPaaMig === "function" && musPaaMig(e)) m = figur.sidde.moebel;
+  else if (typeof gaestUnderMus === "function") {
+    const g = gaestUnderMus(e);
+    if (g && g.sidder && moeblerIRummet.indexOf(g.saede) >= 0) m = g.saede;
+  }
+  if (m) { valgtMoebel = m; opdaterPanel(); }
+}, true);
 
 document.getElementById("knap-drej").addEventListener("click", drejValgt);
 document.getElementById("knap-saml").addEventListener("click", samlOpValgt);

@@ -471,6 +471,7 @@ footer {
 
 #su-figur {
   display: block;
+  margin: 0 auto;   /* midt på scenen, så figuren står midt på den lyse cirkel */
   width: 220px;
   height: 340px;
   image-rendering: pixelated;

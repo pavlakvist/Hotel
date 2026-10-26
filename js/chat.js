@@ -11,7 +11,8 @@ const chatForm = document.getElementById("chat");
 const chatTekst = document.getElementById("chat-tekst");
 
 const BOBLE_MAKS_B = 230;     // hvor bred en boble højst må være
-const BOBLE_LEVETID = 16;     // sekunder før en boble forsvinder
+const BOBLE_LEVETID = 25;     // sekunder før en kort boble forsvinder (lange tekster bliver længere, se levetid())
+function levetid(bo) { return bo.levetid || BOBLE_LEVETID; }
 // emoji-skrifterne gør, at smileyerne bliver farvede (Windows, Mac og Linux)
 const SKRIFT = "13px Verdana, Arial, sans-serif, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji'";
 let bobler = [];              // { navn, linjer, x, y, maalY, b, h, alder }
@@ -191,7 +192,7 @@ function sig(hvem, navn, tekst) {
   const h = linjer.length * 17 + 10;
   const hoved = hovedPaa(hvem);
   bobler.forEach(function (bo) { bo.nyest = false; });
-  bobler.push({ navn: navn, linjer: linjer, x: hoved.x, y: hoved.y, maalY: hoved.y, b: b, h: h, alder: 0, nyest: true,
+  bobler.push({ navn: navn, linjer: linjer, x: hoved.x, y: hoved.y, maalY: hoved.y, b: b, h: h, alder: 0, nyest: true, levetid: Math.min(45, BOBLE_LEVETID + tekst.length * 0.25),
     stil: Object.assign({}, hvem === figur ? minBoble : GAEST_BOBLER[navn] || { farve: "#fcf2e9", pynt: "ingen" }) });
 }
 
@@ -281,10 +282,10 @@ function tegnBobler() {
 
   bobler.forEach(function (bo) {
     bo.alder += dt;
-    bo.maalY -= dt * 4;                  // boblerne driver langsomt opad
+    bo.maalY -= dt * 2;                  // boblerne driver langsomt opad
     bo.y += (bo.maalY - bo.y) * Math.min(1, dt * 10);
   });
-  bobler = bobler.filter(function (bo) { return bo.alder < BOBLE_LEVETID && bo.y + bo.h > -20; });
+  bobler = bobler.filter(function (bo) { return bo.alder < levetid(bo) && bo.y + bo.h > -20; });
 
   // en gammel boble, der står i vejen for en nyere, rykker op over den
   for (let i = bobler.length - 2; i >= 0; i--) {
@@ -300,7 +301,7 @@ function tegnBobler() {
     const x = Math.max(6, Math.min(BREDDE - bo.b - 6, bo.x - bo.b / 2));
     const y = bo.y - bo.h;
     ctx.save();
-    ctx.globalAlpha = Math.min(1, (BOBLE_LEVETID - bo.alder) / 2);
+    ctx.globalAlpha = Math.min(1, (levetid(bo) - bo.alder) / 2);
 
     tegnEnBoble(ctx, bo, x, y, bo.nyest && bo.alder < 4 ? bo.x : null);
     ctx.restore();
