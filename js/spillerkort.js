@@ -86,6 +86,11 @@ function hentKort(navn) {
   serverKald("hv_spillerkort", { p_token: token, p_navn: navn }).then(function (svar) {
     kortSvar[navn] = svar;
     if (navn === FIGUR.navn && svar && svar.motto && !profilMotto.value) profilMotto.value = svar.motto;
+    if (navn === FIGUR.navn && svar && svar.oprettet) {      // Min profil viser også den rigtige dato fra serveren
+      medlemSiden = medlemDato(svar.oprettet);
+      const pm = document.getElementById("profil-medlem");
+      if (pm) pm.textContent = medlemSiden;
+    }
     if (kortNavn === navn) visKort();
   }).catch(function () {
     kortSvar[navn] = false;      // database-11-spillerkort.sql er ikke kørt endnu
@@ -206,6 +211,7 @@ function visKort() {
   const motto = mig ? profilMotto.value.trim() : erComputerGaest(navn) ? GAEST_MOTTO[navn] || "" : svar ? svar.motto : "";
   let html = "<p class='sk-motto'>✏️ " + (motto ? rens(motto) : "<i>Intet motto endnu</i>") + "</p>";
   if (kortLikes[navn] !== undefined) html += "<p class='sk-baand sk-likes'>👍 Likes: " + kortLikes[navn].toLocaleString("da-DK") + "</p>";
+  if (svar && svar.oprettet) html += "<p class='sk-baand sk-medlem'>📅 Medlem siden " + medlemDato(svar.oprettet) + "<br><small>" + medlemLaengde(svar.oprettet) + "</small></p>";
   if (svar && svar.foedselsdag && typeof datoTekst === "function") html += "<p class='sk-baand sk-fd'>🎂 " + datoTekst(svar.foedselsdag) + "</p>";
 
   const mangler = !erComputerGaest(navn) && svar === false;
@@ -245,6 +251,20 @@ function visKort() {
     k.addEventListener("click", function () { saetForhold(navn, k.dataset.saet, true); });
   });
   tegnKortFigur();
+}
+
+// "24. oktober 2026" og "Medlem i 2 dage"
+function medlemDato(tid) {
+  return new Date(tid).toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" });
+}
+function medlemLaengde(tid) {
+  const dage = Math.floor((Date.now() - new Date(tid).getTime()) / 86400000);
+  if (dage < 1) return "Blev medlem i dag";
+  if (dage < 31) return "Medlem i " + dage + (dage === 1 ? " dag" : " dage");
+  const maaneder = Math.floor(dage / 30.44);
+  if (maaneder < 12) return "Medlem i " + maaneder + (maaneder === 1 ? " måned" : " måneder");
+  const aar = Math.floor(maaneder / 12), rest = maaneder % 12;
+  return "Medlem i " + aar + " år" + (rest ? " og " + rest + (rest === 1 ? " måned" : " måneder") : "");
 }
 
 // Kortet opdateres, mens det er åbent (andre kan jo sætte hjerter imens)
@@ -337,6 +357,8 @@ kortStil.textContent =
   "#spillerkort .sk-motto { padding: 6px 8px; background: #fff; border: 1px solid #d6e8c8; border-radius: 6px; word-wrap: break-word; }" +
   "#spillerkort .sk-baand { padding: 5px 8px; background: #9ccc8f; color: #1f3a1c; border-radius: 6px; font-weight: bold; text-align: center; }" +
   "#spillerkort .sk-fd { background: #f3dfa6; color: #5a4313; }" +
+  "#spillerkort .sk-medlem { background: #d6e8f5; color: #23455e; }" +
+  "#spillerkort .sk-medlem small { font-weight: normal; }" +
   "#spillerkort .sk-forhold { margin-top: 5px; padding: 5px 6px; border-radius: 6px; max-height: 120px; overflow-y: auto; }" +
   "#spillerkort .sk-overskrift { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }" +
   "#spillerkort .sk-tom { display: block; color: #8a8a7a; font-size: 12px; }" +
