@@ -137,8 +137,57 @@ function erIRummet(x, y) {
   return !RUM.form || RUM.form(x, y);
 }
 
+// Hvor mange felter fylder møblet? [bredde, dybde]. Sofaer og senge kan fylde 2 felter.
+// "felter" i kataloget gælder, når møblet ikke er drejet. Drejet bytter de to tal plads.
+function moebelFelter(type, spejlet) {
+  const f = (type && type.felter) || [1, 1];
+  return spejlet ? [f[1], f[0]] : [f[0], f[1]];
+}
+
+// Ligger møblet på tværs? Møbler med 4 billeder ("klipper") har m.retning 0-3,
+// og retning 1 og 3 ligger på tværs. De gamle møbler bruger m.spejlet.
+function drejetTvaers(m) {
+  const t = MOEBEL_TYPER[m.type] || {};
+  return t.klipper ? (m.retning || 0) % 2 === 1 : !!m.spejlet;
+}
+
+// Står møblet m på feltet (x, y)? (m.x, m.y er møblets bagerste felt)
+function daekker(m, x, y) {
+  const f = moebelFelter(MOEBEL_TYPER[m.type], drejetTvaers(m));
+  return x >= m.x && x < m.x + f[0] && y >= m.y && y < m.y + f[1];
+}
+
 function moebelPaa(x, y) {
-  return moeblerIRummet.find(function (m) { return m.x === x && m.y === y; });
+  return moeblerIRummet.find(function (m) { return daekker(m, x, y); });
+}
+
+// Er der plads til møblet med sit bagerste felt på (x, y)?
+// "uden" er et møbel, der ikke tæller med (det, man er ved at flytte eller dreje)
+function pladsTil(type, x, y, spejlet, uden) {
+  const f = moebelFelter(type, spejlet);
+  const fig = figurFelt();
+  for (let dx = 0; dx < f[0]; dx++) {
+    for (let dy = 0; dy < f[1]; dy++) {
+      if (!erIRummet(x + dx, y + dy)) return false;
+      const andet = moebelPaa(x + dx, y + dy);
+      if (andet && andet !== uden) return false;
+      const sidderHer = figur.sidde && uden && figur.sidde.moebel === uden;
+      if (!type.kanGaaPaa && !sidderHer && fig.x === x + dx && fig.y === y + dy) return false;
+    }
+  }
+  return true;
+}
+
+// Hvor på skærmen møblet tegnes: midt mellem dets felter, med bunden på det forreste hjørne
+function moebelSted(type, x, y, spejlet) {
+  const f = moebelFelter(type, spejlet);
+  return { x: punkt(x + f[0] / 2, y + f[1] / 2).x, y: punkt(x + f[0], y + f[1]).y - FLISE_H / 2 };
+}
+
+// Store møbler tegnes, som om de stod på deres forreste felt
+function moebelDybde(m) {
+  const f = moebelFelter(MOEBEL_TYPER[m.type], drejetTvaers(m));
+  return m.x + f[0] - 1 + m.y + f[1] - 1;
 }
 
 // Kan figuren gå på feltet?
@@ -203,7 +252,15 @@ function gaaTil(x, y, saede) {
 
 // Sæt sig ned på et møbel (figuren står allerede på feltet)
 function saetDig(m) {
-  const plads = ledigPlads(m, figur);
+  const t = MOEBEL_TYPER[m.type] || {};
+  if (t.klipper && (m.retning || 0) >= 2) {
+    // figurerne har endnu ingen billeder af at sidde bagfra
+    besked.textContent = "Drej stolen, så den vender ud mod dig, for at sætte dig.";
+    return;
+  }
+  let plads = ledigPlads(m, figur);
+  const celle = cellePlads(m, figurFelt());
+  if (celle >= 0) plads = tagnePladser(m, figur).indexOf(celle) < 0 ? celle : -1;
   if (plads < 0) {
     besked.textContent = "Der er ikke plads. Prøv et andet sted at sidde.";
     return;
@@ -217,6 +274,8 @@ function saetDig(m) {
 // Vender møblet mod højre på skærmen? (spejling og "vender" fra kataloget)
 function venderHoejre(m) {
   const type = MOEBEL_TYPER[m.type] || {};
+  // 4 retninger: 0 = ned mod venstre, 1 = ned mod højre, 2 = op mod højre, 3 = op mod venstre
+  if (type.klipper) return m.retning === 1 || m.retning === 2;
   return m.spejlet !== (type.vender === "hoejre");
 }
 
@@ -225,7 +284,14 @@ function venderHoejre(m) {
 function saedePladser(m) {
   const t = MOEBEL_TYPER[m.type] || {};
   if (!t.saede) return [];
-  const bred = t.klip ? t.klip[2] >= 95 : t.tegning === "sofa";
+  // møbler på flere felter: man sidder på det felt, man står på (én plads pr. felt),
+  // og rykker lidt ud mod hver sin ende, så to ikke sidder oven i hinanden
+  if (t.felter) {
+    const n = t.felter[0] * t.felter[1];
+    const vej = drejetTvaers(m) ? -1 : 1;
+    return Array.from({ length: n }, function (_, i) { return (i - (n - 1) / 2) * 20 * vej; });
+  }
+  const bred = t.klip ? t.klip[2] * (t.skala || 1) >= 95 : t.tegning === "sofa";
   if (!bred) return [0];
   return [-22, 22];
 }
@@ -237,7 +303,27 @@ function tagnePladser(m, hvem) {
   if (rumValg === "hal" && typeof HAL_GAESTER !== "undefined") {
     HAL_GAESTER.forEach(function (g) { if (g !== hvem && g.saede === m) tagne.push(g.plads); });
   }
+  // rigtige spillere i rummet (js/rigtige-spillere.js)
+  if (typeof ANDRE_SPILLERE !== "undefined") {
+    Object.values(ANDRE_SPILLERE).forEach(function (g) { if (g !== hvem && g.sidder && g.saede === m) tagne.push(g.plads); });
+  }
   return tagne;
+}
+
+// Hvilken plads er feltet f på et møbel med flere felter? (-1 = møblet har kun ét felt)
+function cellePlads(m, f) {
+  const t = MOEBEL_TYPER[m.type] || {};
+  if (!t.felter || !daekker(m, f.x, f.y)) return -1;
+  const ff = moebelFelter(t, drejetTvaers(m));
+  return (f.y - m.y) * ff[0] + (f.x - m.x);
+}
+
+// Feltet, hvor plads nr. "plads" er på et møbel med flere felter (det modsatte af cellePlads)
+function pladsFelt(m, plads) {
+  const t = MOEBEL_TYPER[m.type] || {};
+  if (!t.felter) return { x: m.x, y: m.y };
+  const ff = moebelFelter(t, drejetTvaers(m));
+  return { x: m.x + (plads % ff[0]), y: m.y + Math.floor(plads / ff[0]) };
 }
 
 // Første ledige plads på møblet, eller -1 hvis der er fyldt
@@ -391,19 +477,24 @@ const TEGNINGER = {
 };
 
 // Tegner et møbel med midten af feltet i (cx, cy)
-function tegnMoebel(c, type, cx, cy, spejlet) {
+function tegnMoebel(c, type, cx, cy, spejlet, retning) {
   const b = hentBillede(type.billede);
   if (billedeKlar(b)) {
     // Dit eget billede: bunden af billedet står på feltets nederste spids
+    // skala: hvor stort møblet tegnes (så det passer til figurerne)
+    // klipDrejet: et rigtigt billede af møblet fra den anden side, så det ikke bare spejles
+    const s = type.skala || 1;
+    // klipper: ét billede for hver af de 4 retninger (så spejles der aldrig)
+    let k = spejlet && type.klipDrejet ? type.klipDrejet : type.klip;
+    if (type.klipper) k = type.klipper[retning || 0] || type.klip;
     c.save();
     c.translate(cx, cy + FLISE_H / 2);
-    if (spejlet) c.scale(-1, 1);
-    if (type.klip) {
+    if (spejlet && !type.klipDrejet && !type.klipper) c.scale(-1, 1);
+    if (k) {
       // møbler fra kataloget: klip det lille stykke ud af det store billede
-      const k = type.klip;
-      c.drawImage(b, k[0], k[1], k[2], k[3], -k[2] / 2, -k[3], k[2], k[3]);
+      c.drawImage(b, k[0], k[1], k[2], k[3], -k[2] * s / 2, -k[3] * s, k[2] * s, k[3] * s);
     } else {
-      c.drawImage(b, -b.naturalWidth / 2, -b.naturalHeight);
+      c.drawImage(b, -b.naturalWidth * s / 2, -b.naturalHeight * s, b.naturalWidth * s, b.naturalHeight * s);
     }
     c.restore();
     return;
@@ -418,6 +509,21 @@ function tegnMoebel(c, type, cx, cy, spejlet) {
 // =============================================================
 // hvor mange pixels figuren rykker tilbage mod ryglænet, når den sidder
 const SIDDE_BAGUD = 6;
+// hvor langt under figurens felt-midte fødderne skal nå for at stå på gulvet foran sofaen
+const FODKANT = 19;
+
+// Når figuren sidder i et af de nye møbler, rykkes den lidt frem og ned,
+// så fødderne når gulvet. Figurer med korte ben (pigen) rykkes mere end drengen.
+function fodJustering(m, valg, retning) {
+  const t = MOEBEL_TYPER[m.type] || {};
+  const f = FIGURER[valg.type] || FIGURER.kvinde;
+  const del = f.sidder && (f.sidder[retning] || f.sidder.ned);
+  const d = del && figurDel(valg, del);
+  if (!d || !t.saede) return { x: 0, y: 0 };
+  const fald = (d.h - d.ay) * f.skala;   // fra numsen ned til fødderne
+  const mangler = Math.max(0, FODKANT - (fald - t.saede));
+  return { x: (venderHoejre(m) ? 1 : -1) * mangler, y: mangler };
+}
 
 function tegnFigur(c) {
   const p = punkt(figur.x + 0.5, figur.y + 0.5);   // fødderne
@@ -451,8 +557,11 @@ function tegnFigur(c) {
       sidde = { hoejde: MOEBEL_TYPER[figur.sidde.moebel.type].saede };
     }
     // på et sæde rykker figuren lidt tilbage mod ryglænet
-    const bagud = sidde ? (venderHoejre(figur.sidde.moebel) ? -1 : 1) * SIDDE_BAGUD : 0;
-    tegnMenneske(c, p.x + bagud, p.y - Math.abs(bagud) / 2, garderobe, figur.retning, gaar && !figur.sidde ? figur.trin : null, sidde);
+    // de nye møbler (med 4 billeder) har sædet tegnet, så fødderne når gulvet uden at rykke figuren
+    const nyt = sidde && (MOEBEL_TYPER[figur.sidde.moebel.type] || {}).klipper;
+    const bagud = sidde && !nyt ? (venderHoejre(figur.sidde.moebel) ? -1 : 1) * SIDDE_BAGUD : 0;
+    const fod = sidde && nyt ? fodJustering(figur.sidde.moebel, garderobe, figur.retning) : { x: 0, y: 0 };
+    tegnMenneske(c, p.x + bagud + fod.x, p.y - Math.abs(bagud) / 2 + fod.y, garderobe, figur.retning, gaar && !figur.sidde ? figur.trin : null, sidde);
   }
 
   // navneskilt
@@ -512,7 +621,7 @@ function flytFigur(dt) {
       const m = figur.skalSidde;
       figur.skalSidde = null;
       const fig = figurFelt();
-      if (moeblerIRummet.indexOf(m) >= 0 && fig.x === m.x && fig.y === m.y) saetDig(m);
+      if (moeblerIRummet.indexOf(m) >= 0 && daekker(m, fig.x, fig.y)) saetDig(m);
     }
     return;
   }
@@ -780,8 +889,8 @@ function tegnAlt() {
   moeblerIRummet.forEach(function (m) {
     const type = MOEBEL_TYPER[m.type];
     if (type.kanGaaPaa) {
-      const c = feltMidte(m.x, m.y);
-      tegnMoebel(ctx, type, c.x, c.y, m.spejlet);
+      const c = moebelSted(type, m.x, m.y, drejetTvaers(m));
+      tegnMoebel(ctx, type, c.x, c.y, m.spejlet, m.retning);
     }
   });
   tegnMarkering();
@@ -792,24 +901,27 @@ function tegnAlt() {
     const type = MOEBEL_TYPER[m.type];
     if (type.kanGaaPaa) return;
     ting.push({
-      dybde: m.x + m.y,
+      dybde: moebelDybde(m),
       tegn: function () {
-        const c = feltMidte(m.x, m.y);
-        tegnMoebel(ctx, type, c.x, c.y, m.spejlet);
+        const c = moebelSted(type, m.x, m.y, drejetTvaers(m));
+        tegnMoebel(ctx, type, c.x, c.y, m.spejlet, m.retning);
       },
     });
   });
-  ting.push({ dybde: figur.x + figur.y + 0.1 + figurPlads() / 1000, tegn: function () { tegnFigur(ctx); } });
+  // når figuren sidder i en sofa på 2 felter, skal den tegnes foran sofaen
+  const figurDybde = figur.sidde ? moebelDybde(figur.sidde.moebel) + 0.1 + figur.sidde.plads * 0.01 : figur.x + figur.y + 0.1;
+  ting.push({ dybde: figurDybde + figurPlads() / 1000, tegn: function () { tegnFigur(ctx); } });
   if (rumValg === "hal") halTing(ting);
   if (typeof andreSpillereTing === "function") andreSpillereTing(ting);   // rigtige spillere (js/rigtige-spillere.js)
 
   // Et "spøgelse" af møblet, man er ved at stille
-  if (valgtType && musFelt && erIRummet(musFelt.x, musFelt.y) && !moebelPaa(musFelt.x, musFelt.y)) {
+  if (valgtType && musFelt && MOEBEL_TYPER[valgtType] && pladsTil(MOEBEL_TYPER[valgtType], musFelt.x, musFelt.y, false)) {
     const f = musFelt;
+    const ff = moebelFelter(MOEBEL_TYPER[valgtType], false);
     ting.push({
-      dybde: f.x + f.y + 0.05,
+      dybde: f.x + ff[0] - 1 + f.y + ff[1] - 1 + 0.05,
       tegn: function () {
-        const c = feltMidte(f.x, f.y);
+        const c = moebelSted(MOEBEL_TYPER[valgtType], f.x, f.y, false);
         ctx.globalAlpha = 0.55;
         tegnMoebel(ctx, MOEBEL_TYPER[valgtType], c.x, c.y, false);
         ctx.globalAlpha = 1;
@@ -921,6 +1033,28 @@ function opdaterPanel() {
 
 function drejValgt() {
   if (!valgtMoebel || rumValg === "hal") return;
+  const t = MOEBEL_TYPER[valgtMoebel.type] || {};
+  if (t.klipper) {
+    // næste retning rundt, som har et billede
+    let r = valgtMoebel.retning || 0;
+    for (let i = 0; i < 4; i++) { r = (r + 1) % 4; if (t.klipper[r]) break; }
+    if (!pladsTil(t, valgtMoebel.x, valgtMoebel.y, r % 2 === 1, valgtMoebel)) {
+      besked.textContent = "Der er ikke plads til at dreje møblet her. Flyt det først.";
+      return;
+    }
+    valgtMoebel.retning = r;
+    if (figur.sidde && figur.sidde.moebel === valgtMoebel) {
+      if (r >= 2) figur.sidde = null;
+      else vendFraRyglaenet(valgtMoebel);
+    }
+    gem();
+    return;
+  }
+  // en sofa på 2 felter skal have plads til at ligge den anden vej
+  if (!pladsTil(MOEBEL_TYPER[valgtMoebel.type], valgtMoebel.x, valgtMoebel.y, !valgtMoebel.spejlet, valgtMoebel)) {
+    besked.textContent = "Der er ikke plads til at dreje møblet her. Flyt det først.";
+    return;
+  }
   valgtMoebel.spejlet = !valgtMoebel.spejlet;
   gem();
 }
@@ -1038,9 +1172,7 @@ laerred.addEventListener("click", function (e) {
   // Stil et nyt møbel
   if (valgtType) {
     const type = MOEBEL_TYPER[valgtType];
-    const fig = figurFelt();
-    const staarDer = fig.x === f.x && fig.y === f.y;
-    if (moebelPaa(f.x, f.y) || (staarDer && !type.kanGaaPaa)) {
+    if (!pladsTil(type, f.x, f.y, false)) {
       besked.textContent = "Der er optaget. Prøv et andet felt.";
       return;
     }
@@ -1063,7 +1195,7 @@ laerred.addEventListener("click", function (e) {
   if (m && MOEBEL_TYPER[m.type].saede) {
     if (!figur.sidde || figur.sidde.moebel !== m) {
       const fig = figurFelt();
-      if (fig.x === m.x && fig.y === m.y && !figur.sidde) saetDig(m);
+      if (daekker(m, fig.x, fig.y) && !figur.sidde) saetDig(m);
       else gaaTil(f.x, f.y, m);
     }
   } else if (!m || MOEBEL_TYPER[m.type].kanGaaPaa) {

@@ -27,7 +27,7 @@ async function puls() {
   const figurTekst = JSON.stringify(garderobe), bobleTekst = JSON.stringify(minBoble);
   const nu = Date.now();
   const sendAlt = nu - sidstFigurTid > 15000;
-  const sidde = figur.sidde && figur.sidde.grad > 0.4 ? { type: figur.sidde.moebel.type, x: figur.sidde.moebel.x, y: figur.sidde.moebel.y } : null;
+  const sidde = figur.sidde && figur.sidde.grad > 0.4 ? { type: figur.sidde.moebel.type, x: figur.sidde.moebel.x, y: figur.sidde.moebel.y, plads: figur.sidde.plads } : null;
   const data = {
     p_token: token, p_rum: rum, p_x: figur.x, p_y: figur.y, p_retning: figur.retning, p_sidder: sidde,
     p_figur: sendAlt || figurTekst !== sendtFigur ? garderobe : null,
@@ -133,7 +133,9 @@ function andreSpillereTing(ting) {
     const s = g.sidderPaa;
     const m = s && moeblerIRummet.find(function (mm) { return mm.x === s.x && mm.y === s.y && mm.type === s.type; });
     if (m && MOEBEL_TYPER[m.type]) {
-      g.sidder = true; g.saede = m; g.plads = 0; g.x = m.x; g.y = m.y; g.rute = [];
+      // plads: hvilken plads i en sofa til to (de nye sofaer har en plads pr. felt)
+      const felt = typeof pladsFelt === "function" ? pladsFelt(m, s.plads || 0) : m;
+      g.sidder = true; g.saede = m; g.plads = s.plads || 0; g.x = felt.x; g.y = felt.y; g.rute = [];
     } else {
       g.sidder = false; g.saede = null;
       // glid blødt hen mod det sted, serveren sagde
@@ -146,7 +148,9 @@ function andreSpillereTing(ting) {
         g.rute = [g.maal];
       } else g.rute = [];
     }
-    ting.push({ dybde: g.x + g.y + 0.1, tegn: function () { tegnAndenSpiller(g); } });
+    // sidder de i en sofa på 2 felter, tegnes de foran sofaen
+    const dybde = g.sidder && typeof moebelDybde === "function" ? moebelDybde(g.saede) + 0.1 + g.plads * 0.01 : g.x + g.y + 0.1;
+    ting.push({ dybde: dybde, tegn: function () { tegnAndenSpiller(g); } });
   });
 }
 

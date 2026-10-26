@@ -18,7 +18,7 @@ function rumMoebler(id) {
   return id === "hal" ? HAL_MOEBLER : vaerelseMoebler(id);
 }
 function somData(liste) {
-  return liste.map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: !!m.spejlet }; });
+  return liste.map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: !!m.spejlet, retning: m.retning || 0 }; });
 }
 
 
@@ -72,9 +72,10 @@ function brugMoebler(id, data) {
     if (i >= 0) {
       const m = gamle.splice(i, 1)[0];
       m.spejlet = !!d.spejlet;
+      m.retning = d.retning || 0;   // de nye møbler har 4 retninger
       return m;
     }
-    return { type: d.type, x: d.x, y: d.y, spejlet: !!d.spejlet };
+    return { type: d.type, x: d.x, y: d.y, spejlet: !!d.spejlet, retning: d.retning || 0 };
   });
   liste.length = 0;
   nye.forEach(function (m) { liste.push(m); });
@@ -114,7 +115,13 @@ const drejValgtFoerByg = drejValgt;
 drejValgt = function () {
   if (!iFaellesRum()) { drejValgtFoerByg(); return; }
   if (!valgtMoebel || !kanBygge()) return;
-  valgtMoebel.spejlet = !valgtMoebel.spejlet;
+  const t = MOEBEL_TYPER[valgtMoebel.type] || {};
+  if (t.klipper) {
+    // de nye møbler har 4 retninger (se drejValgt i js/spil.js)
+    const r = ((valgtMoebel.retning || 0) + 1) % 4;
+    if (!pladsTil(t, valgtMoebel.x, valgtMoebel.y, r % 2 === 1, valgtMoebel)) return;
+    valgtMoebel.retning = r;
+  } else valgtMoebel.spejlet = !valgtMoebel.spejlet;
   gem();
 };
 

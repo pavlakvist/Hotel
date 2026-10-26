@@ -15,6 +15,17 @@
 // Ingen møbler endnu (også de 6 første fra js/indstillinger.js er taget ud)
 MOEBLER.length = 0;
 
+// -------------------------------------------------------------
+//  NYE MØBLER (26/10), tegnet i pixel-stil i 4 retninger
+//  klipper:  ét billede for hver retning: ned-venstre, ned-højre, op-højre (ryggen), op-venstre
+//  felter:   [bredde, dybde] i felter (sofaen og sofabordet fylder 2)
+// -------------------------------------------------------------
+MOEBLER.push(
+  {"id": "ny-sofa", "navn": "Rød sofa", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 0, 256, 248], [260, 0, 256, 248], [520, 0, 252, 227], [776, 0, 252, 227]], "klip": [0, 0, 256, 248], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.58, "felter": [2, 1], "saede": 31},
+  {"id": "ny-laenestol", "navn": "Rød lænestol", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 252, 128, 216], [132, 252, 128, 216], [264, 252, 128, 195], [396, 252, 128, 195]], "klip": [0, 252, 128, 216], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.58, "saede": 31},
+  {"id": "ny-sofabord", "navn": "Sofabord", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 472, 234, 147], [238, 472, 234, 147], [476, 472, 234, 147], [714, 472, 234, 147]], "klip": [0, 472, 234, 147], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1]},
+);
+
 
 // -------------------------------------------------------------
 //  Én gang på hver computer: de gamle møbler i rummene, i Mine ting

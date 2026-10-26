@@ -140,7 +140,7 @@ function sendMinLejData(tving) {
 }
 function mineLejMoebler() {
   const liste = rumValg === "vaerelse" && aktivtVaerelse === "mit" ? moeblerIRummet : mitVaerelse;
-  return liste.map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: !!m.spejlet }; });
+  return liste.map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: !!m.spejlet, retning: m.retning || 0 }; });
 }
 let lejMoebelTimer = null;
 function sendMineMoebler() {
@@ -414,7 +414,7 @@ function gaaIndFremmed(l) {
     info.doer = d.doer || standardDoer(info);
     lejFremmede[l.id] = info;
     andreVaerelser[l.id] = (svar.moebler || []).filter(function (m) { return MOEBEL_TYPER[m.type]; })
-      .map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: !!m.spejlet }; });
+      .map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: !!m.spejlet, retning: m.retning || 0 }; });
     lejMoeblerSidst = stabil(svar.moebler || []);
     gaaTilVaerelse(l.id);
     besked.textContent = "🚪 Du er på besøg hos " + svar.ejer + " (nr. " + (svar.sal * 100 + svar.nr) + ").";

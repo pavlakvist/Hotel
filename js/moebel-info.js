@@ -87,10 +87,9 @@ laerred.addEventListener("click", function (e) {
   if (!flytter || e.ctrlKey || e.metaKey) return;
   e.stopImmediatePropagation();
   const f = musTilFelt(e);
-  const fig = figurFelt();
   const type = MOEBEL_TYPER[flytter.type];
-  const andet = moebelPaa(f.x, f.y);
-  if (!erIRummet(f.x, f.y) || (andet && andet !== flytter) || (fig.x === f.x && fig.y === f.y && !type.kanGaaPaa)) {
+  // pladsTil (js/spil.js) tjekker alle de felter, møblet fylder
+  if (!pladsTil(type, f.x, f.y, drejetTvaers(flytter), flytter)) {
     besked.textContent = "Der er optaget. Prøv et andet felt.";
     return;
   }

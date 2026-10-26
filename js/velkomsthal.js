@@ -410,7 +410,11 @@ function tegnHalGaest(g) {
   let sidde = null, bagud = 0;
   if (g.sidder) {
     sidde = { hoejde: MOEBEL_TYPER[g.saede.type].saede };
-    bagud = (venderHoejre(g.saede) ? -1 : 1) * SIDDE_BAGUD;
+    if (MOEBEL_TYPER[g.saede.type].klipper) {
+      // de nye møbler: ryk lidt frem, så fødderne når gulvet (fodJustering i js/spil.js)
+      const fod = fodJustering(g.saede, g.valg, g.retning);
+      p.x += fod.x; p.y += fod.y;
+    } else bagud = (venderHoejre(g.saede) ? -1 : 1) * SIDDE_BAGUD;
   } else {
     ctx.beginPath();
     ctx.ellipse(p.x, p.y, 16, 7, 0, 0, Math.PI * 2);
