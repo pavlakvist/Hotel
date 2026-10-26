@@ -187,7 +187,8 @@ function pladsTil(type, x, y, spejlet, uden) {
 function moebelSted(type, x, y, spejlet) {
   const f = moebelFelter(type, spejlet);
   // de nye møbler (klipper) er tegnet, så billedets bund-midte er møblets forreste hjørne
-  if (type && type.klipper) return punkt(x + f[0], y + f[1]);
+  // (tegnMoebel lægger selv et halvt felt til, så bunden rammer hjørnet)
+  if (type && type.klipper) { const h = punkt(x + f[0], y + f[1]); return { x: h.x, y: h.y - FLISE_H / 2 }; }
   return { x: punkt(x + f[0] / 2, y + f[1] / 2).x, y: punkt(x + f[0], y + f[1]).y - FLISE_H / 2 };
 }
 
@@ -293,8 +294,8 @@ function saedePladser(m) {
   if (!t.saede) return [];
   // møbler på flere felter: man sidder på det felt, man står på (én plads pr. felt),
   // og rykker lidt ud mod hver sin ende, så to ikke sidder oven i hinanden
-  if (t.felter) {
-    const n = t.felter[0] * t.felter[1];
+  if (t.felter || t.klipper) {
+    const n = t.felter ? t.felter[0] * t.felter[1] : 1;
     const vej = drejetTvaers(m) ? -1 : 1;
     // (rykket lidt ind mod midten, så man sidder på puden og ikke på armlænet)
     const ind = 0.02 * FLISE_B;
@@ -534,7 +535,10 @@ function fodJustering(m, valg, retning) {
   // numsen sidder midt på puden (lidt foran feltets midte), og figuren synker
   // lidt ned i puden, så fødderne når gulvet
   const frem = 0.14;
-  return { x: (venderHoejre(m) ? 1 : -1) * frem * FLISE_B / 2, y: frem * FLISE_H / 2 + mangler };
+  // sidde-billedernes anker ligger ikke midt i figuren (drengens ligger helt ude i siden),
+  // så figuren rykkes, så den sidder midt på pladsen
+  const midt = (d.ax - d.w / 2) * f.skala;
+  return { x: (venderHoejre(m) ? 1 : -1) * frem * FLISE_B / 2 + midt, y: frem * FLISE_H / 2 + mangler };
 }
 
 function tegnFigur(c) {

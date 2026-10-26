@@ -24,6 +24,10 @@ MOEBLER.push(
   {"id": "ny-sofa", "navn": "Rød sofa", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 0, 382, 255], [386, 0, 382, 255], [772, 0, 378, 225], [1154, 0, 378, 225]], "klip": [0, 0, 382, 255], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1], "saede": 19},
   {"id": "ny-laenestol", "navn": "Rød lænestol", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 259, 190, 207], [194, 259, 190, 207], [388, 259, 190, 177], [582, 259, 190, 177]], "klip": [0, 259, 190, 207], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "saede": 19},
   {"id": "ny-sofabord", "navn": "Sofabord", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 470, 348, 186], [352, 470, 348, 186], [704, 470, 348, 186], [1056, 470, 348, 186]], "klip": [0, 470, 348, 186], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1]},
+  {"id": "ny-vitrine", "navn": "Vitrineskab", "billede": "billeder/moebler/hjem-moebler.png", "klipper": [[0, 0, 184, 306], [188, 0, 184, 306], [376, 0, 184, 278], [564, 0, 184, 278]], "klip": [0, 0, 184, 306], "vender": "venstre", "skala": 0.5, "kategori": "Hyggeligt hjem"},
+  {"id": "ny-koeleskab", "navn": "Køleskab", "billede": "billeder/moebler/hjem-moebler.png", "klipper": [[0, 310, 170, 294], [174, 310, 170, 294], [348, 310, 170, 284], [522, 310, 170, 284]], "klip": [0, 310, 170, 294], "vender": "venstre", "skala": 0.5, "kategori": "Hyggeligt hjem"},
+  {"id": "ny-spisebord", "navn": "Spisebord", "billede": "billeder/moebler/hjem-moebler.png", "klipper": [[0, 608, 180, 170], [184, 608, 180, 170], [368, 608, 180, 170], [552, 608, 180, 170]], "klip": [0, 608, 180, 170], "vender": "venstre", "skala": 0.5, "kategori": "Hyggeligt hjem"},
+  {"id": "ny-spisestol", "navn": "Spisestol", "billede": "billeder/moebler/hjem-moebler.png", "klipper": [[0, 782, 120, 187], [124, 782, 120, 187], [248, 782, 120, 161], [372, 782, 120, 161]], "klip": [0, 782, 120, 187], "vender": "venstre", "skala": 0.5, "kategori": "Hyggeligt hjem", "saede": 21},
 );
 
 
