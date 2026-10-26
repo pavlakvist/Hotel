@@ -21,9 +21,9 @@ MOEBLER.length = 0;
 //  felter:   [bredde, dybde] i felter (sofaen og sofabordet fylder 2)
 // -------------------------------------------------------------
 MOEBLER.push(
-  {"id": "ny-sofa", "navn": "Rød sofa", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 0, 382, 289], [386, 0, 382, 289], [772, 0, 378, 259], [1154, 0, 378, 259]], "klip": [0, 0, 382, 289], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1], "saede": 22},
-  {"id": "ny-laenestol", "navn": "Rød lænestol", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 293, 190, 241], [194, 293, 190, 241], [388, 293, 190, 211], [582, 293, 190, 211]], "klip": [0, 293, 190, 241], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "saede": 22},
-  {"id": "ny-sofabord", "navn": "Sofabord", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 538, 348, 195], [352, 538, 348, 195], [704, 538, 348, 195], [1056, 538, 348, 195]], "klip": [0, 538, 348, 195], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1]},
+  {"id": "ny-sofa", "navn": "Rød sofa", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 0, 382, 255], [386, 0, 382, 255], [772, 0, 378, 225], [1154, 0, 378, 225]], "klip": [0, 0, 382, 255], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1], "saede": 19},
+  {"id": "ny-laenestol", "navn": "Rød lænestol", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 259, 190, 207], [194, 259, 190, 207], [388, 259, 190, 177], [582, 259, 190, 177]], "klip": [0, 259, 190, 207], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "saede": 19},
+  {"id": "ny-sofabord", "navn": "Sofabord", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 470, 348, 186], [352, 470, 348, 186], [704, 470, 348, 186], [1056, 470, 348, 186]], "klip": [0, 470, 348, 186], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1]},
 );
 
 

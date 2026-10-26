@@ -142,7 +142,7 @@ function andreSpillereTing(ting) {
       const dx = g.maal.x - g.x, dy = g.maal.y - g.y, afstand = Math.hypot(dx, dy);
       if (afstand > 4) { g.x = g.maal.x; g.y = g.maal.y; g.rute = []; }
       else if (afstand > 0.02) {
-        const skridt = Math.min(afstand, Math.max(2.5, afstand * 3) * dt);
+        const skridt = Math.min(afstand, Math.max(2.5, afstand * 3) * FELT_FART * dt);
         g.x += dx / afstand * skridt; g.y += dy / afstand * skridt;
         g.trin += dt * 8;
         g.rute = [g.maal];

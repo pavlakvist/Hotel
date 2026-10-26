@@ -58,6 +58,7 @@ function skarptLaerred() {
 // Et felt på gulvet er en "rude" (diamant), 96 pixels bred og 48 høj.
 const FLISE_B = 96;
 const FLISE_H = 48;
+const FELT_FART = 64 / FLISE_B;   // farten er i felter pr. sekund; større felter = lidt færre felter pr. sekund
 const VAEG_HOEJDE = 110;
 const START = { x: BREDDE / 2, y: 170 };   // hvor det bagerste hjørne af gulvet står (regnes ud i skarptLaerred)
 
@@ -185,6 +186,8 @@ function pladsTil(type, x, y, spejlet, uden) {
 // Hvor på skærmen møblet tegnes: midt mellem dets felter, med bunden på det forreste hjørne
 function moebelSted(type, x, y, spejlet) {
   const f = moebelFelter(type, spejlet);
+  // de nye møbler (klipper) er tegnet, så billedets bund-midte er møblets forreste hjørne
+  if (type && type.klipper) return punkt(x + f[0], y + f[1]);
   return { x: punkt(x + f[0] / 2, y + f[1] / 2).x, y: punkt(x + f[0], y + f[1]).y - FLISE_H / 2 };
 }
 
@@ -293,7 +296,9 @@ function saedePladser(m) {
   if (t.felter) {
     const n = t.felter[0] * t.felter[1];
     const vej = drejetTvaers(m) ? -1 : 1;
-    return Array.from({ length: n }, function (_, i) { return (i - (n - 1) / 2) * 20 * vej; });
+    // (rykket lidt ind mod midten, så man sidder på puden og ikke på armlænet)
+    const ind = 0.02 * FLISE_B;
+    return Array.from({ length: n }, function (_, i) { return -(i - (n - 1) / 2) * ind * vej; });
   }
   const bred = t.klip ? t.klip[2] * (t.skala || 1) >= 95 : t.tegning === "sofa";
   if (!bred) return [0];
@@ -514,7 +519,7 @@ function tegnMoebel(c, type, cx, cy, spejlet, retning) {
 // hvor mange pixels figuren rykker tilbage mod ryglænet, når den sidder
 const SIDDE_BAGUD = 6;
 // hvor langt under figurens felt-midte fødderne skal nå for at stå på gulvet foran sofaen
-const FODKANT = 14;
+const FODKANT = 16;
 
 // Når figuren sidder i et af de nye møbler, rykkes den lidt frem og ned,
 // så fødderne når gulvet. Figurer med korte ben (pigen) rykkes mere end drengen.
@@ -526,7 +531,10 @@ function fodJustering(m, valg, retning) {
   if (!d || !t.saede) return { x: 0, y: 0 };
   const fald = (d.h - d.ay) * f.skala;   // fra numsen ned til fødderne
   const mangler = Math.max(0, FODKANT - (fald - t.saede));
-  return { x: (venderHoejre(m) ? 1 : -1) * mangler, y: mangler };
+  // numsen sidder midt på puden (lidt foran feltets midte), og figuren synker
+  // lidt ned i puden, så fødderne når gulvet
+  const frem = 0.14;
+  return { x: (venderHoejre(m) ? 1 : -1) * frem * FLISE_B / 2, y: frem * FLISE_H / 2 + mangler };
 }
 
 function tegnFigur(c) {
@@ -633,7 +641,7 @@ function flytFigur(dt) {
   const dx = maal.x - figur.x;
   const dy = maal.y - figur.y;
   const afstand = Math.hypot(dx, dy);
-  const skridt = FIGUR.fart * dt;
+  const skridt = FIGUR.fart * FELT_FART * dt;
 
   // Hvilken vej kigger figuren på skærmen?
   // (dx - dy) er højre/venstre, og (dx + dy) er ned mod os/op væk fra os
@@ -1231,6 +1239,14 @@ laerred.addEventListener("click", function (e) {
       const fig = figurFelt();
       if (daekker(m, fig.x, fig.y) && !figur.sidde) saetDig(m);
       else gaaTil(f.x, f.y, m);
+    } else {
+      // man sidder allerede i sofaen: klik på den anden side = ryk derover, hvis der er ledigt
+      const celle = cellePlads(m, f);
+      if (celle >= 0 && celle !== figur.sidde.plads && tagnePladser(m, figur).indexOf(celle) < 0) {
+        figur.x = f.x;
+        figur.y = f.y;
+        figur.sidde.plads = celle;
+      }
     }
   } else if (!m || MOEBEL_TYPER[m.type].kanGaaPaa) {
     gaaTil(f.x, f.y);

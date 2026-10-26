@@ -382,7 +382,7 @@ function opdaterHal(dt) {
     const maal = g.rute[0];
     const dx = maal.x - g.x, dy = maal.y - g.y;
     const afstand = Math.hypot(dx, dy);
-    const skridt = 2.2 * dt;
+    const skridt = 2.2 * FELT_FART * dt;
     const lodret = dx + dy > 0.01 ? "ned" : dx + dy < -0.01 ? "op" : "";
     const vandret = dx - dy > 0.01 ? "hoejre" : dx - dy < -0.01 ? "venstre" : "";
     g.retning = lodret && vandret ? lodret + "-" + vandret : lodret || vandret || g.retning;
