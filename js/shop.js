@@ -17,11 +17,17 @@ function gemLager() {
   try { localStorage.setItem(LAGER_NOEGLE, JSON.stringify(lager)); } catch (e) {}
 }
 
-function tilLager(type) {
+// Læg en ting i lageret. Køb i Shoppen bruger altid denne, så det, man har betalt for,
+// kommer i Mine ting, uanset hvilket rum man står i (tilLager bliver ændret af
+// js/bygmester.js og js/lejligheder.js, så møbler i fælles rum ikke kan samles op).
+function laegILager(type) {
   if (!MOEBEL_TYPER[type]) return;
   lager.push({ type: type, tid: Date.now() });
   gemLager();
   visLager();
+}
+function tilLager(type) {
+  laegILager(type);
 }
 
 function fraLager(type) {
@@ -179,7 +185,7 @@ document.getElementById("shop-koeb").addEventListener("click", function () {
   const p = pris(shopValgt);
   const betalt = p.stella ? brugKrystaller(p.beloeb) : brugGlimt(p.beloeb);
   if (!betalt) return;
-  tilLager(shopValgt.id);
+  laegILager(shopValgt.id);
   svaev("🛍️");
   besked.textContent = "Du købte " + shopValgt.navn + "! Den ligger i Mine ting 📦";
   visShop();
