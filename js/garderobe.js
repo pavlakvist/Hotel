@@ -165,7 +165,7 @@ function deleI(fane) {
     if (d.kunPige && hvem() === "dreng") return false;
     if (kun && d.slags === "toej") return false;
     if (kun && d.slags === "farve") return kun.indexOf(d.omr) >= 0;
-    if (kun && d.slags === "bukser") return kun.indexOf("underdel") >= 0;
+    if (kun && d.slags === "bukser") return kun.indexOf("underdel") >= 0 && !FIGURER[kladde.type].ingenBukser;
     if (d.slags === "toej") return alle[d.slot] && alle[d.slot].length > 0;
     if (d.slags === "bukser") return typeof BUKSER !== "undefined";
     if (d.slags === "haarstil") return !!(FIGURER[kladde.type] && FIGURER[kladde.type].haarstile);

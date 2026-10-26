@@ -1,9 +1,10 @@
 // =============================================================
 //  Spillerkortet 🪪 — klik på dig selv eller en anden spiller
 //  Et lille grønt/creme kort med navn, figur, skilt, motto, likes
-//  og hvem der har sat ❤ hjerte og 🙂 smiley på spilleren.
-//  I klikmenuen kan man sætte ❤ og 🙂 på andre og fjerne dem igen med ✕.
-//  (Kræver database-11-spillerkort.sql. Computer-gæsterne gemmes kun på computeren.)
+//  og hvem spilleren selv har givet ❤ hjerte og 🙂 smiley.
+//  Dine egne hjerter/smileyer står på DIT kort, med en "Fjern"-knap ved hvert navn.
+//  I klikmenuen kan man sætte ❤ og 🙂 på andre og fjerne dem igen med "Fjern".
+//  (Kræver database-11 + database-20. Computer-gæsterne gemmes kun på computeren.)
 // =============================================================
 const FORHOLD = {
   hjerte: { tegn: "❤️", navn: "Hjerte" },
@@ -11,7 +12,7 @@ const FORHOLD = {
 };
 const FORHOLD_NOEGLE = "mit-hotel-forhold";     // computer-gæsterne: { navn: { hjerte: true, smiley: true } }
 
-// Computer-gæsterne har lidt fra hinanden i forvejen, så kortet ikke er tomt
+// Computer-gæsterne har givet lidt til hinanden i forvejen, så kortet ikke er tomt
 const GAEST_FORHOLD = {
   Ida: { hjerte: ["Freja"], smiley: ["Noah", "Oliver"] },
   Noah: { hjerte: ["Ida"], smiley: ["Oliver"] },
@@ -36,19 +37,31 @@ const kortLikes = {};         // navn → antal likes
 
 
 // -------------------------------------------------------------
-//  Hvem har sat hvad?
+//  Hvem har spilleren givet hvad?
 // -------------------------------------------------------------
+// Er database-20 kørt? (så viser serveren, hvem spilleren selv har givet)
+function nyeForhold(s) { return !!(s && s.givet); }
+
 function forholdListe(navn, slags) {
-  if (erComputerGaest(navn)) {
-    const liste = ((GAEST_FORHOLD[navn] || {})[slags] || []).slice();
-    if (mineGaestForhold[navn] && mineGaestForhold[navn][slags]) liste.unshift(FIGUR.navn);
-    return liste;
-  }
+  if (erComputerGaest(navn)) return ((GAEST_FORHOLD[navn] || {})[slags] || []).slice();
   const s = kortSvar[navn];
-  return s ? (s[slags] || []).slice() : [];
+  const liste = nyeForhold(s) ? (s[slags] || []).slice() : [];
+  if (navn === FIGUR.navn) {          // dine hjerter på computer-gæsterne står også på dit kort
+    Object.keys(mineGaestForhold).forEach(function (g) {
+      if (mineGaestForhold[g][slags] && liste.indexOf(g) < 0) liste.push(g);
+    });
+  }
+  return liste;
 }
+// Har JEG givet navn et hjerte/en smiley?
 function harSat(navn, slags) {
-  return forholdListe(navn, slags).indexOf(FIGUR.navn) >= 0;
+  if (erComputerGaest(navn)) return !!(mineGaestForhold[navn] && mineGaestForhold[navn][slags]);
+  const s = kortSvar[navn];
+  const mit = "mit" + slags.charAt(0).toUpperCase() + slags.slice(1);
+  if (nyeForhold(s)) return !!s[mit];
+  const mitKort = kortSvar[FIGUR.navn];
+  if (nyeForhold(mitKort)) return (mitKort[slags] || []).indexOf(navn) >= 0;
+  return !!(s && (s[slags] || []).indexOf(FIGUR.navn) >= 0);     // database-20 er ikke kørt endnu
 }
 
 // "Ida", "Ida og Noah", "Ida og 2 andre" (dig selv står først som "Du")
@@ -95,12 +108,19 @@ function saetForhold(navn, slags, til) {
   }
   const s = kortSvar[navn];
   serverKald("hv_forhold_saet", { p_token: mitToken(), p_navn: navn, p_slags: slags, p_til: til }).then(function () {
-    if (s) {
+    if (nyeForhold(s)) s["mit" + slags.charAt(0).toUpperCase() + slags.slice(1)] = til;
+    else if (s) {
       s[slags] = (s[slags] || []).filter(function (n) { return n !== FIGUR.navn; });
       if (til) s[slags].unshift(FIGUR.navn);
     }
+    const mitKort = kortSvar[FIGUR.navn];
+    if (nyeForhold(mitKort)) {
+      mitKort[slags] = (mitKort[slags] || []).filter(function (n) { return n !== navn; });
+      if (til) mitKort[slags].unshift(navn);
+    }
     efterForhold(navn, slags, til);
     hentKort(navn);
+    if (navn !== FIGUR.navn) hentKort(FIGUR.navn);
   }).catch(function (e) {
     besked.textContent = /hv_forhold/.test(e.message) ? "❤️ og 🙂 virker, når database-11-spillerkort.sql er kørt i Supabase." : e.message;
   });
@@ -111,7 +131,7 @@ function efterForhold(navn, slags, til) {
   const g = ANDRE_SPILLERE[navn] || HAL_GAESTER.find(function (x) { return x.navn === navn; });
   if (til && g) svaev(f.tegn, g);
   besked.textContent = til ? "Du har sat " + f.tegn + " på " + navn + "." : "Du har fjernet dit " + f.tegn + " fra " + navn + ".";
-  if (kortNavn === navn) visKort();
+  if (kortNavn === navn || kortNavn === FIGUR.navn) visKort();
   if (!minMenu.hidden && menuHvem && menuHvem.navn === navn) visForholdKnapper(menuHvem);
 }
 
@@ -189,22 +209,37 @@ function visKort() {
   if (svar && svar.foedselsdag && typeof datoTekst === "function") html += "<p class='sk-baand sk-fd'>🎂 " + datoTekst(svar.foedselsdag) + "</p>";
 
   const mangler = !erComputerGaest(navn) && svar === false;
+  const gammel = !erComputerGaest(navn) && svar && !nyeForhold(svar);
   Object.keys(FORHOLD).forEach(function (slags) {
     const f = FORHOLD[slags];
     const liste = forholdListe(navn, slags);
-    const tekst = navneTekst(liste);
-    const sat = !mig && harSat(navn, slags);
-    html += "<div class='sk-forhold sk-" + slags + "' title='" + rens(liste.join(", ")) + "'>" +
-      "<span class='sk-tegn'>" + f.tegn + "</span>" +
-      "<span class='sk-hvem'>" + (mangler ? "<i>Virker, når database-11 er kørt</i>" : tekst ? rens(tekst) : "<i>Ingen endnu</i>") + "</span>" +
-      (sat ? "<button type='button' class='sk-x' data-fjern='" + slags + "' title='Fjern dit " + f.navn.toLowerCase() + "'>✕</button>" : "") +
-      (!mig && !sat && !mangler ? "<button type='button' class='sk-plus' data-saet='" + slags + "' title='Sæt " + f.navn.toLowerCase() + "'>+</button>" : "") +
-      "</div>";
+    const overskrift = (mig ? "Mine " : "") + (slags === "hjerte" ? (mig ? "hjerter" : "Hjerter") : (mig ? "smileyer" : "Smileyer")) + ":";
+    html += "<div class='sk-forhold sk-" + slags + "'>" +
+      "<div class='sk-overskrift'><span class='sk-tegn'>" + f.tegn + "</span><b>" + overskrift + "</b></div>";
+    if (mangler) html += "<i class='sk-tom'>Virker, når database-11 er kørt</i>";
+    else if (gammel && !mig) html += "<i class='sk-tom'>Virker, når database-20 er kørt</i>";
+    else if (!liste.length) html += "<i class='sk-tom'>" + (mig ? "Ingen endnu. Klik på en spiller for at give et " + f.navn.toLowerCase() + "." : "Ingen endnu") + "</i>";
+    else liste.forEach(function (n) {
+      html += "<div class='sk-person'><span>" + rens(n) + "</span>" +
+        (mig ? "<button type='button' class='sk-fjern' data-fjern='" + slags + "' data-navn='" + rens(n) + "'>Fjern</button>" : "") + "</div>";
+    });
+    html += "</div>";
   });
+  // På en andens kort: dine egne knapper til at give eller fjerne
+  if (!mig && !mangler) {
+    html += "<div class='sk-dine'>";
+    Object.keys(FORHOLD).forEach(function (slags) {
+      const f = FORHOLD[slags];
+      html += harSat(navn, slags)
+        ? "<button type='button' class='sk-fjern' data-fjern='" + slags + "' data-navn='" + rens(navn) + "'>" + f.tegn + " Fjern " + f.navn.toLowerCase() + "</button>"
+        : "<button type='button' class='sk-giv' data-saet='" + slags + "'>" + f.tegn + " Giv " + f.navn.toLowerCase() + "</button>";
+    });
+    html += "</div>";
+  }
   const raekker = spKort.querySelector(".sk-raekker");
   raekker.innerHTML = html;
   raekker.querySelectorAll("[data-fjern]").forEach(function (k) {
-    k.addEventListener("click", function () { saetForhold(navn, k.dataset.fjern, false); });
+    k.addEventListener("click", function () { saetForhold(k.dataset.navn, k.dataset.fjern, false); });
   });
   raekker.querySelectorAll("[data-saet]").forEach(function (k) {
     k.addEventListener("click", function () { saetForhold(navn, k.dataset.saet, true); });
@@ -232,7 +267,7 @@ aabnGaestMenu = function (g) {
   aabnKort(g.navn, g.valg);
 };
 
-// ❤ Hjerte og 🙂 Smiley i klikmenuen, med et lille ✕ ude i siden, når de er sat
+// ❤ Hjerte og 🙂 Smiley i klikmenuen, med en "Fjern"-knap ude i siden, når de er sat
 function visForholdKnapper(g) {
   minMenuKnapper.querySelectorAll(".sk-menu").forEach(function (r) { r.remove(); });
   Object.keys(FORHOLD).forEach(function (slags) {
@@ -252,7 +287,7 @@ function visForholdKnapper(g) {
       const x = document.createElement("button");
       x.type = "button";
       x.className = "sk-menu-x";
-      x.textContent = "✕";
+      x.textContent = "Fjern";
       x.title = "Fjern dit " + f.navn.toLowerCase();
       x.addEventListener("click", function (e) { e.stopPropagation(); saetForhold(g.navn, slags, false); });
       raekke.appendChild(x);
@@ -302,7 +337,18 @@ kortStil.textContent =
   "#spillerkort .sk-motto { padding: 6px 8px; background: #fff; border: 1px solid #d6e8c8; border-radius: 6px; word-wrap: break-word; }" +
   "#spillerkort .sk-baand { padding: 5px 8px; background: #9ccc8f; color: #1f3a1c; border-radius: 6px; font-weight: bold; text-align: center; }" +
   "#spillerkort .sk-fd { background: #f3dfa6; color: #5a4313; }" +
-  "#spillerkort .sk-forhold { display: flex; align-items: center; gap: 6px; margin-top: 5px; padding: 5px 6px; border-radius: 6px; }" +
+  "#spillerkort .sk-forhold { margin-top: 5px; padding: 5px 6px; border-radius: 6px; max-height: 120px; overflow-y: auto; }" +
+  "#spillerkort .sk-overskrift { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }" +
+  "#spillerkort .sk-tom { display: block; color: #8a8a7a; font-size: 12px; }" +
+  "#spillerkort .sk-person { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 0; }" +
+  "#spillerkort .sk-person span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }" +
+  "#spillerkort .sk-fjern, #spillerkort .sk-giv { padding: 2px 8px; border-radius: 6px; border: 1px solid #b0455f; background: #fff; color: #9a2f4a;" +
+  " font: bold 11px Verdana, sans-serif; cursor: pointer; }" +
+  "#spillerkort .sk-fjern:hover { background: #b0455f; color: #fff; }" +
+  "#spillerkort .sk-giv { border-color: #4e7d4a; color: #2f5a2b; }" +
+  "#spillerkort .sk-giv:hover { background: #4e7d4a; color: #fff; }" +
+  "#spillerkort .sk-dine { display: flex; gap: 6px; margin-top: 6px; }" +
+  "#spillerkort .sk-dine button { flex: 1; padding: 5px 4px; }" +
   "#spillerkort .sk-hjerte { background: #f6d3df; border: 1px solid #e3a2ba; }" +
   "#spillerkort .sk-smiley { background: #f8eab4; border: 1px solid #e3c86a; }" +
   "#spillerkort .sk-hvem { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }" +
@@ -314,5 +360,6 @@ kortStil.textContent =
   "#min-menu-knapper .sk-menu button { margin: 0; }" +
   "#min-menu-knapper .sk-menu.sat.sk-hjerte button { background: #c9668b; border-color: #e3a2ba; }" +
   "#min-menu-knapper .sk-menu.sat.sk-smiley button { background: #c9a12f; border-color: #e3c86a; }" +
-  "#min-menu-knapper .sk-menu .sk-menu-x { flex: 0 0 28px; width: 28px; padding: 0; text-align: center; font-size: 12px; }";
+  "#min-menu-knapper .sk-menu .sk-menu-x, #min-menu-knapper .sk-menu.sat button.sk-menu-x { flex: 0 0 auto; width: auto; padding: 0 8px; text-align: center; font-size: 12px; font-weight: bold;" +
+  " background: #fff; color: #9a2f4a; border-color: #b0455f; }";
 document.head.appendChild(kortStil);
