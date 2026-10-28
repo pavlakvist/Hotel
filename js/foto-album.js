@@ -127,9 +127,31 @@ function kanGemmePixels() {
   try { const c = document.createElement("canvas"); c.width = c.height = 2; c.getContext("2d").drawImage(laerred, 0, 0, 2, 2); c.toDataURL(); return true; }
   catch (e) { return false; }
 }
+// Hvorfor må browseren ikke gemme pixels? En lille kode, Pavla kan sende til Claude.
+// B = et figurbillede, F = et figurbillede med farvefilter, L = hotellets lærred (1 = virker, 0 = blokeret)
+function pixelTjek() {
+  function proev(tegn) {
+    try { const c = document.createElement("canvas"); c.width = c.height = 4; const g = c.getContext("2d"); tegn(g); c.toDataURL(); return "1"; }
+    catch (e) { return "0"; }
+  }
+  const b = typeof figurBilleder === "object" ? Object.values(figurBilleder).find(function (x) { return x.complete && x.naturalWidth; }) : null;
+  let fejl = "";
+  try { const c = document.createElement("canvas"); c.width = c.height = 2; c.getContext("2d").drawImage(laerred, 0, 0, 2, 2); c.toDataURL(); } catch (e) { fejl = e.name; }
+  return "B" + (b ? proev(function (g) { g.drawImage(b, 0, 0); }) : "-") +
+    " F" + (b ? proev(function (g) { g.filter = "grayscale(1)"; g.drawImage(b, 0, 0); }) : "-") +
+    " L" + (fejl ? "0 " + fejl : "1") + " " + location.protocol.replace(":", "");
+}
+
 // "Tag billede" åbner redigeringen i stedet for at gemme med det samme
 document.addEventListener("click", function (e) {
-  if (!e.target.closest || !e.target.closest("#kam-tag") || !kanGemmePixels()) return;
+  if (!e.target.closest || !e.target.closest("#kam-tag")) return;
+  if (!kanGemmePixels()) {
+    // kamera.js gemmer billedet på den gamle måde; fortæl hvorfor der ikke kommer pynt og album
+    setTimeout(function () {
+      kamTekst.textContent = "📸 Billedet ligger i Mine ting, men browseren vil ikke lade det blive pyntet eller lagt i albummet. Send denne kode til Claude: " + pixelTjek();
+    }, 0);
+    return;
+  }
   e.stopImmediatePropagation();
   e.preventDefault();
   const c = document.createElement("canvas");
@@ -254,7 +276,10 @@ function albumData(kilde) {
 }
 function sendTilAlbum(kilde, tekst, rum) {
   if (!SERVER.til || !mitToken()) return Promise.reject(new Error("Albummet kræver, at du er logget ind på hotellet."));
-  return serverKald("hv_album_send", { p_token: mitToken(), p_billede: albumData(kilde), p_tekst: (typeof rensTekst === "function" ? rensTekst(tekst || "") : tekst) || null, p_rum: rum || null })
+  let data;
+  try { data = albumData(kilde); }
+  catch (e) { return Promise.reject(new Error("Browseren vil ikke lade billedet blive lagt op. Send denne kode til Claude: " + pixelTjek())); }
+  return serverKald("hv_album_send", { p_token: mitToken(), p_billede: data, p_tekst: (typeof rensTekst === "function" ? rensTekst(tekst || "") : tekst) || null, p_rum: rum || null })
     .then(function () { albumBilleder = null; if (!albumVindue.hidden) hentAlbum(); })
     .catch(function (e) {
       throw new Error(/hv_album/.test(e.message) ? "kør database-19-album.sql i Supabase først." : e.message);
@@ -330,10 +355,18 @@ function visAlbum() {
       tegnFotoI(c, f);
       k.appendChild(c);
       k.insertAdjacentHTML("beforeend", "<small>" + rens(f.rumNavn) + " · " + fotoDato(f) + "</small>");
-      k.addEventListener("click", function () {
+      let forsoeg = 0;
+      k.addEventListener("click", function laegOp() {
         const b = fotoBillede(f);
         const status = document.getElementById("al-status");
-        if (!b) { status.textContent = "Billedet er ikke klar endnu. Prøv igen om lidt."; return; }
+        if (!status) return;
+        if (!b || (b.complete === false)) {          // billedet bliver gjort klar; prøv selv igen om lidt
+          status.textContent = "Gør billedet klar …";
+          if (forsoeg++ < 6) setTimeout(laegOp, 1200);
+          else { forsoeg = 0; status.textContent = "Billedet kunne ikke gøres klar. Prøv et andet billede."; }
+          return;
+        }
+        forsoeg = 0;
         status.textContent = "Lægger billedet op …";
         sendTilAlbum(b, document.getElementById("al-tekst").value, f.rumNavn).then(function () {
           albumVaelger = false;

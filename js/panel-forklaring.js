@@ -146,3 +146,11 @@ forklaringStil.textContent =
   "#ejer-indhold ul.pf-regler { padding-left: 20px; }" +
   "#ejer-indhold ul.pf-regler li { display: list-item; padding: 3px 0; border: 0; }";
 document.head.appendChild(forklaringStil);
+
+// 📝 Eventnoter, 🏆 vindere og 🎁 gratis gevinst (js/event-vindere.js) hentes herfra,
+// så hotel.html ikke skal ændres. Den kører, når alt det andet er klar.
+(function () {
+  const s = document.createElement("script");
+  s.src = "js/event-vindere.js?v=1";
+  document.body.appendChild(s);
+})();
