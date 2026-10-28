@@ -45,6 +45,13 @@ MOEBLER.push(
   {"id": "test-laenestol", "navn": "Orange lænestol (test)", "retninger": ["billeder/moebler/laenestol/laenestol-0.png", "billeder/moebler/laenestol/laenestol-1.png", "billeder/moebler/laenestol/laenestol-2.png", "billeder/moebler/laenestol/laenestol-3.png"], "kategori": "Nye møbler", "saede": 19},
 );
 
+// Biografen 🎬 (js/biograf.js). "bagfra": man kan også sidde i sædet, når det vender ryggen til
+// (så ser man hovedet over ryglænet, ligesom i en rigtig biograf).
+MOEBLER.push(
+  {"id": "bio-saede", "navn": "Biografsæde", "retninger": ["billeder/moebler/bio-saede/bio-saede-0.png", "billeder/moebler/bio-saede/bio-saede-1.png", "billeder/moebler/bio-saede/bio-saede-2.png", "billeder/moebler/bio-saede/bio-saede-3.png"], "kategori": "Biograf", "saede": 20, "bagfra": true},
+  {"id": "popcorn-maskine", "navn": "Popcornmaskine", "retninger": ["billeder/moebler/popcorn-maskine/popcorn-maskine-0.png", "billeder/moebler/popcorn-maskine/popcorn-maskine-1.png", "billeder/moebler/popcorn-maskine/popcorn-maskine-2.png", "billeder/moebler/popcorn-maskine/popcorn-maskine-3.png"], "kategori": "Biograf"},
+);
+
 MOEBLER.push(
   {"id": "ny-sofa", "navn": "Rød sofa", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 0, 382, 255], [386, 0, 382, 255], [772, 0, 378, 225], [1154, 0, 378, 225]], "klip": [0, 0, 382, 255], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1], "saede": 19},
   {"id": "ny-laenestol", "navn": "Rød lænestol", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 259, 190, 207], [194, 259, 190, 207], [388, 259, 190, 177], [582, 259, 190, 177]], "klip": [0, 259, 190, 207], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "saede": 19},

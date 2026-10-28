@@ -101,7 +101,7 @@ function tegnElevator() {
   ctx.font = "bold 9px Verdana, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(rumValg === "hal" ? "▲ S ▼" : aktivtVaerelse === "hemmelig" ? "▲ ? ▼" : "▲ 1 ▼", 32, -136.5);
+  ctx.fillText(herEtage() === "stue" ? "▲ S ▼" : aktivtVaerelse === "hemmelig" ? "▲ ? ▼" : "▲ 1 ▼", 32, -136.5);
   // åbningen og det gyldne lys indeni
   firkant(7, -125, 50, 123, "#e0a73c");
   firkant(9, -123, 46, 121, "#2a1410");

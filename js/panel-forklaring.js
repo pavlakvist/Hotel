@@ -188,3 +188,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/elevator-musik.js?v=1";
   document.body.appendChild(s);
 })();
+
+// 🎬 Biografen (js/biograf.js): lærred med film, biografsæder og popcorn.
+(function () {
+  if (document.querySelector("script[src^='js/biograf.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/biograf.js?v=1";
+  document.body.appendChild(s);
+})();
