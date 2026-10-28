@@ -170,3 +170,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/skaansom.js?v=1";
   document.body.appendChild(s);
 })();
+
+// 🍷 Vinrødt hotel-tema (js/vinroed-tema.js): det grønne bliver vinrødt, guld og creme.
+(function () {
+  if (document.querySelector("script[src^='js/vinroed-tema.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vinroed-tema.js?v=1";
+  document.body.appendChild(s);
+})();
