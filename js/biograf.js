@@ -106,6 +106,7 @@ function vaegFirkant(x1, x2, h1, h2, farve) {
 // Gardinerne: 1 = trukket for, 0 = trukket fra. Det tager BIO_GARDIN_TID sekunder.
 let bioGardin = 1, bioGardinTid = performance.now();
 const BIO_GARDIN_TID = 1.8;
+const BIO_MOERKE = 0.62;   // hvor mørkt der bliver i salen, når filmen kører (0 = lyst, 1 = helt sort)
 
 const tegnVaeggeFoerBio = tegnVaegge;
 tegnVaegge = function () {
@@ -181,13 +182,14 @@ tegnVaegge = function () {
   });
 };
 
-// Når filmen kører, bliver der lidt mørkt i salen (lærredet lyser stadig)
+// Når filmen kører, bliver der mørkt i salen (lærredet lyser stadig)
 const tegnBoblerFoerBio = tegnBobler;
 tegnBobler = function () {
-  if (iBiografen() && bioFilm.v) {
+  if (iBiografen() && bioGardin < 1) {
+    // lyset går ned, mens gardinerne glider fra (og op igen, når de lukker)
     ctx.save();
     ctx.globalCompositeOperation = "source-atop";    // kun hvor der er tegnet noget, ikke i hullet til filmen
-    ctx.fillStyle = "rgba(12, 0, 6, 0.3)";
+    ctx.fillStyle = "rgba(8, 0, 4, " + (BIO_MOERKE * (1 - bioGardin)) + ")";
     ctx.fillRect(0, 0, BREDDE, HOEJDE);
     ctx.restore();
   }
