@@ -4,6 +4,7 @@
 //  og hvem spilleren selv har givet ❤ hjerte og 🙂 smiley.
 //  Dine egne hjerter/smileyer står på DIT kort, med en "Fjern"-knap ved hvert navn.
 //  I klikmenuen kan man sætte ❤ og 🙂 på andre og fjerne dem igen med "Fjern".
+//  Kortet viser også, hvor længe spilleren har været online (kræver database-22).
 //  (Kræver database-11 + database-20. Computer-gæsterne gemmes kun på computeren.)
 // =============================================================
 const FORHOLD = {
@@ -34,6 +35,10 @@ function gemGaestForhold() {
 
 const kortSvar = {};          // navn → svar fra serveren (null = ingen profil, false = database-11 mangler)
 const kortLikes = {};         // navn → antal likes
+const kortOnline = {};        // navn → { online, sekunder, sidst, hentet } fra serveren
+const SIDEN_START = Date.now();                 // da du åbnede hotellet (bruges, hvis database-22 mangler)
+// Computer-gæsterne "kom online" lidt før dig
+const GAEST_ONLINE_MIN = { Ida: 12, Noah: 47, Freja: 5, Oliver: 83 };
 
 
 // -------------------------------------------------------------
@@ -94,6 +99,13 @@ function hentKort(navn) {
     if (kortNavn === navn) visKort();
   }).catch(function () {
     kortSvar[navn] = false;      // database-11-spillerkort.sql er ikke kørt endnu
+    if (kortNavn === navn) visKort();
+  });
+  serverKald("hv_online_tid", { p_token: token, p_navn: navn }).then(function (svar) {
+    kortOnline[navn] = svar ? { online: svar.online, sekunder: svar.sekunder, sidst: svar.sidst, hentet: Date.now() } : null;
+    if (kortNavn === navn) visKort();
+  }).catch(function () {
+    kortOnline[navn] = false;    // database-22-online-tid.sql er ikke kørt endnu
     if (kortNavn === navn) visKort();
   });
   serverKald("hv_like_info", { p_token: token, p_navn: navn }).then(function (svar) {
@@ -212,6 +224,7 @@ function visKort() {
   let html = "<p class='sk-motto'>✏️ " + (motto ? rens(motto) : "<i>Intet motto endnu</i>") + "</p>";
   if (kortLikes[navn] !== undefined) html += "<p class='sk-baand sk-likes'>👍 Likes: " + kortLikes[navn].toLocaleString("da-DK") + "</p>";
   if (svar && svar.oprettet) html += "<p class='sk-baand sk-medlem'>📅 Medlem siden " + medlemDato(svar.oprettet) + "<br><small>" + medlemLaengde(svar.oprettet) + "</small></p>";
+  html += onlineBaand(navn);
   if (svar && svar.foedselsdag && typeof datoTekst === "function") html += "<p class='sk-baand sk-fd'>🎂 " + datoTekst(svar.foedselsdag) + "</p>";
 
   const mangler = !erComputerGaest(navn) && svar === false;
@@ -265,6 +278,35 @@ function medlemLaengde(tid) {
   if (maaneder < 12) return "Medlem i " + maaneder + (maaneder === 1 ? " måned" : " måneder");
   const aar = Math.floor(maaneder / 12), rest = maaneder % 12;
   return "Medlem i " + aar + " år" + (rest ? " og " + rest + (rest === 1 ? " måned" : " måneder") : "");
+}
+
+// 🟢 "Online i 23 min" eller ⚪ "Ikke online" (tom, hvis vi ikke ved det)
+function onlineBaand(navn) {
+  let sek = null, online = true, sidst = null;
+  const o = kortOnline[navn];
+  if (erComputerGaest(navn)) {
+    sek = (Date.now() - SIDEN_START) / 1000 + (GAEST_ONLINE_MIN[navn] || 20) * 60;
+  } else if (o) {
+    const gaaet = (Date.now() - o.hentet) / 1000;      // tiden siden vi spurgte serveren
+    online = o.online || navn === FIGUR.navn;
+    if (o.sekunder !== null) sek = o.sekunder + gaaet;
+    if (o.sidst !== null) sidst = o.sidst + gaaet;
+  } else if (navn === FIGUR.navn) {
+    sek = (Date.now() - SIDEN_START) / 1000;          // database-22 mangler: tæl fra da du åbnede hotellet
+  } else return "";
+  if (online && sek === null) sek = 0;
+  if (online) return "<p class='sk-baand sk-online'>🟢 Online i " + varighed(sek) + "</p>";
+  return "<p class='sk-baand sk-offline'>⚪ Ikke online" + (sidst !== null ? "<br><small>Sidst set for " + varighed(sidst) + " siden</small>" : "") + "</p>";
+}
+// "under 1 min", "23 min", "1 t 5 min", "2 dage 3 t"
+function varighed(sek) {
+  const min = Math.floor(sek / 60);
+  if (min < 1) return "under 1 min";
+  if (min < 60) return min + " min";
+  const t = Math.floor(min / 60), m = min % 60;
+  if (t < 24) return t + " t" + (m ? " " + m + " min" : "");
+  const d = Math.floor(t / 24), rt = t % 24;
+  return d + (d === 1 ? " dag" : " dage") + (rt ? " " + rt + " t" : "");
 }
 
 // Kortet opdateres, mens det er åbent (andre kan jo sætte hjerter imens)
@@ -359,6 +401,9 @@ kortStil.textContent =
   "#spillerkort .sk-fd { background: #f3dfa6; color: #5a4313; }" +
   "#spillerkort .sk-medlem { background: #d6e8f5; color: #23455e; }" +
   "#spillerkort .sk-medlem small { font-weight: normal; }" +
+  "#spillerkort .sk-online { background: #cdeac0; color: #1f4a1a; }" +
+  "#spillerkort .sk-offline { background: #e4e1d8; color: #5a5a50; }" +
+  "#spillerkort .sk-offline small { font-weight: normal; }" +
   "#spillerkort .sk-forhold { margin-top: 5px; padding: 5px 6px; border-radius: 6px; max-height: 120px; overflow-y: auto; }" +
   "#spillerkort .sk-overskrift { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }" +
   "#spillerkort .sk-tom { display: block; color: #8a8a7a; font-size: 12px; }" +
