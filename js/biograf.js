@@ -1,7 +1,7 @@
 // =============================================================
 //  Biografen 🎬 — et fælles rum med et stort lærred, røde
 //  biografsæder og en popcornmaskine.
-//  - Klik på lærredet (eller skriv :youtube <link>) for at sætte en film på.
+//  - Hotellets ansatte og ejeren klikker på lærredet (eller skriver :youtube <link>) for at sætte en film på.
 //    Filmen vises på lærredet for alle, der er i biografen.
 //  - Sæderne vender ryggen til, mod lærredet. Man kan godt sidde i dem:
 //    så ser man hovedet over ryglænet, ligesom i en rigtig biograf.
@@ -30,6 +30,13 @@ BIOGRAF_MOEBLER.push({ type: "popcorn-maskine", x: 11, y: 2, spejlet: false, ret
 if (!MOEBEL_TYPER["bio-saede"]) console.warn("Biografen: bio-saede mangler i js/moebel-katalog.js (gammel udgave i browseren? Tryk Ctrl+F5)");
 
 function iBiografen() { return rumValg === "vaerelse" && aktivtVaerelse === "biograf"; }
+// YouTube vil ikke afspille i filer åbnet direkte fra computeren (fejl 153), kun på hotellet på nettet
+const BIO_FRA_FIL = location.protocol === "file:";
+// Kun hotellets ansatte (skilte i ANSAT_SKILTE, js/eventrum.js) og ejeren kan sætte film på og stoppe dem
+function maaStyreBio(navn) {
+  navn = navn || FIGUR.navn;
+  return typeof erAnsat === "function" ? erAnsat(navn) : EJERE.indexOf(navn) >= 0;
+}
 
 // Møblerne: det, der er gemt på denne computer, ellers hotellets egne
 const vaerelseMoeblerFoerBio = vaerelseMoebler;
@@ -75,7 +82,7 @@ function bioFraServer(svar) {
   if (!svar || !Array.isArray(svar.spillere) || !iBiografen()) return;
   svar.spillere.forEach(function (s) {
     const b = s.rum === "biograf" && s.sidder && s.sidder.bio;
-    if (b && b.t > bioFilm.t) saetFilm(b.v, b.t, b.af);
+    if (b && b.t > bioFilm.t && maaStyreBio(b.af)) saetFilm(b.v, b.t, b.af);
   });
 }
 
@@ -96,6 +103,10 @@ function vaegFirkant(x1, x2, h1, h2, farve) {
   polygon(ctx, [vaegPunkt(x1, h2), vaegPunkt(x2, h2), vaegPunkt(x2, h1), vaegPunkt(x1, h1)], farve);
 }
 
+// Gardinerne: 1 = trukket for, 0 = trukket fra. Det tager BIO_GARDIN_TID sekunder.
+let bioGardin = 1, bioGardinTid = performance.now();
+const BIO_GARDIN_TID = 1.8;
+
 const tegnVaeggeFoerBio = tegnVaegge;
 tegnVaegge = function () {
   tegnVaeggeFoerBio();
@@ -104,9 +115,9 @@ tegnVaegge = function () {
   // guldramme og lærred
   vaegFirkant(L.fra - 0.12, L.til + 0.12, L.bund - 8, L.top + 8, "#d9a441");
   vaegFirkant(L.fra - 0.06, L.til + 0.06, L.bund - 4, L.top + 4, "#5a2a12");
-  vaegFirkant(L.fra, L.til, L.bund, L.top, bioFilm.v ? "#000000" : "#1c1418");
-  if (!bioFilm.v) {
-    // tekst på det tomme lærred
+  vaegFirkant(L.fra, L.til, L.bund, L.top, bioFilm.v && !BIO_FRA_FIL ? "#000000" : "#1c1418");
+  if (bioFilm.v && BIO_FRA_FIL) {
+    // tekst på lærredet, når filmen ikke kan vises
     const m = vaegPunkt((L.fra + L.til) / 2, (L.bund + L.top) / 2);
     ctx.save();
     ctx.translate(m.x, m.y);
@@ -117,22 +128,47 @@ tegnVaegge = function () {
     ctx.fillText("🎬 HELLO VERA BIO", 0, -10);
     ctx.fillStyle = "#f3e6cc";
     ctx.font = "13px Verdana, sans-serif";
-    ctx.fillText("Klik på lærredet for at sætte en film på", 0, 18);
+    ctx.fillText("Filmen kan kun vises, når hotellet er åbnet på nettet", 0, 18);
     ctx.restore();
-  } else {
+  } else if (bioFilm.v) {
     // hul i lærredet, så filmen (bag ved spillet) kan ses. Figurer foran tegnes oven på.
     ctx.save();
     ctx.globalCompositeOperation = "destination-out";
     polygon(ctx, laerredHjoerner(), "#000000");
     ctx.restore();
   }
-  // røde fløjlsgardiner i begge sider
-  [[L.fra - 1.1, L.fra - 0.1], [L.til + 0.1, L.til + 1.1]].forEach(function (g) {
-    for (let i = 0; i < 6; i++) {
-      const a = g[0] + (g[1] - g[0]) * i / 6, b = g[0] + (g[1] - g[0]) * (i + 1) / 6;
+  // røde fløjlsgardiner: trukket for, når der ingen film er, og de glider til siden, når filmen starter
+  const nu = performance.now();
+  const dt = Math.min(0.1, (nu - bioGardinTid) / 1000);
+  bioGardinTid = nu;
+  const maal = bioFilm.v ? 0 : 1;
+  if (bioGardin < maal) bioGardin = Math.min(maal, bioGardin + dt / BIO_GARDIN_TID);
+  if (bioGardin > maal) bioGardin = Math.max(maal, bioGardin - dt / BIO_GARDIN_TID);
+  const g = bioGardin * bioGardin * (3 - 2 * bioGardin);   // blødt i starten og slutningen
+  const midt = (L.fra + L.til) / 2;
+  [[L.fra - 1.1, L.fra - 0.1 + (midt - L.fra + 0.1) * g], [L.til + 0.1 - (L.til + 0.1 - midt) * g, L.til + 1.1]].forEach(function (side) {
+    const folder = 6 + Math.round(g * 10);                    // flere folder, når gardinet er trukket ud
+    for (let i = 0; i < folder; i++) {
+      const a = side[0] + (side[1] - side[0]) * i / folder, b = side[0] + (side[1] - side[0]) * (i + 1) / folder;
       vaegFirkant(a, b, 0, L.top + 22, i % 2 ? "#8e1622" : "#b0202e");
     }
   });
+  if (g > 0.85) {
+    // guldskrift på de lukkede gardiner
+    const m = vaegPunkt(midt, (L.bund + L.top) / 2);
+    ctx.save();
+    ctx.globalAlpha = (g - 0.85) / 0.15;
+    ctx.translate(m.x, m.y);
+    ctx.transform(1, 0.5, 0, 1, 0, 0);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f2c35a";
+    ctx.font = "bold 26px Georgia, serif";
+    ctx.fillText("🎬 HELLO VERA BIO", 0, -10);
+    ctx.fillStyle = "#fbe7c0";
+    ctx.font = "13px Verdana, sans-serif";
+    ctx.fillText(maaStyreBio() ? "Klik på lærredet for at sætte en film på" : "Filmen starter, når en ansat sætter den på", 0, 18);
+    ctx.restore();
+  }
   vaegFirkant(L.fra - 1.2, L.til + 1.2, L.top + 12, L.top + 30, "#9a1a27");   // kappen foroven
   vaegFirkant(L.fra - 1.2, L.til + 1.2, L.top + 10, L.top + 13, "#d9a441");
   // små guldlamper på væggen
@@ -173,7 +209,7 @@ laerred.parentNode.insertBefore(bioSkaerm, laerred);   // før lærredet = bag v
 
 // Læg filmen præcis over lærredet på væggen (følger med, når man trækker og zoomer)
 function placerBioSkaerm() {
-  const vis = iBiografen() && !!bioFilm.v;
+  const vis = iBiografen() && !!bioFilm.v && !BIO_FRA_FIL;
   if (bioSkaerm.hidden === vis) bioSkaerm.hidden = !vis;
   if (vis) {
     const r = laerred.getBoundingClientRect();
@@ -200,7 +236,10 @@ function saetFilm(v, t, af) {
   if (!nyFilm) return;
   if (bioFilm.v) {
     const start = Math.max(0, Math.floor((Date.now() - t) / 1000));
-    bioSkaerm.src = "https://www.youtube-nocookie.com/embed/" + v + "?autoplay=1&controls=0&rel=0&playsinline=1&enablejsapi=1&start=" + start;
+    // origin: YouTube vil vide, hvilken side der viser filmen (ellers fejl 153)
+    if (!BIO_FRA_FIL) bioSkaerm.src = "https://www.youtube-nocookie.com/embed/" + v + "?autoplay=1&controls=0&rel=0&playsinline=1&enablejsapi=1&start=" + start +
+      "&origin=" + encodeURIComponent(location.origin);
+    document.getElementById("bio-aaben").href = "https://www.youtube.com/watch?v=" + v + (start ? "&t=" + start + "s" : "");
     if (af && af !== FIGUR.navn) besked.textContent = "🎬 " + af + " satte en film på lærredet.";
   } else {
     bioSkaerm.removeAttribute("src");
@@ -210,6 +249,7 @@ function saetFilm(v, t, af) {
 }
 
 function visFilm(link) {
+  if (!maaStyreBio()) { besked.textContent = "🎬 Kun hotellets ansatte kan sætte film på i biografen."; return; }
   const id = youtubeId(link);
   if (!id) { bioTekst("Det ligner ikke et YouTube-link. Prøv at kopiere linket igen.", true); return; }
   saetFilm(id, Date.now(), FIGUR.navn);
@@ -217,11 +257,12 @@ function visFilm(link) {
   svaev("🎬");
 }
 function stopFilm() {
+  if (!maaStyreBio()) return;
   saetFilm(null, Date.now(), FIGUR.navn);
   besked.textContent = "⏹ Du stoppede filmen.";
 }
 
-// :youtube virker for alle i biografen og viser filmen på lærredet (i stedet for tv-vinduet)
+// :youtube virker for de ansatte i biografen og viser filmen på lærredet (i stedet for tv-vinduet)
 if (typeof maaViseYoutube === "function") {
   const maaViseYoutubeFoerBio = maaViseYoutube;
   maaViseYoutube = function () { return iBiografen() || maaViseYoutubeFoerBio(); };
@@ -249,7 +290,8 @@ bioStil.textContent =
   "#bio-vindue input { flex: 1; min-width: 0; padding: 7px 8px; border: 2px solid #d9a441; border-radius: 8px; background: #fff; color: #4a1a22; }" +
   "#bio-vindue .bio-knapper { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }" +
   "#bio-vindue button.bio-k { padding: 6px 10px; border: 2px solid #b3202f; border-radius: 8px; background: #7a1b2b; color: #fff6e0; font-weight: bold; cursor: pointer; }" +
-  "#bio-vindue button.bio-k.lys { background: #fbf3e4; color: #7a1b2b; }" +
+  "#bio-vindue .bio-k.lys { background: #fbf3e4; color: #7a1b2b; }" +
+  "#bio-vindue a.bio-k { padding: 6px 10px; border: 2px solid #b3202f; border-radius: 8px; font-weight: bold; text-decoration: none; }" +
   "#bio-vindue p { margin: 8px 0 0; line-height: 1.35; }" +
   "#bio-vindue p.fejl { color: #b3202f; font-weight: bold; }";
 document.head.appendChild(bioStil);
@@ -266,6 +308,7 @@ bioVindue.innerHTML =
   '    <button class="bio-k lys" type="button" id="bio-spil">▶ Fortsæt</button>' +
   '    <button class="bio-k lys" type="button" id="bio-lyd">🔊 Lyd på</button>' +
   '    <button class="bio-k" type="button" id="bio-stop">⏹ Stop filmen</button>' +
+  '    <a class="bio-k lys" id="bio-aaben" target="_blank" rel="noopener">↗ Åbn på YouTube</a>' +
   '  </div>' +
   '  <p id="bio-tekst"></p>' +
   '</div>';
@@ -279,10 +322,15 @@ function bioTekst(tekst, fejl) {
 }
 function visBioVindue(aaben) {
   if (aaben) bioVindue.hidden = false;
+  const styrer = maaStyreBio();
   document.getElementById("bio-knapper").hidden = !bioFilm.v;
-  if (bioFilm.v) bioTekst("🎞 Filmen kører" + (bioFilm.af ? " (sat på af " + bioFilm.af + ")" : "") + ". Alle i biografen ser den samme film." +
-    (location.protocol === "file:" ? " Viser lærredet en fejl? YouTube vil ikke afspille i filer åbnet direkte fra computeren. Prøv hotellet på nettet." : ""));
-  else bioTekst("Sæt et link ind fra YouTube, og tryk ▶ Vis film. Alle i biografen ser filmen på lærredet.");
+  document.getElementById("bio-form").hidden = !styrer;            // andre kan kun se med (og selv sætte på pause / skrue op)
+  document.getElementById("bio-stop").hidden = !styrer;
+  if (bioFilm.v && BIO_FRA_FIL) bioTekst("Du har åbnet hotellet direkte fra computeren, og så vil YouTube ikke vise filmen (fejl 153). " +
+    "Åbn hotellet på nettet (pavlakvist.github.io/Hotel), eller tryk ↗ Åbn på YouTube.", true);
+  else if (bioFilm.v) bioTekst("🎞 Filmen kører" + (bioFilm.af ? " (sat på af " + bioFilm.af + ")" : "") + ". Alle i biografen ser den samme film.");
+  else if (styrer) bioTekst("Sæt et link ind fra YouTube, og tryk ▶ Vis film. Alle i biografen ser filmen på lærredet.");
+  else bioTekst("Der kører ingen film lige nu. Kun hotellets ansatte kan sætte film på. Find et sæde, og hent popcorn 🍿");
 }
 
 document.getElementById("bio-luk").addEventListener("click", function () { bioVindue.hidden = true; });
@@ -322,8 +370,9 @@ skiftRum = function (navn) {
   const varHer = iBiografen();
   skiftRumFoerBio(navn);
   if (iBiografen() && !varHer) {
-    besked.textContent = "Velkommen i Biografen 🎬 Klik på lærredet for at vælge en film, og hent popcorn 🍿";
-    visBioVindue(true);
+    besked.textContent = maaStyreBio() ? "Velkommen i Biografen 🎬 Klik på lærredet for at vælge en film, og hent popcorn 🍿"
+      : "Velkommen i Biografen 🎬 Find et sæde, og hent popcorn 🍿";
+    visBioVindue(maaStyreBio());
   }
   if (!iBiografen() && varHer) {
     bioFilm = { v: null, t: 0, af: "" };
