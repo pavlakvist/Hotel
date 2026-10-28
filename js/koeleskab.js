@@ -7,11 +7,11 @@
 //  så der skal ikke køres noget nyt i databasen.
 // =============================================================
 
-// Maden. "raekke" er rækken i billeder/mad/mad.png (4 billeder: hel, 1 bid, 2 bid, 3 bid)
+// Maden. "raekke" er rækken i billeder/mad/mad.png (4 billeder à 48x64: hel, 1 bid, 2 bid, 3 bid)
 const MAD = {
-  gulerod:  { navn: "gulerod",  hvad: "en gulerod",  tegn: "🥕", raekke: 0, lyd: "Nam!",   goer: "spiser" },
-  sodavand: { navn: "sodavand", hvad: "en sodavand", tegn: "🥤", raekke: 1, lyd: "Slurp!", goer: "drikker" },
-  is:       { navn: "is",       hvad: "en is",       tegn: "🍦", raekke: 2, lyd: "Mmm!",   goer: "spiser" },
+  gulerod:  { navn: "gulerod",  hvad: "en gulerod",  tegn: "🥕", raekke: 0, lyd: "Nam!",   goer: "spiser", greb: 0.5 },
+  sodavand: { navn: "sodavand", hvad: "en sodavand", tegn: "🥤", raekke: 1, lyd: "Slurp!", goer: "drikker", greb: 0.55 },
+  is:       { navn: "is",       hvad: "en is",       tegn: "🍦", raekke: 2, lyd: "Mmm!",   goer: "spiser", greb: 0.72 },
 };
 const MAD_BILLEDE = "billeder/mad/mad.png";
 const MAD_BIDDER = 4;           // så mange bidder, så er den væk
@@ -195,23 +195,72 @@ function spis(h, hvem, regnSelv) {
   return h.bid >= MAD_BIDDER;
 }
 
+// Hvor hånden er (i forhold til figurens højde), og hvor stor maden tegnes
+const MAD_HAAND = { x: 0.13, y: 0.36, mund: 0.76, sidY: 0.22, sidMund: 0.5, b: 15, h: 20 };
+const MAD_CELLE = [48, 64];   // størrelsen på hvert billede i mad.png
+
+// En lille knyttet hånd om maden (billeder/mad/haand.png, tegnet med kode).
+// Ét billede pr. hudfarve: pige, dreng, Pige (tøj) og en lys, der farves, hvis man selv har valgt hudfarve.
+const HAAND_BILLEDE = "billeder/mad/haand.png";
+const HAAND_CELLER = { pige: 0, dreng: 1, pigetoej: 2, lys: 3 };
+const HAAND_FARVET = {};   // hudfarve -> lærred med hånden i den farve
+function haandKilde(valg) {
+  const b = hentBillede(HAAND_BILLEDE);
+  if (!billedeKlar(b)) return null;
+  const egen = valg && valg.farver && valg.farver[valg.type] && valg.farver[valg.type].hud;
+  if (!egen) {
+    const n = HAAND_CELLER[valg && valg.type];
+    return { b: b, sx: (n === undefined ? 3 : n) * 24 };
+  }
+  // man har selv valgt hudfarve: farv den lyse hånd
+  if (!HAAND_FARVET[egen]) {
+    const c = document.createElement("canvas");
+    c.width = 24; c.height = 24;
+    const g = c.getContext("2d");
+    g.drawImage(b, 72, 0, 24, 24, 0, 0, 24, 24);
+    g.globalCompositeOperation = "multiply";
+    g.fillStyle = egen;
+    g.fillRect(0, 0, 24, 24);
+    g.globalCompositeOperation = "destination-in";
+    g.drawImage(b, 72, 0, 24, 24, 0, 0, 24, 24);
+    HAAND_FARVET[egen] = c;
+  }
+  return { b: HAAND_FARVET[egen], sx: 0 };
+}
+// tommelen skal vende væk fra kroppen, så billedet spejles, når hånden er i venstre side
+function tegnNaeve(x, y, side, valg) {
+  const k = haandKilde(valg);
+  if (!k) return;
+  const s = 10;   // hvor stor hånden tegnes
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.translate(x, y);
+  if (side < 0) ctx.scale(-1, 1);
+  ctx.drawImage(k.b, k.sx, 0, 24, 24, -s * 11.5 / 24, -s * 12 / 24, s, s);
+  ctx.restore();
+}
+
 // Tegn tingen i hånden. p = fødderne, hoejde = figurens højde, side = 1 (højre) / -1 (venstre)
-function tegnMad(h, p, hoejde, side, sidder) {
+function tegnMad(h, p, hoejde, side, sidder, valg) {
   const b = hentBillede(MAD_BILLEDE);
   if (!billedeKlar(b)) return;
   const mad = MAD[h.ting];
   // et bid: hånden går op til munden og ned igen (0,9 sekund)
   const t = h.loeft ? (performance.now() - h.loeft) / 900 : 1;
   const op = t < 1 ? Math.sin(Math.min(1, t) * Math.PI) : 0;
-  const haandY = p.y - hoejde * (sidder ? 0.2 : 0.4);
-  const mundY = p.y - hoejde * (sidder ? 0.5 : 0.74);
-  const x = p.x + side * (13 - op * 9);
+  // hånden hænger ned ved siden af kroppen; maden holdes, så hånden er midt på den
+  const haandY = p.y - hoejde * (sidder ? MAD_HAAND.sidY : MAD_HAAND.y);
+  const mundY = p.y - hoejde * (sidder ? MAD_HAAND.sidMund : MAD_HAAND.mund);
+  const x = p.x + side * hoejde * (MAD_HAAND.x - op * (MAD_HAAND.x - 0.05));
   const y = haandY + (mundY - haandY) * op;
   const stadie = Math.min(3, h.bid);
   ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(b, stadie * 24, mad.raekke * 32, 24, 32, Math.round(x - 10), Math.round(y - 24), 21, 28);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(b, stadie * MAD_CELLE[0], mad.raekke * MAD_CELLE[1], MAD_CELLE[0], MAD_CELLE[1], Math.round(x - MAD_HAAND.b / 2), Math.round(y - MAD_HAAND.h * mad.greb), MAD_HAAND.b, MAD_HAAND.h);
   ctx.restore();
+  tegnNaeve(x, y, side, valg);
   // "Nam!" når biddet bliver taget
   if (h.loeft && t > 0.45 && h.ordSagt !== h.loeft) { h.ordSagt = h.loeft; madOrd(mad.lyd, x, mundY - 12); }
 }
@@ -238,7 +287,7 @@ function tegnMadOrd() {
 function madSide(retning, vendt) {
   if (/hoejre/.test(retning)) return 1;
   if (/venstre/.test(retning)) return -1;
-  return vendt || 1;
+  return -1;   // lige forfra: højre hånd, som er til venstre på skærmen
 }
 
 // Hvor står figuren? (samme regning som tegnFigur / tegnHalGaest)
@@ -268,7 +317,7 @@ tegnFigur = function (c) {
   }
   const sidde = figur.sidde && figur.sidde.grad > 0.4 ? figur.sidde.moebel : null;
   const p = madFod(figur, garderobe, sidde);
-  tegnMad(minHaand, p, figurHoejde(garderobe), madSide(figur.retning, figur.vendt), !!sidde);
+  tegnMad(minHaand, p, figurHoejde(garderobe), madSide(figur.retning, figur.vendt), !!sidde, garderobe);
 };
 
 // de andre: computer-gæsterne og de rigtige spillere
@@ -290,7 +339,7 @@ tegnHalGaest = function (g) {
   }
   if (!h) return;
   const p = madFod(g, g.valg, g.sidder ? g.saede : null);
-  tegnMad(h, p, figurHoejde(g.valg), madSide(g.retning, 1), !!g.sidder);
+  tegnMad(h, p, figurHoejde(g.valg), madSide(g.retning, 1), !!g.sidder, g.valg);
 };
 
 const tegnBoblerFoerMad = tegnBobler;

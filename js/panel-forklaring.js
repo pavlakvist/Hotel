@@ -162,3 +162,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/koeleskab.js?v=1";
   document.body.appendChild(s);
 })();
+
+// 🌿 Skånsom visning (js/skaansom.js): rarere for øjnene, knap øverst ved 🚪 Log ud.
+(function () {
+  if (document.querySelector("script[src^='js/skaansom.js']")) return;   // står den allerede i hotel.html?
+  const s = document.createElement("script");
+  s.src = "js/skaansom.js?v=1";
+  document.body.appendChild(s);
+})();
