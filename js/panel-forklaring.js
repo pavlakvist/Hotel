@@ -154,3 +154,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/event-vindere.js?v=1";
   document.body.appendChild(s);
 })();
+
+// 🧊 Køleskabet med gulerod, sodavand og is (js/koeleskab.js) hentes også herfra.
+(function () {
+  if (document.querySelector("script[src^='js/koeleskab.js']")) return;   // står den allerede i hotel.html?
+  const s = document.createElement("script");
+  s.src = "js/koeleskab.js?v=1";
+  document.body.appendChild(s);
+})();
