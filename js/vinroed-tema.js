@@ -67,7 +67,12 @@ function vinRegler(regler) {
 }
 function vinArk(ark) {
   if (!ark || vinFaerdige.has(ark)) return;
-  try { vinRegler(ark.cssRules); vinFaerdige.add(ark); } catch (e) {}   // et ark, der ikke er klar endnu, prøves igen senere
+  try { vinRegler(ark.cssRules); vinFaerdige.add(ark); }
+  catch (e) {
+    // Firefox må ikke læse stilarket, når hotellet åbnes fra computeren (file:///).
+    // Så farves hvert element i stedet (se vinElementer herunder).
+    if (e && e.name === "SecurityError") setTimeout(vinStartElementer, 0);
+  }
 }
 function vinAlleArk() {
   for (let i = 0; i < document.styleSheets.length; i++) vinArk(document.styleSheets[i]);
@@ -85,6 +90,53 @@ new MutationObserver(function (liste) {
 }).observe(document.documentElement, { childList: true, subtree: true });
 window.addEventListener("load", vinAlleArk);
 setTimeout(vinAlleArk, 1500);
+
+// ----- Reserve: farv elementerne ét for ét -----
+// Bruges kun, når stilarket ikke kan læses (Firefox + file:///).
+const VIN_EGENSKABER = ["color", "background-color", "background-image", "border-top-color", "border-right-color",
+  "border-bottom-color", "border-left-color", "outline-color", "box-shadow"];
+const vinGemt = new WeakMap();     // element → dets egen stil, før det blev farvet
+let vinElementerTil = false, vinKoe = new Set(), vinVenter = false;
+function vinEt(el) {
+  if (vinGemt.has(el)) el.style.cssText = vinGemt.get(el);
+  const egen = el.style;
+  const cs = getComputedStyle(el);
+  const nye = [];
+  VIN_EGENSKABER.forEach(function (eg) {
+    if (egen.getPropertyValue(eg) || (eg === "background-color" && egen.getPropertyValue("background"))) return;  // selvvalgt farve
+    const v = cs.getPropertyValue(eg);
+    if (!v || v === "none" || v.indexOf("rgb") < 0 || v.indexOf("url(") >= 0) return;
+    const ny = vinTekst(v);
+    if (ny !== v) nye.push([eg, ny]);
+  });
+  if (!nye.length) return;
+  if (!vinGemt.has(el)) vinGemt.set(el, egen.cssText);
+  nye.forEach(function (x) { egen.setProperty(x[0], x[1], "important"); });
+}
+function vinKoeEl(el) {
+  if (el.nodeType !== 1 || el.closest("canvas, .bs-farver, .bs-forhaand, .or-farver")) return;
+  vinKoe.add(el);
+  if (!vinVenter) { vinVenter = true; requestAnimationFrame(vinTomKoe); }
+}
+function vinTomKoe() {
+  vinVenter = false;
+  const liste = Array.from(vinKoe); vinKoe.clear();
+  liste.forEach(function (el) { if (el.isConnected) vinEt(el); });
+}
+function vinStartElementer() {
+  if (vinElementerTil) return;
+  vinElementerTil = true;
+  document.querySelectorAll("body *").forEach(vinKoeEl);
+  new MutationObserver(function (liste) {
+    liste.forEach(function (m) {
+      if (m.type === "attributes") { vinKoeEl(m.target); m.target.querySelectorAll("*").forEach(vinKoeEl); return; }
+      m.addedNodes.forEach(function (n) {
+        if (n.nodeType !== 1) return;
+        vinKoeEl(n); n.querySelectorAll("*").forEach(vinKoeEl);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+}
 
 // ----- Navneskiltene over figurerne (tegnes i spillet, ikke med CSS) -----
 const VIN_LAERRED = { "#4e7d4a": "#8a2a3e", "#2f4a2b": "#5a1626", "#e7f3e2": "#f7e7cf" };

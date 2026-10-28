@@ -175,6 +175,6 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vinroed-tema.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vinroed-tema.js?v=1";
+  s.src = "js/vinroed-tema.js?v=2";
   document.body.appendChild(s);
 })();
