@@ -20,6 +20,31 @@ MOEBLER.length = 0;
 //  klipper:  ét billede for hver retning: ned-venstre, ned-højre, op-højre (ryggen), op-venstre
 //  felter:   [bredde, dybde] i felter (sofaen og sofabordet fylder 2)
 // -------------------------------------------------------------
+// -------------------------------------------------------------
+//  STANDARD FOR NYE MØBLER (28/10): ét PNG-billede pr. retning
+//
+//  - Hvert billede er ÉN PNG-fil med ÉT møbel og ægte gennemsigtig baggrund
+//    (ingen ark, ingen collage, ingen hvid eller ternet baggrund).
+//  - Billederne tegnes 1:1: ét gulvfelt er 96 x 48 pixels, så billedet skal
+//    være i den størrelse, møblet skal have i spillet (skala 1, ingen "skala").
+//    Bredden er ca. (bredde + dybde i felter) x 48 px, fx stol 1x1 = ca. 96-104 px,
+//    sofa 2x1 = ca. 144-150 px. Pigen er ca. 128 px høj.
+//  - Bunden af billedet er møblets forreste hjørne på gulvet (benene står på gulvet).
+//    Hvis det ikke passer, skriv "anker": [x, y] = den pixel i billedet, der skal stå
+//    på det forreste hjørne (eller "ankre": én [x, y] pr. retning).
+//  - Lige så lidt tom kant som muligt, men plads til en lille skygge.
+//  - Filerne ligger i billeder/moebler/<id>/<id>-0.png ... <id>-3.png:
+//      0 = vender ned mod venstre (set skråt forfra fra højre)
+//      1 = vender ned mod højre   (set skråt forfra fra venstre)
+//      2 = ryggen til, op mod højre
+//      3 = ryggen til, op mod venstre
+//    Mangler en retning, skriv null, så springer "Drej" den over.
+//  - felter: [bredde, dybde] i felter. saede: hvor højt sædet er, i pixels.
+// -------------------------------------------------------------
+MOEBLER.push(
+  {"id": "test-laenestol", "navn": "Orange lænestol (test)", "retninger": ["billeder/moebler/laenestol/laenestol-0.png", "billeder/moebler/laenestol/laenestol-1.png", "billeder/moebler/laenestol/laenestol-2.png", "billeder/moebler/laenestol/laenestol-3.png"], "kategori": "Nye møbler", "saede": 19},
+);
+
 MOEBLER.push(
   {"id": "ny-sofa", "navn": "Rød sofa", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 0, 382, 255], [386, 0, 382, 255], [772, 0, 378, 225], [1154, 0, 378, 225]], "klip": [0, 0, 382, 255], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1], "saede": 19},
   {"id": "ny-laenestol", "navn": "Rød lænestol", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 259, 190, 207], [194, 259, 190, 207], [388, 259, 190, 177], [582, 259, 190, 177]], "klip": [0, 259, 190, 207], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "saede": 19},

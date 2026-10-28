@@ -108,6 +108,46 @@ function billedeKlar(b) {
   return b && b.complete && b.naturalWidth > 0;
 }
 
+// Advarer i konsollen (F12), hvis et møbelbillede ikke har gennemsigtig baggrund
+// (alle fire hjørner er helt faste). Virker ikke altid fra file://, så fejl ignoreres.
+function tjekGennemsigtig(b, sti) {
+  try {
+    const c = document.createElement("canvas");
+    c.width = b.naturalWidth; c.height = b.naturalHeight;
+    const k = c.getContext("2d");
+    k.drawImage(b, 0, 0);
+    const hjoerner = [[0, 0], [c.width - 1, 0], [0, c.height - 1], [c.width - 1, c.height - 1]];
+    const faste = hjoerner.every(function (h) { return k.getImageData(h[0], h[1], 1, 1).data[3] === 255; });
+    if (faste) console.warn("Møbelbilledet har ingen gennemsigtig baggrund: " + sti);
+  } catch (e) {}
+}
+
+// Møbler med ét PNG-billede for hver retning ("retninger" i js/moebel-katalog.js).
+// De virker som møblerne med 4 klip ("klipper"), men hver retning er sin egen fil,
+// så der aldrig klippes, spejles eller drejes i billedet.
+function forberedRetninger(t) {
+  t.billede = t.billede || t.retninger.find(Boolean);   // til ikoner i shop, lager og møbel-boksen
+  t.klipper = t.retninger.map(function (sti) { return sti ? [0, 0, 0, 0] : null; });
+  t.retninger.forEach(function (sti, r) {
+    if (!sti) return;
+    const b = hentBillede(sti);
+    function klar() { t.klipper[r] = [0, 0, b.naturalWidth, b.naturalHeight]; tjekGennemsigtig(b, sti); }
+    if (billedeKlar(b)) klar(); else b.addEventListener("load", klar);
+  });
+}
+MOEBLER.forEach(function (t) { if (Array.isArray(t.retninger)) forberedRetninger(t); });
+
+// Ankerpunktet: det sted i billedet (i billedets egne pixels), der skal stå på
+// møblets forreste hjørne på gulvet. Kan skrives i kataloget som "anker": [x, y]
+// eller "ankre": [[x, y], ...] (ét pr. retning). Ellers regnes det ud: bunden af
+// billedet, og vandret dér, hvor det forreste hjørne er, når møblet står midt i billedet.
+function moebelAnker(type, bredde, hoejde, retning) {
+  const a = (type.ankre && type.ankre[retning]) || type.anker;
+  if (a) return a;
+  const f = moebelFelter(type, retning % 2 === 1);
+  return [bredde / 2 + (f[0] - f[1]) * FLISE_B / 4 / (type.skala || 1), hoejde];
+}
+
 
 // =============================================================
 //  Omregning mellem felter og skærm
@@ -264,6 +304,7 @@ function saetDig(m) {
   if (t.klipper && (m.retning || 0) >= 2) {
     // figurerne har endnu ingen billeder af at sidde bagfra
     besked.textContent = "Drej stolen, så den vender ud mod dig, for at sætte dig.";
+    traedAfMoeblet(m);
     return;
   }
   let plads = ledigPlads(m, figur);
@@ -488,6 +529,17 @@ const TEGNINGER = {
 
 // Tegner et møbel med midten af feltet i (cx, cy)
 function tegnMoebel(c, type, cx, cy, spejlet, retning) {
+  if (type.retninger) {
+    // ét billede pr. retning: tegnes 1:1 (skala 1), med ankerpunktet på det forreste hjørne
+    const r = retning || 0;
+    const rb = hentBillede(type.retninger[r] || type.billede);
+    if (billedeKlar(rb)) {
+      const s = type.skala || 1;
+      const a = moebelAnker(type, rb.naturalWidth, rb.naturalHeight, r);
+      c.drawImage(rb, cx - a[0] * s, cy + FLISE_H / 2 - a[1] * s, rb.naturalWidth * s, rb.naturalHeight * s);
+      return;
+    }
+  }
   const b = hentBillede(type.billede);
   if (billedeKlar(b)) {
     // Dit eget billede: bunden af billedet står på feltets nederste spids
@@ -896,11 +948,26 @@ function tegnMarkering() {
 
 // Passer sædet stadig? Er møblet taget op, drejet eller flyttet (måske af en anden),
 // så rejser figuren sig eller følger med sin plads i sofaen.
+// Når figuren rejser sig, fordi møblet er drejet med ryggen til, skal den træde
+// ned på et ledigt felt ved siden af (ellers står den inde i møblet og spærrer for "Drej")
+function traedAfMoeblet(m) {
+  const f = figurFelt();
+  if (!daekker(m, f.x, f.y)) return;
+  let bedst = null;
+  for (let x = m.x - 1; x <= m.x + 3; x++) for (let y = m.y - 1; y <= m.y + 3; y++) {
+    if (!kanGaa(x, y)) continue;
+    const afstand = Math.abs(x - f.x) + Math.abs(y - f.y);
+    if (!bedst || afstand < bedst.afstand) bedst = { x: x, y: y, afstand: afstand };
+  }
+  if (bedst) { figur.x = bedst.x; figur.y = bedst.y; figur.rute = []; }
+}
+
 function tjekSaede() {
   if (!figur.sidde) return;
   const m = figur.sidde.moebel;
   const t = MOEBEL_TYPER[m.type] || {};
-  if (moeblerIRummet.indexOf(m) < 0 || (t.klipper && (m.retning || 0) >= 2)) { figur.sidde = null; return; }
+  if (moeblerIRummet.indexOf(m) < 0) { figur.sidde = null; return; }
+  if (t.klipper && (m.retning || 0) >= 2) { figur.sidde = null; traedAfMoeblet(m); return; }
   if (!t.klipper) return;
   const felt = pladsFelt(m, figur.sidde.plads);
   figur.x = felt.x;
@@ -1075,7 +1142,7 @@ function drejValgt() {
     }
     valgtMoebel.retning = r;
     if (figur.sidde && figur.sidde.moebel === valgtMoebel) {
-      if (r >= 2) figur.sidde = null;
+      if (r >= 2) { figur.sidde = null; traedAfMoeblet(valgtMoebel); }
       else vendFraRyglaenet(valgtMoebel);
     }
     gem();

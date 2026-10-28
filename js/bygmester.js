@@ -118,7 +118,8 @@ drejValgt = function () {
   const t = MOEBEL_TYPER[valgtMoebel.type] || {};
   if (t.klipper) {
     // de nye møbler har 4 retninger (se drejValgt i js/spil.js)
-    const r = ((valgtMoebel.retning || 0) + 1) % 4;
+    let r = valgtMoebel.retning || 0;
+    for (let i = 0; i < 4; i++) { r = (r + 1) % 4; if (t.klipper[r]) break; }   // spring retninger uden billede over
     if (!pladsTil(t, valgtMoebel.x, valgtMoebel.y, r % 2 === 1, valgtMoebel)) return;
     valgtMoebel.retning = r;
   } else valgtMoebel.spejlet = !valgtMoebel.spejlet;
