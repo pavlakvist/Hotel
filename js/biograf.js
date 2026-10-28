@@ -113,7 +113,7 @@ function vaegFirkant(x1, x2, h1, h2, farve) {
 
 // Gardinerne: 1 = trukket for, 0 = trukket fra. Det tager BIO_GARDIN_TID sekunder.
 let bioGardin = 1, bioGardinTid = performance.now();
-const BIO_GARDIN_TID = 5;   // sekunder om at rulle fra (og for igen)
+const BIO_GARDIN_TID = 10;   // sekunder om at rulle fra (og for igen)
 const BIO_MOERKE = 0.62;   // hvor mørkt der bliver i salen, når filmen kører (0 = lyst, 1 = helt sort)
 
 const tegnVaeggeFoerBio = tegnVaegge;
@@ -216,10 +216,35 @@ bioSkaerm.hidden = true;
 laerred.parentNode.insertBefore(bioSkaerm, laerred);   // før lærredet = bag ved det
 
 // Læg filmen præcis over lærredet på væggen (følger med, når man trækker og zoomer)
+// Stor skærm: filmen vises stort midt på skærmen (kun hos dig selv)
+let bioStor = false;
+const bioStorBag = document.createElement("div");
+bioStorBag.id = "bio-stor-bag";
+bioStorBag.hidden = true;
+bioStorBag.style.cssText = "position: fixed; inset: 0; z-index: 8999; background: rgba(10, 0, 4, 0.88);";
+bioStorBag.innerHTML = '<button type="button" id="bio-lille" style="position: fixed; top: 14px; right: 16px; z-index: 9001; padding: 8px 14px; border: 2px solid #d9a441; ' +
+  'border-radius: 8px; background: #7a1b2b; color: #f7dfa0; font-weight: bold; cursor: pointer;">✕ Lille skærm</button>';
+document.body.appendChild(bioStorBag);
+function saetStor(stor) {
+  bioStor = stor;
+  bioStorBag.hidden = !stor;
+  bioSkaerm.style.zIndex = stor ? "9000" : "";
+  const k = document.getElementById("bio-stor");
+  if (k) k.textContent = stor ? "✕ Lille skærm" : "⛶ Stor skærm";
+}
+document.getElementById("bio-lille").addEventListener("click", function () { saetStor(false); });
+document.addEventListener("keydown", function (e) { if (e.key === "Escape" && bioStor) saetStor(false); });
+
 function placerBioSkaerm() {
   const vis = iBiografen() && !!bioFilm.v && !BIO_FRA_FIL;
   if (bioSkaerm.hidden === vis) bioSkaerm.hidden = !vis;
-  if (vis) {
+  if (!vis && bioStor) saetStor(false);
+  if (vis && bioStor) {
+    const w = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.82 * 16 / 9), h = w * 9 / 16;
+    bioSkaerm.style.width = w + "px"; bioSkaerm.style.height = h + "px";
+    bioSkaerm.style.transform = "translate(" + (window.innerWidth - w) / 2 + "px," + (window.innerHeight - h) / 2 + "px)";
+  } else if (vis) {
+    bioSkaerm.style.width = "750px"; bioSkaerm.style.height = "375px";
     const r = laerred.getBoundingClientRect();
     const sx = r.width / BREDDE, sy = r.height / HOEJDE;
     const h = laerredHjoerner();
@@ -302,7 +327,8 @@ bioStil.textContent =
   "#bio-vindue .bio-k.lys { background: #fbf3e4; color: #7a1b2b; }" +
   "#bio-vindue a.bio-k { padding: 6px 10px; border: 2px solid #b3202f; border-radius: 8px; font-weight: bold; text-decoration: none; }" +
   "#bio-vindue p { margin: 8px 0 0; line-height: 1.35; }" +
-  "#bio-vindue p.fejl { color: #b3202f; font-weight: bold; }";
+  "#bio-vindue p.fejl { color: #b3202f; font-weight: bold; }" +
+  "#bio-vindue [hidden] { display: none !important; }";
 document.head.appendChild(bioStil);
 
 const bioVindue = document.createElement("div");
@@ -314,6 +340,7 @@ bioVindue.innerHTML =
   '  <form id="bio-form"><input id="bio-link" type="text" placeholder="Sæt et YouTube-link ind …"><button class="bio-k" type="submit">▶ Vis film</button></form>' +
   '  <div class="bio-knapper" id="bio-knapper">' +
   '    <button class="bio-k lys" type="button" id="bio-pause">⏸ Pause</button>' +
+  '    <button class="bio-k lys" type="button" id="bio-stor">⛶ Stor skærm</button>' +
   '    <button class="bio-k lys" type="button" id="bio-lyd">🔊 Lyd på</button>' +
   '    <button class="bio-k" type="button" id="bio-stop">⏹ Stop filmen</button>' +
   '    <a class="bio-k lys" id="bio-aaben" target="_blank" rel="noopener">↗ Åbn på YouTube</a>' +
@@ -337,6 +364,7 @@ function visBioVindue(aaben) {
   document.getElementById("bio-stop").hidden = !styrer;
   document.getElementById("bio-lyd").hidden = !styrer;
   document.getElementById("bio-aaben").hidden = !styrer && !BIO_FRA_FIL;
+  document.getElementById("bio-stor").hidden = BIO_FRA_FIL;
   document.getElementById("bio-pause").textContent = bioPauset ? "▶ Fortsæt" : "⏸ Pause";
   if (bioFilm.v && BIO_FRA_FIL) bioTekst("Du har åbnet hotellet direkte fra computeren, og så vil YouTube ikke vise filmen (fejl 153). " +
     "Åbn hotellet på nettet (pavlakvist.github.io/Hotel), eller tryk ↗ Åbn på YouTube.", true);
@@ -359,6 +387,7 @@ document.getElementById("bio-pause").addEventListener("click", function () {   /
 });
 document.getElementById("bio-lyd").addEventListener("click", function () { bioKommando("unMute"); bioKommando("setVolume"); bioKommando("playVideo"); });
 document.getElementById("bio-stop").addEventListener("click", stopFilm);
+document.getElementById("bio-stor").addEventListener("click", function () { saetStor(!bioStor); });
 
 // Klik på lærredet åbner vinduet
 function overLaerredet(e) {
