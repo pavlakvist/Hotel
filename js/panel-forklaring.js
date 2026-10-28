@@ -178,3 +178,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vinroed-tema.js?v=2";
   document.body.appendChild(s);
 })();
+
+// 🎵 Elevatormusik (js/elevator-musik.js): hyggelig musik i elevatoren, med 🔊/🔇-knap.
+(function () {
+  if (document.querySelector("script[src^='js/elevator-musik.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/elevator-musik.js?v=1";
+  document.body.appendChild(s);
+})();
