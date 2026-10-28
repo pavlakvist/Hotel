@@ -42,6 +42,7 @@ create table if not exists public.hv_rare_log (
   pris integer,
   tid timestamptz not null default now()
 );
+alter table public.hv_vindere add column if not exists stil jsonb;   -- {"farve": "guld", "effekt": "glimmer"}
 alter table public.hv_eventnoter enable row level security;
 alter table public.hv_vindere enable row level security;
 alter table public.hv_gevinster enable row level security;
@@ -99,7 +100,8 @@ begin
 end $$;
 
 -- 🏆 Skriv vinderne ind (ejeren, Eventværter og Eventfolk). Hver vinder får én gratis ting.
-create or replace function public.hv_vindere_saet(p_token uuid, p_event text, p_navne text, p_gevinst text)
+drop function if exists public.hv_vindere_saet(uuid, text, text, text);
+create or replace function public.hv_vindere_saet(p_token uuid, p_event text, p_navne text, p_gevinst text, p_stil jsonb default null)
 returns json language plpgsql security definer set search_path = public as $$
 declare s hv_spillere; v_id bigint; v_navne jsonb := '[]'::jsonb; v_ukendte text[] := '{}'; n text; o hv_spillere;
 begin
@@ -117,8 +119,10 @@ begin
     raise exception 'Der findes ingen spiller, der hedder %.', array_to_string(v_ukendte, ', ');
   end if;
   if jsonb_array_length(v_navne) = 0 then raise exception 'Skriv mindst én vinder.'; end if;
-  insert into hv_vindere (hvem, event, navne, gevinst)
-  values (s.navn, left(trim(coalesce(p_event, '')), 80), v_navne, left(trim(coalesce(p_gevinst, '')), 200)) returning id into v_id;
+  insert into hv_vindere (hvem, event, navne, gevinst, stil)
+  values (s.navn, left(trim(coalesce(p_event, '')), 80), v_navne, left(trim(coalesce(p_gevinst, '')), 200),
+    case when jsonb_typeof(p_stil) = 'object' then jsonb_build_object('farve', left(coalesce(p_stil->>'farve', ''), 20), 'effekt', left(coalesce(p_stil->>'effekt', ''), 20)) end)
+  returning id into v_id;
   insert into hv_gevinster (noegle, navn_lille, navn, grund, event, vinder_id)
   select 'v-' || v_id || '-' || lower(x), lower(x), x, 'vinder', left(trim(coalesce(p_event, '')), 80), v_id
   from jsonb_array_elements_text(v_navne) x
@@ -152,7 +156,7 @@ begin
     on conflict (noegle) do nothing;
   end if;
   return json_build_object(
-    'vindere', coalesce((select json_agg(json_build_object('id', id, 'hvem', hvem, 'event', event, 'navne', navne, 'gevinst', gevinst, 'tid', tid) order by id desc)
+    'vindere', coalesce((select json_agg(json_build_object('id', id, 'hvem', hvem, 'event', event, 'navne', navne, 'gevinst', gevinst, 'stil', stil, 'tid', tid) order by id desc)
       from (select * from hv_vindere where tid > now() - interval '7 days' order by id desc limit 5) v), '[]'::json),
     'gevinster', coalesce((select json_agg(json_build_object('id', id, 'grund', grund, 'event', event, 'oprettet', oprettet) order by id)
       from hv_gevinster where navn_lille = s.navn_lille and brugt is null), '[]'::json),

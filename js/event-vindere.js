@@ -230,6 +230,13 @@ function visVinderFane(sek) {
     "<datalist id='vi-forslag'>" + navne.map(function (n) { return "<option value='" + rens(n) + "'>"; }).join("") + "</datalist>" +
     "<label class='ejer-felt'>Hvad har de vundet?<input id='vi-gevinst' type='text' maxlength='200' value='1 gratis ting i shoppen 🎁'></label>" +
     "<p class='ejer-info'>🎁 Hver vinder kan vælge <b>én</b> gratis ting i shoppen (også rares).</p>" +
+    "<div class='bs-raekke'><span class='bs-lbl'>🎨 Farve</span><div class='bs-farver'>" + Object.keys(EV_FARVER).map(function (id) {
+      return "<button type='button' data-vi-farve='" + id + "' title='" + rens(EV_FARVER[id].navn) + "' style='background:" + EV_FARVER[id].kant + "'" + (id === evValg.farve ? " class='valgt'" : "") + "></button>";
+    }).join("") + "</div></div>" +
+    "<div class='bs-raekke'><span class='bs-lbl'>✨ Effekt</span><div class='bs-pynt'>" + Object.keys(EV_EFFEKTER).map(function (id) {
+      return "<button type='button' data-vi-effekt='" + id + "'" + (id === evValg.effekt ? " class='valgt'" : "") + ">" + EV_EFFEKTER[id].ikon + " " + EV_EFFEKTER[id].navn + "</button>";
+    }).join("") + "</div></div>" +
+    "<div class='bs-lbl'>👀 Sådan kommer boksen til at se ud</div><div id='vi-proeve'></div>" +
     "<button id='vi-gem'>🏆 Vis vinderne for alle</button><p class='ejer-info' id='vi-svar'></p></section>" +
     "<h3>Vindere de sidste 7 dage</h3>";
   if (evVindereFejl) html += "<p class='ev-fejl'>" + rens(evVindereFejl) + "</p>";
@@ -240,12 +247,34 @@ function visVinderFane(sek) {
   }).join("") + "</ul>" : "<p class='tom'>Ingen vindere endnu.</p>";
   sek.innerHTML = html;
 
+  function proeve() {
+    const navne = document.getElementById("vi-navne").value.split(/\s*[,;]\s*/).filter(Boolean);
+    document.getElementById("vi-proeve").innerHTML = vinderBoksHtml({ event: document.getElementById("vi-event").value.trim(),
+      navne: navne.length ? navne : ["Navn"], gevinst: document.getElementById("vi-gevinst").value, hvem: FIGUR.navn, tid: Date.now(),
+      stil: evValg }, true, false);
+  }
+  function vaelg(hvad, id) {
+    evValg[hvad] = id;
+    try { localStorage.setItem(EV_VALG_NOEGLE, JSON.stringify(evValg)); } catch (e) {}
+    sek.querySelectorAll("[data-vi-" + hvad + "]").forEach(function (k) { k.classList.toggle("valgt", k.getAttribute("data-vi-" + hvad) === id); });
+    proeve();
+  }
+  sek.querySelectorAll("[data-vi-farve]").forEach(function (k) { k.addEventListener("click", function () { vaelg("farve", k.dataset.viFarve); }); });
+  sek.querySelectorAll("[data-vi-effekt]").forEach(function (k) { k.addEventListener("click", function () { vaelg("effekt", k.dataset.viEffekt); }); });
+  ["vi-event", "vi-navne", "vi-gevinst"].forEach(function (id) { document.getElementById(id).addEventListener("input", proeve); });
+  proeve();
+
   document.getElementById("vi-gem").addEventListener("click", function () {
     const knap = this, svar = document.getElementById("vi-svar");
     const event = document.getElementById("vi-event").value, liste = document.getElementById("vi-navne").value,
       gevinst = document.getElementById("vi-gevinst").value;
     knap.disabled = true;
-    serverKald("hv_vindere_saet", { p_token: mitToken(), p_event: event, p_navne: liste, p_gevinst: gevinst }).then(function (r) {
+    const data = { p_token: mitToken(), p_event: event, p_navne: liste, p_gevinst: gevinst };
+    serverKald("hv_vindere_saet", Object.assign({ p_stil: { farve: evValg.farve, effekt: evValg.effekt } }, data)).catch(function (e) {
+      // er database-21 ikke kørt igen endnu, gemmes vinderne uden farve og effekt
+      if (/function|schema cache/i.test(e.message)) return serverKald("hv_vindere_saet", data);
+      throw e;
+    }).then(function (r) {
       adminSkriv("Skrev vindere ind" + (event.trim() ? " for " + event.trim() : "") + ": " + r.navne.join(", "));
       besked.textContent = "🏆 Vinderne står nu i højre side for alle.";
       evHentVindere();
@@ -327,6 +356,51 @@ function evHentVindere() {
 evHentVindere();
 setInterval(evHentVindere, 6000);
 
+// Farver (de samme som bannerne) og effekter på vinderboksen
+const EV_FARVER = typeof BANNER_FARVER !== "undefined" ? BANNER_FARVER : {
+  groen: { navn: "Grøn", bg: "#fbf6ea", kant: "#4e7d4a", ring: "#9ccc8f", titel: "#1f3a1c", under: "#7a8a76" } };
+const EV_EFFEKTER = {
+  ingen: { navn: "Ingen", ikon: "🚫" },
+  gloed: { navn: "Glød", ikon: "🌟" },
+  glimmer: { navn: "Glimmer", ikon: "✨" },
+  konfetti: { navn: "Konfetti", ikon: "🎊" },
+  hjerter: { navn: "Hjerter", ikon: "💖" },
+  regnbue: { navn: "Regnbue", ikon: "🌈" },
+  hop: { navn: "Hop", ikon: "🦘" },
+  blink: { navn: "Blink", ikon: "💡" },
+};
+const EV_VALG_NOEGLE = "mit-hotel-vinder-stil";
+let evValg = { farve: "guld", effekt: "glimmer" };
+try { Object.assign(evValg, JSON.parse(localStorage.getItem(EV_VALG_NOEGLE) || "{}")); } catch (e) {}
+
+// Små ting, der flyver rundt i boksen (glimmer, konfetti, hjerter)
+function evFxHtml(effekt) {
+  const tegn = { glimmer: ["✨", "⭐", "✦"], konfetti: ["▮", "▮", "▮", "▮"], hjerter: ["💖", "💕", "💗"] }[effekt];
+  if (!tegn) return "";
+  const farver = ["#e74c3c", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6", "#ff7eb6"];
+  let html = "<span class='ev-fx-lag'>";
+  for (let i = 0; i < 9; i++) {
+    html += "<span class='ev-fx ev-fx-" + effekt + "' style='left:" + (6 + i * 11) + "%;animation-delay:" + (i * 0.37 % 2.2).toFixed(2) + "s;" +
+      (effekt === "konfetti" ? "color:" + farver[i % farver.length] + ";" : "") + "'>" + tegn[i % tegn.length] + "</span>";
+  }
+  return html + "</span>";
+}
+
+// Én vinderboks. fuld = vis gevinsten og hvem der skrev det.
+function vinderBoksHtml(v, fuld, lukKnap) {
+  const st = v.stil || {};
+  const f = EV_FARVER[st.farve] || EV_FARVER.groen || EV_FARVER[Object.keys(EV_FARVER)[0]];
+  const eff = EV_EFFEKTER[st.effekt] ? st.effekt : "ingen";
+  return "<div class='ev-boks ev-vinder ev-eff-" + eff + "' style='background:" + f.bg + ";border-color:" + f.kant + ";--ev-ring:" + f.ring + ";--ev-kant:" + f.kant + "'>" +
+    evFxHtml(eff) + (lukKnap ? "<button class='ev-luk' data-ev-luk='" + v.id + "' title='Luk'>✕</button>" : "") +
+    "<h4 style='color:" + f.titel + "'>🏆 Vinderne" + (v.event ? " af " + rens(v.event) : "") + "</h4><ul style='color:" + f.titel + "'>" + v.navne.map(function (n) {
+      return "<li" + (n === FIGUR.navn ? " class='mig'" : "") + ">👑 " + rens(n) + (n === FIGUR.navn ? " (dig!)" : "") + "</li>";
+    }).join("") + "</ul>" +
+    // gevinsten og hvem der skrev det, ser kun vinderne selv (og ejeren). De andre ser bare spillet og navnene.
+    (fuld ? (v.gevinst ? "<p style='color:" + f.under + "'>" + rens(v.gevinst) + "</p>" : "") +
+      "<small style='color:" + f.under + "'>" + rens(v.hvem) + " · " + evTid(v.tid) + "</small>" : "") + "</div>";
+}
+
 function visHoejre() {
   const lukket = evHent(EV_LUKKET_NOEGLE), gaveLukket = evHent(EV_GAVE_LUKKET_NOEGLE);
   const vindere = evVindere.filter(function (v) { return lukket.indexOf(v.id) < 0; }).slice(0, 3);
@@ -349,13 +423,7 @@ function visHoejre() {
         : "<p>Hav en dejlig dag på HELLO VERA 🎉</p>") + "</div>";
   }
   vindere.forEach(function (v) {
-    html += "<div class='ev-boks ev-vinder'><button class='ev-luk' data-ev-luk='" + v.id + "' title='Luk'>✕</button>" +
-      "<h4>🏆 Vinderne" + (v.event ? " af " + rens(v.event) : "") + "</h4><ul>" + v.navne.map(function (n) {
-        return "<li" + (n === FIGUR.navn ? " class='mig'" : "") + ">👑 " + rens(n) + (n === FIGUR.navn ? " (dig!)" : "") + "</li>";
-      }).join("") + "</ul>" +
-      // gevinsten og hvem der skrev det, ser kun vinderne selv (og ejeren). De andre ser bare spillet og navnene.
-      (v.navne.indexOf(FIGUR.navn) >= 0 || evErEjer()
-        ? (v.gevinst ? "<p>" + rens(v.gevinst) + "</p>" : "") + "<small>" + rens(v.hvem) + " · " + evTid(v.tid) + "</small>" : "") + "</div>";
+    html += vinderBoksHtml(v, v.navne.indexOf(FIGUR.navn) >= 0 || evErEjer(), true);
   });
   evHoejre.innerHTML = html;
   evHoejre.hidden = !html;
@@ -500,6 +568,33 @@ evStil.textContent =
   "@keyframes ev-glimt { 50% { box-shadow: 0 0 16px rgba(255, 200, 60, .9); } }" +
   ".ev-gave-knap { width: 100%; margin-top: 6px; padding: 7px; border: 2px solid #a87a1c; border-radius: 8px; background: #f2c14e;" +
   " color: #4a2e00; font: bold 12px Verdana, sans-serif; cursor: pointer; } .ev-gave-knap:hover { background: #ffd56a; }" +
+  ".ev-vinder { overflow: hidden; }" +
+  ".ev-vinder > :not(.ev-fx-lag) { position: relative; }" +
+  ".ev-vinder > .ev-luk { position: absolute; z-index: 2; }" +
+  ".ev-fx-lag { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 8px; }" +
+  ".ev-fx { position: absolute; top: -14px; font-size: 11px; opacity: 0; animation: ev-fald 2.6s linear infinite; }" +
+  ".ev-fx-glimmer { top: auto; font-size: 12px; animation: ev-blinke 2.2s ease-in-out infinite; }" +
+  ".ev-fx-glimmer:nth-child(3n) { bottom: 8px; } .ev-fx-glimmer:nth-child(3n+1) { top: 30%; } .ev-fx-glimmer:nth-child(3n+2) { top: 4px; }" +
+  ".ev-fx-konfetti { font-size: 8px; }" +
+  ".ev-fx-hjerter { top: auto; bottom: -14px; animation-name: ev-stig; }" +
+  "@keyframes ev-fald { 0% { transform: translateY(0) rotate(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(150px) rotate(320deg); opacity: 0; } }" +
+  "@keyframes ev-stig { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-150px); opacity: 0; } }" +
+  "@keyframes ev-blinke { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1.1); } }" +
+  ".ev-eff-gloed { animation: ev-gloed 1.8s ease-in-out infinite; }" +
+  "@keyframes ev-gloed { 50% { box-shadow: 0 0 18px 4px var(--ev-ring); } }" +
+  ".ev-eff-regnbue { animation: ev-regnbue 3s linear infinite; }" +
+  "@keyframes ev-regnbue { 0% { border-color: #e74c3c; } 20% { border-color: #f1c40f; } 40% { border-color: #2ecc71; } 60% { border-color: #3498db; } 80% { border-color: #9b59b6; } 100% { border-color: #e74c3c; } }" +
+  ".ev-eff-hop { animation: ev-hop 1.6s ease-in-out infinite; }" +
+  "@keyframes ev-hop { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }" +
+  ".ev-eff-blink { animation: ev-blink 1s steps(2, start) infinite; }" +
+  "@keyframes ev-blink { 50% { border-color: var(--ev-ring); box-shadow: 0 0 0 3px var(--ev-ring); } }" +
+  "#vi-proeve { width: 230px; margin: 6px 0 10px; font: 12px Verdana, sans-serif; }" +
+  "#vi-proeve .ev-boks { pointer-events: auto; }" +
+  "#ejer-indhold #vi-proeve h4 { margin: 0 18px 6px 0; padding: 0; border: 0; font-size: 13px; text-transform: none; letter-spacing: normal; }" +
+  "#ejer-indhold #vi-proeve p { margin: 4px 0; padding: 0; border: 0; background: none; }" +
+  "#ejer-indhold #vi-proeve ul { margin: 0; padding: 0; } #ejer-indhold #vi-proeve li { display: block; padding: 2px 0; border: 0; background: none; }" +
+  "#ejer-indhold .ev-skriv .bs-farver button, #ejer-indhold .ev-skriv .bs-pynt button { width: auto; }" +
+  "#ejer-indhold .ev-skriv .bs-farver button { width: 26px; }" +
   "#gave-baand { display: flex; align-items: center; gap: 8px; margin: 0 8px 6px; padding: 7px 10px; background: #fff6d6; border: 2px solid #c99a2e;" +
   " border-radius: 8px; color: #4a2e00; font-size: 12px; }" +
   "#gave-baand[hidden] { display: none; }" +
