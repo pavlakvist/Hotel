@@ -7,6 +7,8 @@
 //  - Vinderne, og den der har fødselsdag i dag, får en "Tillykke"-boks med en knap,
 //    der åbner shoppen. Der må de vælge PRÆCIS én gratis ting (også rares).
 //  - Ejerpanel → "💎 Rares" (kun ejeren): hvem der har købt og vundet rares.
+//  - Nyt skilt 🎪 Eventfolk (i Ansættelse): kan skrive eventnoter og vindere,
+//    men ikke sende nyheder eller låse rum. Har også Mit job og Staff chat.
 //  (Kræver database-21-eventnoter-vindere.sql.)
 // =============================================================
 const EV_LUKKET_NOEGLE = "mit-hotel-vindere-lukket";      // vinder-bokse man har lukket med ✕
@@ -15,7 +17,32 @@ const EV_MANGLER = "⚠️ Serveren kender ikke eventnoter endnu. Kør database-
 
 function evHent(noegle) { try { return JSON.parse(localStorage.getItem(noegle) || "[]"); } catch (e) { return []; } }
 function evGem(noegle, v) { try { localStorage.setItem(noegle, JSON.stringify(v)); } catch (e) {} }
-function evMaaSkrive() { const r = minRolle(); return r === "ejer" || r === "eventvaert"; }
+function evMaaSkrive() { const r = minRolle(); return r === "ejer" || r === "eventvaert" || r === "eventfolk"; }
+
+
+// -------------------------------------------------------------
+//  🎪 Det nye skilt: Eventfolk
+// -------------------------------------------------------------
+if (!SKILTE.some(function (s) { return s.id === "eventfolk"; })) {
+  const efter = SKILTE.findIndex(function (s) { return s.id === "eventvaert"; });
+  SKILTE.splice(efter + 1, 0, { id: "eventfolk", navn: "Eventfolk", tekst: "Hjælper med events og skriver noter og vindere.",
+    fil: "billeder/skilte/eventfolk.png" });
+}
+ROLLE_FANER.eventfolk = ["guide", "eventnoter", "vindere", "mitjob", "staffchat"];
+ROLLE_NAVN.eventfolk = "🛡️ Eventfolk-panel";
+if (ANSAT_SKILTE.indexOf("eventfolk") < 0) ANSAT_SKILTE.push("eventfolk");
+if (typeof STAFF_RANG !== "undefined" && !STAFF_RANG.some(function (r) { return r[0] === "eventfolk"; })) {
+  STAFF_RANG.splice(STAFF_RANG.findIndex(function (r) { return r[0] === "eventvaert"; }) + 1, 0, ["eventfolk", "🎪 Eventfolk"]);
+}
+if (typeof JOB_KAN !== "undefined") JOB_KAN.eventfolk = ["🛡 Får mod-knappen med fanerne Eventnoter og Vindere",
+  "📝 Skriver eventnoter: hvordan eventet gik, og hvem der var træls",
+  "🏆 Skriver vinderne ind efter et event, så de står i højre side for alle",
+  "🎁 Vinderne får én gratis ting i shoppen (også rares)"].concat(typeof PERSONALE_KAN !== "undefined" ? PERSONALE_KAN : []);
+if (typeof JOB_BESKRIVELSE !== "undefined") {
+  JOB_BESKRIVELSE.eventfolk = "Som eventfolk hjælper du eventværterne med at holde events. Efter hvert event skriver du en eventnote om, hvordan det gik, og hvem der var træls, og du skriver vinderne ind, så de kan vælge én gratis ting i shoppen.";
+  SKILTE.forEach(function (sk) { if (sk.id === "eventfolk") sk.beskrivelse = JOB_BESKRIVELSE.eventfolk; });
+}
+if (typeof ROLLE_GUIDE !== "undefined") ROLLE_GUIDE.eventfolk = "Du er eventfolk. Du hjælper med events, og efter hvert event skriver du en eventnote (hvordan det gik, og hvem der var træls) og skriver vinderne ind. Vinderne kan så vælge én gratis ting i shoppen.";
 function evErEjer() { return EJERE.indexOf(FIGUR.navn) >= 0; }
 function evTid(t) { return tidTekst(new Date(t).getTime()); }
 function evFejl(e) { return /function|schema cache|does not exist/i.test(e.message) ? EV_MANGLER : e.message; }
@@ -59,14 +86,37 @@ evFanerSkjul();
 setInterval(evFanerSkjul, 1000);
 
 PANEL_HJAELP.eventnoter = { titel: "📝 Eventnoter", tekst: "Noter efter hvert event: hvordan det gik, og hvem der var træls.",
-  punkter: ["Ejeren og Eventværter skriver noterne. Alle ansatte kan læse dem.",
+  punkter: ["Ejeren, Eventværter og Eventfolk skriver noterne. Alle ansatte kan læse dem.",
     "Skriv navnet på eventet, hvordan det forløb, og hvem der lavede ballade.", "🗑 sletter en note (tryk to gange)."] };
-PANEL_HJAELP.vindere = { titel: "🏆 Vindere", tekst: "Skriv vinderne ind efter et event. De står i en boks i højre side for alle.",
+PANEL_HJAELP.vindere = { titel: "🏆 Vindere", tekst: "Skriv vinderne ind efter et event. De står i en boks i højre side for alle. Ejeren, Eventværter og Eventfolk kan bruge fanen.",
   punkter: ["Skriv flere vindere med komma imellem, fx <b>Ida, Noah</b>.",
     "Hver vinder får en 🎉 Tillykke-boks og kan vælge <b>én</b> gratis ting i shoppen (også rares).",
     "Spillere med fødselsdag får også én gratis ting på dagen.", "🗑 Fjern tager boksen væk igen."] };
 PANEL_HJAELP.rares = { titel: "💎 Rares", tekst: "Hvem har købt en rare i shoppen, og hvem har vundet en.",
   punkter: ["Kun for ejeren.", "Nederst står alle gratis ting fra events og fødselsdage, og om de er valgt."] };
+
+// Det nye står også i Guide-fanen, i "Mit job" og i jobbeskrivelserne
+(function () {
+  const evKan = ["📝 Skriver eventnoter: hvordan eventet gik, og hvem der var træls",
+    "🏆 Skriver vinderne ind efter et event, så de står i højre side for alle",
+    "🎁 Vinderne får én gratis ting i shoppen (også rares)"];
+  if (typeof JOB_KAN !== "undefined") {
+    JOB_KAN.eventvaert = JOB_KAN.eventvaert || [];
+    evKan.slice().reverse().forEach(function (k) { if (JOB_KAN.eventvaert.indexOf(k) < 0) JOB_KAN.eventvaert.splice(1, 0, k); });
+    ["mod", "staff", "hjaelper", "bygmester", "support", "content-creator"].forEach(function (id) {
+      const l = JOB_KAN[id];
+      if (l && l.indexOf("📝 Kan læse eventnoterne i panelet") < 0) l.push("📝 Kan læse eventnoterne i panelet");
+    });
+  }
+  if (typeof EJER_KAN !== "undefined") EJER_KAN.push("📝 Skriver eventnoter og 🏆 vindere, og ser 💎 hvem der har købt og vundet rares");
+  if (typeof ROLLE_GUIDE !== "undefined") ROLLE_GUIDE.eventvaert += " Efter hvert event skriver du en eventnote (hvordan det gik, og hvem der var træls) og skriver vinderne ind. Vinderne kan så vælge én gratis ting i shoppen.";
+  const ekstra = " Efter hvert event skriver du en eventnote om, hvordan det gik, og skriver vinderne ind, så de kan vælge én gratis ting i shoppen.";
+  if (typeof JOB_BESKRIVELSE !== "undefined" && JOB_BESKRIVELSE.eventvaert && JOB_BESKRIVELSE.eventvaert.indexOf("eventnote") < 0) {
+    JOB_BESKRIVELSE.eventvaert += ekstra;
+    if (typeof SKILTE !== "undefined") SKILTE.forEach(function (sk) { if (sk.id === "eventvaert") sk.beskrivelse = JOB_BESKRIVELSE.eventvaert; });
+  }
+  if (PANEL_HJAELP.events) PANEL_HJAELP.events.punkter.push("📝 Efter eventet: skriv en note under <b>Eventnoter</b>, og skriv vinderne ind under <b>Vindere</b>.");
+})();
 
 let evNoter = null;           // null = ikke hentet endnu
 let evNoterFejl = "";
@@ -133,7 +183,7 @@ function visEventnoter(sek) {
       "<label class='ejer-felt'>Hvem var træls? 😤<input id='en-traels' type='text' maxlength='1000' placeholder='Fx Noah spammede chatten'></label>" +
       "<button id='en-gem'>📝 Gem noten</button><p class='ejer-info' id='en-svar'></p></section>";
   } else {
-    html += "<p class='ejer-info'>📖 Her kan du læse ejerens og Eventværternes noter fra eventene.</p>";
+    html += "<p class='ejer-info'>📖 Her kan du læse noterne fra eventene.</p>";
   }
   html += "<h3>Noter fra eventene</h3>";
   if (evNoterFejl) html += "<p class='ev-fejl'>" + rens(evNoterFejl) + "</p>";
@@ -302,8 +352,10 @@ function visHoejre() {
     html += "<div class='ev-boks ev-vinder'><button class='ev-luk' data-ev-luk='" + v.id + "' title='Luk'>✕</button>" +
       "<h4>🏆 Vinderne" + (v.event ? " af " + rens(v.event) : "") + "</h4><ul>" + v.navne.map(function (n) {
         return "<li" + (n === FIGUR.navn ? " class='mig'" : "") + ">👑 " + rens(n) + (n === FIGUR.navn ? " (dig!)" : "") + "</li>";
-      }).join("") + "</ul>" + (v.gevinst ? "<p>" + rens(v.gevinst) + "</p>" : "") +
-      "<small>" + rens(v.hvem) + " · " + evTid(v.tid) + "</small></div>";
+      }).join("") + "</ul>" +
+      // gevinsten og hvem der skrev det, ser kun vinderne selv (og ejeren). De andre ser bare spillet og navnene.
+      (v.navne.indexOf(FIGUR.navn) >= 0 || evErEjer()
+        ? (v.gevinst ? "<p>" + rens(v.gevinst) + "</p>" : "") + "<small>" + rens(v.hvem) + " · " + evTid(v.tid) + "</small>" : "") + "</div>";
   });
   evHoejre.innerHTML = html;
   evHoejre.hidden = !html;

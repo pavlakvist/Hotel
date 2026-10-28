@@ -1,5 +1,5 @@
 -- HELLO VERA, del 21: 📝 eventnoter, 🏆 vindere i højre side, 🎁 én gratis ting til vindere og fødselsdagsbørn,
--- og 💎 en oversigt over hvem der har købt og vundet rares.
+-- 💎 en oversigt over hvem der har købt og vundet rares, og det nye skilt 🎪 Eventfolk.
 -- Kør database-10-foedselsdage.sql FØRST. Kopiér ALT herfra → Supabase → SQL Editor → + New query → Run.
 -- Må gerne køres flere gange.
 
@@ -48,14 +48,28 @@ alter table public.hv_gevinster enable row level security;
 alter table public.hv_rare_log enable row level security;
 revoke all on public.hv_eventnoter, public.hv_vindere, public.hv_gevinster, public.hv_rare_log from anon, authenticated;
 
--- 📝 Skriv en eventnote (ejeren og Eventværter)
+-- 🎪 Eventfolk er nu personale (Tilkald hjælp, Staff chat, læse eventnoter)
+create or replace function public.hv_er_ansat(p_navn text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select hv_er_ejer(p_navn) or exists (select 1 from hv_ansatte where navn_lille = lower(p_navn)
+    and skilt in ('mod', 'staff', 'hjaelper', 'eventvaert', 'eventfolk', 'bygmester', 'support', 'content-creator'));
+$$;
+
+-- Må skrive eventnoter og vindere: ejeren, Eventværter og Eventfolk
+create or replace function public.hv_maa_skrive_events(p_navn text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select hv_er_eventvaert(p_navn) or exists (select 1 from hv_ansatte where navn_lille = lower(p_navn) and skilt = 'eventfolk');
+$$;
+revoke all on function public.hv_maa_skrive_events(text) from public, anon, authenticated;
+
+-- 📝 Skriv en eventnote (ejeren, Eventværter og Eventfolk)
 create or replace function public.hv_eventnote_skriv(p_token uuid, p_event text, p_forloeb text, p_traels text)
 returns void language plpgsql security definer set search_path = public as $$
 declare s hv_spillere;
 begin
   select * into s from hv_spillere where token = p_token;
   if s.id is null then raise exception 'Du er ikke logget ind.'; end if;
-  if not hv_er_eventvaert(s.navn) then raise exception 'Kun ejeren og Eventværter kan skrive eventnoter.'; end if;
+  if not hv_maa_skrive_events(s.navn) then raise exception 'Kun ejeren, Eventværter og Eventfolk kan skrive eventnoter.'; end if;
   if coalesce(trim(p_forloeb), '') = '' and coalesce(trim(p_traels), '') = '' then raise exception 'Skriv hvordan eventet gik.'; end if;
   insert into hv_eventnoter (hvem, event, forloeb, traels)
   values (s.navn, left(trim(coalesce(p_event, '')), 80), left(coalesce(p_forloeb, ''), 3000), left(coalesce(p_traels, ''), 1000));
@@ -84,14 +98,14 @@ begin
     from (select * from hv_eventnoter order by id desc limit 200) n), '[]'::json);
 end $$;
 
--- 🏆 Skriv vinderne ind (ejeren og Eventværter). Hver vinder får én gratis ting.
+-- 🏆 Skriv vinderne ind (ejeren, Eventværter og Eventfolk). Hver vinder får én gratis ting.
 create or replace function public.hv_vindere_saet(p_token uuid, p_event text, p_navne text, p_gevinst text)
 returns json language plpgsql security definer set search_path = public as $$
 declare s hv_spillere; v_id bigint; v_navne jsonb := '[]'::jsonb; v_ukendte text[] := '{}'; n text; o hv_spillere;
 begin
   select * into s from hv_spillere where token = p_token;
   if s.id is null then raise exception 'Du er ikke logget ind.'; end if;
-  if not hv_er_eventvaert(s.navn) then raise exception 'Kun ejeren og Eventværter kan skrive vindere ind.'; end if;
+  if not hv_maa_skrive_events(s.navn) then raise exception 'Kun ejeren, Eventværter og Eventfolk kan skrive vindere ind.'; end if;
   foreach n in array regexp_split_to_array(coalesce(p_navne, ''), '\s*[,;\n]\s*') loop
     n := trim(n);
     if n = '' then continue; end if;
@@ -112,14 +126,14 @@ begin
   return json_build_object('id', v_id, 'navne', v_navne);
 end $$;
 
--- Fjern en vinder-boks (ejeren og Eventværter). Gratis ting, der ikke er valgt endnu, forsvinder også.
+-- Fjern en vinder-boks (ejeren, Eventværter og Eventfolk). Gratis ting, der ikke er valgt endnu, forsvinder også.
 create or replace function public.hv_vinder_slet(p_token uuid, p_id bigint)
 returns void language plpgsql security definer set search_path = public as $$
 declare s hv_spillere;
 begin
   select * into s from hv_spillere where token = p_token;
   if s.id is null then raise exception 'Du er ikke logget ind.'; end if;
-  if not hv_er_eventvaert(s.navn) then raise exception 'Kun ejeren og Eventværter kan fjerne vindere.'; end if;
+  if not hv_maa_skrive_events(s.navn) then raise exception 'Kun ejeren, Eventværter og Eventfolk kan fjerne vindere.'; end if;
   delete from hv_gevinster where vinder_id = p_id and brugt is null;
   delete from hv_vindere where id = p_id;
 end $$;
