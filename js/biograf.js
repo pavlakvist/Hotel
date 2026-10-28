@@ -14,11 +14,11 @@
 //  Rummet
 // -------------------------------------------------------------
 const BIOGRAF_RUM = { id: "biograf", navn: "Biografen", ejer: EJER_NAVNE[0], bredde: 12, dybde: 14,
-  vaeg: "#4a1a22", gulv1: "#7c1f2c", gulv2: "#6e1a26", vaegHoejde: 260, doer: { x: 0, y: 12 } };
+  vaeg: "#4a1a22", gulv1: "#7c1f2c", gulv2: "#6e1a26", vaegHoejde: 420, doer: { x: 0, y: 12 } };
 INDBYGGEDE_RUM.biograf = BIOGRAF_RUM;
 
 // Lærredet hænger på bagvæggen (den højre væg øverst) fra felt "fra" til "til", i "bund"-"top" pixels over gulvet
-const LAERRED = { fra: 2.5, til: 9.5, bund: 40, top: 215 };
+const LAERRED = { fra: 2.5, til: 9.5, bund: 90, top: 280 };   // lærredet hænger lige (ikke skævt langs væggen)
 
 // Hotellets egne møbler i biografen: 4 rækker sæder, der vender mod lærredet (retning 2), og to popcornmaskiner
 const BIOGRAF_MOEBLER = [];
@@ -66,6 +66,7 @@ function biografSomData() {
 // Hver gang en ansat sætter en ny film på (eller stopper den), bliver n én større, og det højeste n vinder.
 // (Tallet bruges i stedet for klokkeslættet, fordi computernes ure ikke går helt ens.)
 let bioFilm = { v: null, t: 0, af: "", n: 0 };
+let bioPauset = false;   // pause hos dig selv
 if (typeof serverKald === "function") {
   const serverKaldFoerBio = serverKald;
   serverKald = async function (funktion, data) {
@@ -98,17 +99,21 @@ function vaegPunkt(x, h) {
   const p = punkt(x, 0);
   return { x: p.x, y: p.y - h };
 }
+// Et punkt på det lige lærred: x = felt langs væggen (bestemmer kun hvor langt til siden), h = pixels over gulvet midt for lærredet
+function ligePunkt(x, h) {
+  return { x: punkt(x, 0).x, y: punkt((LAERRED.fra + LAERRED.til) / 2, 0).y - h };
+}
 function laerredHjoerner() {
-  return [vaegPunkt(LAERRED.fra, LAERRED.top), vaegPunkt(LAERRED.til, LAERRED.top),
-    vaegPunkt(LAERRED.til, LAERRED.bund), vaegPunkt(LAERRED.fra, LAERRED.bund)];
+  return [ligePunkt(LAERRED.fra, LAERRED.top), ligePunkt(LAERRED.til, LAERRED.top),
+    ligePunkt(LAERRED.til, LAERRED.bund), ligePunkt(LAERRED.fra, LAERRED.bund)];
 }
 function vaegFirkant(x1, x2, h1, h2, farve) {
-  polygon(ctx, [vaegPunkt(x1, h2), vaegPunkt(x2, h2), vaegPunkt(x2, h1), vaegPunkt(x1, h1)], farve);
+  polygon(ctx, [ligePunkt(x1, h2), ligePunkt(x2, h2), ligePunkt(x2, h1), ligePunkt(x1, h1)], farve);
 }
 
 // Gardinerne: 1 = trukket for, 0 = trukket fra. Det tager BIO_GARDIN_TID sekunder.
 let bioGardin = 1, bioGardinTid = performance.now();
-const BIO_GARDIN_TID = 1.8;
+const BIO_GARDIN_TID = 5;   // sekunder om at rulle fra (og for igen)
 const BIO_MOERKE = 0.62;   // hvor mørkt der bliver i salen, når filmen kører (0 = lyst, 1 = helt sort)
 
 const tegnVaeggeFoerBio = tegnVaegge;
@@ -122,10 +127,9 @@ tegnVaegge = function () {
   vaegFirkant(L.fra, L.til, L.bund, L.top, bioFilm.v && !BIO_FRA_FIL ? "#000000" : "#1c1418");
   if (bioFilm.v && BIO_FRA_FIL) {
     // tekst på lærredet, når filmen ikke kan vises
-    const m = vaegPunkt((L.fra + L.til) / 2, (L.bund + L.top) / 2);
+    const m = ligePunkt((L.fra + L.til) / 2, (L.bund + L.top) / 2);
     ctx.save();
     ctx.translate(m.x, m.y);
-    ctx.transform(1, 0.5, 0, 1, 0, 0);
     ctx.textAlign = "center";
     ctx.fillStyle = "#e9c46a";
     ctx.font = "bold 26px Georgia, serif";
@@ -154,16 +158,15 @@ tegnVaegge = function () {
     const folder = 6 + Math.round(g * 10);                    // flere folder, når gardinet er trukket ud
     for (let i = 0; i < folder; i++) {
       const a = side[0] + (side[1] - side[0]) * i / folder, b = side[0] + (side[1] - side[0]) * (i + 1) / folder;
-      vaegFirkant(a, b, 0, L.top + 22, i % 2 ? "#8e1622" : "#b0202e");
+      vaegFirkant(a, b, L.bund - 26, L.top + 22, i % 2 ? "#8e1622" : "#b0202e");
     }
   });
   if (g > 0.85) {
     // guldskrift på de lukkede gardiner
-    const m = vaegPunkt(midt, (L.bund + L.top) / 2);
+    const m = ligePunkt(midt, (L.bund + L.top) / 2);
     ctx.save();
     ctx.globalAlpha = (g - 0.85) / 0.15;
     ctx.translate(m.x, m.y);
-    ctx.transform(1, 0.5, 0, 1, 0, 0);
     ctx.textAlign = "center";
     ctx.fillStyle = "#f2c35a";
     ctx.font = "bold 26px Georgia, serif";
@@ -239,6 +242,7 @@ function saetFilm(v, t, af, n) {
   const nyFilm = v !== bioFilm.v || t !== bioFilm.t;
   bioFilm = { v: v || null, t: t, af: af || "", n: n };
   if (!nyFilm) return;
+  bioPauset = false;
   if (bioFilm.v) {
     const start = Math.max(0, Math.floor((Date.now() - t) / 1000));
     // origin: YouTube vil vide, hvilken side der viser filmen (ellers fejl 153)
@@ -250,7 +254,7 @@ function saetFilm(v, t, af, n) {
     bioSkaerm.removeAttribute("src");
     if (af && af !== FIGUR.navn) besked.textContent = "🎬 " + af + " stoppede filmen.";
   }
-  visBioVindue(false);
+  visBioVindue(!!bioFilm.v && !maaStyreBio());   // andre får pause-knappen frem, når en film starter
 }
 
 function visFilm(link) {
@@ -310,7 +314,6 @@ bioVindue.innerHTML =
   '  <form id="bio-form"><input id="bio-link" type="text" placeholder="Sæt et YouTube-link ind …"><button class="bio-k" type="submit">▶ Vis film</button></form>' +
   '  <div class="bio-knapper" id="bio-knapper">' +
   '    <button class="bio-k lys" type="button" id="bio-pause">⏸ Pause</button>' +
-  '    <button class="bio-k lys" type="button" id="bio-spil">▶ Fortsæt</button>' +
   '    <button class="bio-k lys" type="button" id="bio-lyd">🔊 Lyd på</button>' +
   '    <button class="bio-k" type="button" id="bio-stop">⏹ Stop filmen</button>' +
   '    <a class="bio-k lys" id="bio-aaben" target="_blank" rel="noopener">↗ Åbn på YouTube</a>' +
@@ -326,14 +329,18 @@ function bioTekst(tekst, fejl) {
   p.classList.toggle("fejl", !!fejl);
 }
 function visBioVindue(aaben) {
-  if (!maaStyreBio()) { bioVindue.hidden = true; return; }   // vinduet er kun for de ansatte og ejeren
-  if (aaben) bioVindue.hidden = false;
   const styrer = maaStyreBio();
+  if (!styrer && !bioFilm.v) { bioVindue.hidden = true; return; }   // andre ser kun vinduet, mens en film kører
+  if (aaben) bioVindue.hidden = false;
   document.getElementById("bio-knapper").hidden = !bioFilm.v;
-  document.getElementById("bio-form").hidden = !styrer;            // andre kan kun se med (og selv sætte på pause / skrue op)
+  document.getElementById("bio-form").hidden = !styrer;            // andre har kun en pause-knap
   document.getElementById("bio-stop").hidden = !styrer;
+  document.getElementById("bio-lyd").hidden = !styrer;
+  document.getElementById("bio-aaben").hidden = !styrer && !BIO_FRA_FIL;
+  document.getElementById("bio-pause").textContent = bioPauset ? "▶ Fortsæt" : "⏸ Pause";
   if (bioFilm.v && BIO_FRA_FIL) bioTekst("Du har åbnet hotellet direkte fra computeren, og så vil YouTube ikke vise filmen (fejl 153). " +
     "Åbn hotellet på nettet (pavlakvist.github.io/Hotel), eller tryk ↗ Åbn på YouTube.", true);
+  else if (bioFilm.v && !styrer) bioTekst("🎞 Filmen kører. Du kan sætte den på pause hos dig selv.");
   else if (bioFilm.v) bioTekst("🎞 Filmen kører" + (bioFilm.af ? " (sat på af " + bioFilm.af + ")" : "") + ". Alle i biografen ser den samme film.");
   else if (styrer) bioTekst("Sæt et link ind fra YouTube, og tryk ▶ Vis film. Alle i biografen ser filmen på lærredet.");
   else bioTekst("Der kører ingen film lige nu. Kun hotellets ansatte kan sætte film på. Find et sæde, og hent popcorn 🍿");
@@ -345,8 +352,11 @@ document.getElementById("bio-form").addEventListener("submit", function (e) {
   visFilm(document.getElementById("bio-link").value);
   document.getElementById("bio-link").value = "";
 });
-document.getElementById("bio-pause").addEventListener("click", function () { bioKommando("pauseVideo"); });
-document.getElementById("bio-spil").addEventListener("click", function () { bioKommando("playVideo"); });
+document.getElementById("bio-pause").addEventListener("click", function () {   // én knap: pause / fortsæt (kun hos dig selv)
+  bioPauset = !bioPauset;
+  bioKommando(bioPauset ? "pauseVideo" : "playVideo");
+  visBioVindue(false);
+});
 document.getElementById("bio-lyd").addEventListener("click", function () { bioKommando("unMute"); bioKommando("setVolume"); bioKommando("playVideo"); });
 document.getElementById("bio-stop").addEventListener("click", stopFilm);
 
@@ -362,12 +372,12 @@ function overLaerredet(e) {
   return sy >= top && sy <= bund;
 }
 laerred.addEventListener("click", function (e) {
-  if (!iBiografen() || valgtType || !maaStyreBio() || !overLaerredet(e)) return;
+  if (!iBiografen() || valgtType || !(maaStyreBio() || bioFilm.v) || !overLaerredet(e)) return;
   e.stopImmediatePropagation();
   visBioVindue(true);
 }, true);
 laerred.addEventListener("mousemove", function (e) {
-  if (iBiografen() && maaStyreBio() && overLaerredet(e)) laerred.style.cursor = "pointer";
+  if (iBiografen() && (maaStyreBio() || bioFilm.v) && overLaerredet(e)) laerred.style.cursor = "pointer";
 });
 
 // Ind i biografen: vinduet vises; ud af biografen: filmen stopper for dig
