@@ -323,6 +323,7 @@ function bioTekst(tekst, fejl) {
   p.classList.toggle("fejl", !!fejl);
 }
 function visBioVindue(aaben) {
+  if (!maaStyreBio()) { bioVindue.hidden = true; return; }   // vinduet er kun for de ansatte og ejeren
   if (aaben) bioVindue.hidden = false;
   const styrer = maaStyreBio();
   document.getElementById("bio-knapper").hidden = !bioFilm.v;
@@ -358,12 +359,12 @@ function overLaerredet(e) {
   return sy >= top && sy <= bund;
 }
 laerred.addEventListener("click", function (e) {
-  if (!iBiografen() || valgtType || !overLaerredet(e)) return;
+  if (!iBiografen() || valgtType || !maaStyreBio() || !overLaerredet(e)) return;
   e.stopImmediatePropagation();
   visBioVindue(true);
 }, true);
 laerred.addEventListener("mousemove", function (e) {
-  if (iBiografen() && overLaerredet(e)) laerred.style.cursor = "pointer";
+  if (iBiografen() && maaStyreBio() && overLaerredet(e)) laerred.style.cursor = "pointer";
 });
 
 // Ind i biografen: vinduet vises; ud af biografen: filmen stopper for dig

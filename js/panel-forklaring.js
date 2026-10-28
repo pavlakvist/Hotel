@@ -193,6 +193,6 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/biograf.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/biograf.js?v=4";
+  s.src = "js/biograf.js?v=5";
   document.body.appendChild(s);
 })();
