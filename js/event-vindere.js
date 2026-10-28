@@ -231,7 +231,7 @@ function visVinderFane(sek) {
     "<label class='ejer-felt'>Hvad har de vundet?<input id='vi-gevinst' type='text' maxlength='200' value='1 gratis ting i shoppen 🎁'></label>" +
     "<p class='ejer-info'>🎁 Hver vinder kan vælge <b>én</b> gratis ting i shoppen (også rares).</p>" +
     "<div class='bs-raekke'><span class='bs-lbl'>🎨 Farve</span><div class='bs-farver'>" + Object.keys(EV_FARVER).map(function (id) {
-      return "<button type='button' data-vi-farve='" + id + "' title='" + rens(EV_FARVER[id].navn) + "' style='background:" + EV_FARVER[id].kant + "'" + (id === evValg.farve ? " class='valgt'" : "") + "></button>";
+      return "<button type='button' data-vi-farve='" + id + "' title='" + rens(EV_FARVER[id].navn) + "' style='background:" + (id === "nat" ? "#1d2638" : EV_FARVER[id].kant) + "'" + (id === evValg.farve ? " class='valgt'" : "") + "></button>";
     }).join("") + "</div></div>" +
     "<div class='bs-raekke'><span class='bs-lbl'>✨ Effekt</span><div class='bs-pynt'>" + Object.keys(EV_EFFEKTER).map(function (id) {
       return "<button type='button' data-vi-effekt='" + id + "'" + (id === evValg.effekt ? " class='valgt'" : "") + ">" + EV_EFFEKTER[id].ikon + " " + EV_EFFEKTER[id].navn + "</button>";
@@ -391,7 +391,7 @@ function vinderBoksHtml(v, fuld, lukKnap) {
   const st = v.stil || {};
   const f = EV_FARVER[st.farve] || EV_FARVER.groen || EV_FARVER[Object.keys(EV_FARVER)[0]];
   const eff = EV_EFFEKTER[st.effekt] ? st.effekt : "ingen";
-  return "<div class='ev-boks ev-vinder ev-eff-" + eff + "' style='background:" + f.bg + ";border-color:" + f.kant + ";--ev-ring:" + f.ring + ";--ev-kant:" + f.kant + "'>" +
+  return "<div class='ev-boks ev-vinder ev-eff-" + eff + "' style='background:linear-gradient(160deg, " + f.ring + ", transparent 85%), " + f.bg + ";border-width:3px;border-color:" + f.kant + ";--ev-ring:" + f.ring + ";--ev-kant:" + f.kant + "'>" +
     evFxHtml(eff) + (lukKnap ? "<button class='ev-luk' data-ev-luk='" + v.id + "' title='Luk'>✕</button>" : "") +
     "<h4 style='color:" + f.titel + "'>🏆 Vinderne" + (v.event ? " af " + rens(v.event) : "") + "</h4><ul style='color:" + f.titel + "'>" + v.navne.map(function (n) {
       return "<li" + (n === FIGUR.navn ? " class='mig'" : "") + ">👑 " + rens(n) + (n === FIGUR.navn ? " (dig!)" : "") + "</li>";
