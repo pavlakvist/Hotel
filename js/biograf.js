@@ -62,11 +62,14 @@ NAV_RUM.splice(1, 0, { id: "biograf", etage: "stue", navn: "Biografen", om: "Fil
 function biografSomData() {
   return BIOGRAF_MOEBLER.map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: false, retning: m.retning }; });
 }
-let bioFilm = { v: null, t: 0, af: "" };      // filmen på lærredet: YouTube-id, hvornår den startede, hvem
+// Filmen på lærredet: v = YouTube-id, t = hvornår den startede, af = hvem, n = nummer.
+// Hver gang en ansat sætter en ny film på (eller stopper den), bliver n én større, og det højeste n vinder.
+// (Tallet bruges i stedet for klokkeslættet, fordi computernes ure ikke går helt ens.)
+let bioFilm = { v: null, t: 0, af: "", n: 0 };
 if (typeof serverKald === "function") {
   const serverKaldFoerBio = serverKald;
   serverKald = async function (funktion, data) {
-    if (funktion === "hv_puls" && iBiografen() && bioFilm.t) {
+    if (funktion === "hv_puls" && iBiografen() && bioFilm.n) {
       // filmen sendes med til de andre i biografen (ligger i p_sidder, så databasen skal ikke ændres)
       data = Object.assign({}, data, { p_sidder: Object.assign({}, data.p_sidder || {}, { bio: bioFilm }) });
     }
@@ -82,7 +85,7 @@ function bioFraServer(svar) {
   if (!svar || !Array.isArray(svar.spillere) || !iBiografen()) return;
   svar.spillere.forEach(function (s) {
     const b = s.rum === "biograf" && s.sidder && s.sidder.bio;
-    if (b && b.t > bioFilm.t && maaStyreBio(b.af)) saetFilm(b.v, b.t, b.af);
+    if (b && (b.n || 0) > bioFilm.n && maaStyreBio(b.af)) saetFilm(b.v, b.t, b.af, b.n);
   });
 }
 
@@ -232,9 +235,9 @@ function bioKommando(func) {
 }
 
 // Sæt en film på lærredet (v = YouTube-id eller null for at stoppe). t = hvornår den startede.
-function saetFilm(v, t, af) {
+function saetFilm(v, t, af, n) {
   const nyFilm = v !== bioFilm.v || t !== bioFilm.t;
-  bioFilm = { v: v || null, t: t, af: af || "" };
+  bioFilm = { v: v || null, t: t, af: af || "", n: n };
   if (!nyFilm) return;
   if (bioFilm.v) {
     const start = Math.max(0, Math.floor((Date.now() - t) / 1000));
@@ -254,13 +257,13 @@ function visFilm(link) {
   if (!maaStyreBio()) { besked.textContent = "🎬 Kun hotellets ansatte kan sætte film på i biografen."; return; }
   const id = youtubeId(link);
   if (!id) { bioTekst("Det ligner ikke et YouTube-link. Prøv at kopiere linket igen.", true); return; }
-  saetFilm(id, Date.now(), FIGUR.navn);
+  saetFilm(id, Date.now(), FIGUR.navn, bioFilm.n + 1);
   besked.textContent = "🎬 Filmen kører på lærredet. Find et sæde, og hent popcorn 🍿";
   svaev("🎬");
 }
 function stopFilm() {
   if (!maaStyreBio()) return;
-  saetFilm(null, Date.now(), FIGUR.navn);
+  saetFilm(null, Date.now(), FIGUR.navn, bioFilm.n + 1);
   besked.textContent = "⏹ Du stoppede filmen.";
 }
 
@@ -378,7 +381,7 @@ skiftRum = function (navn) {
     visBioVindue(maaStyreBio());
   }
   if (!iBiografen() && varHer) {
-    bioFilm = { v: null, t: 0, af: "" };
+    bioFilm = { v: null, t: 0, af: "", n: 0 };
     bioSkaerm.removeAttribute("src");
     bioVindue.hidden = true;
   }

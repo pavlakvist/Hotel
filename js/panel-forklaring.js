@@ -193,6 +193,6 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/biograf.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/biograf.js?v=5";
+  s.src = "js/biograf.js?t=" + Date.now();   // hentes altid frisk, så rettelser i biografen ses med det samme
   document.body.appendChild(s);
 })();
