@@ -15,9 +15,9 @@
 const RUM = {
   bredde: 10,              // antal felter fra venstre mod højre
   dybde: 10,               // antal felter bagud
-  gulvFarve1: "#d8b47a",   // gulvet skifter mellem to farver, som et skakbræt
-  gulvFarve2: "#c9a46c",
-  vaegFarve: "#86b3dd",
+  gulvFarve1: "#f8d7e1",   // gulvet skifter mellem to farver, som et skakbræt (lyserødt)
+  gulvFarve2: "#efc3d1",
+  vaegFarve: "#f2b6c9",    // lyserøde vægge i dit værelse
   gulvBillede: "",         // fx "billeder/gulv.png" (64 x 32 pixels, rudeformet)
 };
 
