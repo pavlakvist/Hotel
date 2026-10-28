@@ -91,7 +91,7 @@ function guideHtml() {
     "<li>🛡️ Knappen i chatbaren åbner og lukker panelet.</li>" +
     "<li>🌙 skifter til mørkt tema, ⤢ gør panelet stort. Træk i toppen for at flytte det.</li>" +
     "<li>🚨 <b>Tilkald hjælp</b> (øverst til venstre) sender en alarm til alle ansatte.</li>" +
-    "<li>❓ Øverst i hver fane står en forklaring. Den kan klappes sammen.</li></ul></div>";
+    "</ul></div>";
 }
 
 const visFaneFoerForklaring = visFane;
@@ -106,6 +106,8 @@ visFane = function () {
     });
     return;
   }
+  // De gule "❓ Sådan bruger du fanen"-bokse er fjernet (Pavla 28/10). Forklaringerne står stadig i 📘 Guide.
+  return;
   const h = PANEL_HJAELP[ejerFane];
   if (!h || ejerIndhold.querySelector(".pf-hjaelp")) return;
   const boks = document.createElement("details");
