@@ -20,14 +20,14 @@ NAV_RUM.splice(2, 0, { id: "postkontor", etage: "stue", navn: "Postkontoret", om
   billede: "billeder/rum/postkontor.png", maks: 30, rum: "vaerelse", vaerelse: "postkontor" });
 function iPostkontoret() { return rumValg === "vaerelse" && aktivtVaerelse === "postkontor"; }
 
-// Hotellets egne møbler på postkontoret: to skriveborde med stole, en sofakrog og lænestole
-const POST_MOEBLER = [
-  { type: "ny-spisebord", x: 4, y: 5, retning: 0 }, { type: "ny-spisestol", x: 4, y: 4, retning: 0 }, { type: "ny-spisestol", x: 3, y: 5, retning: 1 },
-  { type: "ny-spisebord", x: 8, y: 5, retning: 0 }, { type: "ny-spisestol", x: 8, y: 4, retning: 0 }, { type: "ny-spisestol", x: 7, y: 5, retning: 1 },
-  { type: "ny-sofa", x: 8, y: 8, retning: 0 }, { type: "ny-sofabord", x: 8, y: 9, retning: 0 }, { type: "ny-laenestol", x: 7, y: 9, retning: 1 },
-  { type: "ny-laenestol", x: 1, y: 8, retning: 0 }, { type: "test-laenestol", x: 3, y: 8, retning: 0 },
-  { type: "ny-vitrine", x: 11, y: 4, retning: 0 },
-].map(function (m) { return Object.assign({ spejlet: false }, m); });
+// Postkontoret har ingen møbler fra start (Pavla fik dem fjernet igen 29/10).
+// POST_FJERNET er dem, der var sat ind: står de stadig samme sted, bliver de taget ud.
+const POST_MOEBLER = [];
+const POST_FJERNET = ["ny-spisebord,4,5", "ny-spisestol,4,4", "ny-spisestol,3,5", "ny-spisebord,8,5", "ny-spisestol,8,4", "ny-spisestol,7,5",
+  "ny-sofa,8,8", "ny-sofabord,8,9", "ny-laenestol,7,9", "ny-laenestol,1,8", "test-laenestol,3,8", "ny-vitrine,11,4"];
+function postUdenEkstra(liste) {
+  return liste.filter(function (m) { return POST_FJERNET.indexOf(m.type + "," + m.x + "," + m.y) < 0; });
+}
 function postSomData() { return POST_MOEBLER.map(function (m) { return Object.assign({}, m); }); }
 // Møblerne: det, der er gemt på denne computer, ellers hotellets egne
 const vaerelseMoeblerFoerPost = vaerelseMoebler;
@@ -35,7 +35,7 @@ vaerelseMoebler = function (id) {
   if (id === "postkontor" && !andreVaerelser.postkontor) {
     let gemt = null;
     try { gemt = JSON.parse(localStorage.getItem("mit-hotel-rum-postkontor") || "null"); } catch (e) {}
-    andreVaerelser.postkontor = (Array.isArray(gemt) && gemt.length ? gemt : postSomData()).filter(function (m) { return MOEBEL_TYPER[m.type]; });
+    andreVaerelser.postkontor = (Array.isArray(gemt) ? postUdenEkstra(gemt) : postSomData()).filter(function (m) { return MOEBEL_TYPER[m.type]; });
   }
   return vaerelseMoeblerFoerPost(id);
 };
@@ -44,7 +44,7 @@ if (typeof serverKald === "function") {
   const serverKaldFoerPost = serverKald;
   serverKald = async function (funktion, data) {
     const svar = await serverKaldFoerPost(funktion, data);
-    if (funktion === "hv_rum_moebler_hent" && svar && !svar.postkontor) svar.postkontor = postSomData();
+    if (funktion === "hv_rum_moebler_hent" && svar) svar.postkontor = Array.isArray(svar.postkontor) ? postUdenEkstra(svar.postkontor) : postSomData();
     return svar;
   };
 }

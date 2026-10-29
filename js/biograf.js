@@ -14,11 +14,11 @@
 //  Rummet
 // -------------------------------------------------------------
 const BIOGRAF_RUM = { id: "biograf", navn: "Biografen", ejer: EJER_NAVNE[0], bredde: 12, dybde: 14,
-  vaeg: "#4a1a22", gulv1: "#7c1f2c", gulv2: "#6e1a26", vaegHoejde: 420, doer: null };   // ingen dør: man kommer og går med elevatoren
+  vaeg: "#4a1a22", gulv1: "#7c1f2c", gulv2: "#6e1a26", vaegHoejde: 560, doer: null };   // høj væg til det store lærred; ingen dør: man kommer og går med elevatoren
 INDBYGGEDE_RUM.biograf = BIOGRAF_RUM;
 
 // Lærredet hænger på bagvæggen (den højre væg øverst) fra felt "fra" til "til", i "bund"-"top" pixels over gulvet
-const LAERRED = { fra: 2.5, til: 9.5, bund: 90, top: 280 };   // lærredet hænger lige (ikke skævt langs væggen)
+const LAERRED = { fra: 1.3, til: 10.7, bund: 175, top: 385 };   // lærredet hænger lige (ikke skævt langs væggen), bredt og højt oppe
 
 // Hotellets egne møbler i biografen: 4 rækker sæder, der vender mod lærredet (retning 2), og to popcornmaskiner
 const BIOGRAF_MOEBLER = [];
@@ -27,22 +27,21 @@ const BIOGRAF_MOEBLER = [];
 });
 BIOGRAF_MOEBLER.push({ type: "popcorn-maskine", x: 0, y: 2, spejlet: false, retning: 1 });
 BIOGRAF_MOEBLER.push({ type: "popcorn-maskine", x: 11, y: 2, spejlet: false, retning: 0 });
-// Lidt hygge: køleskab med sodavand og is, et vitrineskab, lænestole ved siden af sæderne
-// og en lille café bagerst med borde, stole og en sofa
-const BIO_GAMLE_ANTAL = BIOGRAF_MOEBLER.length;   // så mange møbler havde biografen før
-[
-  { type: "ny-koeleskab", x: 11, y: 0, retning: 0 }, { type: "ny-vitrine", x: 0, y: 0, retning: 0 },
-  { type: "ny-laenestol", x: 11, y: 6, retning: 0 }, { type: "ny-laenestol", x: 11, y: 9, retning: 0 },
-  { type: "ny-spisebord", x: 3, y: 13, retning: 0 }, { type: "ny-spisestol", x: 3, y: 12, retning: 0 }, { type: "ny-spisestol", x: 2, y: 13, retning: 1 },
-  { type: "ny-spisebord", x: 9, y: 13, retning: 0 }, { type: "ny-spisestol", x: 9, y: 12, retning: 0 }, { type: "ny-spisestol", x: 8, y: 13, retning: 1 },
-  { type: "ny-sofa", x: 5, y: 13, retning: 0 },
-].forEach(function (m) { BIOGRAF_MOEBLER.push(Object.assign({ spejlet: false }, m)); });
-// Er biografen stadig præcis som den første udgave (kun sæder og popcorn)? Så får den de nye møbler.
-function bioGammelStandard(liste) {
-  if (!Array.isArray(liste) || liste.length !== BIO_GAMLE_ANTAL) return false;
+// De ekstra møbler (køleskab, vitrine, lænestole og café), som Pavla bad om at få fjernet igen 29/10.
+// Står de stadig, hvor de blev sat ind, bliver de taget ud (også hvis de er gemt på serveren).
+const BIO_GAMLE_ANTAL = BIOGRAF_MOEBLER.length;
+const BIO_FJERNET = [
+  { type: "ny-koeleskab", x: 11, y: 0 }, { type: "ny-vitrine", x: 0, y: 0 },
+  { type: "ny-laenestol", x: 11, y: 6 }, { type: "ny-laenestol", x: 11, y: 9 },
+  { type: "ny-spisebord", x: 3, y: 13 }, { type: "ny-spisestol", x: 3, y: 12 }, { type: "ny-spisestol", x: 2, y: 13 },
+  { type: "ny-spisebord", x: 9, y: 13 }, { type: "ny-spisestol", x: 9, y: 12 }, { type: "ny-spisestol", x: 8, y: 13 },
+  { type: "ny-sofa", x: 5, y: 13 },
+];
+// Tag de fjernede ekstra møbler ud (kun dem, der står præcis hvor de blev sat ind); alt andet bliver
+function bioUdenEkstra(liste) {
   const noegle = function (m) { return m.type + "," + m.x + "," + m.y; };
-  const gamle = BIOGRAF_MOEBLER.slice(0, BIO_GAMLE_ANTAL).map(noegle);
-  return liste.every(function (m) { return gamle.indexOf(noegle(m)) >= 0; });
+  const fjern = BIO_FJERNET.map(noegle);
+  return liste.filter(function (m) { return fjern.indexOf(noegle(m)) < 0; });
 }
 if (!MOEBEL_TYPER["bio-saede"]) console.warn("Biografen: bio-saede mangler i js/moebel-katalog.js (gammel udgave i browseren? Tryk Ctrl+F5)");
 
@@ -61,7 +60,7 @@ vaerelseMoebler = function (id) {
   if (id === "biograf" && !andreVaerelser.biograf) {
     let gemt = null;
     try { gemt = JSON.parse(localStorage.getItem("mit-hotel-rum-biograf") || "null"); } catch (e) {}
-    andreVaerelser.biograf = (Array.isArray(gemt) && gemt.length && !bioGammelStandard(gemt) ? gemt : BIOGRAF_MOEBLER)
+    andreVaerelser.biograf = (Array.isArray(gemt) && bioUdenEkstra(gemt).length ? bioUdenEkstra(gemt) : BIOGRAF_MOEBLER)
       .map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; });
   }
   return vaerelseMoeblerFoerBio(id);
@@ -92,7 +91,7 @@ if (typeof serverKald === "function") {
       data = Object.assign({}, data, { p_sidder: Object.assign({}, data.p_sidder || {}, { bio: bioFilm }) });
     }
     const svar = await serverKaldFoerBio(funktion, data);
-    if (funktion === "hv_rum_moebler_hent" && svar && (!svar.biograf || bioGammelStandard(svar.biograf))) svar.biograf = biografSomData();
+    if (funktion === "hv_rum_moebler_hent" && svar) svar.biograf = Array.isArray(svar.biograf) && bioUdenEkstra(svar.biograf).length ? bioUdenEkstra(svar.biograf) : biografSomData();
     if (funktion === "hv_puls") { try { bioFraServer(svar); } catch (e) { console.warn(e); } }
     return svar;
   };
@@ -196,7 +195,7 @@ tegnVaegge = function () {
   vaegFirkant(L.fra - 1.2, L.til + 1.2, L.top + 12, L.top + 30, "#9a1a27");   // kappen foroven
   vaegFirkant(L.fra - 1.2, L.til + 1.2, L.top + 10, L.top + 13, "#d9a441");
   // små guldlamper på væggen
-  [0.8, L.til + 1.8].forEach(function (x) {
+  [0.8, L.til + 1.8].filter(function (x) { return x < L.fra - 1.25 || (x > L.til + 1.25 && x < BIOGRAF_RUM.bredde); }).forEach(function (x) {   // kun hvis der er plads ved siden af gardinerne
     const p = vaegPunkt(x, 150);
     ctx.fillStyle = "rgba(255, 210, 120, 0.25)";
     ctx.beginPath(); ctx.arc(p.x, p.y, 18, 0, Math.PI * 2); ctx.fill();
