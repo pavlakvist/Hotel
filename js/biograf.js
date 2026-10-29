@@ -27,6 +27,23 @@ const BIOGRAF_MOEBLER = [];
 });
 BIOGRAF_MOEBLER.push({ type: "popcorn-maskine", x: 0, y: 2, spejlet: false, retning: 1 });
 BIOGRAF_MOEBLER.push({ type: "popcorn-maskine", x: 11, y: 2, spejlet: false, retning: 0 });
+// Lidt hygge: køleskab med sodavand og is, et vitrineskab, lænestole ved siden af sæderne
+// og en lille café bagerst med borde, stole og en sofa
+const BIO_GAMLE_ANTAL = BIOGRAF_MOEBLER.length;   // så mange møbler havde biografen før
+[
+  { type: "ny-koeleskab", x: 11, y: 0, retning: 0 }, { type: "ny-vitrine", x: 0, y: 0, retning: 0 },
+  { type: "ny-laenestol", x: 11, y: 6, retning: 0 }, { type: "ny-laenestol", x: 11, y: 9, retning: 0 },
+  { type: "ny-spisebord", x: 3, y: 13, retning: 0 }, { type: "ny-spisestol", x: 3, y: 12, retning: 0 }, { type: "ny-spisestol", x: 2, y: 13, retning: 1 },
+  { type: "ny-spisebord", x: 9, y: 13, retning: 0 }, { type: "ny-spisestol", x: 9, y: 12, retning: 0 }, { type: "ny-spisestol", x: 8, y: 13, retning: 1 },
+  { type: "ny-sofa", x: 5, y: 13, retning: 0 },
+].forEach(function (m) { BIOGRAF_MOEBLER.push(Object.assign({ spejlet: false }, m)); });
+// Er biografen stadig præcis som den første udgave (kun sæder og popcorn)? Så får den de nye møbler.
+function bioGammelStandard(liste) {
+  if (!Array.isArray(liste) || liste.length !== BIO_GAMLE_ANTAL) return false;
+  const noegle = function (m) { return m.type + "," + m.x + "," + m.y; };
+  const gamle = BIOGRAF_MOEBLER.slice(0, BIO_GAMLE_ANTAL).map(noegle);
+  return liste.every(function (m) { return gamle.indexOf(noegle(m)) >= 0; });
+}
 if (!MOEBEL_TYPER["bio-saede"]) console.warn("Biografen: bio-saede mangler i js/moebel-katalog.js (gammel udgave i browseren? Tryk Ctrl+F5)");
 
 function iBiografen() { return rumValg === "vaerelse" && aktivtVaerelse === "biograf"; }
@@ -44,7 +61,7 @@ vaerelseMoebler = function (id) {
   if (id === "biograf" && !andreVaerelser.biograf) {
     let gemt = null;
     try { gemt = JSON.parse(localStorage.getItem("mit-hotel-rum-biograf") || "null"); } catch (e) {}
-    andreVaerelser.biograf = (Array.isArray(gemt) && gemt.length ? gemt : BIOGRAF_MOEBLER)
+    andreVaerelser.biograf = (Array.isArray(gemt) && gemt.length && !bioGammelStandard(gemt) ? gemt : BIOGRAF_MOEBLER)
       .map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; });
   }
   return vaerelseMoeblerFoerBio(id);
@@ -75,7 +92,7 @@ if (typeof serverKald === "function") {
       data = Object.assign({}, data, { p_sidder: Object.assign({}, data.p_sidder || {}, { bio: bioFilm }) });
     }
     const svar = await serverKaldFoerBio(funktion, data);
-    if (funktion === "hv_rum_moebler_hent" && svar && !svar.biograf) svar.biograf = biografSomData();
+    if (funktion === "hv_rum_moebler_hent" && svar && (!svar.biograf || bioGammelStandard(svar.biograf))) svar.biograf = biografSomData();
     if (funktion === "hv_puls") { try { bioFraServer(svar); } catch (e) { console.warn(e); } }
     return svar;
   };
