@@ -52,6 +52,19 @@ MOEBLER.push(
   {"id": "popcorn-maskine", "navn": "Popcornmaskine", "retninger": ["billeder/moebler/popcorn-maskine/popcorn-maskine-0.png", "billeder/moebler/popcorn-maskine/popcorn-maskine-1.png", "billeder/moebler/popcorn-maskine/popcorn-maskine-2.png", "billeder/moebler/popcorn-maskine/popcorn-maskine-3.png"], "kategori": "Biograf"},
 );
 
+// Tagterrassen ☀️ (js/tagterrasse.js): udendørs møbler. Man kan sidde på havestol, bænk og loungesofa.
+// Klik på isvognen for at få en is 🍦
+MOEBLER.push(
+  {"id": "tag-havestol", "navn": "Havestol", "retninger": ["billeder/moebler/tag-havestol/tag-havestol-0.png", "billeder/moebler/tag-havestol/tag-havestol-1.png", "billeder/moebler/tag-havestol/tag-havestol-2.png", "billeder/moebler/tag-havestol/tag-havestol-3.png"], "kategori": "Tagterrasse", "saede": 20},
+  {"id": "tag-baenk", "navn": "Havebænk", "retninger": ["billeder/moebler/tag-baenk/tag-baenk-0.png", "billeder/moebler/tag-baenk/tag-baenk-1.png", "billeder/moebler/tag-baenk/tag-baenk-2.png", "billeder/moebler/tag-baenk/tag-baenk-3.png"], "kategori": "Tagterrasse", "felter": [2, 1], "saede": 19},
+  {"id": "tag-loungesofa", "navn": "Loungesofa", "retninger": ["billeder/moebler/tag-loungesofa/tag-loungesofa-0.png", "billeder/moebler/tag-loungesofa/tag-loungesofa-1.png", "billeder/moebler/tag-loungesofa/tag-loungesofa-2.png", "billeder/moebler/tag-loungesofa/tag-loungesofa-3.png"], "kategori": "Tagterrasse", "felter": [2, 1], "saede": 22},
+  {"id": "tag-bord", "navn": "Havebord", "retninger": ["billeder/moebler/tag-bord/tag-bord-0.png", "billeder/moebler/tag-bord/tag-bord-1.png", "billeder/moebler/tag-bord/tag-bord-2.png", "billeder/moebler/tag-bord/tag-bord-3.png"], "kategori": "Tagterrasse"},
+  {"id": "tag-parasol", "navn": "Parasol", "retninger": ["billeder/moebler/tag-parasol/tag-parasol-0.png", null, null, null], "kategori": "Tagterrasse"},
+  {"id": "tag-plantekasse", "navn": "Plantekasse med blomster", "retninger": ["billeder/moebler/tag-plantekasse/tag-plantekasse-0.png", "billeder/moebler/tag-plantekasse/tag-plantekasse-1.png", "billeder/moebler/tag-plantekasse/tag-plantekasse-2.png", "billeder/moebler/tag-plantekasse/tag-plantekasse-3.png"], "kategori": "Tagterrasse"},
+  {"id": "tag-oliventrae", "navn": "Oliventræ", "retninger": ["billeder/moebler/tag-oliventrae/tag-oliventrae-0.png", "billeder/moebler/tag-oliventrae/tag-oliventrae-1.png", "billeder/moebler/tag-oliventrae/tag-oliventrae-2.png", "billeder/moebler/tag-oliventrae/tag-oliventrae-3.png"], "kategori": "Tagterrasse"},
+  {"id": "tag-isvogn", "navn": "Isvogn", "retninger": ["billeder/moebler/tag-isvogn/tag-isvogn-0.png", "billeder/moebler/tag-isvogn/tag-isvogn-1.png", "billeder/moebler/tag-isvogn/tag-isvogn-2.png", "billeder/moebler/tag-isvogn/tag-isvogn-3.png"], "kategori": "Tagterrasse"},
+);
+
 MOEBLER.push(
   {"id": "ny-sofa", "navn": "Rød sofa", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 0, 382, 255], [386, 0, 382, 255], [772, 0, 378, 225], [1154, 0, 378, 225]], "klip": [0, 0, 382, 255], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "felter": [2, 1], "saede": 19},
   {"id": "ny-laenestol", "navn": "Rød lænestol", "billede": "billeder/moebler/nye-moebler.png", "klipper": [[0, 259, 190, 207], [194, 259, 190, 207], [388, 259, 190, 177], [582, 259, 190, 177]], "klip": [0, 259, 190, 207], "kategori": "Nye møbler", "vender": "venstre", "skala": 0.5, "saede": 19},

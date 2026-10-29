@@ -204,3 +204,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/postkontor.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// ☀️ Tagterrassen (js/tagterrasse.js): blå himmel, skyer, sol, udendørs møbler og en isvogn.
+(function () {
+  if (document.querySelector("script[src^='js/tagterrasse.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/tagterrasse.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
