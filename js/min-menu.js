@@ -195,6 +195,48 @@ const rapportHvem = document.getElementById("rapport-hvem");
 const rapportTekst = document.getElementById("rapport-tekst");
 const rapportTak = document.getElementById("rapport-tak");
 
+// Valgene under "Hvad vil du fortælle os om?" – tilføj gerne flere her
+// (værdien er det, personalet ser i Ejerpanelet)
+const RAPPORT_GRUNDE = [
+  ["Mobning", "Nogen er grim eller mobber"],
+  ["Grimme ord", "Grimme ord i chatten"],
+  ["Spam", "Spam i chatten"],
+  ["Snyd ved bytte", "Snyd ved bytte"],
+  ["Tigger", "Tigger om Glimt/Stella"],
+  ["Upassende navn/motto", "Upassende navn/motto"],
+  ["Upassende rum", "Upassende rum"],
+  ["Falsk ansat", "Lader som om de er ansat"],
+  ["Personlige oplysninger", "Spørger om private ting"],
+  ["Trusler", "Trusler, jeg er utryg"],
+  ["Fejl", "Fejl i spillet"],
+  ["Andet", "Andet"]
+];
+
+// Byg valgene i vinduet (i to kolonner, så vinduet ikke bliver for højt)
+(function lavRapportGrunde() {
+  const form = document.getElementById("rapport-form");
+  const gamle = form.querySelectorAll("input[name='rapport-grund']");
+  if (!gamle.length) return;
+  const foerste = gamle[0].closest("label");
+  const boks = document.createElement("div");
+  boks.id = "rapport-grunde";
+  boks.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;margin-bottom:6px;font-size:0.92em";
+  RAPPORT_GRUNDE.forEach(function (g, i) {
+    const label = document.createElement("label");
+    label.style.cssText = "display:flex;align-items:center;gap:5px;white-space:nowrap";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "rapport-grund";
+    radio.value = g[0];
+    if (i === 0) radio.checked = true;
+    label.appendChild(radio);
+    label.appendChild(document.createTextNode(g[1]));
+    boks.appendChild(label);
+  });
+  form.insertBefore(boks, foerste);
+  gamle.forEach(function (r) { r.closest("label").remove(); });
+})();
+
 function aabnRapport() {
   rapportHvem.innerHTML = "<option value=''>Ingen bestemt</option>";
   if (rumValg === "hal") {
@@ -205,6 +247,8 @@ function aabnRapport() {
     });
   }
   rapportTekst.value = "";
+  const foersteGrund = document.querySelector("input[name='rapport-grund']");
+  if (foersteGrund) foersteGrund.checked = true;
   rapportTak.hidden = true;
   document.getElementById("rapport-form").hidden = false;
   rapportVindue.hidden = false;
