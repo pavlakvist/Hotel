@@ -627,3 +627,63 @@ function faaPopcorn(m) {
     try { tegnMadFoerBio(h, p, hoejde, side, sidder, valg); } finally { if (madBillede) billeder[MAD_BILLEDE] = madBillede; else delete billeder[MAD_BILLEDE]; }
   };
 })();
+
+
+// -------------------------------------------------------------
+//  🎬 Biograf-fanen i panelet (kun ejeren og de ansatte)
+//  Sæt et YouTube-link på, sæt på pause, stop filmen osv. uden at klikke på lærredet.
+// -------------------------------------------------------------
+(function bioFane() {
+  if (typeof ROLLE_FANER === "undefined" || typeof visFane !== "function" || !document.getElementById("ejer-faner")) return;
+  Object.keys(ROLLE_FANER).forEach(function (r) { if (ROLLE_FANER[r].indexOf("biograf") < 0) ROLLE_FANER[r].push("biograf"); });
+  const fane = document.createElement("button");
+  fane.dataset.fane = "biograf";
+  fane.textContent = "🎬 Biograf";
+  fane.hidden = !rolleMaa("biograf");
+  document.getElementById("ejer-faner").appendChild(fane);
+  fane.addEventListener("click", function () { ejerFane = "biograf"; visFane(); });
+  setInterval(function () { fane.hidden = !rolleMaa("biograf"); }, 2000);
+
+  const visFaneFoerBio = visFane;
+  visFane = function () {
+    visFaneFoerBio();
+    fane.classList.toggle("valgt", ejerFane === "biograf");
+    if (!ejerVindue.hidden && ejerFane === "biograf" && rolleMaa("biograf")) visBioFane();
+  };
+
+  function visBioFane() {
+    const her = iBiografen();
+    const status = !her ? "Du er ikke i biografen lige nu. Sætter du et link på, går du derind, og filmen starter."
+      : bioFilm.v ? "🎞 Filmen kører" + (bioFilm.af ? " (sat på af " + rens(bioFilm.af) + ")" : "") + "."
+      : "Gardinet er trukket for. Der kører ingen film.";
+    ejerIndhold.innerHTML =
+      "<h3>🎬 Biografen</h3>" +
+      "<p class='ejer-info'>Kun du og de ansatte kan styre biografen. Alle i biografen ser den samme film.</p>" +
+      "<form id='bp-form' style='display:flex; gap:6px; margin:10px 0;'>" +
+      "<input id='bp-link' type='text' placeholder='Sæt et YouTube-link ind …' style='flex:1; padding:7px; border-radius:8px; border:2px solid #d9a441;'>" +
+      "<button class='lv-knap' type='submit'>▶ Vis film</button></form>" +
+      "<div style='display:flex; flex-wrap:wrap; gap:6px;'>" +
+      (her && bioFilm.v ?
+        "<button class='lv-knap' type='button' id='bp-pause'>" + (bioPauset ? "▶ Fortsæt" : "⏸ Pause") + "</button>" +
+        "<button class='lv-knap' type='button' id='bp-lyd'>🔊 Lyd på</button>" +
+        "<button class='lv-knap' type='button' id='bp-stor'>⛶ Stor skærm</button>" +
+        "<button class='lv-knap' type='button' id='bp-stop'>⏹ Stop filmen</button>" : "") +
+      (!her ? "<button class='lv-knap' type='button' id='bp-gaa'>🚪 Gå til biografen</button>" : "") +
+      "</div><p id='bp-status' style='margin-top:10px;'>" + status + "</p>";
+    document.getElementById("bp-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const link = document.getElementById("bp-link").value;
+      if (!youtubeId(link)) { document.getElementById("bp-status").textContent = "Det ligner ikke et YouTube-link. Prøv at kopiere linket igen."; return; }
+      if (iBiografen()) { visFilm(link); visFane(); return; }
+      gaaTilVaerelse("biograf");
+      setTimeout(function () { if (iBiografen()) visFilm(link); visFane(); }, 400);
+    });
+    const knap = function (id, f) { const k = document.getElementById(id); if (k) k.addEventListener("click", function () { f(); visFane(); }); };
+    knap("bp-pause", function () { document.getElementById("bio-pause").click(); });
+    knap("bp-lyd", function () { document.getElementById("bio-lyd").click(); });
+    knap("bp-stor", function () { saetStor(true); });
+    knap("bp-stop", stopFilm);
+    knap("bp-gaa", function () { gaaTilVaerelse("biograf"); });
+  }
+  function rens(t) { return String(t).replace(/[&<>"']/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); }
+})();
