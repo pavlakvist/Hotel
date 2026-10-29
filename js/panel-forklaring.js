@@ -196,3 +196,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/biograf.js?t=" + Date.now();   // hentes altid frisk, så rettelser i biografen ses med det samme
   document.body.appendChild(s);
 })();
+
+// ✉️ Postkontoret og postkasserne (js/postkontor.js): skriv breve, postkasse ved din dør, eget navneskilt.
+(function () {
+  if (document.querySelector("script[src^='js/postkontor.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/postkontor.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
