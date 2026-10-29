@@ -267,6 +267,7 @@ gaaTil = function (x, y, saede) {
 //  Chatlogs, private beskeder, rapporter og administratorlog fra serveren
 // -------------------------------------------------------------
 let serverBeskeder = null, serverRapporter = null, serverAdminlog = null;
+let rapportKiggere = {};     // hvem kigger på hvilke rapporter (database-25)
 const setChat = {};
 let sidsteModData = "";
 
@@ -392,9 +393,42 @@ rapporter = function () {
   if (!serverRapporter) return lokale;
   return lokale.concat(serverRapporter.map(function (r) {
     return { sid: r.id, fra: r.fra, hvem: r.hvem, grund: r.grund, tekst: (r.tekst || "") + " (fra " + r.fra + ")",
-      tid: r.tid, behandlet: r.behandlet, behandletTid: r.behandletTid };
+      tid: r.tid, behandlet: r.behandlet, behandletTid: r.behandletTid,
+      kigger: rapportKiggere[r.id] ? rapportKiggere[r.id].kigger : null };
   }));
 };
+
+// Den der rapporterede får en privat besked, når nogen kigger på sagen, og når den er løst
+// (kræver database-25-rapport-beskeder.sql)
+function hentRapportKiggere() {
+  const token = mitToken();
+  if (!SERVER.til || !token || !erModEllerEjer()) return;
+  serverKald("hv_rapport_kiggere", { p_token: token }).then(function (svar) {
+    const nu = stabil(svar || {});
+    if (nu === stabil(rapportKiggere)) return;
+    rapportKiggere = svar || {};
+    tegnPanelIgen(["rapporter"]);
+  }).catch(function () {});
+}
+function rapportBesked(id, slags) {
+  return serverKald("hv_rapport_besked", { p_token: mitToken(), p_id: id, p_slags: slags })
+    .then(function (svar) {
+      if (svar && svar.kigger) rapportKiggere[id] = { kigger: svar.kigger };
+      tegnPanelIgen(["rapporter"]);
+    })
+    .catch(function (e) {
+      besked.textContent = /hv_rapport_besked|function/i.test(e.message)
+        ? "Kør database-25-rapport-beskeder.sql i Supabase, så får den der rapporterede besked."
+        : e.message;
+    });
+}
+function rapportKigger(r) {
+  if (!r || !r.sid) return;
+  rapportKiggere[r.sid] = { kigger: FIGUR.navn };
+  rapportBesked(r.sid, "kigger");
+}
+hentRapportKiggere();
+setInterval(hentRapportKiggere, 5000);
 
 // Nyheder og rapporter gemmes på serveren, når panelet gemmer dem
 let nyhederHentet = false;
@@ -409,6 +443,7 @@ gemListe = function (noegle, liste, maks) {
       s.behandlet = !!r.behandlet;
       s.behandletTid = r.behandlet ? Date.now() : null;
       serverKald("hv_rapport_behandl", { p_token: mitToken(), p_id: r.sid, p_behandlet: !!r.behandlet })
+        .then(function () { if (r.behandlet) rapportBesked(r.sid, "loest"); })
         .catch(function (e) { besked.textContent = e.message; });
     });
     liste = liste.filter(function (r) { return !r.sid; });

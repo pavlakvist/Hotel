@@ -658,7 +658,7 @@ function visRapporter() {
     const tekst = r.fra ? String(r.tekst || "").replace(" (fra " + r.fra + ")", "") : r.tekst;
     const soeg = [r.grund, r.hvem, r.fra, tekst].join(" ").toLowerCase();
     return "<li class='rap-kort" + (r.behandlet ? " faerdig" : "") + "' data-soeg='" + rens(soeg) + "'>" +
-      "<div class='rap-top'><span class='rap-status'>" + (r.behandlet ? "✅ Behandlet" : "🆕 Åben") + "</span>" +
+      "<div class='rap-top'><span class='rap-status'>" + (r.behandlet ? "✅ Behandlet" : r.kigger ? "👀 " + rens(r.kigger) + " kigger på den" : "🆕 Åben") + "</span>" +
       "<b class='rap-grund'>🚩 " + rens(r.grund || "Rapport") + "</b><span class='rap-dato'>" + tidTekst(r.tid) + "</span></div>" +
       "<div class='rap-hvem'>" + (r.fra ? "Fra <b>" + rens(r.fra) + "</b> " : "") +
       (r.hvem ? "om <a href='#' data-spiller='" + rens(r.hvem) + "'>" + rens(r.hvem) + "</a>" : "<i>ingen bestemt spiller</i>") + "</div>" +
@@ -666,7 +666,8 @@ function visRapporter() {
       "<div class='rap-knapper'>" +
       (r.behandlet
         ? "<small>Behandlet " + tidTekst(r.behandletTid || r.tid) + "</small><button class='lille' data-aabn='" + x.i + "'>↩ Åbn igen</button>"
-        : "<button class='lille groen' data-behandl='" + x.i + "'>✅ Behandl</button>") +
+        : (r.sid && !r.kigger && typeof rapportKigger === "function" ? "<button class='lille' data-kig='" + x.i + "'>👀 Jeg kigger på den</button>" : "") +
+          "<button class='lille groen' data-behandl='" + x.i + "'>✅ Løst</button>") +
       (r.hvem ? "<button class='lille' data-straf='" + rens(r.hvem) + "'>⚖️ Straf " + rens(r.hvem) + "</button>" : "") +
       "</div></li>";
   }
@@ -714,6 +715,16 @@ function visRapporter() {
     });
   }
   knapper("data-behandl", true);
+  // "Jeg kigger på den": den der rapporterede får en privat besked (mod-panel.js)
+  ejerIndhold.querySelectorAll("[data-kig]").forEach(function (k) {
+    k.addEventListener("click", function () {
+      const r = rapporter()[+k.dataset.kig];
+      if (!r) return;
+      k.disabled = true;
+      rapportKigger(r);
+      adminSkriv("Kigger på rapport: " + r.grund + (r.fra ? " (fra " + r.fra + ")" : ""));
+    });
+  });
   knapper("data-aabn", false);
 }
 
