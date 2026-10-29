@@ -14,7 +14,7 @@
 //  Rummet
 // -------------------------------------------------------------
 const BIOGRAF_RUM = { id: "biograf", navn: "Biografen", ejer: EJER_NAVNE[0], bredde: 12, dybde: 14,
-  vaeg: "#4a1a22", gulv1: "#7c1f2c", gulv2: "#6e1a26", vaegHoejde: 420, doer: { x: 0, y: 12 } };
+  vaeg: "#4a1a22", gulv1: "#7c1f2c", gulv2: "#6e1a26", vaegHoejde: 420, doer: null };   // ingen dør: man kommer og går med elevatoren
 INDBYGGEDE_RUM.biograf = BIOGRAF_RUM;
 
 // Lærredet hænger på bagvæggen (den højre væg øverst) fra felt "fra" til "til", i "bund"-"top" pixels over gulvet

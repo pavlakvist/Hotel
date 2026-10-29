@@ -14,7 +14,7 @@
 //  Rummet
 // -------------------------------------------------------------
 const POST_RUM = { id: "postkontor", navn: "Postkontoret", ejer: EJER_NAVNE[0], bredde: 12, dybde: 10,
-  vaeg: "#7a2832", gulv1: "#ead9b4", gulv2: "#dcc69c", vaegHoejde: 230, doer: { x: 0, y: 8 } };
+  vaeg: "#7a2832", gulv1: "#ead9b4", gulv2: "#dcc69c", vaegHoejde: 230, doer: null };   // ingen dør: man kommer og går med elevatoren
 INDBYGGEDE_RUM.postkontor = POST_RUM;
 NAV_RUM.splice(2, 0, { id: "postkontor", etage: "stue", navn: "Postkontoret", om: "Skriv breve til de andre ✉️",
   billede: "billeder/rum/postkontor.png", maks: 30, rum: "vaerelse", vaerelse: "postkontor" });
