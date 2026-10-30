@@ -531,7 +531,7 @@ figurHoejde = function (valg) {
 // Hvor langt figuren synker ned i sædet: så meget, at hoved, skuldre og
 // lidt af ryggen stikker op over ryglænet (BIO_SYNLIG = den del af figuren, man ser)
 const BIO_SYNLIG = 0.4;
-const BIO_IND = 0.22;     // hvor meget figuren rykkes ind mod ryglænet (del af et felt)
+const BIO_IND = 0.34;     // hvor meget figuren rykkes ind mod ryglænet (del af et felt)
 function bioSaenk(valg) {
   const h = figurHoejdeFoerBio(valg);
   return Math.max(0, h * (1 - BIO_SYNLIG) - BIO_RYG.hoejde);
@@ -543,25 +543,37 @@ const tegnMenneskeFoerBio = tegnMenneske;
 tegnMenneske = function (c, x, y, valg, retning, gaarTrin, sidde) {
   const m = bioTegnerSaede;
   if (!m || !sidde) { tegnMenneskeFoerBio(c, x, y, valg, retning, gaarTrin, sidde); return; }
-  const ned = bioSaenk(valg);   // figuren sidder nede i sædet, med overkroppen over ryglænet
   const l = rygLinje(m);
   const dx = l[1].x - l[0].x, dy = l[1].y - l[0].y, n = Math.hypot(dx, dy) || 1;
   const a = { x: l[0].x - dx / n * 400, y: l[0].y - dy / n * 400 };
   const b = { x: l[1].x + dx / n * 400, y: l[1].y + dy / n * 400 };
+  // figuren rykkes lidt hen mod ryglænet, så den sidder lige bag det og ikke svæver bagved
+  const ind = BIO_IND * (m.retning === 2 ? -1 : 1);
+  const fx = x + ind * FLISE_B / 2, fy = y + BIO_IND * FLISE_H / 2;
+  const f = FIGURER[valg.type];
+  if (f && f.sidderBagfra) {
+    // Pavlas billede af figuren, der sidder bagfra (js/sidde-nye.js): numsen på sædet.
+    // Figuren tegnes hel, og bagefter tegnes den nederste del af sædet (ryglænet og armlænene)
+    // oven på igen, så det er selve sædet, der dækker hende, og ikke en lige streg.
+    tegnMenneskeFoerBio(c, fx, fy, valg, retning, null, sidde);
+    const t = MOEBEL_TYPER[m.type];
+    const sted = moebelSted(t, m.x, m.y, drejetTvaers(m));
+    c.save();
+    c.beginPath();
+    c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(b.x, b.y + 2000); c.lineTo(a.x, a.y + 2000);
+    c.closePath();
+    c.clip();
+    tegnMoebel(c, t, sted.x, sted.y, m.spejlet, m.retning);
+    c.restore();
+    return;
+  }
+  // ældre figurer: stå-billedet sænket ned i sædet og skåret af ved ryglænet
   c.save();
   c.beginPath();
   c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(b.x, b.y - 2000); c.lineTo(a.x, a.y - 2000);
   c.closePath();
   c.clip();
-  // figuren rykkes lidt hen mod ryglænet, så den sidder lige bag det og ikke svæver bagved
-  const ind = BIO_IND * (m.retning === 2 ? -1 : 1);
-  const f = FIGURER[valg.type];
-  if (f && f.sidderBagfra) {
-    // Pavlas billede af figuren, der sidder bagfra (js/sidde-nye.js): numsen på sædet
-    tegnMenneskeFoerBio(c, x + ind * FLISE_B / 2, y + BIO_IND * FLISE_H / 2, valg, retning, null, sidde);
-  } else {
-    tegnMenneskeFoerBio(c, x + ind * FLISE_B / 2, y + BIO_IND * FLISE_H / 2 + ned, valg, retning, null, null);
-  }
+  tegnMenneskeFoerBio(c, fx, fy + bioSaenk(valg), valg, retning, null, null);
   c.restore();
 };
 
