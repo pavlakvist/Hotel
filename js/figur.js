@@ -82,6 +82,8 @@ const FIGURER = {
   dreng: {
     navn: "Dreng",
     skala: 0.96,
+    // drengens benene går skråt frem i sidde-billedet, så han rykkes kun lidt mod midten af sædet
+    siddeMidt: 0.35,
     raekke: "alle",
     // hættetrøjen og bukserne kan få en farve (farvelag i billeder/figurer/farvelag)
     omraader: ["skjorte", "underdel"],

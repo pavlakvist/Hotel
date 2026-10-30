@@ -519,16 +519,24 @@ const figurHoejdeFoerBio = figurHoejde;
 figurHoejde = function (valg) {
   const h = figurHoejdeFoerBio(valg);
   if (!bioTegnerSaede) return h;
-  return h * 0.5 + MOEBEL_TYPER[bioTegnerSaede.type].saede;
+  return h - bioSaenk(valg);
 };
 
+// Hvor langt figuren synker ned i sædet: så meget, at hoved, skuldre og
+// lidt af ryggen stikker op over ryglænet (BIO_SYNLIG = den del af figuren, man ser)
+const BIO_SYNLIG = 0.5;
+function bioSaenk(valg) {
+  const h = figurHoejdeFoerBio(valg);
+  return Math.max(0, h * (1 - BIO_SYNLIG) - BIO_RYG.hoejde);
+}
+
 // Figuren bagfra (stå-billedet, der kigger op mod lærredet), sænket ned i sædet
-// og skåret af ved toppen af ryglænet, så kun hoved og skuldre kan ses
+// og skåret af ved toppen af ryglænet, så hoved, skuldre og lidt af ryggen kan ses
 const tegnMenneskeFoerBio = tegnMenneske;
 tegnMenneske = function (c, x, y, valg, retning, gaarTrin, sidde) {
   const m = bioTegnerSaede;
   if (!m || !sidde) { tegnMenneskeFoerBio(c, x, y, valg, retning, gaarTrin, sidde); return; }
-  const ned = figurHoejdeFoerBio(valg) * 0.5 - sidde.hoejde;   // så numsen er nede på sædet
+  const ned = bioSaenk(valg);   // figuren sidder nede i sædet, med overkroppen over ryglænet
   const l = rygLinje(m);
   const dx = l[1].x - l[0].x, dy = l[1].y - l[0].y, n = Math.hypot(dx, dy) || 1;
   const a = { x: l[0].x - dx / n * 400, y: l[0].y - dy / n * 400 };

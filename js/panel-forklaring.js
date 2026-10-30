@@ -177,7 +177,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vinroed-tema.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vinroed-tema.js?v=2";
+  s.src = "js/vinroed-tema.js?v=3";
   document.body.appendChild(s);
 })();
 
@@ -218,5 +218,13 @@ document.head.appendChild(forklaringStil);
   if (document.querySelector("script[src^='js/shop-hotel-moebler.js']")) return;
   const s = document.createElement("script");
   s.src = "js/shop-hotel-moebler.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 🛒 Køb i Shoppen (js/shop-koeb.js): vælg antal, bekræft købet, og et tal på det, man har.
+(function () {
+  if (document.querySelector("script[src^='js/shop-koeb.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/shop-koeb.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();

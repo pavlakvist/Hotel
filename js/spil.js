@@ -573,6 +573,9 @@ function tegnMoebel(c, type, cx, cy, spejlet, retning) {
 const SIDDE_BAGUD = 6;
 // hvor langt under figurens felt-midte fødderne skal nå for at stå på gulvet foran sofaen
 const FODKANT = 16;
+// hvor langt figuren rykker ind mod ryglænet (del af et felt), og hvor mange pixels den synker ned i puden
+const SIDDE_TILBAGE = 0.12;
+const SIDDE_SYNK = 7;
 
 // Når figuren sidder i et af de nye møbler, rykkes den lidt frem og ned,
 // så fødderne når gulvet. Figurer med korte ben (pigen) rykkes mere end drengen.
@@ -584,13 +587,13 @@ function fodJustering(m, valg, retning) {
   if (!d || !t.saede) return { x: 0, y: 0 };
   const fald = (d.h - d.ay) * f.skala;   // fra numsen ned til fødderne
   const mangler = Math.max(0, FODKANT - (fald - t.saede));
-  // numsen sidder midt på puden (lidt foran feltets midte), og figuren synker
-  // lidt ned i puden, så fødderne når gulvet
-  const frem = 0.14;
+  // numsen sidder inde på puden, lidt tilbage mod ryglænet (ikke ude på kanten),
+  // og figuren synker ned i puden, så den sidder I stolen og ikke foran den
+  const tilbage = SIDDE_TILBAGE;
   // sidde-billedernes anker ligger ikke midt i figuren (drengens ligger helt ude i siden),
   // så figuren rykkes, så den sidder midt på pladsen
-  const midt = (d.ax - d.w / 2) * f.skala;
-  return { x: (venderHoejre(m) ? 1 : -1) * frem * FLISE_B / 2 + midt, y: frem * FLISE_H / 2 + mangler };
+  const midt = (d.ax - d.w / 2) * f.skala * (f.siddeMidt !== undefined ? f.siddeMidt : 1);
+  return { x: -(venderHoejre(m) ? 1 : -1) * tilbage * FLISE_B / 2 + midt, y: -tilbage * FLISE_H / 2 + SIDDE_SYNK + mangler };
 }
 
 function tegnFigur(c) {

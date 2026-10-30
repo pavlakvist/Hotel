@@ -51,3 +51,11 @@ const MOEBLER = [
   { id: "plante", navn: "Plante", billede: "", tegning: "plante", farve: "#2ecc71" },
   { id: "taeppe", navn: "Tæppe",  billede: "", tegning: "taeppe", farve: "#e17055", kanGaaPaa: true },
 ];
+
+
+// ----- Vinrødt tema med det samme -----
+// Temaet (js/vinroed-tema.js) hentes her, som det allerførste i hotellet,
+// så man ikke kan nå at se de gamle grønne farver, før det bliver vinrødt.
+if (document.getElementById("spil") && !document.querySelector("script[src^='js/vinroed-tema.js']")) {
+  document.write('<script src="js/vinroed-tema.js?v=3"><\/script>');
+}
