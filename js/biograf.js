@@ -18,7 +18,7 @@ const BIOGRAF_RUM = { id: "biograf", navn: "Biografen", ejer: EJER_NAVNE[0], bre
 INDBYGGEDE_RUM.biograf = BIOGRAF_RUM;
 
 // Lærredet hænger på bagvæggen (den højre væg øverst) fra felt "fra" til "til", i "bund"-"top" pixels over gulvet
-const LAERRED = { fra: 1.3, til: 10.7, bund: 175, top: 385 };   // lærredet hænger lige (ikke skævt langs væggen), bredt og højt oppe
+const LAERRED = { fra: -6.1, til: 5.6, bund: 67, top: 308 };   // lærredet hænger lige (ikke skævt), stort og højt oppe over hjørnet, hvor Pavla tegnede det
 
 // Hotellets egne møbler i biografen: 4 rækker sæder, der vender mod lærredet (retning 2), og to popcornmaskiner
 const BIOGRAF_MOEBLER = [];
