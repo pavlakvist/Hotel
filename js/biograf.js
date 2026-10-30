@@ -519,12 +519,19 @@ const figurHoejdeFoerBio = figurHoejde;
 figurHoejde = function (valg) {
   const h = figurHoejdeFoerBio(valg);
   if (!bioTegnerSaede) return h;
+  const f = FIGURER[valg.type];
+  if (f && f.sidderBagfra) {
+    // det rigtige billede af figuren, der sidder bagfra: fra numsen og op + sædets højde
+    const d = f.sidder["op-hoejre"];
+    return d.anker[1] * f.skala + MOEBEL_TYPER[bioTegnerSaede.type].saede;
+  }
   return h - bioSaenk(valg);
 };
 
 // Hvor langt figuren synker ned i sædet: så meget, at hoved, skuldre og
 // lidt af ryggen stikker op over ryglænet (BIO_SYNLIG = den del af figuren, man ser)
-const BIO_SYNLIG = 0.5;
+const BIO_SYNLIG = 0.4;
+const BIO_IND = 0.22;     // hvor meget figuren rykkes ind mod ryglænet (del af et felt)
 function bioSaenk(valg) {
   const h = figurHoejdeFoerBio(valg);
   return Math.max(0, h * (1 - BIO_SYNLIG) - BIO_RYG.hoejde);
@@ -546,7 +553,15 @@ tegnMenneske = function (c, x, y, valg, retning, gaarTrin, sidde) {
   c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(b.x, b.y - 2000); c.lineTo(a.x, a.y - 2000);
   c.closePath();
   c.clip();
-  tegnMenneskeFoerBio(c, x, y + ned, valg, retning, null, null);
+  // figuren rykkes lidt hen mod ryglænet, så den sidder lige bag det og ikke svæver bagved
+  const ind = BIO_IND * (m.retning === 2 ? -1 : 1);
+  const f = FIGURER[valg.type];
+  if (f && f.sidderBagfra) {
+    // Pavlas billede af figuren, der sidder bagfra (js/sidde-nye.js): numsen på sædet
+    tegnMenneskeFoerBio(c, x + ind * FLISE_B / 2, y + BIO_IND * FLISE_H / 2, valg, retning, null, sidde);
+  } else {
+    tegnMenneskeFoerBio(c, x + ind * FLISE_B / 2, y + BIO_IND * FLISE_H / 2 + ned, valg, retning, null, null);
+  }
   c.restore();
 };
 
@@ -710,4 +725,14 @@ function faaPopcorn(m) {
     knap("bp-gaa", function () { gaaTilVaerelse("biograf"); });
   }
   function rens(t) { return String(t).replace(/[&<>"']/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); }
+})();
+
+
+// 🪑 Pavlas nye billeder af figurerne, der sidder (js/sidde-nye.js), hentes herfra,
+// fordi biografen altid hentes frisk.
+(function () {
+  if (document.querySelector("script[src^='js/sidde-nye.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/sidde-nye.js?t=" + Date.now();
+  document.body.appendChild(s);
 })();
