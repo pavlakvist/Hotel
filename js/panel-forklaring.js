@@ -212,3 +212,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/tagterrasse.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🛒 Biografens og tagterrassens møbler kan købes i Shoppen (js/shop-hotel-moebler.js).
+(function () {
+  if (document.querySelector("script[src^='js/shop-hotel-moebler.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/shop-hotel-moebler.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
