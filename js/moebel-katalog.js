@@ -106,3 +106,14 @@ MOEBLER.push(
     localStorage.setItem(NULSTIL_NOEGLE, "1");
   } catch (e) {}
 })();
+
+// Caféen ☕ (js/cafe.js): vinrøde og gyldne cafémøbler. Klik på cafédisken for kaffe eller kage.
+MOEBLER.push(
+  {"id": "cafe-stol", "navn": "Caféstol", "retninger": ["billeder/moebler/cafe-stol/cafe-stol-0.png", "billeder/moebler/cafe-stol/cafe-stol-1.png", "billeder/moebler/cafe-stol/cafe-stol-2.png", "billeder/moebler/cafe-stol/cafe-stol-3.png"], "kategori": "Café", "saede": 21},
+  {"id": "cafe-bord", "navn": "Bistrobord af marmor", "retninger": ["billeder/moebler/cafe-bord/cafe-bord-0.png", "billeder/moebler/cafe-bord/cafe-bord-1.png", "billeder/moebler/cafe-bord/cafe-bord-2.png", "billeder/moebler/cafe-bord/cafe-bord-3.png"], "kategori": "Café"},
+  {"id": "cafe-sofa", "navn": "Vinrød fløjlssofa", "retninger": ["billeder/moebler/cafe-sofa/cafe-sofa-0.png", "billeder/moebler/cafe-sofa/cafe-sofa-1.png", "billeder/moebler/cafe-sofa/cafe-sofa-2.png", "billeder/moebler/cafe-sofa/cafe-sofa-3.png"], "kategori": "Café", "felter": [2, 1], "saede": 22},
+  {"id": "cafe-disk", "navn": "Cafédisk med kager", "retninger": ["billeder/moebler/cafe-disk/cafe-disk-0.png", "billeder/moebler/cafe-disk/cafe-disk-1.png", "billeder/moebler/cafe-disk/cafe-disk-2.png", "billeder/moebler/cafe-disk/cafe-disk-3.png"], "kategori": "Café", "felter": [2, 1]},
+  {"id": "cafe-lampe", "navn": "Standerlampe", "retninger": ["billeder/moebler/cafe-lampe/cafe-lampe-0.png", "billeder/moebler/cafe-lampe/cafe-lampe-1.png", "billeder/moebler/cafe-lampe/cafe-lampe-2.png", "billeder/moebler/cafe-lampe/cafe-lampe-3.png"], "kategori": "Café"},
+  {"id": "cafe-plante", "navn": "Palme i guldkrukke", "retninger": ["billeder/moebler/cafe-plante/cafe-plante-0.png", "billeder/moebler/cafe-plante/cafe-plante-1.png", "billeder/moebler/cafe-plante/cafe-plante-2.png", "billeder/moebler/cafe-plante/cafe-plante-3.png"], "kategori": "Café"},
+  {"id": "cafe-tavle", "navn": "Menutavle", "retninger": ["billeder/moebler/cafe-tavle/cafe-tavle-0.png", "billeder/moebler/cafe-tavle/cafe-tavle-1.png", "billeder/moebler/cafe-tavle/cafe-tavle-2.png", "billeder/moebler/cafe-tavle/cafe-tavle-3.png"], "kategori": "Café"},
+);

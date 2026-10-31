@@ -692,6 +692,9 @@ function faaPopcorn(m) {
   fane.textContent = "🎬 Biograf";
   fane.hidden = !rolleMaa("biograf");
   document.getElementById("ejer-faner").appendChild(fane);
+  // "📖 Mit job" skal stå lige under "🎬 Biograf"
+  const mitJobKnap = document.querySelector("#ejer-faner [data-fane='mitjob']");
+  if (mitJobKnap) fane.after(mitJobKnap);
   fane.addEventListener("click", function () { ejerFane = "biograf"; visFane(); });
   setInterval(function () { fane.hidden = !rolleMaa("biograf"); }, 2000);
 

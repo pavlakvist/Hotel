@@ -228,3 +228,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/shop-koeb.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// ☕ Caféen (js/cafe.js): vinrøde og gyldne møbler, kaffe og kage ved disken.
+(function () {
+  if (document.querySelector("script[src^='js/cafe.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/cafe.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();

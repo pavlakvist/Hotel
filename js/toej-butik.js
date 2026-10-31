@@ -1,9 +1,9 @@
 // =============================================================
 //  Tøj i Shoppen 👕 (fra dine tøj-ark)
 //  Tøjet købes for Glimt og ligger bagefter i "Mine ting" under Tøj.
-//  Trykker man "Tag på", får "Pige (tøj)" tøjets farve på t-shirt,
-//  shorts eller sko. Formen på tøjet ændrer sig ikke, kun farven,
-//  fordi tøjet på arket kun er tegnet forfra.
+//  Trykker man "Tag på", får din egen figur (Pige eller Dreng) tøjets
+//  farve på trøjen eller bukserne. Formen ændrer sig ikke, kun farven,
+//  fordi tøjet på arket kun er tegnet forfra. Sko kan ikke ses endnu.
 // =============================================================
 const TOEJ_VARER = [
   { id: "pige-overdel-01", navn: "Hvid top", hvem: "pige", slot: "overdel", farve: "#e1d8cd", pris: 120 },
@@ -176,28 +176,60 @@ function tegnToejBillede(c, v) {
   b.src = toejFil(v);
 }
 
-// Tag tøjet på: farven kommer på Pige (tøj)
+// Tag tøjet på: farven kommer på din egen figur (pigens trøje/jeans, drengens hættetrøje/bukser)
+const TOEJ_FIGUR_OMR = { overdel: "skjorte", underdel: "underdel" };   // sko findes ikke på figurerne endnu
+function toejFigur(v) { return v.hvem === "dreng" ? "dreng" : "pige"; }
 function tagToejPaa(v) {
-  if (garderobe.type !== TOEJ_FIGUR) {
-    garderobe.type = TOEJ_FIGUR;
-    besked.textContent = "Du har fået Pige (tøj) på, så du kan se tøjet ✨";
-  } else {
-    besked.textContent = "Du har " + v.navn.toLowerCase() + " på 👕";
-  }
-  if (!garderobe.farver) garderobe.farver = {};
-  if (!garderobe.farver[TOEJ_FIGUR]) garderobe.farver[TOEJ_FIGUR] = {};
-  garderobe.farver[TOEJ_FIGUR][TOEJ_OMR[v.slot]] = v.farve;
+  const type = toejFigur(v);
+  const omr = TOEJ_FIGUR_OMR[v.slot];
   if (!garderobe.ting) garderobe.ting = {};
-  if (!garderobe.ting[TOEJ_FIGUR]) garderobe.ting[TOEJ_FIGUR] = {};
-  garderobe.ting[TOEJ_FIGUR]["butik-" + v.slot] = v.id;
+  if (!garderobe.ting[type]) garderobe.ting[type] = {};
+  if (!omr) {
+    // skoene kan ikke ses på figuren, men huskes som "på"
+    garderobe.ting[type]["butik-sko"] = v.id;
+    besked.textContent = "Skoene kan ikke ses på figuren endnu, men du har dem på 👟";
+  } else {
+    if (garderobe.type !== type) {
+      besked.textContent = "Du er nu " + (type === "dreng" ? "Dreng" : "Pige") + " med " + v.navn.toLowerCase() + " ✨";
+    } else {
+      besked.textContent = "Du har " + v.navn.toLowerCase() + " på 👕";
+    }
+    garderobe.type = type;
+    if (!garderobe.farver) garderobe.farver = {};
+    if (!garderobe.farver[type]) garderobe.farver[type] = {};
+    garderobe.farver[type][omr] = v.farve;
+    garderobe.ting[type]["butik-" + v.slot] = v.id;
+  }
   gemGarderobe();
   tegnForhaandsvisning();
-  svaev("👕");
+  svaev(omr ? "👕" : "👟");
 }
 function harToejPaa(v) {
-  const t = garderobe.ting && garderobe.ting[TOEJ_FIGUR];
-  return garderobe.type === TOEJ_FIGUR && t && t["butik-" + v.slot] === v.id;
+  const t = garderobe.ting && garderobe.ting[toejFigur(v)];
+  return (v.slot === "sko" || garderobe.type === toejFigur(v)) && t && t["butik-" + v.slot] === v.id;
 }
+
+// Havde man tøj på den gamle "Pige (tøj)", flyttes det over på den rigtige pige
+(function () {
+  try {
+    if (garderobe.type !== TOEJ_FIGUR) return;
+    const gamle = (garderobe.ting && garderobe.ting[TOEJ_FIGUR]) || {};
+    if (!gamle["butik-overdel"] && !gamle["butik-underdel"]) return;
+    garderobe.type = "pige";
+    ["overdel", "underdel", "sko"].forEach(function (slot) {
+      const v = toejVare(gamle["butik-" + slot]);
+      if (!v || v.hvem !== "pige") return;
+      if (!garderobe.ting.pige) garderobe.ting.pige = {};
+      garderobe.ting.pige["butik-" + slot] = v.id;
+      if (TOEJ_FIGUR_OMR[slot]) {
+        if (!garderobe.farver) garderobe.farver = {};
+        if (!garderobe.farver.pige) garderobe.farver.pige = {};
+        garderobe.farver.pige[TOEJ_FIGUR_OMR[slot]] = v.farve;
+      }
+    });
+    gemGarderobe();
+  } catch (e) {}
+})();
 
 
 // -------------------------------------------------------------
