@@ -1,8 +1,7 @@
 // =============================================================
 //  🪑 Nye billeder af pigen og drengen, der sidder (Pavlas sidde-ark 30/10)
 //  Kilde: billeder/figurer/kilde/sidde-ark.jpg
-//  Skråt forfra (ned mod venstre/højre) til stole og sofaer,
-//  og bagfra (op mod højre/venstre) til biografsæderne.
+//  Bruges kun bagfra (op mod højre/venstre) til biografsæderne.
 //  anker = numsen, der skal ramme sædet. "-hoejre"/"-venstre" er det samme billede spejlet.
 //  (Hentes fra js/biograf.js.)
 // =============================================================
@@ -23,12 +22,13 @@
   Object.keys(NYE).forEach(function (hvem) {
     const f = FIGURER[hvem], n = NYE[hvem];
     if (!f) return;
-    f.sidder = {
-      "ned": n.forV, "ned-venstre": n.forV, "venstre": n.forV,
-      "ned-hoejre": n.forH, "hoejre": n.forH,
-      "op-hoejre": n.bagH, "op": n.bagH, "op-venstre": n.bagV,
-    };
-    f.siddeMidt = 0;          // ankeret sidder lige på numsen, så figuren skal ikke centreres
+    // Skråt forfra (stole og sofaer) bruges de gamle sidde-billeder, fordi de er tegnet
+    // som resten af figuren. Arket her er tegnet i en anden stil (større hoved, andet ansigt),
+    // så figuren så anderledes ud, når den satte sig. Kun bagfra (biografen) bruges arket,
+    // hvor man næsten kun ser håret.
+    f.sidder["op-hoejre"] = n.bagH;
+    f.sidder["op"] = n.bagH;
+    f.sidder["op-venstre"] = n.bagV;
     f.sidderBagfra = true;    // biografen tegner det rigtige bagfra-billede (js/biograf.js)
   });
 })();

@@ -1,6 +1,6 @@
 // =============================================================
 //  Caféen ☕ — et fælles rum på stueetagen i vinrød og guld.
-//  - Vinrøde vægge, et ternet gulv i creme og vinrød, bistroborde
+//  - Vinrøde vægge, et ensfarvet cremefarvet gulv, bistroborde
 //    af marmor, caféstole, fløjlssofaer, lamper, palmer og en menutavle.
 //  - Klik på cafédisken, så går du derhen og kan vælge en kop kaffe ☕
 //    eller et stykke kage 🍰, som du får i hånden (ligesom maden fra køleskabet).
@@ -14,7 +14,7 @@
 //  Rummet
 // -------------------------------------------------------------
 const CAFE_RUM = { id: "cafe", navn: "Caféen", ejer: EJER_NAVNE[0], bredde: 12, dybde: 10,
-  vaeg: "#7a2232", gulv1: "#eadfc8", gulv2: "#8c2a3a", vaegHoejde: 200, doer: null };   // ternet gulv; ingen dør: man kommer med elevatoren
+  vaeg: "#7a2232", gulv1: "#eadfc8", gulv2: "#eadfc8", vaegHoejde: 200, doer: null };   // ensfarvet cremefarvet gulv; ingen dør: man kommer med elevatoren
 INDBYGGEDE_RUM.cafe = CAFE_RUM;
 function iCafeen() { return rumValg === "vaerelse" && aktivtVaerelse === "cafe"; }
 
@@ -24,6 +24,17 @@ function iCafeen() { return rumValg === "vaerelse" && aktivtVaerelse === "cafe";
   const ny = { id: "cafe", etage: "stue", navn: "Caféen", om: "Kaffe, kage og hygge ☕", billede: "billeder/rum/cafe.png", maks: 40, rum: "vaerelse", vaerelse: "cafe" };
   if (r) Object.assign(r, ny); else NAV_RUM.push(ny);
 })();
+
+// Tagterrassen står i stueetagens liste lige under Postkontoret (i stedet for som sin egen etage).
+// Venter, til både js/postkontor.js og js/tagterrasse.js er hentet.
+(function flytTagterrassen(forsoeg) {
+  const tag = NAV_RUM.find(function (x) { return x.id === "tagterrasse"; });
+  const post = NAV_RUM.find(function (x) { return x.id === "postkontor"; });
+  if (!tag || !post) { if (forsoeg < 60) setTimeout(function () { flytTagterrassen(forsoeg + 1); }, 500); return; }
+  tag.etage = "stue";
+  NAV_RUM.splice(NAV_RUM.indexOf(tag), 1);
+  NAV_RUM.splice(NAV_RUM.indexOf(post) + 1, 0, tag);
+})(0);
 
 // Hvis browseren har en gammel udgave af js/moebel-katalog.js, kommer caféens møbler med herfra
 const CAFE_TYPER = [
