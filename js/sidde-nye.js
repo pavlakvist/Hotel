@@ -32,3 +32,27 @@
     f.sidderBagfra = true;    // biografen tegner det rigtige bagfra-billede (js/biograf.js)
   });
 })();
+
+// Drengens gamle sidde-billede er tegnet lidt større end hans gå-billeder, så han blev større,
+// når han satte sig (større end pigen). Mens han sidder, tegnes han derfor lidt mindre,
+// så hovedet er lige så stort, som når han står.
+FIGURER.dreng.siddeSkala = 0.82;
+(function () {
+  function medSiddeSkala(valg, sidde, gør) {
+    const f = sidde && FIGURER[valg.type];
+    if (!f || !f.siddeSkala) return gør();
+    const gammel = f.skala;
+    f.skala = f.siddeSkala;
+    try { return gør(); } finally { f.skala = gammel; }
+  }
+  const tegnMenneskeFoerSkala = tegnMenneske;
+  tegnMenneske = function (c, x, y, valg, retning, gaarTrin, sidde) {
+    const args = arguments, self = this;
+    medSiddeSkala(valg, sidde, function () { tegnMenneskeFoerSkala.apply(self, args); });
+  };
+  const fodJusteringFoerSkala = fodJustering;
+  fodJustering = function (m, valg, retning) {
+    const args = arguments, self = this;
+    return medSiddeSkala(valg, true, function () { return fodJusteringFoerSkala.apply(self, args); });
+  };
+})();

@@ -236,3 +236,19 @@ document.head.appendChild(forklaringStil);
   s.src = "js/cafe.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🛋 Hyggestue-møbler i pixel-stil (js/pixel-moebler.js): lænestol, sofa, kaktus og reol.
+(function () {
+  if (document.querySelector("script[src^='js/pixel-moebler.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/pixel-moebler.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 🕹📚 Spillehjørnet og Læsehjørnet (js/hjoerner.js): arkadespil, billard, skak, bogreoler og kamin.
+(function () {
+  if (document.querySelector("script[src^='js/hjoerner.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/hjoerner.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
