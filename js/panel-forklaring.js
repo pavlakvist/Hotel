@@ -268,3 +268,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/realistisk.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🪵 Realistiske vinduer (js/realistisk-ui.js): træ, læder, messing og papir i panelet.
+(function () {
+  if (document.querySelector("script[src^='js/realistisk-ui.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/realistisk-ui.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
