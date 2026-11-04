@@ -49,28 +49,101 @@ function realGulvBillede() {
   return realFarvet(REALISTISK.gulvFliser, nuance(RUM.gulvFarve1, 1.08));
 }
 
-function realGulvSti() {
-  ctx.beginPath();
+function realGulvSti(g) {
+  g = g || ctx;
+  g.beginPath();
   for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) {
     if (!erIRummet(x, y)) continue;
     const d = diamant(x, y);
-    ctx.moveTo(d[0].x, d[0].y);
-    for (let i = 1; i < 4; i++) ctx.lineTo(d[i].x, d[i].y);
-    ctx.closePath();
+    g.moveTo(d[0].x, d[0].y);
+    for (let i = 1; i < 4; i++) g.lineTo(d[i].x, d[i].y);
+    g.closePath();
   }
 }
 
 // blød skygge på gulvet langs en væg (p0-p1 er væggens fod, ind = et punkt inde på gulvet)
-function realVaegSkygge(p0, p1, ind, styrke) {
+function realVaegSkygge(g, p0, p1, ind, styrke) {
   const vx = p1.x - p0.x, vy = p1.y - p0.y, L = Math.hypot(vx, vy);
   if (!L) return;
   const nx = -vy / L, ny = vx / L;
   const dd = (ind.x - p0.x) * nx + (ind.y - p0.y) * ny;
-  const g = ctx.createLinearGradient(p0.x, p0.y, p0.x + nx * dd, p0.y + ny * dd);
-  g.addColorStop(0, "rgba(20,8,0," + styrke + ")");
-  g.addColorStop(0.35, "rgba(20,8,0," + styrke * 0.35 + ")");
-  g.addColorStop(1, "rgba(20,8,0,0)");
-  polygon(ctx, [p0, p1, { x: p1.x + nx * dd, y: p1.y + ny * dd }, { x: p0.x + nx * dd, y: p0.y + ny * dd }], g);
+  const gr = g.createLinearGradient(p0.x, p0.y, p0.x + nx * dd, p0.y + ny * dd);
+  gr.addColorStop(0, "rgba(20,8,0," + styrke + ")");
+  gr.addColorStop(0.35, "rgba(20,8,0," + styrke * 0.35 + ")");
+  gr.addColorStop(1, "rgba(20,8,0,0)");
+  polygon(g, [p0, p1, { x: p1.x + nx * dd, y: p1.y + ny * dd }, { x: p0.x + nx * dd, y: p0.y + ny * dd }], gr);
+}
+
+// Selve det realistiske gulv (planker/fliser, skygger ved væggene og lys) tegnes på g
+function realGulvLag(g, bil) {
+  const F = bil.width / 4, o = punkt(0, 0);
+  const moenster = g.createPattern(bil, "repeat");
+  // det firkantede billede lægges ned på skrå: én felt-bredde = (48, 24), én felt-dybde = (-48, 24)
+  moenster.setTransform(new DOMMatrix([FLISE_B / 2 / F, FLISE_H / 2 / F, -FLISE_B / 2 / F, FLISE_H / 2 / F, o.x, o.y]));
+  g.save();
+  realGulvSti(g);
+  g.clip();
+  g.fillStyle = moenster;
+  g.fill();
+  // skygger hvor gulvet møder væggene (felt for felt, så det også virker i L-, T- og U-rum)
+  const venstre = {}, bag = {};
+  for (let y = 0; y < RUM.dybde; y++) for (let x = 0; x < RUM.bredde; x++) if (erIRummet(x, y)) { venstre[x + "," + y] = 1; break; }
+  for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) if (erIRummet(x, y)) { bag[x + "," + y] = 1; break; }
+  function skygge(x, y, side) {
+    const hjoerne = venstre[x + "," + y] && bag[x + "," + y];
+    const c = punkt(x, y);
+    if (hjoerne) {
+      // i hjørnet deler de to skygger sig ved en lodret linje, så de ikke lægges oven i hinanden
+      g.save(); g.beginPath();
+      if (side === "v") g.rect(c.x - 9999, c.y - 9999, 9999, 19998); else g.rect(c.x, c.y - 9999, 9999, 19998);
+      g.clip();
+    }
+    if (side === "v") realVaegSkygge(g, punkt(x, y + 1), c, punkt(x + 0.6, y), 0.55);
+    else realVaegSkygge(g, c, punkt(x + 1, y), punkt(x, y + 0.6), 0.45);
+    if (hjoerne) g.restore();
+  }
+  Object.keys(venstre).forEach(function (k) { const a = k.split(","); skygge(+a[0], +a[1], "v"); });
+  Object.keys(bag).forEach(function (k) { const a = k.split(","); skygge(+a[0], +a[1], "b"); });
+  // varmt lys midt i rummet, lidt mørkere ude i hjørnerne
+  const m = punkt(RUM.bredde * 0.45, RUM.dybde * 0.4);
+  const r = (RUM.bredde + RUM.dybde) * FLISE_B * 0.4;
+  const lys = g.createRadialGradient(m.x, m.y - 40, 30, m.x, m.y, r);
+  lys.addColorStop(0, "rgba(255,215,150,0.14)");
+  lys.addColorStop(0.55, "rgba(255,215,150,0.03)");
+  lys.addColorStop(1, "rgba(20,5,0,0.22)");
+  g.fillStyle = lys;
+  realGulvSti(g);
+  g.fill();
+  g.restore();
+}
+
+// Gulvet tegnes kun én gang ind i et billede og genbruges i hvert billede (meget hurtigere).
+// Det laves om, når rummet, gulvfarven eller zoomen ændrer sig.
+let REAL_GULV_CACHE = null;
+function realGulvCache(bil) {
+  const T = ctx.getTransform();
+  let s = Math.hypot(T.a, T.b) || 1;
+  s = Math.ceil(s * 4) / 4;
+  let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, form = "";
+  for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) {
+    if (!erIRummet(x, y)) { form += "."; continue; }
+    form += "x";
+    diamant(x, y).forEach(function (p) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+  }
+  if (minX > maxX) return null;
+  minX = Math.floor(minX - 2); minY = Math.floor(minY - 2); maxX = Math.ceil(maxX + 2); maxY = Math.ceil(maxY + 2);
+  const w = maxX - minX, h = maxY - minY;
+  s = Math.min(s, 4096 / w, 4096 / h);          // ikke større end 4096 pixels
+  const noegle = [s, minX, minY, w, h, RUM.bredde, RUM.dybde, form, RUM.gulvFarve1, bil.src || bil.width].join("|");
+  if (REAL_GULV_CACHE && REAL_GULV_CACHE.noegle === noegle) return REAL_GULV_CACHE;
+  const c = REAL_GULV_CACHE && REAL_GULV_CACHE.c || document.createElement("canvas");
+  c.width = Math.ceil(w * s); c.height = Math.ceil(h * s);
+  const g = c.getContext("2d");
+  g.setTransform(s, 0, 0, s, -minX * s, -minY * s);
+  g.imageSmoothingEnabled = true;
+  realGulvLag(g, bil);
+  REAL_GULV_CACHE = { noegle: noegle, c: c, x: minX, y: minY, w: w, h: h };
+  return REAL_GULV_CACHE;
 }
 
 (function () {
@@ -83,45 +156,9 @@ function realVaegSkygge(p0, p1, ind, styrke) {
     const gammeltMoenster = gulvMoenster;
     gulvMoenster = function () { return REAL_TOM; };
     try { gammelGulv(); } finally { gulvMoenster = gammeltMoenster; }
-    const F = bil.width / 4, o = punkt(0, 0);
-    const moenster = ctx.createPattern(bil, "repeat");
-    // det firkantede billede lægges ned på skrå: én felt-bredde = (48, 24), én felt-dybde = (-48, 24)
-    moenster.setTransform(new DOMMatrix([FLISE_B / 2 / F, FLISE_H / 2 / F, -FLISE_B / 2 / F, FLISE_H / 2 / F, o.x, o.y]));
-    ctx.save();
-    realGulvSti();
-    ctx.clip();
-    ctx.fillStyle = moenster;
-    ctx.fill();
-    // skygger hvor gulvet møder væggene (felt for felt, så det også virker i L-, T- og U-rum)
-    const venstre = {}, bag = {};
-    for (let y = 0; y < RUM.dybde; y++) for (let x = 0; x < RUM.bredde; x++) if (erIRummet(x, y)) { venstre[x + "," + y] = 1; break; }
-    for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) if (erIRummet(x, y)) { bag[x + "," + y] = 1; break; }
-    function skygge(x, y, side) {
-      const hjoerne = venstre[x + "," + y] && bag[x + "," + y];
-      const c = punkt(x, y);
-      if (hjoerne) {
-        // i hjørnet deler de to skygger sig ved en lodret linje, så de ikke lægges oven i hinanden
-        ctx.save(); ctx.beginPath();
-        if (side === "v") ctx.rect(c.x - 9999, c.y - 9999, 9999, 19998); else ctx.rect(c.x, c.y - 9999, 9999, 19998);
-        ctx.clip();
-      }
-      if (side === "v") realVaegSkygge(punkt(x, y + 1), c, punkt(x + 0.6, y), 0.55);
-      else realVaegSkygge(c, punkt(x + 1, y), punkt(x, y + 0.6), 0.45);
-      if (hjoerne) ctx.restore();
-    }
-    Object.keys(venstre).forEach(function (k) { const a = k.split(","); skygge(+a[0], +a[1], "v"); });
-    Object.keys(bag).forEach(function (k) { const a = k.split(","); skygge(+a[0], +a[1], "b"); });
-    // varmt lys midt i rummet, lidt mørkere ude i hjørnerne
-    const m = punkt(RUM.bredde * 0.45, RUM.dybde * 0.4);
-    const r = (RUM.bredde + RUM.dybde) * FLISE_B * 0.4;
-    const lys = ctx.createRadialGradient(m.x, m.y - 40, 30, m.x, m.y, r);
-    lys.addColorStop(0, "rgba(255,215,150,0.14)");
-    lys.addColorStop(0.55, "rgba(255,215,150,0.03)");
-    lys.addColorStop(1, "rgba(20,5,0,0.22)");
-    ctx.fillStyle = lys;
-    realGulvSti();
-    ctx.fill();
-    ctx.restore();
+    const k = realGulvCache(bil);
+    if (k) ctx.drawImage(k.c, k.x, k.y, k.w, k.h);
+    else realGulvLag(ctx, bil);
   };
 })();
 
