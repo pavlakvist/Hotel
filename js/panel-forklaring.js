@@ -284,3 +284,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/realistisk-elevator.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🧍 Realistiske figurer (js/figurer-real.js): pigen og drengen fra de grønne ChatGPT-ark.
+(function () {
+  if (document.querySelector("script[src^='js/figurer-real.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/figurer-real.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
