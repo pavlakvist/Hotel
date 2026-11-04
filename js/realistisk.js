@@ -12,11 +12,11 @@
 
 const REALISTISK = {
   til: (function () { try { return localStorage.getItem("mit-hotel-realistisk") !== "fra"; } catch (e) { return true; } })(),
-  gulvTrae: "billeder/realistisk/gulv-eg.jpg",       // 4 x 4 felter, gentager sig sømløst
+  gulvTrae: "billeder/realistisk/gulv-eg.jpg", // 4 x 4 felter, gentager sig sømløst
   gulvFliser: "billeder/realistisk/gulv-fliser.jpg", // gråt, farves med rummets gulvfarve
-  tapet: "billeder/realistisk/tapet.png",            // lyst, farves med rummets vægfarve
-  panel: "billeder/realistisk/panel.png",            // træpanel nederst på væggen
-  panelHoejde: 50,                                   // panelets højde i spil-pixels
+  tapet: "billeder/realistisk/tapet.png", // lyst, farves med rummets vægfarve
+  panel: "billeder/realistisk/panel.png", // træpanel nederst på væggen
+  panelHoejde: 50, // panelets højde i spil-pixels
 };
 
 // et billede, der er farvet med en farve (gemmes, så det kun laves én gang)
@@ -188,6 +188,11 @@ function realVaegBillede(farve, vh, moerk) {
 // "anker" = det sted i billedet, der står på møblets forreste hjørne.
 const REAL_TYPER = [
   { id: "real-laenestol", navn: "Rød fløjlslænestol", saede: 32, centrer: true, skala: 0.5, anker: [190, 322] },
+  { id: "real-sofa", navn: "Rød fløjlssofa", felter: [2, 1], saede: 30, centrer: true, skala: 0.5, ankre: [[308, 366], [212, 366], [308, 366], [212, 366]] },
+  { id: "real-sofabord", navn: "Sofabord med marmor", skala: 0.5, ankre: [[160, 244], [160, 244], [160, 244], [160, 244]] },
+  { id: "real-gulvlampe", navn: "Gulvlampe i messing", skala: 0.5, ankre: [[150, 398], [150, 398], [150, 398], [150, 398]] },
+  { id: "real-plante", navn: "Gummitræ i krukke", skala: 0.5, ankre: [[160, 357], [160, 357], [160, 357], [160, 357]] },
+  { id: "real-reol", navn: "Reol med bøger", skala: 0.5, ankre: [[160, 420], [160, 420], [160, 420], [160, 420]] },
 ];
 REAL_TYPER.forEach(function (t) {
   if (MOEBEL_TYPER[t.id]) return;
@@ -199,7 +204,7 @@ REAL_TYPER.forEach(function (t) {
 });
 
 // Shoppen
-const REAL_PRISER = { "real-laenestol": 250 };
+const REAL_PRISER = { "real-laenestol": 250, "real-sofa": 400, "real-sofabord": 180, "real-gulvlampe": 150, "real-plante": 90, "real-reol": 220 };
 (function iShoppen(forsoeg) {
   if (typeof HOTEL_MOEBEL_PRISER === "undefined" || typeof hotelMoeblerIShop !== "function") {
     if (forsoeg < 60) setTimeout(function () { iShoppen(forsoeg + 1); }, 500);
