@@ -260,3 +260,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/gang-rettet.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// ✨ Realistisk hotel (js/realistisk.js): gulv af egeplanker, vægge med tapet og træpanel, og en rød fløjlslænestol.
+(function () {
+  if (document.querySelector("script[src^='js/realistisk.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/realistisk.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
