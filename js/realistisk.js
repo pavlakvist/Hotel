@@ -311,7 +311,7 @@ function realRosaSaet() {
 }
 let realRosaVent = 0;
 setInterval(function () {
-  if (rumValg === "vaerelse" && aktivtVaerelse === "mit") { if (++realRosaVent >= 3) realRosaSaet(); }
+  if (rumValg === "vaerelse" && aktivtVaerelse === "mit") { ++realRosaVent; }
   else realRosaVent = 0;
 }, 1000);
 
@@ -405,7 +405,6 @@ function realRosaSaet2() {
     : "🌸 Dit værelse har fået flere lyserøde møbler!";
 }
 setInterval(function () {
-  if (rumValg === "vaerelse" && aktivtVaerelse === "mit" && realRosaVent >= 5) realRosaSaet2();
 }, 1000);
 
 // =============================================================
@@ -437,3 +436,47 @@ function realOmbyt(liste, mappe) {
 (function realCafe(forsoeg) {
   if (realOmbyt(REAL_CAFE, "real-cafe") && forsoeg < 60) setTimeout(function () { realCafe(forsoeg + 1); }, 500);
 })(0);
+
+// =============================================================
+//  🌸 Indret dit værelse helt med de lyserøde møbler (én gang)
+//  Dine gamle møbler lægges i Mine ting, så du kan stille dem igen.
+// =============================================================
+const REAL_ROSA_3_NOEGLE = "mit-hotel-lyseroedt-saet-3";
+function realRosaIndret() {
+  try { if (localStorage.getItem(REAL_ROSA_3_NOEGLE)) return; } catch (e) { return; }
+  if (rumValg !== "vaerelse" || aktivtVaerelse !== "mit") return;
+  if (typeof iFremmedLej === "function" && iFremmedLej()) return;
+  if (typeof lejHentet !== "undefined" && SERVER.til && mitToken() && !lejHentet) return;
+  if (typeof laegILager !== "function" || typeof lager === "undefined") return;
+  const alle = REAL_ROSA.concat(REAL_ROSA_2);
+  const staar = moeblerIRummet.filter(function (m) { return alle.some(function (a) { return a.type === m.type && a.x === m.x && a.y === m.y; }); }).length;
+  if (staar < alle.length - 2) {
+    // de gamle møbler i Mine ting
+    moeblerIRummet.slice().forEach(function (m) { laegILager(m.type); });
+    moeblerIRummet.length = 0;
+    alle.forEach(function (m) {
+      const t = MOEBEL_TYPER[m.type];
+      if (!t) return;
+      const f = moebelFelter(t, m.retning % 2 === 1);
+      let plads = true;
+      for (let dx = 0; dx < f[0] && plads; dx++) for (let dy = 0; dy < f[1] && plads; dy++) {
+        if (!erIRummet(m.x + dx, m.y + dy) || moebelPaa(m.x + dx, m.y + dy)) plads = false;
+      }
+      const d = RUM.doer;
+      if (plads && d && daekker({ type: m.type, x: m.x, y: m.y, retning: m.retning }, d.x, d.y)) plads = false;
+      const iLager = lager.some(function (l) { return l.type === m.type; });
+      if (plads) {
+        moeblerIRummet.push({ type: m.type, x: m.x, y: m.y, spejlet: false, retning: m.retning });
+        if (iLager && typeof fraLager === "function") fraLager(m.type);     // så du ikke får den to gange
+      } else if (!iLager) laegILager(m.type);
+    });
+    if (typeof gem === "function") gem();
+    if (typeof besked !== "undefined" && besked) besked.textContent = "🌸 Dit værelse er indrettet med lyserøde møbler! Dine gamle møbler ligger i Mine ting.";
+  }
+  try {
+    localStorage.setItem(REAL_ROSA_NOEGLE, "1"); localStorage.setItem(REAL_ROSA_2_NOEGLE, "1"); localStorage.setItem(REAL_ROSA_3_NOEGLE, "1");
+  } catch (e) {}
+}
+setInterval(function () {
+  if (rumValg === "vaerelse" && aktivtVaerelse === "mit" && realRosaVent >= 3) realRosaIndret();
+}, 1000);
