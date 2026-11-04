@@ -292,3 +292,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/figurer-real.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 👕 Rigtigt tøjskift (js/toej-rigtigt.js): sko med farve, mønstre (tern, striber, prikker, camo),
+// "Tag af" i Shoppen, og dit eget tøj under Overdel/Underdel i Skift udseende.
+(function () {
+  if (document.querySelector("script[src^='js/toej-rigtigt.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/toej-rigtigt.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
