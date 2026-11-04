@@ -10,6 +10,9 @@
 //  "🧍 Realistiske figurer" i js/panel-forklaring.js.
 //  (Hentes fra js/panel-forklaring.js.)
 // =============================================================
+// ⏸ SAT PÅ PAUSE 4/11: de realistiske figurer bruges ikke (kun "gå forfra" var skarp).
+//    Vil du have dem igen: skriv false i stedet for true her.
+const REAL_PAUSE = true;
 const FIGURER_REAL = {
   pige: {
     staa: {
@@ -76,6 +79,7 @@ const FIGURER_REAL = {
     },
   },
 };
+if (!REAL_PAUSE) {
 const REAL_SKALA = 130 / 236;   // billederne er 236 px høje, figuren skal være 130 px som før
 const REAL_BEN_FART = 1.5;      // 8 billeder pr. skridt-cyklus, så benene skal skifte lidt hurtigere
 
@@ -125,3 +129,5 @@ saetRealFigurer();
     return foer.apply(this, args);
   };
 })();
+
+}
