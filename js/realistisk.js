@@ -433,9 +433,42 @@ function realOmbyt(liste, mappe) {
   });
   return mangler;
 }
-(function realCafe(forsoeg) {
-  if (realOmbyt(REAL_CAFE, "real-cafe") && forsoeg < 60) setTimeout(function () { realCafe(forsoeg + 1); }, 500);
-})(0);
+// Tagterrassen, hjørnerne og biografen (deres møbler kommer, når rummene er hentet)
+const REAL_TAG = {
+  "tag-havestol": { ankre: [[160,  307],  [160,  307],  [160,  307],  [160,  307]], saede: 31, centrer: true },
+  "tag-baenk": { ankre: [[298,  341],  [202,  341],  [298,  341],  [202,  341]], saede: 31, centrer: true },
+  "tag-loungesofa": { ankre: [[308,  348],  [212,  348],  [308,  348],  [212,  348]], saede: 31, centrer: true },
+  "tag-bord": { ankre: [[160,  297],  [160,  297],  [160,  297],  [160,  297]] },
+  "tag-parasol": { ankre: [[310,  526],  [310,  526],  [310,  526],  [310,  526]] },
+  "tag-plantekasse": { ankre: [[160,  271],  [160,  271],  [160,  271],  [160,  271]] },
+  "tag-oliventrae": { ankre: [[220,  465],  [220,  465],  [220,  465],  [220,  465]] },
+  "tag-isvogn": { ankre: [[190,  438],  [190,  438],  [190,  438],  [190,  438]] },
+};
+const REAL_HJOERNE = {
+  "spil-arkade": { ankre: [[160,  445],  [160,  445],  [160,  445],  [160,  445]] },
+  "spil-billard": { ankre: [[308,  338],  [212,  338],  [308,  338],  [212,  338]] },
+  "spil-bordfodbold": { ankre: [[288,  338],  [192,  338],  [288,  338],  [192,  338]] },
+  "spil-skakbord": { ankre: [[150,  269],  [150,  269],  [150,  269],  [150,  269]] },
+  "spil-saekkestol": { ankre: [[160,  254],  [160,  254],  [160,  254],  [160,  254]], saede: 22, centrer: true },
+  "spil-hylde": { ankre: [[160,  393],  [160,  393],  [160,  393],  [160,  393]] },
+  "laese-reol": { ankre: [[160,  420],  [160,  420],  [160,  420],  [160,  420]] },
+  "laese-laenestol": { ankre: [[170,  342],  [170,  342],  [170,  342],  [170,  342]], saede: 33, centrer: true },
+  "laese-sofa": { ankre: [[308,  366],  [212,  366],  [308,  366],  [212,  366]], saede: 32, centrer: true },
+  "laese-lampe": { ankre: [[150,  390],  [150,  390],  [150,  390],  [150,  390]] },
+  "laese-bord": { ankre: [[150,  261],  [150,  261],  [150,  261],  [150,  261]] },
+  "laese-kamin": { ankre: [[298,  394],  [202,  394],  [298,  394],  [202,  394]] },
+  "laese-globus": { ankre: [[150,  324],  [150,  324],  [150,  324],  [150,  324]] },
+};
+const REAL_BIO = {
+  "bio-saede": { ankre: [[160,  324],  [160,  324],  [160,  324],  [160,  324]], saede: 32, centrer: true },
+  "popcorn-maskine": { ankre: [[160,  410],  [160,  410],  [160,  410],  [160,  410]] },
+};
+let realOmbytFaerdig = false;
+const realOmbytTimer = setInterval(function () {
+  const mangler = realOmbyt(REAL_CAFE, "real-cafe") + realOmbyt(REAL_TAG, "real-tag") + realOmbyt(REAL_HJOERNE, "real-hjoerner") + realOmbyt(REAL_BIO, "real-biograf");
+  if (!mangler) { realOmbytFaerdig = true; clearInterval(realOmbytTimer); }
+}, 500);
+realOmbyt(REAL_CAFE, "real-cafe");
 
 // =============================================================
 //  🌸 Indret dit værelse helt med de lyserøde møbler (én gang)
