@@ -252,3 +252,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/hjoerner.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🚶 Rettet gang for pigen og drengen (js/gang-rettet.js): hovedet hopper ikke mere, når de går.
+(function () {
+  if (document.querySelector("script[src^='js/gang-rettet.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/gang-rettet.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
