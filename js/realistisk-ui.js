@@ -29,6 +29,11 @@
   const TOPPE = TOP_KLASSER.map(function (k) { return "." + k; }).join(", ");
   const TITLER = TOP_KLASSER.map(function (k) { return "." + k + " h2, ." + k + " h3, ." + k + " > span"; }).join(", ");
   const TOP_KNAPPER = TOP_KLASSER.map(function (k) { return "." + k + " button"; }).join(", ");
+  // Lister med spillere/samtaler i panelet: papirkort i stedet for træknapper
+  const LISTE_KLASSER = [".an-spillere", "#sp-liste", "#pb-liste", "#pg-liste", "#sb-liste", "#sc-liste", ".ao-liste", ".fd-liste",
+    ".pk-liste", ".rap-liste", ".sp-kort-liste", ".sp-chat-liste", ".an-liste", ".an-skilte"];
+  const LISTER = LISTE_KLASSER.map(function (k) { return k + " button"; }).join(", " + "#ejer-vindue:not(.moerkt) #ejer-indhold#ejer-indhold ");
+  const LISTER_VALGT = LISTE_KLASSER.map(function (k) { return k + " button.valgt"; }).join(", " + "#ejer-vindue:not(.moerkt) #ejer-indhold#ejer-indhold ");
   const MESSING_KNAPPER = "#mention-knap, #log-ud-knap, #skaansom-knap, #online-tal, #paamind-fane";
 
   const css = [
@@ -89,17 +94,17 @@
     V + "#ejer-indhold input[type=text], " + V + "#ejer-indhold input[type=number], " + V + "#ejer-indhold input[type=date], " +
       V + "#ejer-indhold input:not([type]), " + V + "#ejer-indhold select, " + V + "#ejer-indhold textarea { background: #fffaf0 !important;" +
       " border: 1px solid #b89458 !important; border-radius: 4px !important; box-shadow: inset 0 2px 3px rgba(80,45,15,.18) !important; color: " + BLAEK + " !important; }",
-    V + "#ejer-indhold button:not(.sc-nat):not([class*='farve']) { background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(0,0,0,.12)), " + LYS_TRAE + " center/256px !important;" +
+    V + "#ejer-indhold button:not(.sc-nat):not([class*='farve']):not([style*='background']) { background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(0,0,0,.12)), " + LYS_TRAE + " center/256px !important;" +
       " color: #fff4dc !important; border: 1px solid #4a2410 !important; border-radius: 5px !important; text-shadow: 0 1px 1px rgba(0,0,0,.6);" +
       " box-shadow: inset 0 1px 0 rgba(255,230,180,.45), 0 2px 3px rgba(0,0,0,.3) !important; }",
-    V + "#ejer-indhold button:not(.sc-nat):not([class*='farve']):hover { filter: brightness(1.1); }",
+    V + "#ejer-indhold button:not(.sc-nat):not([class*='farve']):not([style*='background']):hover { filter: brightness(1.1); }",
     V + "#ejer-indhold button.valgt { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(0,0,0,.12)), " + MESSING + " !important; color: #3a2408 !important; text-shadow: none; }",
 
     // Spillerlisten: som kort i et kartotek (ikke træknapper)
-    V + "#ejer-indhold #sp-liste button, " + V + "#ejer-indhold #pb-liste button { background: linear-gradient(180deg, #fffaf0, #f4e6c8) !important; color: " + BLAEK + " !important;" +
+    V + "#ejer-indhold#ejer-indhold " + LISTER + " { background: linear-gradient(180deg, #fffaf0, #f4e6c8) !important; color: " + BLAEK + " !important;" +
       " border: 1px solid rgba(156,116,48,.55) !important; text-shadow: none !important; font-family: " + SERIF + " !important;" +
       " box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 2px 3px rgba(70,35,10,.15) !important; }",
-    V + "#ejer-indhold #sp-liste button.valgt, " + V + "#ejer-indhold #pb-liste button.valgt { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(0,0,0,.1)), " + MESSING + " !important; color: #3a2408 !important; }",
+    V + "#ejer-indhold#ejer-indhold " + LISTER_VALGT + " { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(0,0,0,.1)), " + MESSING + " !important; color: #3a2408 !important; }",
     V + ".sp-fakta span { background: rgba(255,250,238,.7) !important; border: 1px solid rgba(156,116,48,.45) !important; }",
     V + ".sp-fakta b { color: " + MOERK_GULD + " !important; font-family: " + SERIF + "; letter-spacing: .06em; }",
 
@@ -120,8 +125,6 @@
     MESSING_KNAPPER + " { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 50%, rgba(0,0,0,.16)), " + MESSING + " !important;" +
       " border: 1px solid #5e3f12 !important; color: #3a2408 !important; text-shadow: 0 1px 0 rgba(255,240,200,.7) !important; font-family: " + SERIF + " !important;" +
       " box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 4px rgba(0,0,0,.45) !important; }",
-    "#hjaelp-knap { background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(0,0,0,.2)), " + LAEDER + " !important; color: #fbe3c4 !important;" +
-      " border: 1px solid " + MOERK_GULD + " !important; text-shadow: 0 1px 1px rgba(0,0,0,.7) !important; font-family: " + SERIF + " !important; box-shadow: 0 2px 4px rgba(0,0,0,.45) !important; }",
 
     // Chatbaren: mahognibord med messingknapper og et elfenbensfelt at skrive i
     "#chat { background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.28)), " + TRAE + " center/512px 256px !important;" +
@@ -148,10 +151,6 @@
     // overskrifter inde i vinduerne
     ".rui-vindue h3, .rui-vindue h4 { font-family: " + SERIF + "; }",
 
-    // Dit lille portræt øverst til venstre: i en forgyldt ramme
-    "#avatar-billede { border: 3px solid " + MOERK_GULD + " !important; box-shadow: 0 0 0 2px #2a0d0a, inset 0 0 0 1px #f3d999, 0 4px 10px rgba(0,0,0,.45) !important;" +
-      " background: " + PAPIR + " !important; }",
-
     // Butikkerne (Shop, Mine ting): læder-sidebjælke, faneblade og elfenbenskort
     ".butik-kat { background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.10), rgba(0,0,0,.25) 90%), " + LAEDER + " !important; border-right: 3px solid #2a0d0a !important; }",
     ".butik-kat button { color: #f6e3c0 !important; background: transparent !important; border-color: transparent !important; text-shadow: 0 1px 1px rgba(0,0,0,.7); font-family: " + SERIF + " !important; }",
@@ -166,6 +165,67 @@
     ".butik-gitter > *, .butik-valgt { background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,250,238,.5)), " + PAPIR + " !important;" +
       " border: 1px solid " + MOERK_GULD + " !important; box-shadow: inset 0 0 0 2px #fbf3e2, inset 0 0 0 3px rgba(216,180,106,.6), 0 3px 6px rgba(70,35,10,.18) !important; }",
     ".butik-krop, .butik-gitter { background: transparent !important; }",
+
+
+    // ----- Lister i panelet: tydelig mørk tekst på papirkort -----
+    V + "#ejer-indhold#ejer-indhold " + LISTE_KLASSER.map(function (k) { return k + " button small, " + k + " button span"; }).join(", " + V + "#ejer-indhold#ejer-indhold ") +
+      " { color: #6b4a30 !important; text-shadow: none !important; }",
+
+    // ----- Farver, man vælger (banner, boble osv.): vis deres egen farve, ingen træ -----
+    ".bs-farver button, .farve-gitter button, .or-farver button, [data-bs-farve] { background-image: none !important; text-shadow: none !important; }",
+
+    // ----- Navigatøren -----
+    "#nav-etager { background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.10), rgba(0,0,0,.25) 90%), " + LAEDER + " !important; }",
+    "#nav-etager button:not(.hemmelig) { background: linear-gradient(180deg, #fffaf0, #f1e1c0) !important; color: " + BLAEK + " !important; font-family: " + SERIF + " !important;" +
+      " border: 1px solid " + MOERK_GULD + " !important; box-shadow: inset 0 1px 0 #fff, 0 2px 4px rgba(0,0,0,.4) !important; }",
+    "#nav-etager button.valgt:not(.hemmelig) { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 45%, rgba(0,0,0,.15)), " + MESSING + " !important; color: #3a2408 !important; }",
+    ".nav-kort { background: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,250,238,.4)), " + PAPIR + " !important; border: 1px solid " + MOERK_GULD + " !important;" +
+      " box-shadow: inset 0 0 0 3px #fbf3e2, inset 0 0 0 4px rgba(216,180,106,.7), 0 3px 8px rgba(70,35,10,.2) !important; }",
+    ".nav-kort img { border: 2px solid " + MOERK_GULD + "; box-shadow: 0 0 0 1px #2a0d0a, 0 2px 4px rgba(0,0,0,.35); }",
+    ".nav-kort h3, .nav-kort b { font-family: " + SERIF + " !important; color: #5a1626 !important; }",
+    ".nav-besoeg { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 50%, rgba(0,0,0,.18)), " + MESSING + " !important;" +
+      " color: #3a2408 !important; border: 1px solid #5e3f12 !important; text-shadow: 0 1px 0 rgba(255,240,200,.7) !important; font-family: " + SERIF + " !important;" +
+      " box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 3px rgba(0,0,0,.4) !important; }",
+    ".nav-besoeg:disabled, .nav-besoeg.her { background: rgba(255,248,230,.8) !important; color: #7a1d2e !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.2) !important; }",
+
+    // ----- 🚨 Tilkald hjælp: en rød lakeret knap med messingring -----
+    "#hjaelp-knap { background: radial-gradient(ellipse at 50% 20%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%), linear-gradient(180deg, #c8202c, #7d0c16) !important;" +
+      " color: #fff3e0 !important; border: 2px solid #d8b46a !important; text-shadow: 0 1px 1px rgba(0,0,0,.6) !important; font-family: " + SERIF + " !important;" +
+      " box-shadow: 0 0 0 1px #3a1008, inset 0 -2px 3px rgba(0,0,0,.35), 0 3px 6px rgba(0,0,0,.45) !important; }",
+    "#hjaelp-knap:active { box-shadow: 0 0 0 1px #3a1008, inset 0 2px 5px rgba(0,0,0,.55) !important; }",
+
+    // ----- ⭐ Glimt og 🔮 Stella: en læderpung med syning og guldtal -----
+    "#glimt { background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.25)), " + LAEDER + " !important; border: 1px solid #2a0d0a !important;" +
+      " box-shadow: inset 0 0 0 2px rgba(0,0,0,.25), 0 0 0 1px " + MOERK_GULD + ", 0 4px 10px rgba(0,0,0,.45) !important; position: fixed; }",
+    "#glimt::after { content: ''; position: absolute; inset: 3px; border: 1px dashed rgba(230,190,120,.5); border-radius: inherit; pointer-events: none; }",
+    "#glimt .penge, #glimt .penge * { background: transparent !important; }",
+    "#glimt b { color: #f3d999 !important; font-family: " + SERIF + " !important; text-shadow: 0 1px 1px rgba(0,0,0,.8) !important; }",
+    "#glimt .penge span { color: #f6e3c0 !important; text-shadow: 0 1px 1px rgba(0,0,0,.7) !important; }",
+
+    // ----- Dit portræt: forgyldt billedramme med messing-navneskilt -----
+    "#avatar-billede { border: 0 !important; border-radius: 6px !important; padding: 5px !important; width: 84px !important;" +
+      " background: linear-gradient(135deg, #f7dc93, #a77a2c 30%, #f3d58a 50%, #8a6020 75%, #e7c27a) !important;" +
+      " box-shadow: 0 0 0 1px #3a2408, inset 0 0 0 1px #fff0c0, inset 0 0 0 3px rgba(90,60,15,.6), 0 6px 14px rgba(0,0,0,.5) !important; }",
+    "#avatar-billede canvas { background: radial-gradient(ellipse at 50% 35%, #f6ead0, #c9ab7a 85%) !important; border: 1px solid #5e3f12; box-shadow: inset 0 0 10px rgba(60,30,10,.45); border-radius: 2px; }",
+    "#avatar-navn { margin-top: 4px; border-radius: 3px; border: 1px solid #5e3f12; font-family: " + SERIF + " !important; color: #3a2408 !important;" +
+      " background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 50%, rgba(0,0,0,.15)), " + MESSING + " !important; text-shadow: 0 1px 0 rgba(255,240,200,.8); }",
+
+    // ----- Spillerkortet / profilen -----
+    "#spillerkort .sk-figur { background: radial-gradient(ellipse at 50% 30%, rgba(255,220,170,.35), rgba(0,0,0,.35) 90%), " + LAEDER + " !important;" +
+      " border: 2px solid " + MOERK_GULD + " !important; box-shadow: 0 0 0 1px #2a0d0a, inset 0 0 14px rgba(0,0,0,.55) !important; }",
+    "#spillerkort .sk-motto { background: #fffaf0 !important; border: 1px solid #b89458 !important; box-shadow: inset 0 2px 3px rgba(80,45,15,.15); font-style: italic; font-family: " + SERIF + "; }",
+    "#spillerkort .sk-baand { background: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,250,238,.4)), " + PAPIR + " !important; color: " + BLAEK + " !important;" +
+      " border: 1px solid " + MOERK_GULD + " !important; border-left-width: 5px !important; font-family: " + SERIF + " !important; box-shadow: 0 2px 4px rgba(70,35,10,.15) !important; }",
+    "#spillerkort .sk-likes { border-left-color: #c9a35a !important; }",
+    "#spillerkort .sk-medlem { border-left-color: #2f4f73 !important; }",
+    "#spillerkort .sk-online { border-left-color: #3f8f3a !important; }",
+    "#spillerkort .sk-offline { border-left-color: #8a8070 !important; }",
+    "#spillerkort .sk-fd { border-left-color: #c47a2c !important; }",
+    "#spillerkort .sk-baand small, #spillerkort .sk-job, #spillerkort .sk-tom, #spillerkort .sk-hvem i { color: #6b4a30 !important; }",
+    "#spillerkort .sk-job b { color: #5a1626 !important; }",
+    "#spillerkort .sk-forhold { background: rgba(255,250,238,.75) !important; border: 1px solid rgba(156,116,48,.5) !important; border-left: 5px solid #a8324a !important; }",
+    "#spillerkort .sk-forhold.sk-smiley, #spillerkort .sk-smiley.sk-forhold { border-left-color: #c9a35a !important; }",
+    "#spillerkort .sk-hjerte:not(.sk-forhold), #spillerkort .sk-smiley:not(.sk-forhold) { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 50%, rgba(0,0,0,.15)), " + MESSING + " !important; color: #3a2408 !important; border: 1px solid #5e3f12 !important; }",
 
     // Chatloggen nederst til højre: et ark papir i en træramme
     "#chatlog { background: " + PAPIR + " repeat, #f3e6cc !important; border-color: #2a0d0a !important;" +
@@ -211,4 +271,119 @@
   };
   setTimeout(window.ruiOpfrisk, 50);
   setTimeout(window.ruiOpfrisk, 1500);
+
+  // ----- Grøn tekst, der er svær at læse, bliver mørkebrun -----
+  // (grågrønne farver, som vinrødt-temaet ikke fanger; den klare "online"-grøn bliver)
+  function groenGraa(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, f = mx - mn;
+    if (f < 0.03) return false;
+    const sat = f / (1 - Math.abs(2 * l - 1));
+    let hue = mx === r ? ((g - b) / f) % 6 : mx === g ? (b - r) / f + 2 : (r - g) / f + 4;
+    hue = (hue * 60 + 360) % 360;
+    if (hue < 65 || hue > 180) return false;
+    if (sat > 0.45 && l > 0.3 && l < 0.65) return false;     // klar grøn (online-prik o.l.)
+    return true;
+  }
+  const tekstSet = new WeakMap();
+  function tjekTekst(el) {
+    if (el.nodeType !== 1 || el.closest("canvas, .bs-farver, .farve-gitter, .or-farver")) return;
+    let harTekst = false;
+    for (let n = el.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && n.nodeValue.trim()) { harTekst = true; break; }
+    if (!harTekst) return;
+    if (tekstSet.get(el) === "sat") el.style.removeProperty("color");
+    const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(el).color);
+    if (m && groenGraa(+m[1], +m[2], +m[3])) {
+      const lys = (+m[1] + +m[2] + +m[3]) / 3;
+      el.style.setProperty("color", lys < 90 ? "#3a1d14" : "#6b4a30", "important");
+      tekstSet.set(el, "sat");
+    }
+  }
+  let tekstKoe = new Set(), tekstVenter = false;
+  function koeTekst(el) {
+    tekstKoe.add(el);
+    if (!tekstVenter) { tekstVenter = true; setTimeout(tomTekst, 120); }
+  }
+  function tomTekst() {
+    tekstVenter = false;
+    const liste = Array.from(tekstKoe); tekstKoe.clear();
+    liste.forEach(function (el) { if (el.isConnected) { tjekTekst(el); el.querySelectorAll("*").forEach(tjekTekst); } });
+  }
+  koeTekst(document.body);
+  new MutationObserver(function (liste) {
+    liste.forEach(function (m) {
+      if (m.type === "attributes") { if (m.target.nodeType === 1) koeTekst(m.target); return; }
+      m.addedNodes.forEach(function (n) { if (n.nodeType === 1) koeTekst(n); else if (n.parentElement) koeTekst(n.parentElement); });
+    });
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+
+  // ----- Dit portræt bevæger sig: det følger din figur -----
+  // Går du, går den også. Står du stille, trækker den vejret, kigger lidt rundt
+  // og viser dine ansigtsudtryk og vink.
+  (function () {
+    const boks = document.getElementById("avatar-billede");
+    if (!boks || typeof tegnMenneske !== "function") return;
+    const gammel = boks.querySelector("canvas");
+    const c = document.createElement("canvas");
+    c.width = 140; c.height = 140;
+    if (gammel) gammel.replaceWith(c); else boks.prepend(c);    // det gamle billede tegnes nu ingen steder
+    const kig = ["ned", "ned", "ned-hoejre", "ned", "ned", "ned-venstre"];
+    function tegn() {
+      const g = c.getContext("2d");
+      g.clearRect(0, 0, c.width, c.height);
+      const nu = performance.now() / 1000;
+      const gaar = typeof figur !== "undefined" && figur.rute && figur.rute.length > 0 && !figur.sidde;
+      const pose = garderobe && garderobe.pose;
+      let retning = "ned", trin = null;
+      if (gaar) {
+        retning = /^op/.test(figur.retning) ? "ned" + figur.retning.slice(2) : figur.retning;   // ansigtet mod os
+        trin = (typeof figur.trin === "number" ? figur.trin : nu * 8);
+      } else if (!pose) {
+        retning = kig[Math.floor(nu / 2.5) % kig.length];
+      }
+      const h = figurHoejde(garderobe);
+      const sk = 2.6;
+      const aande = gaar ? 0 : Math.sin(nu * 2.2) * 0.012;     // vejrtrækning
+      const hop = gaar ? Math.abs(Math.sin(nu * 9)) * 3 : 0;    // lille hop, når den går
+      g.save();
+      g.translate(c.width / 2, 4 + h * sk - hop);
+      g.scale(sk, sk * (1 + aande));
+      try { tegnMenneske(g, 0, 0, garderobe, retning, trin, null); }
+      catch (e) { try { tegnMenneske(g, 0, 0, garderobe, "ned", null, null); } catch (e2) {} }
+      g.restore();
+      const navn = document.getElementById("avatar-navn");
+      if (navn && navn.textContent !== FIGUR.navn) navn.textContent = FIGUR.navn;
+    }
+    let sidst = 0;
+    (function loop(t) {
+      if (t - sidst > 70) { sidst = t; tegn(); }       // ca. 14 billeder i sekundet
+      requestAnimationFrame(loop);
+    })(0);
+  })();
+
+  // ----- Talebobler: blød skygge og lidt glans, så de ligner rigtige skilte -----
+  if (typeof tegnEnBoble === "function" && typeof rundRamme === "function") {
+    const boble = tegnEnBoble;
+    tegnEnBoble = function (c, bo, x, y, hale) {
+      c.save();
+      c.shadowColor = "rgba(40,15,5,0.35)";
+      c.shadowBlur = 8;
+      c.shadowOffsetY = 3;
+      rundRamme(c, x, y, bo.b, bo.h, 9);
+      c.fillStyle = bo.stil && bo.stil.farve || "#fcf2e9";
+      c.fill();
+      c.restore();
+      boble(c, bo, x, y, hale);
+      c.save();
+      rundRamme(c, x + 1, y + 1, bo.b - 2, bo.h - 2, 8);
+      c.clip();
+      const gl = c.createLinearGradient(0, y, 0, y + bo.h);
+      gl.addColorStop(0, "rgba(255,255,255,0.2)");
+      gl.addColorStop(0.45, "rgba(255,255,255,0.05)");
+      gl.addColorStop(1, "rgba(0,0,0,0.07)");
+      c.fillStyle = gl;
+      c.fillRect(x, y, bo.b, bo.h);
+      c.restore();
+    };
+  }
 })();

@@ -276,3 +276,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/realistisk-ui.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🛗 Realistisk elevator (js/realistisk-elevator.js): messing, mahogni og bronzedøre.
+(function () {
+  if (document.querySelector("script[src^='js/realistisk-elevator.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/realistisk-elevator.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();

@@ -283,7 +283,10 @@ function tegnBobler() {
   bobler.forEach(function (bo) {
     bo.alder += dt;
     bo.maalY -= dt * 2;                  // boblerne driver langsomt opad
-    bo.y += (bo.maalY - bo.y) * Math.min(1, dt * 10);
+    // blød fjeder: boblen sætter blidt i gang og bremser blidt op (ingen hop)
+    bo.v = bo.v || 0;
+    bo.v += ((bo.maalY - bo.y) * 36 - 12 * bo.v) * dt;
+    bo.y += bo.v * dt;
   });
   bobler = bobler.filter(function (bo) { return bo.alder < levetid(bo) && bo.y + bo.h > -20; });
 
