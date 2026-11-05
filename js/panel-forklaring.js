@@ -301,3 +301,19 @@ document.head.appendChild(forklaringStil);
   s.src = "js/toej-rigtigt.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🛗 Kun elevator i de fælles rum (js/kun-elevator.js): ingen døre i hallen og event-rummene.
+(function () {
+  if (document.querySelector("script[src^='js/kun-elevator.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/kun-elevator.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 🎪 Staff-møbler til events (js/staff-moebler.js): gratis kategori kun for staff og ejeren.
+(function () {
+  if (document.querySelector("script[src^='js/staff-moebler.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/staff-moebler.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
