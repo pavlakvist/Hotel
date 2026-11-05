@@ -317,3 +317,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/staff-moebler.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 📦🔄 Mine ting bliver åben + drej med Shift (js/lager-shift.js)
+(function () {
+  if (document.querySelector("script[src^='js/lager-shift.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/lager-shift.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
