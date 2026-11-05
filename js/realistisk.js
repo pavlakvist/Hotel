@@ -118,12 +118,12 @@ function realGulvLag(g, bil) {
 }
 
 // Gulvet tegnes kun én gang ind i et billede og genbruges i hvert billede (meget hurtigere).
-// Det laves om, når rummet, gulvfarven eller zoomen ændrer sig.
+// Billedet har præcis skærmens pixels (kun den del af gulvet, der kan ses), så det
+// bare skal kopieres over. Det laves om, når rummet, gulvfarven, zoomen eller kameraet ændrer sig.
 let REAL_GULV_CACHE = null;
 function realGulvCache(bil) {
   const T = ctx.getTransform();
-  let s = Math.hypot(T.a, T.b) || 1;
-  s = Math.ceil(s * 4) / 4;
+  if (T.b || T.c) return null;
   let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, form = "";
   for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) {
     if (!erIRummet(x, y)) { form += "."; continue; }
@@ -131,18 +131,19 @@ function realGulvCache(bil) {
     diamant(x, y).forEach(function (p) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
   }
   if (minX > maxX) return null;
-  minX = Math.floor(minX - 2); minY = Math.floor(minY - 2); maxX = Math.ceil(maxX + 2); maxY = Math.ceil(maxY + 2);
-  const w = maxX - minX, h = maxY - minY;
-  s = Math.min(s, 4096 / w, 4096 / h);          // ikke større end 4096 pixels
-  const noegle = [s, minX, minY, w, h, RUM.bredde, RUM.dybde, form, RUM.gulvFarve1, bil.src || bil.width].join("|");
+  // gulvets kasse i skærm-pixels, skåret til lærredet
+  const rx = Math.max(0, Math.floor(T.a * (minX - 2) + T.e)), ry = Math.max(0, Math.floor(T.d * (minY - 2) + T.f));
+  const rx2 = Math.min(ctx.canvas.width, Math.ceil(T.a * (maxX + 2) + T.e)), ry2 = Math.min(ctx.canvas.height, Math.ceil(T.d * (maxY + 2) + T.f));
+  if (rx2 <= rx || ry2 <= ry) return null;
+  const noegle = [T.a.toFixed(4), T.d.toFixed(4), T.e.toFixed(1), T.f.toFixed(1), rx, ry, rx2, ry2, RUM.bredde, RUM.dybde, form, RUM.gulvFarve1, bil.src || bil.width].join("|");
   if (REAL_GULV_CACHE && REAL_GULV_CACHE.noegle === noegle) return REAL_GULV_CACHE;
   const c = REAL_GULV_CACHE && REAL_GULV_CACHE.c || document.createElement("canvas");
-  c.width = Math.ceil(w * s); c.height = Math.ceil(h * s);
+  c.width = rx2 - rx; c.height = ry2 - ry;
   const g = c.getContext("2d");
-  g.setTransform(s, 0, 0, s, -minX * s, -minY * s);
+  g.setTransform(T.a, 0, 0, T.d, T.e - rx, T.f - ry);
   g.imageSmoothingEnabled = true;
   realGulvLag(g, bil);
-  REAL_GULV_CACHE = { noegle: noegle, c: c, x: minX, y: minY, w: w, h: h };
+  REAL_GULV_CACHE = { noegle: noegle, c: c, x: rx, y: ry };
   return REAL_GULV_CACHE;
 }
 
@@ -157,8 +158,12 @@ function realGulvCache(bil) {
     gulvMoenster = function () { return REAL_TOM; };
     try { gammelGulv(); } finally { gulvMoenster = gammeltMoenster; }
     const k = realGulvCache(bil);
-    if (k) ctx.drawImage(k.c, k.x, k.y, k.w, k.h);
-    else realGulvLag(ctx, bil);
+    if (k) {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(k.c, k.x, k.y);
+      ctx.restore();
+    } else realGulvLag(ctx, bil);
   };
 })();
 
@@ -550,3 +555,54 @@ function realRosaIndret() {
 setInterval(function () {
   if (rumValg === "vaerelse" && aktivtVaerelse === "mit" && realRosaVent >= 3) realRosaIndret();
 }, 1000);
+
+
+// =============================================================
+//  ⚡ Hurtigere møbler (5/11)
+//  De realistiske møbler er store billeder, der blev skaleret om i hvert
+//  eneste billede. Nu laves hvert møbel én gang i præcis skærmens størrelse
+//  og kopieres bare over derefter. Det ser helt ens ud.
+// =============================================================
+const REAL_SKALERET = {};          // { skala: { sti: canvas } }
+const REAL_SKALAER = [];
+function realSkaleret(b, sti, Sx, Sy) {
+  const n = Sx.toFixed(3) + "x" + Sy.toFixed(3);
+  let lager = REAL_SKALERET[n];
+  if (!lager) {
+    lager = REAL_SKALERET[n] = {};
+    REAL_SKALAER.push(n);
+    while (REAL_SKALAER.length > 2) delete REAL_SKALERET[REAL_SKALAER.shift()];   // kun de seneste zoom-trin
+  }
+  let c = lager[sti];
+  if (!c) {
+    c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(b.naturalWidth * Sx));
+    c.height = Math.max(1, Math.round(b.naturalHeight * Sy));
+    const g = c.getContext("2d");
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = "high";
+    g.drawImage(b, 0, 0, c.width, c.height);
+    lager[sti] = c;
+  }
+  return c;
+}
+(function () {
+  const gammelTegnMoebel = tegnMoebel;
+  tegnMoebel = function (c, type, cx, cy, spejlet, retning) {
+    const s = type && type.skala;
+    if (!type || !type.retninger || !s || s === 1 || !c.getTransform) return gammelTegnMoebel(c, type, cx, cy, spejlet, retning);
+    const T = c.getTransform();
+    if (T.b || T.c || T.a <= 0 || T.d <= 0 || c.globalAlpha < 1) return gammelTegnMoebel(c, type, cx, cy, spejlet, retning);
+    const r = retning || 0;
+    const sti = type.retninger[r] || type.billede;
+    const rb = hentBillede(sti);
+    if (!billedeKlar(rb)) return gammelTegnMoebel(c, type, cx, cy, spejlet, retning);
+    const lille = realSkaleret(rb, sti, s * T.a, s * T.d);
+    const a = moebelAnker(type, rb.naturalWidth, rb.naturalHeight, r);
+    const x = T.a * (cx - a[0] * s) + T.e, y = T.d * (cy + FLISE_H / 2 - a[1] * s) + T.f;
+    c.save();
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.drawImage(lille, Math.round(x), Math.round(y));
+    c.restore();
+  };
+})();

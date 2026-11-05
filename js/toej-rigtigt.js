@@ -10,6 +10,13 @@
 //  (Hentes fra js/panel-forklaring.js.)
 // =============================================================
 (function () {
+  // 👗 Stor garderobe: former (shorts, nederdel, kjole) og mange frisurer
+  if (!document.querySelector("script[src^='js/garderobe-stor.js']")) {
+    const s = document.createElement("script");
+    s.src = "js/garderobe-stor.js?t=" + Date.now();
+    document.body.appendChild(s);
+  }
+
   // ----- 1) Skoene får et område, og farvelagene hentes friske -----
   ["pige", "dreng"].forEach(function (hvem) {
     const f = FIGURER[hvem];
@@ -21,7 +28,9 @@
   // så de hentes med et nyt navn, og browseren ikke bruger de gamle
   const figurBilledeFoer = figurBillede;
   figurBillede = function (sti) {
-    if (sti && sti.indexOf("/farvelag/") >= 0 && /\/(pige|dreng)-[^\/]*\.png$/.test(sti)) sti += "?sko=1";
+    if (sti && sti.indexOf("/farvelag/") >= 0 && /\/(pige|dreng)-[^\/]*\.png$/.test(sti)) sti += "?sko=2";
+    // 4 gå-billeder havde hule sko (rettet 5/11), så de hentes friske
+    else if (sti && /\/pige-gaa-(hoejre-s1|ned-3|venstre-1|venstre-4)\.png$/.test(sti)) sti += "?sko=2";
     return figurBilledeFoer(sti);
   };
 
@@ -32,6 +41,15 @@
     { id: "striber", navn: "Striber" },
     { id: "prikker", navn: "Prikker" },
     { id: "camo", navn: "Camouflage" },
+    { id: "skotsk", navn: "Skotskternet" },
+    { id: "blomster", navn: "Blomster" },
+    { id: "hjerter", navn: "Hjerter" },
+    { id: "stjerner", navn: "Stjerner" },
+    { id: "leopard", navn: "Leopard" },
+    { id: "zebra", navn: "Zebra" },
+    { id: "denim", navn: "Cowboystof" },
+    { id: "glimmer", navn: "Glimmer" },
+    { id: "regnbue", navn: "Regnbue" },
   ];
   // farven, hvis man vælger mønster uden at have valgt en farve
   const STD_FARVE = { skjorte: "#e8dccb", underdel: "#7fa6c8", sko: "#f0ede6" };
@@ -51,11 +69,16 @@
     const noegle = farve + "|" + moenster;
     if (stofGemmer[noegle]) return stofGemmer[noegle];
     const c = hexRgb(farve);
-    const base = bland(c, c, 0), moerk = bland(c, [20, 14, 12], 0.42), moerkest = bland(c, [10, 8, 8], 0.62),
+    const base = bland(c, c, 0), moerk = bland(c, [20, 14, 12], 0.5), moerkest = bland(c, [10, 8, 8], 0.72),
       lys = bland(c, [255, 252, 245], 0.45), hvid = bland(c, [255, 255, 255], 0.75);
     let s = 8;
     if (moenster === "striber") s = 4;
     if (moenster === "prikker") s = 6;
+    if (moenster === "skotsk") s = 12;
+    if (moenster === "blomster" || moenster === "leopard") s = 10;
+    if (moenster === "denim") s = 4;
+    if (moenster === "glimmer") s = 7;
+    if (moenster === "regnbue") s = 12;
     const t = document.createElement("canvas");
     t.width = s; t.height = s;
     const g = t.getContext("2d");
@@ -74,6 +97,45 @@
       g.fillRect(0, 2, s, 2);
     } else if (moenster === "prikker") {
       px(1, 1, hvid); px(4, 4, hvid);
+    } else if (moenster === "skotsk") {
+      // brede mørke bånd + tynde lyse streger
+      for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+        const bx = x >= 3 && x < 7, by = y >= 3 && y < 7;
+        if (bx && by) px(x, y, moerkest);
+        else if (bx || by) px(x, y, moerk);
+        if (x === 9 || y === 9) px(x, y, hvid);
+      }
+    } else if (moenster === "blomster") {
+      const kort = ["..........", "....h.....", "...hgh....", "....h.....", "..........", "..........", ".........h", "........hg", ".........h", ".........."];
+      for (let y = 0; y < 10; y++) for (let x = 0; x < 10; x++) {
+        if (kort[y][x] === "h") px(x, y, hvid);
+        else if (kort[y][x] === "g") px(x, y, "#f2c94c");
+      }
+      px(1, 7, "#f2c94c"); px(0, 7, hvid); px(2, 7, hvid); px(1, 6, hvid); px(1, 8, hvid);
+    } else if (moenster === "hjerter") {
+      const kort = [".h.h....", "hhhhh...", "hhhhh...", ".hhh....", "..h.....", "........", "........", "........"];
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (kort[y][x] === "h") px((x + (y > 4 ? 0 : 0)) % 8, y, hvid);
+    } else if (moenster === "stjerner") {
+      px(2, 1, hvid); px(1, 2, hvid); px(2, 2, hvid); px(3, 2, hvid); px(2, 3, hvid);
+      px(6, 5, lys); px(5, 6, lys); px(6, 6, hvid); px(7, 6, lys); px(6, 7, lys);
+    } else if (moenster === "leopard") {
+      const kort = [".oo.......", "o.co......", "o..o...oo.", ".oo...o.co", "......o..o", "...oo..oo.", "..oc.o....", "..o..o....", "...oo.....", ".........."];
+      for (let y = 0; y < 10; y++) for (let x = 0; x < 10; x++) {
+        if (kort[y][x] === "o") px(x, y, moerkest);
+        else if (kort[y][x] === "c") px(x, y, moerk);
+      }
+    } else if (moenster === "zebra") {
+      for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+        const v = (x + Math.round(Math.sin(y * 0.8) * 1.5) + 8) % 8;
+        if (v < 3) px(x, y, "rgb(30,26,24)");
+      }
+    } else if (moenster === "denim") {
+      for (let i = 0; i < 4; i++) { px(i, 3 - i, lys); px((i + 2) % 4, 3 - i, moerk); }
+    } else if (moenster === "glimmer") {
+      px(1, 1, hvid); px(4, 3, "#ffffff"); px(2, 5, lys); px(6, 6, hvid);
+    } else if (moenster === "regnbue") {
+      const rb = ["#e74c3c", "#e67e22", "#f1c40f", "#2ecc71", "#3498db", "#9b59b6"];
+      for (let y = 0; y < s; y++) { g.fillStyle = rb[Math.floor(y / 2) % 6]; g.fillRect(0, y, s, 1); }
     } else if (moenster === "camo") {
       const kort = ["..##....", ".####..x", "..##..xx", "x.....xx", "xx..##..", "x..####.", "...##...", "..xx...."];
       for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
@@ -84,7 +146,27 @@
     stofGemmer[noegle] = t;
     return t;
   }
-  function fyldFor(ctx, farver, o) {
+  function fyldFor(ctx, farver, o, h) {
+    // håret: ombre (to farver oppefra og ned) eller striber (js/garderobe-stor.js)
+    if (o === "haar" && farver.haarEffekt && farver.haar2) {
+      const c1 = farver.haar || "#6b3c22", c2 = farver.haar2;
+      if (farver.haarEffekt === "ombre") {
+        const gr = ctx.createLinearGradient(0, (h || 150) * 0.12, 0, (h || 150) * 0.62);
+        gr.addColorStop(0, c1); gr.addColorStop(0.3, c1); gr.addColorStop(1, c2);
+        return gr;
+      }
+      const noegle = "striber|" + c1 + "|" + c2;
+      if (!stofGemmer[noegle]) {
+        const t = document.createElement("canvas");
+        t.width = 7; t.height = 1;
+        const g = t.getContext("2d");
+        g.fillStyle = c1; g.fillRect(0, 0, 7, 1);
+        g.fillStyle = c2; g.fillRect(2, 0, 1, 1);
+        g.globalAlpha = 0.5; g.fillRect(1, 0, 1, 1); g.fillRect(3, 0, 1, 1);
+        stofGemmer[noegle] = t;
+      }
+      return ctx.createPattern(stofGemmer[noegle], "repeat");
+    }
     const m = farver[o + "Moenster"];
     const farve = farver[o] || STD_FARVE[o];
     if (!m) return farver[o];
@@ -103,7 +185,8 @@
     if (!klar(d.lag)) return null;
 
     const noegle = d.noegle + "|" + (bukser ? bukser.id : "") + "|" +
-      brugte.map(function (o) { return o + (farver[o] || "") + (farver[o + "Moenster"] || ""); }).join();
+      brugte.map(function (o) { return o + (farver[o] || "") + (farver[o + "Moenster"] || ""); }).join() +
+      "|" + (farver.haarEffekt || "") + (farver.haar2 || "");
     if (farveGemmer[noegle]) return farveGemmer[noegle];
     if (farveAntal > 400) { farveGemmer = {}; farveAntal = 0; }
 
@@ -153,7 +236,7 @@
       } else if (bukser && o === "stroemper") {
         farvOmraade(o, bukser.shorts ? hud : bukseStof(hc, bukser));
       } else {
-        farvOmraade(o, fyldFor(hc, farver, o));
+        farvOmraade(o, fyldFor(hc, farver, o, h));
       }
     });
     farveGemmer[noegle] = ud;
@@ -178,6 +261,10 @@
     "dreng-underdel-06": { navn: "Camo bukser", farve: "#5a5a3e", moenster: "camo" },
     "dreng-underdel-07": { navn: "Camo bukser 2", farve: "#606046", moenster: "camo" },
     "dreng-sko-07": { navn: "Grønne sko" },
+    // shorts og nederdel får nu også den rigtige form på figuren (js/garderobe-stor.js)
+    "pige-underdel-06": { form: "shorts" }, "pige-underdel-12": { form: "shorts" },
+    "pige-underdel-15": { form: "shorts" }, "pige-underdel-13": { navn: "Sort nederdel", form: "nederdel" },
+    "dreng-underdel-11": { navn: "Lysebrune shorts", form: "shorts" }, "dreng-underdel-15": { navn: "Blå shorts", form: "shorts" },
   };
   TOEJ_VARER.forEach(function (v) { if (RETTET[v.id]) Object.assign(v, RETTET[v.id]); });
 
@@ -197,6 +284,7 @@
     if (!fv || !omr) return;
     if (v.moenster) fv[omr + "Moenster"] = v.moenster;
     else delete fv[omr + "Moenster"];
+    if (v.slot === "underdel") { if (v.form) fv.underdelForm = v.form; else delete fv.underdelForm; }
     gemGarderobe();
     tegnForhaandsvisning();
   };
@@ -206,6 +294,7 @@
     const type = toejFigur(v), omr = TOEJ_FIGUR_OMR[v.slot];
     const fv = garderobe.farver && garderobe.farver[type];
     if (fv && omr) { delete fv[omr]; delete fv[omr + "Moenster"]; }
+    if (fv && v.slot === "underdel") delete fv.underdelForm;
     if (garderobe.ting && garderobe.ting[type]) delete garderobe.ting[type]["butik-" + v.slot];
     gemGarderobe();
     tegnForhaandsvisning();
@@ -293,6 +382,7 @@
       delete ting["butik-" + d.slot];
       delete mineFarver()[omr];
       delete mineFarver()[omr + "Moenster"];
+      if (d.slot === "underdel") delete mineFarver().underdelForm;
       tegnSkift();
     });
     liste.forEach(function (v) {
@@ -302,6 +392,7 @@
         mineFarver()[omr] = v.farve;
         if (v.moenster) mineFarver()[omr + "Moenster"] = v.moenster;
         else delete mineFarver()[omr + "Moenster"];
+        if (v.slot === "underdel") { if (v.form) mineFarver().underdelForm = v.form; else delete mineFarver().underdelForm; }
         tegnSkift();
       });
       knap.title = v.navn;
@@ -345,4 +436,5 @@
   document.head.appendChild(stil);
 
   if (typeof tegnForhaandsvisning === "function") tegnForhaandsvisning();
+
 })();
