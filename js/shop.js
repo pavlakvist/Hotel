@@ -295,7 +295,7 @@ document.getElementById("lager-saet").addEventListener("click", function () {
   valgtType = lagerValgt.id;
   valgtMoebel = null;
   lagerStiller = lagerValgt.id;
-  lagerVindue.hidden = true;
+  // Mine ting bliver åben på skærmen, så man kan blive ved med at sætte ting ind
   opdaterPanel();
 });
 
