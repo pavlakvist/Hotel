@@ -325,3 +325,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/lager-shift.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎨 Gulv & vægge (js/rum-farver.js): skift farve på gulv, tapet og træpanel i dine egne rum.
+(function () {
+  if (document.querySelector("script[src^='js/rum-farver.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/rum-farver.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
