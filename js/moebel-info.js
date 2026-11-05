@@ -113,3 +113,17 @@ skiftRum = function (navn) {
   skiftRumInfo(navn);
   visMoebelInfo();
 };
+
+// Shift drejer det møbel, man har klikket på (et kort tryk på Shift alene,
+// så store bogstaver i chatten ikke drejer noget)
+let shiftAlene = false;
+window.addEventListener("keydown", function (e) {
+  shiftAlene = e.key === "Shift" && !e.repeat;
+});
+window.addEventListener("keyup", function (e) {
+  if (e.key !== "Shift" || !shiftAlene) return;
+  shiftAlene = false;
+  if (!valgtMoebel || rumValg === "hal") return;
+  drejValgt();
+  visMoebelInfo();
+});
