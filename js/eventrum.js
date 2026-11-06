@@ -101,3 +101,12 @@ visSystem = function () {
     k.addEventListener("click", function () { ejerVindue.hidden = true; gaaTilVaerelse(k.dataset.eventGaa); });
   });
 };
+
+
+// Omdøb og opret event-rum + max antal personer i rummene (js/eventrum-ny.js)
+(function () {
+  if (document.querySelector("script[src^='js/eventrum-ny.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/eventrum-ny.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();

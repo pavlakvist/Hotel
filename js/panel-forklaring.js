@@ -344,3 +344,15 @@ document.head.appendChild(forklaringStil);
     document.body.appendChild(s);
   });
 })();
+
+// 🎲 Terninger på gulv og væg (alle kan slå) + 👢 :kick (js/terninger.js). Skal komme efter staff-møblerne.
+(function () {
+  if (document.querySelector("script[src^='js/terninger.js']")) return;
+  function hent() {
+    if (typeof STAFF_TYPER === "undefined") { setTimeout(hent, 200); return; }
+    const s = document.createElement("script");
+    s.src = "js/terninger.js?t=" + Date.now();   // hentes altid frisk
+    document.body.appendChild(s);
+  }
+  hent();
+})();
