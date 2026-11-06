@@ -333,3 +333,14 @@ document.head.appendChild(forklaringStil);
   s.src = "js/rum-farver.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🦴 Fælles skelet for gangen (js/skelet-gang.js): små skridt, skiftevis venstre og højre ben.
+// 🪑 Sæder og højder (js/saeder.js): figuren sidder på sædefladen, armlænet ud mod skærmen er foran.
+(function () {
+  ["js/skelet-gang.js", "js/saeder.js"].forEach(function (fil) {
+    if (document.querySelector("script[src^='" + fil + "']")) return;
+    const s = document.createElement("script");
+    s.src = fil + "?t=" + Date.now();   // hentes altid frisk
+    document.body.appendChild(s);
+  });
+})();
