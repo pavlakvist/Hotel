@@ -75,6 +75,23 @@ const STAFF_TYPER = [
   { id: "ev-rundtbord", navn: "Rundt festbord", skala: 0.5, ankre: [[126, 283], [126, 283], [126, 283], [126, 283]] },
   { id: "ev-klapstol", navn: "Hvid feststol", saede: 34, centrer: true, skala: 0.5, ankre: [[126, 276], [126, 276], [126, 276], [126, 276]] },
 ];
+// 🟢🔵🟡 Samme møbler i grøn, blå og gul (6/11). Billederne: billeder/moebler/ev-<navn>-<farve>/
+const STAFF_FARVER = { groen: "grøn", blaa: "blå", gul: "gul" };
+const STAFF_FARVE_MOEBLER = ["ev-scene", "ev-loeber", "ev-afspaerring", "ev-balloner", "ev-ballonbue", "ev-stol", "ev-vip-sofa",
+  "ev-tronstol", "ev-barstol", "ev-gaver", "ev-blomster", "ev-billetskranke", "ev-candyfloss", "ev-neonskilt",
+  "ev-dommerbord", "ev-trommer", "ev-slikbar"];
+Object.keys(STAFF_FARVER).forEach(function (farve) {
+  STAFF_FARVE_MOEBLER.forEach(function (id) {
+    const g = STAFF_TYPER.find(function (t) { return t.id === id; });
+    if (!g) return;
+    const t = Object.assign({}, g);
+    t.id = id + "-" + farve;
+    t.navn = g.navn + " (" + STAFF_FARVER[farve] + ")";
+    t.ankre = g.ankre.map(function (a) { return a.slice(); });
+    if (g.felter) t.felter = g.felter.slice();
+    STAFF_TYPER.push(t);
+  });
+});
 STAFF_TYPER.forEach(function (t) {
   if (MOEBEL_TYPER[t.id]) return;
   t.retninger = [0, 1, 2, 3].map(function (i) { return "billeder/moebler/" + t.id + "/" + t.id + "-" + i + ".png?r=1"; });
