@@ -364,3 +364,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vagtskema.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🧺 Loppemarkedet hver søndag (js/loppemarked.js)
+(function () {
+  if (document.querySelector("script[src^='js/loppemarked.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/loppemarked.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
