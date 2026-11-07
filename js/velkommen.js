@@ -1,19 +1,23 @@
 // =============================================================
 //  🛎 Min side — velkomstsiden man kommer til efter login
-//  Profilkort, opslagstavle ("Hvad sker der?"), nyheder, venner
-//  og en stor knap: "Tjek ind på HELLO VERA".
+//  Pavlas billede er selve siden; her gør vi det levende:
+//  navn, Glimt/Stella, nyheder, dine mål, og vinduet med
+//  Fællesskab (opslagstavle + venner), Nyheder, Profil og Indstillinger.
 //  Henter alt fra serveren med hv_velkomst (database-30-velkomst.sql).
 // =============================================================
 const MS = {
   navn: aktivKonto(),
   data: null,
   harVelkomst: true,      // false, hvis database-30 ikke er kørt endnu
+  hoej: 0,                // hvilken nyhed "Dagens højdepunkter" viser
 };
+const MS_TJEKKET_IND = "mit-hotel-har-tjekket-ind";
+const MS_NYT_SET = "mit-hotel-nyt-set";
 
 function $(id) { return document.getElementById(id); }
 function tal(n) { return typeof n === "number" ? n.toLocaleString("da-DK") : "–"; }
 function figurBillede(type) {
-  return "billeder/figurer/" + (type === "dreng" ? "dreng" : "pige") + "-staa-ned.png";
+  return "billeder/figurer/" + (type === "pige" ? "pige" : "dreng") + "-staa-ned.png";
 }
 function siden(tid) {
   const s = Math.max(0, Math.round((Date.now() - tid) / 1000));
@@ -32,20 +36,39 @@ function lav(tag, klasse, tekst) {
   if (tekst != null) el.textContent = tekst;
   return el;
 }
+function hent(noegle) { try { return localStorage.getItem(noegle); } catch (e) { return null; } }
+function gem(noegle, v) { try { localStorage.setItem(noegle, v); } catch (e) {} }
 
-// ----- Navnet og hilsenen med det samme -----
-(function () {
-  const time = new Date().getHours();
-  const hilsen = time < 5 ? "God nat" : time < 10 ? "Godmorgen" : time < 17 ? "Goddag" : "Godaften";
-  document.querySelector(".ms-hej h2").firstChild.textContent = hilsen + ", ";
-  $("ms-navn").textContent = MS.navn || "";
-  $("ms-hej-navn").textContent = MS.navn || "";
-  $("ms-skriv-tekst").placeholder = "Hvad sker der, " + (MS.navn || "") + "?";
-  // Alle "Tjek ind"-knapper tager navnet med ind i hotellet
-  document.querySelectorAll("#ms-tjek-ind, .tjek-link").forEach(function (a) { a.href = hotelAdresse(); });
-})();
+// ----- Navnet med det samme, og alle "ind i hotellet"-steder får navnet med -----
+$("ms-navn").textContent = MS.navn || "";
+$("ms-ind-som").textContent = MS.navn || "";
+$("ms-skriv-tekst").placeholder = "Hvad sker der, " + (MS.navn || "") + "?";
+document.querySelectorAll(".tjek").forEach(function (a) {
+  a.href = hotelAdresse();
+  a.addEventListener("click", function () { gem(MS_TJEKKET_IND, "1"); });
+});
 
-// ----- Log ud -----
+// ----- Vinduet -----
+const FANE_TITLER = { faellesskab: "Fællesskab", nyt: "Nyt fra hotellet", profil: "Min profil", indstillinger: "Indstillinger" };
+function aabnVindue(fane) {
+  document.querySelectorAll(".vindue-faner button").forEach(function (b) { b.classList.toggle("aktiv", b.dataset.fane === fane); });
+  document.querySelectorAll(".fane").forEach(function (f) { f.hidden = f.dataset.fane !== fane; });
+  $("ms-vindue-titel").textContent = FANE_TITLER[fane];
+  $("ms-vindue-baggrund").hidden = false;
+  if (fane === "nyt") markerNytSet();
+}
+function lukVindue() { $("ms-vindue-baggrund").hidden = true; }
+document.querySelectorAll("[data-panel]").forEach(function (b) {
+  b.addEventListener("click", function () { aabnVindue(b.dataset.panel); });
+});
+document.querySelectorAll(".vindue-faner button").forEach(function (b) {
+  b.addEventListener("click", function () { aabnVindue(b.dataset.fane); });
+});
+$("ms-vindue-luk").addEventListener("click", lukVindue);
+$("ms-vindue-baggrund").addEventListener("click", function (e) { if (e.target === this) lukVindue(); });
+window.addEventListener("keydown", function (e) { if (e.key === "Escape") lukVindue(); });
+
+// ----- Log ud (to klik) -----
 $("ms-log-ud").addEventListener("click", function () {
   const k = this;
   if (!k.classList.contains("sikker")) {
@@ -77,27 +100,81 @@ async function hentAlt() {
   try { const p = await serverKald("hv_penge_hent", { p_token: token, p_glimt: null, p_stella: null }); d.glimt = p.glimt; d.stella = p.stella; } catch (e) {}
   try { const k = await serverKald("hv_spillerkort", { p_token: token, p_navn: MS.navn }); if (k) { d.motto = k.motto; d.oprettet = k.oprettet; } } catch (e) {}
   try { d.nyheder = (await serverKald("hv_nyheder_hent", { p_token: token })).slice(-5).reverse(); } catch (e) {}
-  try { d.online = await serverKald("hv_antal_online", {}); } catch (e) {}
   MS.data = d;
   visAlt();
 }
 
 function visAlt() {
   const d = MS.data;
-  // profilkortet
-  $("ms-navn").textContent = d.navn || MS.navn;
-  $("ms-hej-navn").textContent = d.navn || MS.navn;
-  $("ms-motto").textContent = d.motto ? "“" + d.motto + "”" : "";
+  const navn = d.navn || MS.navn;
+  $("ms-navn").textContent = navn + (d.ejer ? " 👑" : "");
   $("ms-glimt").textContent = tal(d.glimt);
   $("ms-stella").textContent = tal(d.stella);
-  $("ms-antal-venner").textContent = d.venner ? d.venner.length : "–";
-  $("ms-medlem").textContent = d.oprettet ? "Gæst siden " + new Date(d.oprettet).toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" }) : "";
-  $("ms-figur").src = figurBillede(d.figur);
-  $("ms-skriv-figur").src = figurBillede(d.figur);
-  $("ms-online-tal").textContent = typeof d.online === "number" ? d.online : "–";
+  // profil-vinduet
+  $("ms-profil-navn").textContent = navn;
+  $("ms-profil-motto").textContent = d.motto ? "“" + d.motto + "”" : "";
+  $("ms-profil-glimt").textContent = tal(d.glimt);
+  $("ms-profil-stella").textContent = tal(d.stella);
+  $("ms-profil-venner").textContent = d.venner ? d.venner.length : "–";
+  $("ms-profil-medlem").textContent = d.oprettet ? "Gæst siden " + new Date(d.oprettet).toLocaleDateString("da-DK", { day: "numeric", month: "long", year: "numeric" }) : "";
+  $("ms-profil-figur").src = figurBillede(d.figur);
+  visMaal();
+  visHoejdepunkt();
+  visKlokke();
   visNyheder(d.nyheder);
   visVenner(d.venner);
   visOpslag(d.opslag);
+}
+
+// ----- Dine mål (i bogen) + baren på profilkortet -----
+function visMaal() {
+  const d = MS.data;
+  const venner = d.venner ? d.venner.length : 0;
+  const harOpslag = (d.opslag || []).some(function (o) { return o.hvem === d.navn; });
+  const maal = [
+    { tekst: "Besøg hotellet", klaret: hent(MS_TJEKKET_IND) === "1" },
+    { tekst: "Skriv et opslag", klaret: harOpslag },
+    { tekst: "Få 5 venner (" + Math.min(venner, 5) + "/5)", klaret: venner >= 5 },
+    { tekst: "Skriv et motto", klaret: !!d.motto },
+  ];
+  const ul = $("ms-maal");
+  ul.innerHTML = "";
+  maal.forEach(function (m) {
+    const li = lav("li", m.klaret ? "klaret" : "");
+    li.appendChild(lav("span", "boks"));
+    li.appendChild(lav("span", "tekst", m.tekst));
+    ul.appendChild(li);
+  });
+  const klaret = maal.filter(function (m) { return m.klaret; }).length;
+  $("ms-under").textContent = "Mål " + klaret + "/" + maal.length + (d.venner ? " · " + venner + (venner === 1 ? " ven" : " venner") : "");
+  $("ms-bar").style.width = Math.round(klaret / maal.length * 100) + "%";
+}
+
+// ----- Dagens højdepunkter: hotellets nyheder, pilene skifter -----
+function visHoejdepunkt() {
+  const n = MS.data.nyheder || [];
+  if (!n.length) { $("ms-hoej-titel").textContent = "Velkommen til HELLO VERA"; $("ms-hoej-under").textContent = "Tjek ind og sig hej!"; return; }
+  MS.hoej = (MS.hoej + n.length) % n.length;
+  const ny = n[MS.hoej];
+  $("ms-hoej-titel").textContent = ny.titel;
+  $("ms-hoej-under").textContent = ny.tekst || (ny.tid ? siden(ny.tid) : "");
+}
+$("ms-hoej-forrige").addEventListener("click", function () { if (MS.data) { MS.hoej--; visHoejdepunkt(); } });
+$("ms-hoej-naeste").addEventListener("click", function () { if (MS.data) { MS.hoej++; visHoejdepunkt(); } });
+
+// ----- Klokken: antal nyheder, du ikke har set endnu -----
+function visKlokke() {
+  const n = MS.data.nyheder || [];
+  const set = Number(hent(MS_NYT_SET) || 0);
+  const nye = n.filter(function (x) { return x.id > set; }).length;
+  $("ms-klokke-tal").hidden = !nye;
+  $("ms-klokke-tal").textContent = nye > 9 ? "9+" : nye;
+}
+function markerNytSet() {
+  const n = (MS.data && MS.data.nyheder) || [];
+  const maks = n.reduce(function (m, x) { return Math.max(m, x.id || 0); }, 0);
+  if (maks) gem(MS_NYT_SET, String(maks));
+  if (MS.data) visKlokke();
 }
 
 // ----- Nyheder -----
@@ -139,10 +216,11 @@ function visOpslag(opslag) {
     $("ms-del").disabled = true;
     return;
   }
+  $("ms-del").disabled = false;
   if (!opslag.length) { boks.appendChild(lav("p", "tom", "Ingen opslag endnu. Skriv det første!")); return; }
   const d = MS.data;
   opslag.forEach(function (o) {
-    const kort = lav("article", "ms-kort opslag");
+    const kort = lav("article", "opslag");
     const top = lav("div", "opslag-top");
     const img = lav("img", "lille-figur"); img.src = figurBillede(o.figur); img.alt = "";
     top.appendChild(img);
