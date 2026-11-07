@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HELLO VERA – Min side</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/indgang.css?v=36">
+  <link rel="stylesheet" href="css/velkommen.css?v=1">
+</head>
+<body class="min-side">
+
+  <!-- ===== Toppen med billedet af hotellet ===== -->
+  <header class="ms-top">
+    <div class="ms-top-billede" aria-hidden="true"></div>
+    <div class="glimt-lag" aria-hidden="true"></div>
+    <div class="ms-top-indhold">
+      <a href="index.html" class="logo"><img src="billeder/forside/krone.png" alt=""><span>HELLO VERA</span></a>
+      <a href="hotel.html" id="ms-tjek-ind" class="knap guld stor ms-tjek-ind">🛎 Tjek ind på HELLO VERA</a>
+    </div>
+
+    <!-- menuen -->
+    <nav class="ms-menu">
+      <a href="#opslag" class="ms-menu-link">Opslagstavlen</a>
+      <a href="#nyt" class="ms-menu-link">Nyt fra hotellet</a>
+      <a href="#venner" class="ms-menu-link">Venner</a>
+      <a href="hotel.html" class="ms-menu-link tjek-link">Tjek ind</a>
+      <span class="ms-online"><span class="prik"></span><span id="ms-online-tal">…</span> online</span>
+      <button type="button" id="ms-log-ud" class="ms-log-ud">🚪 Log ud</button>
+    </nav>
+  </header>
+
+  <main class="ms-gitter">
+
+    <!-- ===== Venstre: profilkortet ===== -->
+    <aside class="ms-venstre">
+      <section class="ms-kort profil">
+        <div class="profil-billede"><img id="ms-figur" src="billeder/figurer/pige-staa-ned.png" alt=""></div>
+        <div class="profil-tekst">
+          <h1 id="ms-navn">…</h1>
+          <p id="ms-motto" class="profil-motto"></p>
+          <p class="profil-tal"><img src="billeder/glimt.png" alt=""> <b id="ms-glimt">–</b> <span>Glimt</span></p>
+          <p class="profil-tal"><img src="billeder/krystal.png" alt=""> <b id="ms-stella">–</b> <span>Stella</span></p>
+          <p class="profil-tal"><span class="ikon">👫</span> <b id="ms-antal-venner">–</b> <span>venner</span></p>
+          <p id="ms-medlem" class="profil-medlem"></p>
+        </div>
+      </section>
+
+      <section class="ms-kort ms-genveje">
+        <a href="#opslag" class="genvej aktiv"><span>📝</span>Opslagstavlen</a>
+        <a href="#venner" class="genvej"><span>👫</span>Mine venner</a>
+        <a href="#nyt" class="genvej"><span>📰</span>Nyt fra hotellet</a>
+        <a href="hotel.html" class="genvej tjek-link"><span>👗</span>Skift udseende</a>
+        <a href="index.html" class="genvej"><span>🏨</span>Forsiden</a>
+      </section>
+    </aside>
+
+    <!-- ===== Midten: velkomst + opslagstavlen ===== -->
+    <section class="ms-midte">
+      <div class="ms-kort ms-hej">
+        <img src="billeder/forside/krone.png" alt="" class="hej-krone">
+        <div>
+          <h2>Godmorgen, <span id="ms-hej-navn">…</span>!</h2>
+          <p>Din nøgle ligger klar i receptionen. Kig på opslagstavlen, eller tjek ind og find dine venner.</p>
+        </div>
+      </div>
+
+      <div id="opslag" class="ms-kort ms-skriv">
+        <div class="skriv-raekke">
+          <img class="lille-figur" id="ms-skriv-figur" src="billeder/figurer/pige-staa-ned.png" alt="">
+          <textarea id="ms-skriv-tekst" maxlength="200" rows="3" placeholder="Hvad sker der?"></textarea>
+        </div>
+        <div class="skriv-bund">
+          <span class="skriv-smileys">
+            <button type="button" data-s="😊">😊</button><button type="button" data-s="😂">😂</button><button type="button" data-s="❤️">❤️</button><button type="button" data-s="⭐">⭐</button><button type="button" data-s="🎉">🎉</button><button type="button" data-s="🛋️">🛋️</button>
+          </span>
+          <span id="ms-skriv-tegn" class="skriv-tegn">0/200</span>
+          <button type="button" id="ms-del" class="knap guld lille">Del opslag</button>
+        </div>
+        <p id="ms-skriv-fejl" class="skriv-fejl" role="alert"></p>
+      </div>
+
+      <div id="ms-opslag-liste" class="ms-opslag-liste">
+        <p class="tom">Henter opslagstavlen …</p>
+      </div>
+    </section>
+
+    <!-- ===== Højre: nyheder, venner, find en gæst ===== -->
+    <aside class="ms-hoejre">
+      <section id="nyt" class="ms-kort ms-nyt">
+        <div class="nyt-billede">
+          <span class="nyt-maerke">📰 Nyt fra hotellet</span>
+        </div>
+        <ul id="ms-nyheder" class="nyt-liste"><li class="tom">Henter nyheder …</li></ul>
+      </section>
+
+      <section id="venner" class="ms-kort">
+        <h3>👫 Mine venner</h3>
+        <ul id="ms-venner" class="venne-liste"><li class="tom">Henter venner …</li></ul>
+      </section>
+
+      <section class="ms-kort">
+        <h3>🔎 Find en gæst</h3>
+        <form id="ms-soeg" class="soeg">
+          <input id="ms-soeg-navn" type="text" maxlength="16" placeholder="Brugernavn …" autocomplete="off">
+          <button type="submit" class="knap guld lille">Søg</button>
+        </form>
+        <div id="ms-soeg-svar" class="soeg-svar"></div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="fod">HELLO VERA · Dit hjem, dit hotel, din historie</footer>
+
+  <script src="js/indstillinger.js?v=32"></script>
+  <script src="js/konto.js?v=37"></script>
+  <script src="js/server.js?v=1"></script>
+  <script>if (!aktivKonto()) location.replace("index.html?login");</script>
+  <script src="js/velkommen.js?v=1"></script>
+</body>
+</html>

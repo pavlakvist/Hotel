@@ -6,6 +6,9 @@
 //  ALLE kan klikke på en terning. Den triller og lander på 1-6, og alle i rummet
 //  ser det samme slag (sendes som en usynlig chatbesked, så der skal ikke køres SQL).
 //
+//  Slagene betyder: 1 Kick (ude af spillet, men bliver i rummet), 2 Stjæl, 3 Få, 4 Dø,
+//  5 Få og stjæl, 6 Safe. Alle i rummet ser "🎲 Noah slog 1 / 👢 Kick – Noah er ude af spillet".
+//
 //  :kick i chatten sender alle andre i rummet direkte ned i lobbyen (velkomsthallen).
 //  Kun ansatte (alle med et staff-skilt), hotellets ejer og rummets ejer kan bruge den.
 //  Den, der skriver :kick, bliver selv i rummet. Hotellets ejer bliver aldrig smidt ud.
@@ -107,9 +110,44 @@
   //  Slagene: hvad viser hver terning, og triller den lige nu?
   // =============================================================
   const SLAG = {};          // "rum|x|y" → { vaerdi, start, hvem }
+  // Hvad betyder hvert slag? (Pavlas regler til events)
+  const BETYDNING = { 1: "Kick", 2: "Stjæl", 3: "Få", 4: "Dø", 5: "Få og stjæl", 6: "Safe" };
+  const BETYDNING_IKON = { 1: "👢", 2: "🦹", 3: "🎁", 4: "💀", 5: "🎁🦹", 6: "🛡️" };
+
+  // Stor besked øverst på skærmen, som alle i rummet ser: "🎲 Noah slog 1 – 👢 Kick"
+  function visSlagBesked(hvem, vaerdi) {
+    let boks = document.getElementById("terning-besked");
+    if (!boks) {
+      boks = document.createElement("div");
+      boks.id = "terning-besked";
+      boks.style.cssText = "position:fixed;left:50%;top:15%;transform:translateX(-50%);z-index:9998;pointer-events:none;" +
+        "background:linear-gradient(#4a1320,#2e0a13);color:#f6e7c1;border:2px solid #d9b45a;border-radius:12px;" +
+        "padding:12px 26px;font:bold 22px Georgia,serif;box-shadow:0 8px 30px rgba(0,0,0,.45);text-align:center;" +
+        "white-space:nowrap;max-width:92vw;transition:opacity .4s";
+      document.body.appendChild(boks);
+    }
+    boks.innerHTML = "";
+    const linje1 = document.createElement("div");
+    linje1.textContent = "🎲 " + hvem + " slog " + vaerdi;
+    const linje2 = document.createElement("div");
+    linje2.style.cssText = "color:#e8cf8f;font-size:26px;margin-top:4px";
+    linje2.textContent = BETYDNING_IKON[vaerdi] + " " + BETYDNING[vaerdi] + (vaerdi === 1 ? " – " + hvem + " er ude af spillet" : "");
+    boks.append(linje1, linje2);
+    boks.style.opacity = "1";
+    boks.hidden = false;
+    clearTimeout(visSlagBesked.t);
+    visSlagBesked.t = setTimeout(function () { boks.style.opacity = "0"; }, 4500);
+  }
   function noegle(x, y) { return (typeof mitRumId === "function" ? mitRumId() : rumValg) + "|" + x + "|" + y; }
   function startSlag(x, y, vaerdi, hvem) {
-    SLAG[noegle(x, y)] = { vaerdi: vaerdi, start: performance.now(), hvem: hvem };
+    const k = noegle(x, y);
+    SLAG[k] = { vaerdi: vaerdi, start: performance.now(), hvem: hvem };
+    // når terningen er landet: alle i rummet får beskeden
+    setTimeout(function () {
+      if (noegle(x, y) !== k) return;      // man har skiftet rum imens
+      visSlagBesked(hvem, vaerdi);
+      besked.textContent = "🎲 " + hvem + " slog " + vaerdi + " – " + BETYDNING[vaerdi];
+    }, RUL_TID);
   }
   function trillerNu(m) {
     const s = SLAG[noegle(m.x, m.y)];
@@ -166,7 +204,7 @@
         if (!s || nu - s.start < RUL_TID || nu - s.start > RUL_TID + VIS_TID) return;
         const p = terningTop(m);
         const alfa = Math.min(1, (RUL_TID + VIS_TID - (nu - s.start)) / 600);
-        const tekst = s.vaerdi + "";
+        const tekst = s.vaerdi + " " + BETYDNING[s.vaerdi];
         const navn = s.hvem || "";
         ctx.save();
         ctx.globalAlpha = alfa;
@@ -235,7 +273,6 @@
     const vaerdi = 1 + Math.floor(Math.random() * 6);
     startSlag(m.x, m.y, vaerdi, FIGUR.navn);
     sendSkjult("terning|" + m.x + "|" + m.y + "|" + vaerdi);
-    setTimeout(function () { besked.textContent = "🎲 Du slog " + vaerdi + "!"; }, RUL_TID);
   }
 
   laerred.addEventListener("click", function (e) {

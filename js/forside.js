@@ -9,7 +9,7 @@ const velkommenTilbage = document.getElementById("velkommen-tilbage");
 lukKonto = function () {};
 
 // Knapperne skifter mellem Log ind og Opret mig i receptionen
-["knap-log-ind", "knap-opret"].forEach(function (id) {
+["knap-log-ind", "knap-opret", "menu-log-ind"].forEach(function (id) {
   document.getElementById(id).addEventListener("click", function () {
     reception.scrollIntoView({ behavior: "smooth", block: "center" });
   });

@@ -290,3 +290,12 @@ body.ny-forside {
   .menu-link { display: none; }
   .kort-gitter { grid-template-columns: 1fr; }
 }
+
+/* ----- Log ind / Min side i menuen øverst ----- */
+.ny-forside .menu-links .menu-log-ind { padding: 7px 18px; border-radius: 10px; font-size: 14px; }
+.knap[hidden], .menu-log-ind[hidden] { display: none; }
+.tilbage-min-side { margin: 12px 0 0; font-size: 14px; }
+@media (max-width: 600px) {
+  .menu-links { gap: 10px; }
+  .menu-links .menu-link { display: none; }
+}

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700;800&display=swap">
   <link rel="stylesheet" href="css/indgang.css?v=36">
-  <link rel="stylesheet" href="css/forside.css?v=1">
+  <link rel="stylesheet" href="css/forside.css?v=2">
 </head>
 <body class="ny-forside">
 
@@ -21,6 +21,8 @@
       <a href="#nyt" class="menu-link">Nyt fra hotellet</a>
       <a href="#om" class="menu-link">Om hotellet</a>
       <a href="hotel.html" id="menu-tjek-ind" class="knap guld lille">Tjek ind</a>
+      <button type="button" id="menu-log-ind" class="knap lys lille menu-log-ind">🔑 Log ind</button>
+      <a href="velkommen.html" id="menu-min-side" class="knap lys lille menu-log-ind" hidden>👤 Min side</a>
     </div>
   </nav>
 
@@ -54,6 +56,7 @@
         <div id="ind-knapper" class="konto-knapper" hidden>
           <div class="knap-raekke">
             <a href="hotel.html" id="knap-tjek-ind" class="knap guld stor">Tjek ind <span class="pil">&rarr;</span></a>
+            <a href="velkommen.html" id="knap-min-side" class="knap lys">👤 Min side</a>
           </div>
           <p class="hjaelp">Logget ind som <b id="konto-hvem"></b> · <button type="button" id="knap-log-ud" class="link-knap">Log ud</button></p>
         </div>
@@ -87,6 +90,7 @@
         <h2>Velkommen tilbage, <span id="tilbage-navn"></span>!</h2>
         <p class="konto-under">Din nøgle ligger klar. Dit værelse venter på dig.</p>
         <a href="hotel.html" id="tilbage-tjek-ind" class="knap guld lille">Tjek ind &rarr;</a>
+        <p class="tilbage-min-side"><a href="velkommen.html" id="tilbage-min-side" class="link-knap">👤 Gå til Min side</a></p>
       </div>
     </div>
   </header>
@@ -129,8 +133,8 @@
   <script src="js/indstillinger.js?v=32"></script>
   <script src="js/konto.js?v=37"></script>
   <script src="js/server.js?v=1"></script>
-  <script src="js/konto-forside.js?v=64"></script>
-  <script src="js/forside.js?v=1"></script>
+  <script src="js/konto-forside.js?v=65"></script>
+  <script src="js/forside.js?v=2"></script>
   <script src="js/ansoeg.js?v=1"></script>
 </body>
 </html>

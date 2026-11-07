@@ -9,6 +9,11 @@ const kontoKode2 = document.getElementById("konto-kode2");
 const kontoFejl = document.getElementById("konto-fejl");
 let kontoMaade = "ind";       // "ind" = log ind, "opret" = opret mig
 
+// Adressen til velkomstsiden (Min side), med navnet på den der er logget ind
+function velkommenAdresse() {
+  return hotelAdresse().replace("hotel.html", "velkommen.html");
+}
+
 function aabnKonto(maade) {
   kontoMaade = maade;
   const opret = maade === "opret";
@@ -78,7 +83,8 @@ kontoForm.addEventListener("submit", async function (e) {
     }
     return;
   }
-  window.location.href = hotelAdresse();
+  // Efter login kommer man til velkomstsiden (Min side) først
+  window.location.href = velkommenAdresse();
 });
 
 document.getElementById("konto-luk").addEventListener("click", lukKonto);
@@ -94,19 +100,25 @@ function visKontoKnapper() {
   if (navn) document.getElementById("konto-hvem").textContent = navn;
   // Tjek ind-knapperne tager navnet med ind i hotellet
   document.querySelectorAll("#menu-tjek-ind, #knap-tjek-ind").forEach(function (a) { a.href = hotelAdresse(); });
+  // Log ind-knappen i menuen bliver til "Min side", når man er logget ind
+  const menuLogInd = document.getElementById("menu-log-ind"), menuMinSide = document.getElementById("menu-min-side");
+  if (menuLogInd) menuLogInd.hidden = !!navn;
+  if (menuMinSide) menuMinSide.hidden = !navn;
+  document.querySelectorAll("#menu-min-side, #knap-min-side, #tilbage-min-side").forEach(function (a) { a.href = velkommenAdresse(); });
   // Ejer-knappen vises kun, hvis ejeren har været logget ind på denne computer
   const ejer = ejerGenvej();
   document.getElementById("ejer-genvej").hidden = !ejer;
   if (ejer) document.getElementById("ejer-navn").textContent = ejer;
 }
 document.getElementById("knap-ejer").addEventListener("click", function () {
-  if (ejerGenvejLogInd()) window.location.href = hotelAdresse();
+  if (ejerGenvejLogInd()) window.location.href = velkommenAdresse();
 });
 document.getElementById("knap-ejer-glem").addEventListener("click", function () {
   glemEjerGenvej();
   visKontoKnapper();
 });
 document.getElementById("knap-log-ind").addEventListener("click", function () { aabnKonto("ind"); });
+document.getElementById("menu-log-ind").addEventListener("click", function () { aabnKonto("ind"); });
 document.getElementById("knap-opret").addEventListener("click", function () { aabnKonto("opret"); });
 document.getElementById("knap-log-ud").addEventListener("click", function () { logUd(); visKontoKnapper(); });
 document.getElementById("menu-tjek-ind").addEventListener("click", function (e) {

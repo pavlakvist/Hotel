@@ -1,0 +1,290 @@
+/* =============================================================
+   HELLO VERA — Min side (velkommen.html), siden efter login
+   Samme varme guld- og brune farver som forsiden (indgang.css).
+   ============================================================= */
+body.min-side {
+  display: block;
+  background:
+    radial-gradient(circle at 85% 0%, rgba(245, 185, 56, 0.10), transparent 45%),
+    linear-gradient(#2b180b, #3f2412 600px, #4a2c16);
+  color: var(--creme);
+}
+
+/* ----- Toppen ----- */
+.ms-top {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 3px solid var(--guld-moerk);
+}
+.ms-top-billede {
+  position: absolute;
+  inset: 0;
+  background: url("../billeder/forside/hotel-forside.jpg") 60% 35% / cover no-repeat;
+  animation: kom-ind 1.2s ease-out;
+}
+.ms-top-billede::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(43, 24, 11, 0.85), rgba(43, 24, 11, 0.25) 55%, rgba(43, 24, 11, 0.5)),
+              linear-gradient(transparent 40%, rgba(43, 24, 11, 0.9));
+}
+.ms-top .glimt-lag { position: absolute; }
+.ms-top-indhold {
+  position: relative;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 26px 24px 70px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.ms-top-indhold .logo { font-size: 34px; }
+.ms-top-indhold .logo img { height: 40px; image-rendering: pixelated; }
+.ms-tjek-ind { padding: 14px 34px; font-size: 18px; animation: puls 2.4s ease-in-out infinite; }
+@keyframes puls {
+  0%, 100% { box-shadow: 0 4px 0 var(--brun), 0 0 0 rgba(255, 224, 138, 0); }
+  50% { box-shadow: 0 4px 0 var(--brun), 0 0 26px rgba(255, 224, 138, 0.7); }
+}
+
+/* menuen */
+.ms-menu {
+  position: relative;
+  max-width: 1240px;
+  margin: -54px auto 14px;
+  padding: 0 24px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px 20px;
+  flex-wrap: wrap;
+}
+.ms-menu > * {
+  background: rgba(43, 24, 11, 0.82);
+}
+.ms-menu {
+  background: none;
+}
+.ms-menu-link, .ms-online, .ms-log-ud {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 2px solid rgba(245, 185, 56, 0.45);
+  font-weight: 800;
+  color: var(--creme-moerk);
+}
+.ms-menu-link:hover { color: var(--guld-lys); border-color: var(--guld); }
+.ms-online { display: inline-flex; align-items: center; gap: 6px; }
+.ms-online .prik, .venne-liste .online .venne-status::before {
+  width: 9px; height: 9px; border-radius: 50%; background: #6fd66b; box-shadow: 0 0 8px #6fd66b;
+}
+.ms-online .prik { display: inline-block; }
+.ms-log-ud { font: 800 15px "Nunito", sans-serif; cursor: pointer; }
+.ms-log-ud:hover { color: #fff; }
+.ms-log-ud.sikker { background: #b23b3b; border-color: #e07070; color: #fff; }
+
+/* ----- De tre kolonner ----- */
+.ms-gitter {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 10px 24px 40px;
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr) 320px;
+  gap: 22px;
+  align-items: start;
+}
+.ms-venstre, .ms-midte, .ms-hoejre { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+/* et kort = creme boks med brun kant, som receptionen på forsiden */
+.ms-kort {
+  background: var(--creme);
+  color: var(--brun-moerk);
+  border: 3px solid var(--brun);
+  border-radius: 18px;
+  box-shadow: 0 6px 0 var(--brun-moerk), 0 14px 30px rgba(0, 0, 0, 0.35);
+  padding: 16px 18px;
+}
+.ms-kort h3 {
+  margin: 0 0 10px;
+  font-family: "Poppins", sans-serif;
+  font-size: 17px;
+  color: var(--brun);
+}
+.tom { margin: 4px 0; color: #8a6a4c; font-size: 14px; list-style: none; }
+
+/* ----- Profilkortet ----- */
+.profil { padding: 0; overflow: hidden; }
+.profil-billede {
+  height: 190px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: url("../billeder/forside/omraade-vaerelser.png") center / cover;
+  border-bottom: 3px solid var(--brun);
+}
+.profil-billede img {
+  height: 160px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35));
+  animation: hop-op 0.7s 0.2s ease-out both;
+}
+.profil-tekst { padding: 12px 18px 16px; }
+.profil-tekst h1 {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  font-size: 24px;
+  color: var(--brun);
+  overflow-wrap: anywhere;
+}
+.profil-motto { margin: 2px 0 10px; font-style: italic; color: #8a6a4c; font-size: 14px; overflow-wrap: anywhere; }
+.profil-tal { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 15px; }
+.profil-tal img, .profil-tal .ikon { width: 20px; height: 20px; image-rendering: pixelated; text-align: center; font-size: 16px; line-height: 20px; }
+.profil-tal b { color: var(--brun); font-size: 16px; }
+.profil-tal span:last-child { color: #8a6a4c; }
+.profil-medlem { margin: 10px 0 0; font-size: 12px; color: #8a6a4c; }
+
+/* genveje */
+.ms-genveje { display: flex; flex-direction: column; gap: 4px; padding: 10px; }
+.genvej {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 800;
+  color: var(--brun);
+}
+.genvej span { width: 22px; text-align: center; }
+.genvej small { font-weight: 600; color: #8a6a4c; }
+.genvej:hover, .genvej.aktiv { background: var(--creme-moerk); }
+
+/* ----- Midten ----- */
+.ms-hej {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(var(--guld-lys), var(--guld));
+}
+.hej-krone { width: 56px; image-rendering: pixelated; flex: none; }
+.ms-hej h2 { margin: 0 0 4px; font-family: "Poppins", sans-serif; font-size: 22px; color: var(--brun-moerk); }
+.ms-hej p { margin: 0; font-weight: 700; color: var(--brun); }
+
+.lille-figur {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  object-position: center 8%;
+  border-radius: 12px;
+  background: var(--creme-moerk);
+  border: 2px solid var(--guld-moerk);
+  image-rendering: pixelated;
+  flex: none;
+}
+
+.skriv-raekke { display: flex; gap: 12px; }
+.ms-skriv textarea {
+  flex: 1;
+  min-width: 0;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 2px solid var(--creme-moerk);
+  border-radius: 12px;
+  font: 600 15px "Nunito", sans-serif;
+  color: var(--brun-moerk);
+  background: #fff;
+}
+.ms-skriv textarea:focus { outline: none; border-color: var(--guld); box-shadow: 0 0 0 3px rgba(245, 185, 56, 0.35); }
+.skriv-bund { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.skriv-smileys { display: flex; gap: 2px; flex: 1; flex-wrap: wrap; }
+.skriv-smileys button {
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 8px;
+}
+.skriv-smileys button:hover { background: var(--creme-moerk); }
+.skriv-tegn { font-size: 12px; color: #8a6a4c; }
+.skriv-fejl { margin: 6px 0 0; min-height: 0; color: #b23b3b; font-weight: 700; font-size: 13px; }
+.skriv-fejl:empty { display: none; }
+.knap:disabled { opacity: 0.55; cursor: default; transform: none; }
+
+.ms-opslag-liste { display: flex; flex-direction: column; gap: 14px; }
+.ms-opslag-liste > .tom { color: var(--creme-moerk); text-align: center; }
+.opslag-top { display: flex; align-items: center; gap: 10px; }
+.opslag-hvem { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.opslag-hvem b { color: var(--brun); }
+.opslag-hvem small { color: #8a6a4c; font-size: 12px; }
+.opslag-tekst { margin: 10px 0 0; font-size: 15px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.opslag-slet {
+  border: 2px solid var(--creme-moerk);
+  background: #fff;
+  border-radius: 8px;
+  padding: 3px 8px;
+  cursor: pointer;
+  font: 800 12px "Nunito", sans-serif;
+  color: var(--brun);
+}
+.opslag-slet.sikker { background: #b23b3b; border-color: #8a2a2a; color: #fff; }
+
+/* ----- Højre ----- */
+.ms-nyt { padding: 0; overflow: hidden; }
+.nyt-billede {
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px 14px;
+  background: url("../billeder/forside/omraade-cafe.png") center / cover;
+  border-bottom: 3px solid var(--brun);
+}
+.nyt-maerke {
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: var(--brun-moerk);
+  color: var(--guld-lys);
+  font-weight: 800;
+  font-size: 13px;
+}
+.nyt-liste { list-style: none; margin: 0; padding: 4px 0; }
+.nyt-liste li { padding: 10px 16px; border-bottom: 1px solid var(--creme-moerk); }
+.nyt-liste li:last-child { border-bottom: none; }
+.nyt-liste b { color: var(--brun); display: block; }
+.nyt-liste p { margin: 2px 0; font-size: 14px; overflow-wrap: anywhere; }
+.nyt-liste small { color: #8a6a4c; font-size: 12px; }
+
+.venne-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.venne-liste li { display: flex; align-items: center; gap: 10px; }
+.venne-liste .lille-figur { width: 34px; height: 34px; border-radius: 10px; }
+.venne-navn { flex: 1; font-weight: 800; color: var(--brun); overflow-wrap: anywhere; }
+.venne-status { font-size: 12px; color: #8a6a4c; }
+.online .venne-status { color: #3c8f39; font-weight: 800; }
+
+.soeg { display: flex; gap: 8px; }
+.soeg input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 2px solid var(--creme-moerk);
+  border-radius: 10px;
+  font: 600 15px "Nunito", sans-serif;
+  color: var(--brun-moerk);
+}
+.soeg input:focus { outline: none; border-color: var(--guld); }
+.soeg-svar { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.soeg-raekke { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.fod { text-align: center; padding: 20px; color: var(--creme-moerk); font-size: 13px; opacity: 0.8; }
+
+/* ----- Mindre skærme ----- */
+@media (max-width: 1050px) {
+  .ms-gitter { grid-template-columns: 250px minmax(0, 1fr); }
+  .ms-hoejre { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+}
+@media (max-width: 720px) {
+  .ms-gitter { grid-template-columns: 1fr; padding: 10px 16px 30px; }
+  .ms-top-indhold { padding: 18px 16px 70px; }
+  .ms-menu { padding: 0 16px; justify-content: flex-start; }
+  .ms-tjek-ind { width: 100%; }
+}
