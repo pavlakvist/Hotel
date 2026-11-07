@@ -118,12 +118,15 @@ function realGulvLag(g, bil) {
 }
 
 // Gulvet tegnes kun én gang ind i et billede og genbruges i hvert billede (meget hurtigere).
-// Billedet har præcis skærmens pixels (kun den del af gulvet, der kan ses), så det
-// bare skal kopieres over. Det laves om, når rummet, gulvfarven, zoomen eller kameraet ændrer sig.
+// Billedet dækker det, man kan se, plus en ekstra kant hele vejen rundt, så når man
+// trækker i skærmen, bliver billedet bare flyttet (i stedet for at blive tegnet forfra
+// for hver eneste musebevægelse, som gav lag). Det laves kun om, når rummet, gulvfarven
+// eller zoomen ændrer sig, eller når man har trukket ud over den ekstra kant.
 let REAL_GULV_CACHE = null;
 function realGulvCache(bil) {
   const T = ctx.getTransform();
   if (T.b || T.c) return null;
+  const W = ctx.canvas.width, H = ctx.canvas.height;
   let minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9, form = "";
   for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) {
     if (!erIRummet(x, y)) { form += "."; continue; }
@@ -131,20 +134,36 @@ function realGulvCache(bil) {
     diamant(x, y).forEach(function (p) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
   }
   if (minX > maxX) return null;
-  // gulvets kasse i skærm-pixels, skåret til lærredet
-  const rx = Math.max(0, Math.floor(T.a * (minX - 2) + T.e)), ry = Math.max(0, Math.floor(T.d * (minY - 2) + T.f));
-  const rx2 = Math.min(ctx.canvas.width, Math.ceil(T.a * (maxX + 2) + T.e)), ry2 = Math.min(ctx.canvas.height, Math.ceil(T.d * (maxY + 2) + T.f));
-  if (rx2 <= rx || ry2 <= ry) return null;
-  const noegle = [T.a.toFixed(4), T.d.toFixed(4), T.e.toFixed(1), T.f.toFixed(1), rx, ry, rx2, ry2, RUM.bredde, RUM.dybde, form, RUM.gulvFarve1, bil.src || bil.width].join("|");
-  if (REAL_GULV_CACHE && REAL_GULV_CACHE.noegle === noegle) return REAL_GULV_CACHE;
-  const c = REAL_GULV_CACHE && REAL_GULV_CACHE.c || document.createElement("canvas");
-  c.width = rx2 - rx; c.height = ry2 - ry;
+  // rummets hjørne (punkt 0,0) i skærm-pixels: alt i billedet regnes ud fra det,
+  // så billedet kan genbruges, selvom kameraet flytter sig
+  const o = punkt(0, 0);
+  const ox = T.a * o.x + T.e, oy = T.d * o.y + T.f;
+  // gulvets kasse i skærm-pixels (målt fra hjørnet)
+  const gx1 = Math.floor(T.a * (minX - 2) + T.e - ox), gy1 = Math.floor(T.d * (minY - 2) + T.f - oy);
+  const gx2 = Math.ceil(T.a * (maxX + 2) + T.e - ox), gy2 = Math.ceil(T.d * (maxY + 2) + T.f - oy);
+  // det man kan se lige nu (målt fra hjørnet), skåret til gulvet
+  const sx1 = Math.max(gx1, Math.floor(-ox)), sy1 = Math.max(gy1, Math.floor(-oy));
+  const sx2 = Math.min(gx2, Math.ceil(W - ox)), sy2 = Math.min(gy2, Math.ceil(H - oy));
+  if (sx2 <= sx1 || sy2 <= sy1) return null;
+  const noegle = [T.a.toFixed(4), T.d.toFixed(4), W, H, RUM.bredde, RUM.dybde, form, RUM.gulvFarve1, bil.src || bil.width].join("|");
+  const k = REAL_GULV_CACHE;
+  if (k && k.noegle === noegle && sx1 >= k.x1 && sy1 >= k.y1 && sx2 <= k.x2 && sy2 <= k.y2) {
+    return { c: k.c, x: Math.round(ox + k.x1), y: Math.round(oy + k.y1) };
+  }
+  if (k && k.noegle !== noegle) k.c.width = k.c.height = 0;   // frigiv det gamle billede
+  // lav billedet: det synlige + en tredjedel skærm ekstra til hver side (men aldrig mere end gulvet)
+  const kantX = Math.round(W / 3), kantY = Math.round(H / 3);
+  const x1 = Math.max(gx1, sx1 - kantX), y1 = Math.max(gy1, sy1 - kantY);
+  const x2 = Math.min(gx2, sx2 + kantX), y2 = Math.min(gy2, sy2 + kantY);
+  const c = k && k.c || document.createElement("canvas");
+  c.width = x2 - x1; c.height = y2 - y1;
   const g = c.getContext("2d");
-  g.setTransform(T.a, 0, 0, T.d, T.e - rx, T.f - ry);
+  const px = Math.round(ox + x1), py = Math.round(oy + y1);   // hvor billedet sættes på skærmen
+  g.setTransform(T.a, 0, 0, T.d, T.e - px, T.f - py);
   g.imageSmoothingEnabled = true;
   realGulvLag(g, bil);
-  REAL_GULV_CACHE = { noegle: noegle, c: c, x: rx, y: ry };
-  return REAL_GULV_CACHE;
+  REAL_GULV_CACHE = { noegle: noegle, c: c, x1: x1, y1: y1, x2: x2, y2: y2 };
+  return { c: c, x: px, y: py };
 }
 
 (function () {
@@ -154,10 +173,11 @@ function realGulvCache(bil) {
     if (!bil) return gammelGulv();
     // først det gamle gulv uden pixel-mønster (så kanterne forrest og særlige
     // rum-former bliver tegnet, men ingen pixel-takker stikker op ad væggen)
+    const k = realGulvCache(bil);
     const gammeltMoenster = gulvMoenster;
     gulvMoenster = function () { return REAL_TOM; };
-    try { gammelGulv(); } finally { gulvMoenster = gammeltMoenster; }
-    const k = realGulvCache(bil);
+    gulvUdenFliser = !!k && typeof gulvUdenFliser !== "undefined";
+    try { gammelGulv(); } finally { gulvMoenster = gammeltMoenster; gulvUdenFliser = false; }
     if (k) {
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);

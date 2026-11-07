@@ -895,9 +895,25 @@ function pixelVaeg(a, b, vh, venstreVaeg) {
   ctx.stroke();
 }
 
+// Sættes af js/realistisk.js, når det realistiske gulv alligevel dækker fliserne:
+// så tegnes gulvet bare som én flade (i stedet for hundredvis af små fliser hvert billede)
+let gulvUdenFliser = false;
+
 function tegnGulv() {
   const gulvBillede = hentBillede(RUM.gulvBillede);
-  for (let x = 0; x < RUM.bredde; x++) {
+  if (gulvUdenFliser) {
+    ctx.beginPath();
+    for (let x = 0; x < RUM.bredde; x++) for (let y = 0; y < RUM.dybde; y++) {
+      if (!erIRummet(x, y)) continue;
+      const d = diamant(x, y);
+      ctx.moveTo(d[0].x, d[0].y);
+      for (let i = 1; i < 4; i++) ctx.lineTo(d[i].x, d[i].y);
+      ctx.closePath();
+    }
+    ctx.fillStyle = RUM.gulvFarve1;
+    ctx.fill();
+  }
+  for (let x = 0; x < RUM.bredde && !gulvUdenFliser; x++) {
     for (let y = 0; y < RUM.dybde; y++) {
       if (!erIRummet(x, y)) continue;
       if (billedeKlar(gulvBillede)) {

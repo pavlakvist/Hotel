@@ -39,6 +39,10 @@ const SKELET_FJERNT_BEN = 0.72;
   const FOR_BAG = { ned: 1, op: 1 };
   const laerred = document.createElement("canvas");
   const lc = laerred.getContext("2d");
+  // det fjerne ben (fra siden) gøres mørkt én gang her, i stedet for med et filter
+  // på hele spillets lærred for hver lille stribe (det var meget langsomt)
+  const moerktLaerred = document.createElement("canvas");
+  const mc = moerktLaerred.getContext("2d");
   // plads omkring fødderne i det lille laerred (i spillets pixels)
   const PL = { b: 200, h: 260, fx: 100, fy: 230 };
 
@@ -98,20 +102,25 @@ const SKELET_FJERNT_BEN = 0.72;
       const raekker = Math.ceil((PL.fy + 2 - top) / s);
       const svingX = forbag ? 0 : vend * sk.skridt * s * frem * (side ? 1 : 0.3);
       const loeft = sk.loeft * s * Math.max(0, paaVejFrem) * (forbag ? 1.3 : 1);
-      if (moerk) c.filter = "brightness(" + SKELET_FJERNT_BEN + ")";
+      const kilde = moerk ? moerktLaerred : laerred;
       for (let r = 0; r < raekker; r++) {
         const yy = top + r * s;
         const del = Math.max(0, Math.min(1, (yy - knaeY) / (PL.fy - knaeY)));   // 0 ved knæet, 1 ved foden
         const dx = Math.round(svingX * del / s) * s;
         const dy = Math.round(loeft * del * del / s) * s;
         const sx0 = Math.max(0, x0), sx1 = Math.min(PL.b, x1);
-        c.drawImage(laerred, sx0 * k, yy * k, (sx1 - sx0) * k, s * k + 1,
+        c.drawImage(kilde, sx0 * k, yy * k, (sx1 - sx0) * k, s * k + 1,
           ox + sx0 + dx, oy + yy - dy, sx1 - sx0, s + 1 / k);
       }
-      if (moerk) c.filter = "none";
     }
 
     if (side) {
+      if (moerktLaerred.width !== bw || moerktLaerred.height !== bh) { moerktLaerred.width = bw; moerktLaerred.height = bh; }
+      mc.setTransform(1, 0, 0, 1, 0, 0);
+      mc.clearRect(0, 0, bw, bh);
+      mc.filter = "brightness(" + SKELET_FJERNT_BEN + ")";
+      mc.drawImage(laerred, 0, 0);
+      mc.filter = "none";
       // fra siden: begge ben er hele benstykket; det fjerne (mørkt) bagved
       ben(0, PL.b, -pos, -fart, true);
       ben(0, PL.b, pos, fart, false);

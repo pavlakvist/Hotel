@@ -634,17 +634,24 @@ lopMi.hidden = true;
 (document.getElementById("moebel-info") || document.body).appendChild(lopMi);
 
 const visMoebelInfoFoerLop = visMoebelInfo;
+// boksen tegnes kun igen, når noget har ændret sig, så man kan nå at skrive en pris og vælge Stella
+let lopMiNoegle = "";
+function lopMiSamme(noegle) {
+  if (lopMiNoegle === noegle && lopMi.innerHTML) { lopMi.hidden = false; return true; }
+  lopMiNoegle = noegle;
+  return false;
+}
 visMoebelInfo = function () {
   visMoebelInfoFoerLop();
-  lopMi.hidden = true;
-  if (!iLop() || !valgtMoebel) return;
+  if (!iLop() || !valgtMoebel) { lopMi.hidden = true; lopMiNoegle = ""; return; }
   const m = valgtMoebel, a = lopAnnonceFor(m), knapper = document.getElementById("mi-knapper"), om = document.getElementById("mi-om");
-  if (m.lopFast) { knapper.hidden = true; om.textContent = "Loppemarkedets eget møbel"; return; }
+  if (m.lopFast) { knapper.hidden = true; om.textContent = "Loppemarkedets eget møbel"; lopMi.hidden = true; lopMiNoegle = ""; return; }
   const bod = lopBod(m.lopBod);
   if (lopErMin(m)) {
     knapper.hidden = false;
-    if (typeof flytter !== "undefined" && flytter) return;
+    if (typeof flytter !== "undefined" && flytter) { lopMi.hidden = true; lopMiNoegle = ""; return; }
     om.textContent = "🧺 Din bod: " + (bod ? bod.navn : "");
+    if (lopMiSamme("min|" + m.lopId + "|" + JSON.stringify(a || null))) return;
     lopMi.innerHTML = a
       ? "<p class='lop-mi-pris'>🏷 Til salg: <b>" + lopPris(a) + "</b>" + (a.optaget ? " <span class='lop-optaget'>🔒 Handel i gang</span>" : "") + "</p>" +
         "<div class='lop-mi-raekke'><input id='lop-mi-beloeb' type='number' min='1' max='1000000' value='" + a.pris + "'>" + lopValutaValg("lop-mi-valuta", a.valuta) +
@@ -654,7 +661,7 @@ visMoebelInfo = function () {
         "<button type='button' id='lop-mi-gem'>🏷 Sæt til salg</button></div>";
     lopMi.hidden = false;
     lopMi.querySelector("#lop-mi-gem").addEventListener("click", function () {
-      const beloeb = parseInt(document.getElementById("lop-mi-beloeb").value, 10), valuta = document.getElementById("lop-mi-valuta").value;
+      const beloeb = parseInt(document.getElementById("lop-mi-beloeb").value, 10), valuta = document.getElementById("lop-mi-valuta").dataset.valgt;
       if (!(beloeb > 0)) { besked.textContent = "Skriv en pris (mindst 1)."; return; }
       if (!m.lopId) { besked.textContent = "Vent et øjeblik, møblet bliver gemt …"; return; }
       lopKald("hv_lop_saelg", { p_moebel: m.lopId, p_pris: beloeb, p_valuta: valuta }).then(function () {
@@ -669,6 +676,7 @@ visMoebelInfo = function () {
   // en andens møbel
   knapper.hidden = true;
   om.textContent = bod ? "Fra boden «" + bod.navn + "» · " + bod.ejer : "";
+  if (lopMiSamme("anden|" + m.lopId + "|" + JSON.stringify(a || null))) return;
   lopMi.innerHTML = a
     ? "<p class='lop-mi-pris'>Pris: <b>" + lopPris(a) + "</b></p>" + (a.optaget && !a.mig ? "<p class='lop-optaget'>🔒 En handel er i gang med den</p>" :
       "<div class='lop-mi-raekke'><button type='button' id='lop-mi-koeb'>🛒 Køb</button><button type='button' id='lop-mi-byt' class='lop-lys'>🔄 Byd bytte</button></div>")
@@ -678,10 +686,20 @@ visMoebelInfo = function () {
   if (k) k.addEventListener("click", function () { lopAabnKoeb(a.id, false); });
   if (b) b.addEventListener("click", function () { lopAabnKoeb(a.id, true); });
 };
-function lopValutaValg(id, valgt) {
-  return "<select id='" + id + "'><option value='glimt'" + (valgt === "glimt" ? " selected" : "") + ">⭐ Glimt</option>" +
-    "<option value='stella'" + (valgt === "stella" ? " selected" : "") + ">🔮 Stella</option></select>";
+// Glimt eller Stella: to knapper, man trykker på (virker bedre end en rulleliste)
+function lopValutaValg(attr, valgt) {
+  if (!/=/.test(attr)) attr = "id='" + attr + "'";
+  return "<span class='lop-valuta' " + attr + " data-valgt='" + valgt + "'>" +
+    "<button type='button' data-lop-vv='glimt'" + (valgt === "glimt" ? " class='valgt'" : "") + " title='Glimt'>⭐ Glimt</button>" +
+    "<button type='button' data-lop-vv='stella'" + (valgt === "stella" ? " class='valgt'" : "") + " title='Stella'>🔮 Stella</button></span>";
 }
+document.addEventListener("click", function (e) {
+  const k = e.target.closest && e.target.closest("[data-lop-vv]");
+  if (!k) return;
+  const boks = k.parentNode;
+  boks.dataset.valgt = k.dataset.lopVv;
+  boks.querySelectorAll("button").forEach(function (b) { b.classList.toggle("valgt", b === k); });
+});
 function lopForslag(type) {
   const p = typeof pris === "function" && MOEBEL_TYPER[type] ? pris(MOEBEL_TYPER[type]) : null;
   return p && !p.stella ? Math.max(1, Math.round(p.beloeb * 0.7 / 5) * 5) : 50;
@@ -822,6 +840,14 @@ document.getElementById("lop-side-mini").addEventListener("click", function () {
 document.getElementById("lop-soeg").addEventListener("input", lopVisListe);
 document.getElementById("lop-sorter").addEventListener("change", lopVisListe);
 
+// 🗑 Slet min bod: møblerne kommer tilbage i Mine ting, og annoncerne forsvinder
+let lopSletSikker = false, lopSletUr = null;
+function lopSletMinBod() {
+  return lopKald("hv_lop_bod_slet", { p_bod: null }).then(function () {
+    lopSig("🗑 Din bod er slettet. Møblerne kommer tilbage i Mine ting.");
+    lopSidst = ""; lopHent(); lopHentLeveringer();
+  }).catch(function (e) { lopSig("⚠️ " + e.message); lopVisSide(); });
+}
 function lopVisSide() {
   lopSide.hidden = !iLop();
   if (lopSide.hidden) return;
@@ -833,8 +859,18 @@ function lopVisSide() {
   const knapper = document.getElementById("lop-side-knapper");
   knapper.innerHTML = (b ? "<button type='button' id='lop-gaa-bod'>🏷 Min bod: " + lopRens(b.navn) + "</button>" : "<button type='button' id='lop-opret'>➕ Opret min bod</button>") +
     "<button type='button' id='lop-mit'>📋 Mit loppemarked" + (LOP.bytteInd.length ? " <i>" + LOP.bytteInd.length + "</i>" : "") + "</button>" +
-    "<button type='button' id='lop-regler-knap' class='lop-lys'>📜 Regler</button>";
-  const g = document.getElementById("lop-gaa-bod"), o = document.getElementById("lop-opret");
+    "<button type='button' id='lop-regler-knap' class='lop-lys'>📜 Regler</button>" +
+    (b ? "<button type='button' id='lop-slet-bod' class='lop-fare'>" + (lopSletSikker ? "Er du sikker? Tryk igen" : "🗑 Slet min bod") + "</button>" : "");
+  const g = document.getElementById("lop-gaa-bod"), o = document.getElementById("lop-opret"), sl = document.getElementById("lop-slet-bod");
+  if (sl) sl.addEventListener("click", function () {
+    if (!lopSletSikker) {
+      lopSletSikker = true; lopVisSide();
+      clearTimeout(lopSletUr); lopSletUr = setTimeout(function () { lopSletSikker = false; lopVisSide(); }, 5000);
+      return;
+    }
+    lopSletSikker = false; clearTimeout(lopSletUr);
+    lopSletMinBod();
+  });
   if (g) g.addEventListener("click", function () { lopGaaTilPlads(b.plads); besked.textContent = "Stil møbler fra 📦 Mine ting i din bod, og klik på dem for at sætte en pris."; });
   if (o) o.addEventListener("click", function () { lopAabnOpret(null); });
   document.getElementById("lop-mit").addEventListener("click", lopAabnOversigt);
@@ -955,7 +991,7 @@ function lopVisOversigt() {
       return "<li><img src='" + lopRens(lopBillede(a.type)) + "' alt=''><div><b>" + lopRens(lopTypeNavn(a.type)) + "</b><small>Nu: " + lopPris(a) +
         (a.optaget ? " · <span class='lop-optaget'>🔒 Handel i gang</span>" : "") + "</small>" +
         "<div class='lop-mi-raekke'><input type='number' min='1' max='1000000' value='" + a.pris + "' data-lop-pris='" + a.id + "'>" +
-        "<select data-lop-valuta='" + a.id + "'><option value='glimt'" + (a.valuta === "glimt" ? " selected" : "") + ">⭐</option><option value='stella'" + (a.valuta === "stella" ? " selected" : "") + ">🔮</option></select>" +
+        lopValutaValg("data-lop-valuta='" + a.id + "'", a.valuta) +
         "<button type='button' data-lop-gem='" + a.id + "'>💾 Ny pris</button><button type='button' class='lop-lys' data-lop-fjern='" + a.id + "'>🗑 Fjern</button></div></div></li>";
     }).join("") + "</ul>" : "<p class='lop-tom'>Du har ikke noget til salg. Gå til din bod på loppemarkedet, og klik på et møbel for at sætte en pris.</p>";
     if (b) {
@@ -963,7 +999,7 @@ function lopVisOversigt() {
       if (ikke.length) html += "<h4>Står i din bod, men er ikke til salg</h4><ul class='lop-ov-liste'>" + ikke.map(function (d) {
         return "<li><img src='" + lopRens(lopBillede(d.type)) + "' alt=''><div><b>" + lopRens(lopTypeNavn(d.type)) + "</b>" +
           "<div class='lop-mi-raekke'><input type='number' min='1' max='1000000' value='" + lopForslag(d.type) + "' data-lop-ny-pris='" + lopRens(d.id) + "'>" +
-          "<select data-lop-ny-valuta='" + lopRens(d.id) + "'><option value='glimt'>⭐</option><option value='stella'>🔮</option></select>" +
+          lopValutaValg("data-lop-ny-valuta='" + lopRens(d.id) + "'", "glimt") +
           "<button type='button' data-lop-saelg='" + lopRens(d.id) + "'>🏷 Sæt til salg</button><button type='button' class='lop-lys' data-lop-hjem='" + lopRens(d.id) + "'>📦 Tag hjem</button></div></div></li>";
       }).join("") + "</ul>";
     }
@@ -990,8 +1026,8 @@ function lopVisOversigt() {
     html += b ? "<label class='lop-felt'>Bodens navn<input id='lop-ov-navn' type='text' maxlength='24' value='" + lopRens(b.navn) + "'></label>" +
       "<div class='lop-mi-raekke'><button type='button' id='lop-ov-omdoeb'>💾 Gem navn</button>" + (iLop() ? "<button type='button' class='lop-lys' id='lop-ov-gaa'>👀 Gå til min bod</button>" : "") + "</div>" +
       "<p class='lop-lille'>Plads " + (b.plads + 1) + " · " + (b.moebler || []).length + " møbler i boden.</p>" +
-      "<h4>Luk boden</h4><p class='lop-lille'>Alle møbler fra boden kommer tilbage i Mine ting, og annoncerne forsvinder.</p>" +
-      "<button type='button' class='lop-fare' id='lop-ov-slet'>🗑 Nedlæg min bod</button>"
+      "<h4>Slet boden</h4><p class='lop-lille'>Alle møbler fra boden kommer tilbage i Mine ting, og annoncerne forsvinder.</p>" +
+      "<button type='button' class='lop-fare' id='lop-ov-slet'>🗑 Slet min bod</button>"
       : "<p class='lop-tom'>Du har ingen bod endnu." + (LOP.aaben ? " Gå på loppemarkedet, og tryk ➕ Opret min bod." : " Loppemarkedet åbner om søndagen.") + "</p>";
   }
   html += "</div>";
@@ -1003,7 +1039,7 @@ function lopVisOversigt() {
   const igen = function (tekst) { return function () { if (tekst) besked.textContent = tekst; lopSidst = ""; lopHent(); }; };
   lopOversigt.querySelectorAll("[data-lop-gem]").forEach(function (k) {
     k.addEventListener("click", function () {
-      const id = k.dataset.lopGem, p = parseInt(lopOversigt.querySelector("[data-lop-pris='" + id + "']").value, 10), v = lopOversigt.querySelector("[data-lop-valuta='" + id + "']").value;
+      const id = k.dataset.lopGem, p = parseInt(lopOversigt.querySelector("[data-lop-pris='" + id + "']").value, 10), v = lopOversigt.querySelector("[data-lop-valuta='" + id + "']").dataset.valgt;
       if (!(p > 0)) { besked.textContent = "Skriv en pris (mindst 1)."; return; }
       document.activeElement.blur();
       lopKald("hv_lop_pris", { p_id: +id, p_pris: p, p_valuta: v }).then(igen("💾 Prisen er ændret.")).catch(fejl);
@@ -1013,7 +1049,7 @@ function lopVisOversigt() {
   lopOversigt.querySelectorAll("[data-lop-saelg]").forEach(function (k) {
     k.addEventListener("click", function () {
       const id = k.dataset.lopSaelg;
-      const p = parseInt(lopOversigt.querySelector("[data-lop-ny-pris='" + id + "']").value, 10), v = lopOversigt.querySelector("[data-lop-ny-valuta='" + id + "']").value;
+      const p = parseInt(lopOversigt.querySelector("[data-lop-ny-pris='" + id + "']").value, 10), v = lopOversigt.querySelector("[data-lop-ny-valuta='" + id + "']").dataset.valgt;
       if (!(p > 0)) { besked.textContent = "Skriv en pris (mindst 1)."; return; }
       document.activeElement.blur();
       lopKald("hv_lop_saelg", { p_moebel: id, p_pris: p, p_valuta: v }).then(igen("🏷 Sat til salg.")).catch(fejl);
@@ -1044,7 +1080,7 @@ function lopVisOversigt() {
   const slet = document.getElementById("lop-ov-slet");
   if (slet) slet.addEventListener("click", function () {
     if (!slet.dataset.sikker) { slet.dataset.sikker = "1"; slet.textContent = "Er du sikker? Tryk igen"; return; }
-    lopKald("hv_lop_bod_slet", { p_bod: null }).then(function () { igen("🧺 Din bod er nedlagt. Møblerne kommer i Mine ting.")(); lopHentLeveringer(); }).catch(fejl);
+    lopSletMinBod().then(function () { lopVisOversigt(); });
   });
 }
 let lopFlytbar = false;
@@ -1208,6 +1244,10 @@ lopStil.textContent = [
   "#lop-side button:disabled, .lop-vindue button:disabled, #lop-mi button:disabled { opacity: .5; cursor: default; }",
   "#lop-side button.lop-lys, .lop-vindue button.lop-lys, #lop-mi button.lop-lys { background: #f3e2bf; color: #5a2a18; border-color: #d9a441; }",
   ".lop-vindue button.lop-fare { background: #b3242f; }",
+  "#lop-side button.lop-fare { background: #b3242f; color: #fff; }",
+  ".lop-valuta { display: inline-flex; gap: 3px; }",
+  ".lop-valuta button { background: #f3e2bf !important; color: #3a1a14 !important; border: 2px solid #d9a441 !important; padding: 4px 7px !important; font-size: 12px !important; white-space: nowrap; cursor: pointer; }",
+  ".lop-valuta button.valgt { background: #7a1f2e !important; color: #fbeacb !important; border-color: #7a1f2e !important; }",
   "#lop-side button i, .lop-faner small { background: #d9a441; color: #3a1a14; border-radius: 9px; padding: 0 6px; font-style: normal; font-size: 11px; margin-left: 3px; }",
   ".lop-soeg { display: flex; gap: 5px; }",
   ".lop-soeg input, .lop-vindue input, #lop-mi input, .lop-soeg select, .lop-vindue select, #lop-mi select { border: 1px solid #d9a441; border-radius: 6px; padding: 5px 6px;",
