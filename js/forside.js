@@ -24,7 +24,7 @@ visKontoKnapper = function () {
   if (navn) {
     reception.hidden = true;
     document.getElementById("tilbage-navn").textContent = navn;
-    document.getElementById("tilbage-tjek-ind").href = hotelAdresse();
+    document.getElementById("tilbage-tjek-ind").href = velkommenAdresse();
   } else if (reception.hidden) {
     aabnKonto(location.search.indexOf("opret") >= 0 ? "opret" : "ind");
   }

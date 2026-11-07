@@ -99,7 +99,8 @@ function visKontoKnapper() {
   document.getElementById("ind-knapper").hidden = !navn;
   if (navn) document.getElementById("konto-hvem").textContent = navn;
   // Tjek ind-knapperne tager navnet med ind i hotellet
-  document.querySelectorAll("#menu-tjek-ind, #knap-tjek-ind").forEach(function (a) { a.href = hotelAdresse(); });
+  // Tjek ind fører til Min side først (velkommen.html). Derfra går man ind i hotellet.
+  document.querySelectorAll("#menu-tjek-ind, #knap-tjek-ind").forEach(function (a) { a.href = velkommenAdresse(); });
   // Log ind-knappen i menuen bliver til "Min side", når man er logget ind
   const menuLogInd = document.getElementById("menu-log-ind"), menuMinSide = document.getElementById("menu-min-side");
   if (menuLogInd) menuLogInd.hidden = !!navn;
