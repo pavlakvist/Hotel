@@ -356,3 +356,11 @@ document.head.appendChild(forklaringStil);
   }
   hent();
 })();
+
+// 📅 Vagtskema for de ansatte (js/vagtskema.js): fanen i panelet + knappen ude i hotellet.
+(function () {
+  if (document.querySelector("script[src^='js/vagtskema.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vagtskema.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
