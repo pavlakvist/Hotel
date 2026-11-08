@@ -7,7 +7,7 @@
 //  - klik på et møbel: grøn kant på gulvet + en lille menu (flyt, drej, kopiér, læg væk)
 //  - panelet forneden: kun de møbler, du HAR (Mine ting). I de fælles rum får
 //    Bygmestre hele kataloget gratis (som før), og ejeren kan slå "Alle møbler" til.
-//  Åbnes med knappen "🔨 Byggetilstand" øverst eller :byg i chatten.
+//  Åbnes med 🔨-knappen i chatbaren eller :byg i chatten.
 //  (hentes frisk fra js/panel-forklaring.js)
 // =============================================================
 (function () {
@@ -141,10 +141,6 @@
   stil.id = "byg-stil";
   stil.textContent = [
     ":root { --byg-moerk: #4a1420; --byg-vin: #7a2232; --byg-guld: #c99a45; --byg-lysguld: #f3d999; --byg-creme: #fbf3e2; --byg-kant: #2a0d0a; --byg-blaek: #3a2214; --byg-valgt: #e8b4bf; }",
-    "#byg-aabn { position: fixed; top: 9px; left: 672px; z-index: 40; padding: 6px 14px; border-radius: 9px; cursor: pointer; font: bold 14px Georgia, 'Times New Roman', serif;" +
-      " color: #3a2408; border: 1px solid #5e3f12; background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 50%, rgba(0,0,0,.16)), url(billeder/ui/messing.jpg) center/256px, #d6ae5f;" +
-      " box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 4px rgba(0,0,0,.45); text-shadow: 0 1px 0 rgba(255,240,200,.7); }",
-    "#byg-aabn:hover { filter: brightness(1.08); }",
     // det man ikke skal bruge, mens man bygger
     "body.bygger header, body.bygger #chat, body.bygger #chatlog, body.bygger #panel, body.bygger #online-tal, body.bygger #hjaelp-knap," +
       " body.bygger #avatar-billede, body.bygger #paamind-fane, body.bygger #vagt-knap, body.bygger #ev-hoejre, body.bygger #moebel-info," +
@@ -232,8 +228,12 @@
   // =============================================================
   function lav(html) { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
 
-  const aabnKnap = lav("<button type='button' id='byg-aabn' title='Byg i rummet (eller skriv :byg)' hidden>🔨 Byggetilstand</button>");
-  document.body.appendChild(aabnKnap);
+  // en lille 🔨-knap i chatbaren, ved siden af Mine ting
+  const aabnKnap = lav("<button type='button' id='byg-aabn' class='chat-lille' title='Byggetilstand (eller skriv :byg)' hidden>🔨</button>");
+  const efterKnap = document.getElementById("chat-lager-knap");
+  if (efterKnap) efterKnap.after(aabnKnap);
+  else if (document.getElementById("chat")) document.getElementById("chat").prepend(aabnKnap);
+  else document.body.appendChild(aabnKnap);
 
   const top = lav(
     "<div id='byg-top' class='byg-del byg-plade' hidden>" +
