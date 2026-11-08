@@ -388,3 +388,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/museum.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎪 Event-reklame med Følg-knap (js/event-reklame.js): stort skilt midt på skærmen + vinderne i Events og nyheder.
+(function () {
+  if (document.querySelector("script[src^='js/event-reklame.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/event-reklame.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
