@@ -380,3 +380,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/fart-maaler.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🏛 Hotellets Museum (js/museum.js): stort rum med fire afdelinger, museumsmøbler og skilte.
+(function () {
+  if (document.querySelector("script[src^='js/museum.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/museum.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
