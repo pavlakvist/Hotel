@@ -78,6 +78,16 @@ function hentStaff() {
     staffHentet = true;
     const nye = (svar.beskeder || []).filter(function (m) { return m.id > staffEfter; });
     nye.forEach(function (m) { staffBeskeder.push(m); staffEfter = Math.max(staffEfter, m.id); });
+    // 🗑 Beskeder, som ejeren har slettet, forsvinder også her (kræver database-33)
+    let slettet = false;
+    if (Array.isArray(svar.ids)) {
+      const findes = {};
+      svar.ids.forEach(function (id) { findes[id] = true; });
+      const mindst = svar.ids.length >= 400 ? Math.min.apply(null, svar.ids) : 0;
+      const foer = staffBeskeder.length;
+      staffBeskeder = staffBeskeder.filter(function (m) { return findes[m.id] || m.id < mindst; });
+      slettet = staffBeskeder.length !== foer;
+    }
     if (staffBeskeder.length > 400) staffBeskeder = staffBeskeder.slice(-400);
     const foerAdgang = stabil([maaSeBeskeder, staffAdgang]);
     maaSeBeskeder = !!svar.maaSeBeskeder;
@@ -90,7 +100,7 @@ function hentStaff() {
     }
     const nyFraAndre = nye.some(function (m) { return m.fra !== FIGUR.navn; });
     if (nyFraAndre && typeof spilPling === "function" && staffEfter && nye.length < 20) spilPling();
-    if (nye.length || stabil([maaSeBeskeder, staffAdgang]) !== foerAdgang) opdaterStaff();
+    if (nye.length || slettet || stabil([maaSeBeskeder, staffAdgang]) !== foerAdgang) opdaterStaff();
   }).catch(function () {});    // database-13-staff.sql er ikke kørt endnu
 }
 hentStaff();
@@ -235,11 +245,14 @@ function tilfoejFlueben() {
 function visStaffChat() {
   if (staffSamtale !== "faelles" && staffNavne().indexOf(staffSamtale) < 0) staffSamtale = "faelles";
   ejerIndhold.innerHTML = "<div class='sc-krop'><aside><ul id='sc-liste'></ul></aside>" +
-    "<section class='sc-samtale'><h3 id='sc-titel'></h3><div id='sc-beskeder'></div>" +
+    "<section class='sc-samtale'><h3><span id='sc-titel'></span>" +
+    (erEjerMig() ? "<button type='button' id='sc-slet' class='sc-slet' title='Slet alle beskeder i denne samtale for alle'>🗑 Slet historik</button>" : "") + "</h3><div id='sc-beskeder'></div>" +
     "<form id='sc-form'><input id='sc-tekst' type='text' maxlength='300' autocomplete='off' placeholder='Skriv til personalet …'><button class='lv-knap'>Send</button></form></section></div>" +
     (staffHentet ? "" : "<p class='ejer-info'>ℹ️ Staff chatten virker, når database-13-staff.sql er kørt i Supabase.</p>");
   tegnSamtaler();
   tegnBeskeder();
+  const slet = document.getElementById("sc-slet");
+  if (slet) slet.addEventListener("click", sletStaffHistorik);
   document.getElementById("sc-form").addEventListener("submit", function (e) {
     e.preventDefault();
     const felt = document.getElementById("sc-tekst");
@@ -250,6 +263,34 @@ function visStaffChat() {
       .then(hentStaff)
       .catch(function (err) { felt.value = tekst; besked.textContent = /hv_staff/.test(err.message) ? "Staff chatten virker, når database-13-staff.sql er kørt." : err.message; });
   });
+}
+
+// 🗑 Ejeren sletter historikken i den samtale, der er åben (to klik: "Er du sikker?")
+let staffSletKlar = null;
+function nulstilSletKnap() {
+  clearTimeout(staffSletKlar);
+  staffSletKlar = null;
+  const k = document.getElementById("sc-slet");
+  if (k) { k.textContent = "🗑 Slet historik"; k.classList.remove("klar"); }
+}
+function sletStaffHistorik() {
+  const k = document.getElementById("sc-slet");
+  if (!k || !erEjerMig()) return;
+  if (!staffSletKlar) {
+    k.textContent = "Er du sikker? Tryk igen";
+    k.classList.add("klar");
+    staffSletKlar = setTimeout(nulstilSletKnap, 4000);
+    return;
+  }
+  nulstilSletKnap();
+  const samtale = staffSamtale;
+  serverKald("hv_staff_slet", { p_token: mitToken(), p_samtale: samtale === "faelles" ? "" : samtale }).then(function (antal) {
+    staffBeskeder = staffBeskeder.filter(function (m) { return samtaleFor(m) !== samtale; });
+    const hvad = samtale === "faelles" ? "den fælles staff chat" : "samtalen med " + samtale;
+    adminSkriv("Slettede historikken i " + hvad);
+    besked.textContent = "🗑 Historikken i " + hvad + " er slettet" + (antal ? " (" + antal + " beskeder)." : ".");
+    tegnBeskeder();
+  }).catch(function (e) { besked.textContent = /hv_staff_slet/.test(e.message) ? "Slet historik virker, når database-33-slet-staff-chat.sql er kørt i Supabase." : e.message; });
 }
 
 // Rangorden i staff chatten: højeste rang øverst
@@ -281,7 +322,7 @@ function tegnSamtaler() {
   });
   liste.innerHTML = html;
   liste.querySelectorAll("[data-sc-samtale]").forEach(function (k) {
-    k.addEventListener("click", function () { staffSamtale = k.dataset.scSamtale; tegnSamtaler(); tegnBeskeder(); document.getElementById("sc-tekst").focus(); });
+    k.addEventListener("click", function () { staffSamtale = k.dataset.scSamtale; nulstilSletKnap(); tegnSamtaler(); tegnBeskeder(); document.getElementById("sc-tekst").focus(); });
   });
   fluebenLyt(liste);
 }
@@ -349,7 +390,10 @@ staffStil.textContent =
   "#ejer-indhold .sc-adgang-info .beder { color: #a0521a; font-weight: bold; }" +
   "#ejer-indhold .sc-adgang-info button { margin-left: auto; }" +
   "#ejer-indhold .sc-samtale { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #fff; border: 2px solid #d6e8c8; border-radius: 10px; overflow: hidden; }" +
-  "#ejer-indhold .sc-samtale h3 { margin: 0; padding: 8px 12px; background: #e8f2dc; color: #1f3a1c; font-size: 14px; }" +
+  "#ejer-indhold .sc-samtale h3 { margin: 0; padding: 8px 12px; background: #e8f2dc; color: #1f3a1c; font-size: 14px; display: flex; align-items: center; gap: 8px; }" +
+  "#ejer-indhold .sc-samtale h3 #sc-titel { flex: 1; min-width: 0; }" +
+  "#ejer-indhold .sc-slet { margin: 0; padding: 3px 9px; border: 1px solid #c9b48a; border-radius: 8px; background: #f3ecd9; color: #6a4a2a; font: 11px Verdana, sans-serif; cursor: pointer; white-space: nowrap; }" +
+  "#ejer-indhold .sc-slet.klar { background: #c0392b; border-color: #962d22; color: #fff; font-weight: bold; }" +
   "#ejer-indhold #sc-beskeder { flex: 1; min-height: 200px; max-height: 420px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }" +
   "#ejer-vindue.stor #sc-beskeder { max-height: none; }" +
   "#ejer-indhold .sc-linje { align-self: flex-start; max-width: 80%; padding: 6px 10px; background: #f3ecd9; border-radius: 10px 10px 10px 2px; }" +
@@ -382,6 +426,9 @@ staffNatStil.textContent =
   N + "#sc-liste button.sc-flueben.beder { background: #4a4230; border-color: #7a6a3a; color: #f0d58c; }" +
   N + ".sc-samtale { background: #2b3542; border-color: #3a4757; }" +
   N + ".sc-samtale h3 { background: #323f4f; color: #e3eaf2; }" +
+  N + ".sc-slet { background: #2b3542; border-color: #46556a; color: #c9d3df; }" +
+  N + ".sc-slet:hover { background: #364353; }" +
+  N + ".sc-slet.klar { background: #a5524a; border-color: #c0392b; color: #fff; }" +
   N + "#sc-beskeder .tom { color: #8c9aab; }" +
   N + ".sc-linje { background: #3a4657; }" +
   N + ".sc-linje.mig { background: #3e5f58; }" +
