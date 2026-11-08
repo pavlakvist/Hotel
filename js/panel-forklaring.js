@@ -372,3 +372,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/loppemarked.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// ⏱ Fartmåler (js/fart-maaler.js): skriv :fart i chatten for at se, hvad der får hotellet til at lagge.
+(function () {
+  if (document.querySelector("script[src^='js/fart-maaler.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/fart-maaler.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
