@@ -28,12 +28,16 @@ function somData(liste) {
 let byggeHentet = false;
 const byggeServer = {};      // rum → sidst kendte møbler fra serveren
 const byggeSender = {};      // rum der er ved at blive gemt
+let byggeSendTal = 0;        // tæller op, hver gang noget bliver gemt (så et gammelt svar ikke sletter nye møbler)
 
 function hentByggeri() {
   const token = mitToken();
   if (!SERVER.til || !token) return;
+  const talVedStart = byggeSendTal;
   serverKald("hv_rum_moebler_hent", { p_token: token }).then(function (svar) {
     svar = svar || {};
+    // er der gemt noget, mens vi ventede på svaret, er svaret for gammelt: vent på det næste
+    if (byggeHentet && talVedStart !== byggeSendTal) return;
     const foersteGang = !byggeHentet;
     byggeHentet = true;
     if (foersteGang) {
@@ -67,6 +71,8 @@ setInterval(hentByggeri, 3000);
 function brugMoebler(id, data) {
   const liste = rumMoebler(id);
   const gamle = liste.slice();
+  // møbler hvis type ikke er hentet endnu, venter (de bliver sat ind lidt senere, se nederst)
+  VENTENDE_MOEBLER[id] = (data || []).filter(function (d) { return d && !MOEBEL_TYPER[d.type]; });
   const nye = (data || []).filter(function (d) { return MOEBEL_TYPER[d.type]; }).map(function (d) {
     const i = gamle.findIndex(function (m) { return m.type === d.type && m.x === d.x && m.y === d.y; });
     if (i >= 0) {
@@ -87,13 +93,17 @@ function brugMoebler(id, data) {
 }
 
 function sendRum(id, liste) {
-  const data = somData(liste);
+  // de ventende møbler kommer med, så de ikke bliver slettet på serveren
+  const data = somData(liste).concat(somData(VENTENDE_MOEBLER[id] || []));
   byggeSender[id] = true;
+  byggeSendTal++;
   serverKald("hv_rum_moebler_gem", { p_token: mitToken(), p_rum: id, p_moebler: data }).then(function () {
     byggeServer[id] = stabil(data);
     delete byggeSender[id];
+    byggeSendTal++;
   }).catch(function (e) {
     delete byggeSender[id];
+    byggeSendTal++;
     delete byggeServer[id];       // hent serverens udgave igen
     besked.textContent = e.message;
   });
@@ -229,3 +239,26 @@ visShop = function () {
   const gitter = document.getElementById("shop-gitter");
   if (!shopVindue.hidden && shopFane === "moebler" && !MOEBLER.length && gitter && !gitter.children.length) tomtKatalogTekst(gitter);
 };
+
+
+// -------------------------------------------------------------
+//  Ventende møbler: når deres type er hentet, kommer de ind i rummet igen
+//  (før blev de smidt væk, og så forsvandt de, næste gang man byggede)
+// -------------------------------------------------------------
+function ventendeRumListe(id) {
+  if (id === "hal") return HAL_MOEBLER;
+  if (rumValg === "vaerelse" && aktivtVaerelse === id) return moeblerIRummet;
+  if (id === "mit") return mitVaerelse;
+  return vaerelseMoebler(id);
+}
+setInterval(function () {
+  Object.keys(VENTENDE_MOEBLER).forEach(function (id) {
+    const venter = VENTENDE_MOEBLER[id];
+    if (!venter || !venter.length) return;
+    const klar = venter.filter(function (m) { return MOEBEL_TYPER[m.type]; });
+    if (!klar.length) return;
+    VENTENDE_MOEBLER[id] = venter.filter(function (m) { return !MOEBEL_TYPER[m.type]; });
+    const liste = ventendeRumListe(id);
+    klar.forEach(function (m) { liste.push({ type: m.type, x: m.x, y: m.y, spejlet: !!m.spejlet, retning: m.retning || 0 }); });
+  });
+}, 300);

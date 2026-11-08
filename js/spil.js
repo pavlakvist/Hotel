@@ -1421,12 +1421,19 @@ lavFigurKnapper();
 // =============================================================
 const GEMME_NOEGLE = "mit-hotel-rum";
 
+// Møbler hvis type ikke findes endnu. De fleste møbler (realistiske, staff, museum ...)
+// kommer fra filer, der hentes lidt efter spillet starter. Indtil da venter møblerne her,
+// i stedet for at blive smidt væk. (js/bygmester.js sætter dem ind, når typen er klar.)
+var VENTENDE_MOEBLER = {};     // rum-id → [møbler]
+
 function gem() {
   if (rumValg === "hal") return;   // velkomsthallen gemmes ikke
   try {
     // dine egne oprettede rum gemmes hver for sig (js/velkomsthal.js)
     const noegle = typeof aktivtVaerelse !== "undefined" && aktivtVaerelse !== "mit" ? "mit-hotel-rum-" + aktivtVaerelse : GEMME_NOEGLE;
-    localStorage.setItem(noegle, JSON.stringify(moeblerIRummet));
+    // møbler, hvis billeder ikke er hentet endnu, skal ikke glemmes (se VENTENDE_MOEBLER)
+    const venter = VENTENDE_MOEBLER[typeof aktivtVaerelse !== "undefined" ? aktivtVaerelse : "mit"] || [];
+    localStorage.setItem(noegle, JSON.stringify(moeblerIRummet.concat(venter)));
   } catch (fejl) {
     // Nogle browsere tillader ikke at gemme. Så virker spillet bare uden.
   }
@@ -1444,6 +1451,9 @@ function hent() {
   try {
     const data = JSON.parse(localStorage.getItem(GEMME_NOEGLE));
     if (Array.isArray(data)) {
+      VENTENDE_MOEBLER.mit = data.filter(function (m) {
+        return m && !MOEBEL_TYPER[m.type] && iGemtPlan(m.x, m.y);
+      });
       moeblerIRummet = data.filter(function (m) {
         return MOEBEL_TYPER[m.type] && iGemtPlan(m.x, m.y);
       });
