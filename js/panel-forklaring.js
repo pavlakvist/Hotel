@@ -404,3 +404,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/byggetilstand.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// ✨ Det enkle Ejerpanel (js/ejer-enkel.js): grupper i siden, hurtigmenu, favoritter, søgefelt og 🎨 farvevalg.
+(function () {
+  if (document.querySelector("script[src^='js/ejer-enkel.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/ejer-enkel.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
