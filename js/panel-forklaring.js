@@ -396,3 +396,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/event-reklame.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🔨 Byggetilstand (js/byggetilstand.js): byg i rummet med værktøjer øverst og møbelpanel forneden.
+(function () {
+  if (document.querySelector("script[src^='js/byggetilstand.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/byggetilstand.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
