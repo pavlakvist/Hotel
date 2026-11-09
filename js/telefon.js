@@ -198,7 +198,9 @@
   APPS.huske = { navn: "Huskespil", ik: "huske", bg: "linear-gradient(#b7f0c8, #3fae6a)", spil: true, tekst: "Vend kortene og find alle par med så få træk som muligt." };
   APPS.muldvarp = { navn: "Muldvarpe", ik: "muldvarp", bg: "linear-gradient(#d8b48a, #8a5a2b)", spil: true, tekst: "Slå de små hamstere, når de stikker hovedet op. 30 sekunder!" };
   APPS.kryds = { navn: "Kryds & bolle", ik: "kryds", bg: "linear-gradient(#ffffff, #cfd6e4)", spil: true, tekst: "Spil mod telefonen. Kan du vinde mange gange i træk?" };
-  const ALLE_SPIL = ["stjerner", "flagre", "huske", "muldvarp", "kryds"];
+  IK.stribe = "<circle cx='7' cy='7' r='3.2' fill='#ff5c8a'/><circle cx='17' cy='7' r='3.2' fill='#ffc93c'/><circle cx='7' cy='17' r='3.2' fill='#ffc93c'/><circle cx='12' cy='12' r='3.2' fill='#ff5c8a'/><circle cx='17' cy='17' r='3.2' fill='#ff5c8a'/>";
+  APPS.stribe = { navn: "Stjernestribe", ik: "stribe", bg: "linear-gradient(#3b4aa8, #1c2366)", spil: true, multi: true, tekst: "👫 Spil mod dine venner! Invitér en ven og læg fire på stribe. I skal begge have hentet spillet." };
+  const ALLE_SPIL = ["stribe", "stjerner", "flagre", "huske", "muldvarp", "kryds"];
   GITTER.push("butik");
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
@@ -411,6 +413,46 @@
     ".doed-pb[hidden] { display: none; }",
     ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
     ".tlf-kabel[hidden] { display: none; }",
+    ".sp-stribe .sn-tal { display: none; }",
+    ".sp-stribe .sp-braet { width: 100%; }",
+    ".st-boks { width: 100%; }",
+    ".st-note { font-size: 12px; background: #3a2f12; color: #ffd98a; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; line-height: 1.4; }",
+    ".st-ov { font-size: 13px; font-weight: 700; margin: 12px 2px 6px; color: #fff; }",
+    ".st-raekke { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 12px; background: #1b1f2a; margin-bottom: 6px; }",
+    ".st-raekke.klik { cursor: pointer; } .st-raekke.klik:hover { background: #242a38; }",
+    ".st-raekke.ny { background: #2b2350; box-shadow: 0 0 0 1px #6a5bff; }",
+    ".st-raekke.lille { font-size: 12px; color: #9a9aa6; padding: 6px 10px; }",
+    ".st-raekke > span:not(.tlf-av) { flex: 1; min-width: 0; font-size: 13px; } .st-raekke .tlf-av { flex: none; } .st-raekke small { display: block; font-size: 11px; color: #9a9aa6; }",
+    ".st-raekke button, .st-kamptop button, .st-opgiv { border: 0; border-radius: 14px; padding: 6px 12px; background: #2c3242; color: #e9e9ee; font: 600 12px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }",
+    ".st-raekke button.ja, .st-opgiv.ja { background: #34c759; color: #fff; }",
+    ".st-raekke button:disabled { opacity: .35; cursor: default; }",
+    ".st-raekke button.sikker, .st-opgiv.sikker { background: #ff3b30; color: #fff; }",
+    ".st-tom { font-size: 12px; color: #9a9aa6; padding: 6px 4px; }",
+    ".st-kamptop { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 12px; margin-bottom: 8px; }",
+    ".st-kamptop span { display: flex; align-items: center; gap: 4px; }",
+    ".st-status { text-align: center; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #c8c8d2; }",
+    ".st-status.min { color: #ffd60a; }",
+    ".st-net { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 7px; border-radius: 14px; background: linear-gradient(#3b4aa8, #26307a); box-shadow: 0 6px 18px rgba(0,0,0,.5); }",
+    ".st-net.min .st-felt { cursor: pointer; }",
+    ".st-felt { aspect-ratio: 1; border: 0; padding: 0; border-radius: 50%; background: #0e1238; display: grid; place-items: center; cursor: default; }",
+    ".st-net.min .st-felt:hover { background: #1b2160; }",
+    ".st-felt.sidst .st-brik { box-shadow: 0 0 0 2px #fff; }",
+    ".st-felt.vind .st-brik { animation: stVind .6s ease-in-out infinite alternate; }",
+    "@keyframes stVind { from { transform: scale(1); } to { transform: scale(1.18); } }",
+    ".st-brik { display: inline-block; width: 82%; height: 82%; border-radius: 50%; animation: stFald .3s ease-in; }",
+    ".st-kamptop .st-brik { width: 12px; height: 12px; animation: none; }",
+    ".st-brik.b1 { background: radial-gradient(circle at 35% 35%, #ff9ab6, #ff5c8a 60%, #c92a5c); }",
+    ".st-brik.b2 { background: radial-gradient(circle at 35% 35%, #ffe6a0, #ffc93c 60%, #d09412); }",
+    "@keyframes stFald { from { transform: translateY(-60px); opacity: .3; } to { transform: translateY(0); opacity: 1; } }",
+    ".st-opgiv { display: block; margin: 12px auto 0; }",
+    "#spil-popup { position: fixed; z-index: 9000; right: 18px; bottom: 90px; width: 270px; padding: 14px; border-radius: 22px; background: rgba(30,28,40,.94); color: #fff; font: 13px -apple-system, 'Segoe UI', sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.45); display: none; text-align: center; }",
+    "#spil-popup.vis { display: block; animation: spPop .35s cubic-bezier(.2,.9,.3,1.3); }",
+    "@keyframes spPop { from { transform: translateY(30px) scale(.8); opacity: 0; } to { transform: none; opacity: 1; } }",
+    "#spil-popup .sp-pop-ik { font-size: 30px; }",
+    "#spil-popup .sp-pop-tekst { margin: 4px 0 10px; line-height: 1.4; }",
+    "#spil-popup .sp-pop-knapper { display: flex; gap: 8px; justify-content: center; }",
+    "#spil-popup button { border: 0; border-radius: 16px; padding: 8px 14px; font: 700 13px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; background: #3a3f52; color: #fff; }",
+    "#spil-popup button.ja { background: #34c759; }",
     ".tlf-app-ik .slet-x { position: absolute; top: -6px; left: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(120,120,128,.92); color: #fff; font: 700 16px/19px -apple-system, sans-serif; text-align: center; text-shadow: none; z-index: 3; box-shadow: 0 1px 3px rgba(0,0,0,.3); }",
     ".ab-indhold { flex: 1; overflow-y: auto; scrollbar-width: none; background: var(--t-lys); padding: 10px 12px 30px; }",
     ".ab-hero { border-radius: 18px; padding: 14px; color: #fff; background: linear-gradient(135deg, #5b6cff, #b05bff 60%, #ff7aa8); box-shadow: 0 4px 14px rgba(91,108,255,.3); }",
@@ -1096,6 +1138,7 @@
     if (id === "beskeder") tal = ulaestIalt();
     if (id === "kontakter") tal = anmodningerTilMig().length;
     if (id === "peep" && typeof peepNye === "function") tal = peepNye().length;
+    if (id === "stribe") tal = stribeTal();
     const indre = id === "events" ? "<span class='tlf-kal'></span>" : ik(A.ik);
     return "<button class='tlf-app-ik' data-app='" + id + "'><span class='fl' style='background:" + A.bg + "'>" + indre + "</span>" +
       (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + (redigerer && A.spil ? "<span class='slet-x' data-afinst='" + id + "' title='Afinstallér'>−</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
@@ -1276,6 +1319,7 @@
     if (id === "beskeder") return ulaestIalt();
     if (id === "kontakter") return anmodningerTilMig().length;
     if (id === "peep" && typeof peepNye === "function") return peepNye().length;
+    if (id === "stribe" && typeof stribeTal === "function") return stribeTal();
     return 0;
   }
   function mappeIkon(m, i) {
@@ -1682,6 +1726,7 @@
     setTimeout(function () {
       delete henter[id];
       if (!harSpil(id)) { mineSpil().push(id); gemInd(); }
+      if (APPS[id].multi) stribeInstalleret(true);
       lille("⬇️ " + APPS[id].navn + " er hentet");
       if (appNu === "butik") tegnButikListe();
     }, 1400);
@@ -1689,6 +1734,7 @@
   function afinstaller(id) {
     if (!APPS[id] || !APPS[id].spil) { lille("Apps der fulgte med telefonen kan ikke slettes"); return; }
     ind.spil = mineSpil().filter(function (s) { return s !== id; });
+    if (APPS[id].multi) stribeInstalleret(false);
     gemInd();
     lille("🗑 " + APPS[id].navn + " er afinstalleret");
     if (appNu === "butik") tegnButikListe();
@@ -1789,6 +1835,8 @@
   function blanding(l) { for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = l[i]; l[i] = l[j]; l[j] = t; } return l; }
 
   const SPIL = {
+    // 👫 Stjernestribe (mod venner over serveren)
+    stribe: { hjaelp: "", lav: function (braet, api) { lavStribe(braet, api); } },
     // 🌟 Stjerneregn
     stjerner: {
       hjaelp: "Flyt kurven med musen eller ← →. Fang ⭐ (🌟 = 3 point). ⛈ koster et liv.",
@@ -2021,6 +2069,181 @@
       },
     },
   };
+
+  // ---------------------------------------------------------------
+  //  🎮 Stjernestribe — spil mod en ven (database-38-spil-med-venner.sql)
+  //  Man inviterer en ven, vennen trykker Bekræft, og så skiftes man til
+  //  at lægge brikker. Fire på stribe vinder. Begge skal have hentet spillet.
+  // ---------------------------------------------------------------
+  let stribeData = { kampe: [], har_spillet: [] }, stribeFejl = "", stribeAabn = null, stribeSidstHentet = 0;
+  function stribeOnline() { return typeof serverKald === "function" && typeof SERVER !== "undefined" && SERVER.til && typeof mitToken === "function" && !!mitToken(); }
+  function stribeHent() {
+    if (!stribeOnline()) { stribeFejl = "Spil med venner virker kun, når du er logget ind på hotellets server."; return Promise.resolve(stribeData); }
+    return serverKald("hv_kamp_hent", { p_token: mitToken(), p_spil: "stribe" }).then(function (d) {
+      stribeData = d && d.kampe ? d : { kampe: [], har_spillet: [] };
+      stribeFejl = ""; stribeSidstHentet = Date.now();
+      return stribeData;
+    }).catch(function (e) {
+      stribeFejl = /function|schema cache|does not exist|Could not find/i.test(e.message) ? "Spil med venner virker, når database-38-spil-med-venner.sql er kørt i Supabase." : e.message;
+      return stribeData;
+    });
+  }
+  function stribeKald(fn, data) {
+    data.p_token = mitToken();
+    return serverKald(fn, data).then(stribeHent).catch(function (e) { lille(e.message); return stribeHent(); });
+  }
+  function migLille() { return mig().toLowerCase(); }
+  function erVaert(k) { return k.vaert.toLowerCase() === migLille(); }
+  function modstander(k) { return erVaert(k) ? k.gaest : k.vaert; }
+  function minTur(k) { return k.status === "igang" && k.tur === (erVaert(k) ? 1 : 2); }
+  function stribeTal() {
+    return (stribeData.kampe || []).filter(function (k) { return (k.status === "inviteret" && !erVaert(k)) || minTur(k); }).length;
+  }
+  function stribeInstalleret(har) {
+    if (stribeOnline()) serverKald("hv_spil_installeret", { p_token: mitToken(), p_spil: "stribe", p_har: har }).catch(function () {});
+  }
+
+  function lavStribe(braet, api) {
+    const boks = document.createElement("div"); boks.className = "st-boks"; braet.appendChild(boks);
+    let vis = stribeAabn || "lobby";
+    stribeAabn = null;
+    function tegn() {
+      if (!api.aktiv()) return;
+      const kampe = stribeData.kampe || [];
+      if (vis !== "lobby") {
+        const k = kampe.find(function (x) { return x.id === vis; });
+        if (!k) { vis = "lobby"; } else { tegnKamp(k); return; }
+      }
+      api.hjaelp("Inviter en ven og læg fire på stribe – vandret, lodret eller skråt. Spillet giver ingen Glimt.");
+      const inv = kampe.filter(function (k) { return k.status === "inviteret" && !erVaert(k); });
+      const mine = kampe.filter(function (k) { return k.status === "igang" || (k.status === "inviteret" && erVaert(k)); });
+      const faerdige = kampe.filter(function (k) { return ["slut", "afvist", "annulleret"].indexOf(k.status) >= 0; }).slice(0, 5);
+      const venner = vennerListe();
+      let h = stribeFejl ? "<div class='st-note'>⚠️ " + esc(stribeFejl) + "</div>" : "";
+      if (inv.length) h += "<div class='st-ov'>📨 Invitationer</div>" + inv.map(function (k) {
+        return "<div class='st-raekke ny'>" + avatarHtml(k.vaert, true) + "<span><b>" + esc(k.vaert) + "</b> inviterer dig</span><button class='ja' data-stja='" + k.id + "'>Bekræft</button><button data-stnej='" + k.id + "'>Nej</button></div>";
+      }).join("");
+      h += "<div class='st-ov'>🎮 Dine spil</div>" + (mine.length ? mine.map(function (k) {
+        const m = modstander(k);
+        if (k.status === "inviteret") return "<div class='st-raekke'>" + avatarHtml(m, true) + "<span><b>" + esc(m) + "</b><small>Venter på at " + esc(m) + " bekræfter …</small></span><button data-stopgiv='" + k.id + "'>Annullér</button></div>";
+        return "<div class='st-raekke klik' data-stvis='" + k.id + "'>" + avatarHtml(m, true) + "<span><b>mod " + esc(m) + "</b><small>" + (minTur(k) ? "⭐ Din tur!" : "Venter på " + esc(m) + " …") + "</small></span><button>Spil</button></div>";
+      }).join("") : "<div class='st-tom'>Ingen spil i gang. Inviter en ven herunder 👇</div>");
+      h += "<div class='st-ov'>👫 Inviter en ven</div>" + (venner.length ? venner.map(function (n) {
+        const har = (stribeData.har_spillet || []).some(function (x) { return x.toLowerCase() === n.toLowerCase(); });
+        return "<div class='st-raekke'>" + avatarHtml(n, true) + "<span><b>" + esc(n) + "</b><small>" + (onlineOm(n) ? "🟢 online" : "⚪ ikke online") + (har ? "" : " · har ikke hentet spillet") + "</small></span>" +
+          "<button class='ja' data-stinv='" + esc(n) + "'" + (har && !stribeFejl ? "" : " disabled") + ">Invitér</button></div>";
+      }).join("") : "<div class='st-tom'>Du har ingen venner endnu. Tilføj venner i Kontakter.</div>");
+      if (faerdige.length) h += "<div class='st-ov'>🏁 Seneste spil</div>" + faerdige.map(function (k) {
+        const m = modstander(k), mitNr = erVaert(k) ? 1 : 2;
+        const t = k.status === "afvist" ? esc(k.gaest) + " sagde nej tak" : k.status === "annulleret" ? "Annulleret" : k.vinder === 3 ? "Uafgjort mod " + esc(m) : k.vinder === mitNr ? "🏆 Du vandt over " + esc(m) : esc(m) + " vandt";
+        return "<div class='st-raekke lille'><span>" + t + "</span></div>";
+      }).join("");
+      boks.innerHTML = h;
+      tegnAvatarer(boks);
+    }
+    function tegnKamp(k) {
+      const m = modstander(k), mitNr = erVaert(k) ? 1 : 2;
+      let status;
+      if (k.status === "slut") status = k.vinder === 3 ? "🤝 Uafgjort!" : k.vinder === mitNr ? "🎉 Du vandt!" : "😮 " + esc(m) + " vandt";
+      else if (k.status !== "igang") status = "Spillet er stoppet";
+      else status = minTur(k) ? "⭐ Din tur – klik på en søjle" : "Venter på " + esc(m) + " …";
+      const vinderFelter = k.status === "slut" && k.vinder < 3 ? fireFelter(k.braet, k.vinder) : [];
+      boks.innerHTML = "<div class='st-kamptop'><button data-sttilbage>‹ Alle spil</button><span>Du <i class='st-brik b" + mitNr + "'></i> mod " + esc(m) + " <i class='st-brik b" + (3 - mitNr) + "'></i></span></div>" +
+        "<div class='st-status" + (minTur(k) ? " min" : "") + "'>" + status + "</div>" +
+        "<div class='st-net" + (minTur(k) ? " min" : "") + "'>" + k.braet.map(function (v, i) {
+          return "<button class='st-felt" + (i === k.sidste ? " sidst" : "") + (vinderFelter.indexOf(i) >= 0 ? " vind" : "") + "' data-stkol='" + (i % 7) + "'>" + (v ? "<i class='st-brik b" + v + "'></i>" : "") + "</button>";
+        }).join("") + "</div>" +
+        (k.status === "igang" ? "<button class='st-opgiv' data-stopgiv='" + k.id + "'>🏳️ Giv op</button>" : "<button class='st-opgiv ja' data-stny='" + esc(m) + "'>🔁 Spil igen mod " + esc(m) + "</button>");
+      api.hjaelp("Fire på stribe vinder – vandret, lodret eller skråt.");
+    }
+    function fireFelter(b, v) {
+      const R = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) for (let i = 0; i < 4; i++) {
+        const l = [0, 1, 2, 3].map(function (n) { return [r + R[i][0] * n, c + R[i][1] * n]; });
+        if (l.every(function (p) { return p[0] < 6 && p[1] >= 0 && p[1] < 7 && b[p[0] * 7 + p[1]] === v; })) return l.map(function (p) { return p[0] * 7 + p[1]; });
+      }
+      return [];
+    }
+    let travl = false;
+    boks.addEventListener("click", function (e) {
+      const g = function (s) { return e.target.closest(s); };
+      let k;
+      if (travl) return;
+      const gor = function (p) { travl = true; p.then(function () { travl = false; tegn(); }); };
+      if ((k = g("[data-stja]"))) { vis = +k.dataset.stja; gor(stribeKald("hv_kamp_svar", { p_id: vis, p_ja: true })); return; }
+      if ((k = g("[data-stnej]"))) { gor(stribeKald("hv_kamp_svar", { p_id: +k.dataset.stnej, p_ja: false })); return; }
+      if ((k = g("[data-stopgiv]"))) {
+        if (!k.classList.contains("sikker")) { k.classList.add("sikker"); k.textContent = "Er du sikker?"; return; }
+        gor(stribeKald("hv_kamp_opgiv", { p_id: +k.dataset.stopgiv })); return;
+      }
+      if ((k = g("[data-stinv]")) || (k = g("[data-stny]"))) {
+        const ven = k.dataset.stinv || k.dataset.stny;
+        travl = true;
+        serverKald("hv_kamp_inviter", { p_token: mitToken(), p_ven: ven, p_spil: "stribe" }).then(function (id) {
+          lille("📨 Invitation sendt til " + ven); vis = "lobby"; return stribeHent();
+        }).catch(function (er) { lille(er.message); }).then(function () { travl = false; tegn(); });
+        return;
+      }
+      if ((k = g("[data-stvis]"))) { vis = +k.dataset.stvis; tegn(); return; }
+      if (g("[data-sttilbage]")) { vis = "lobby"; tegn(); return; }
+      if ((k = g("[data-stkol]"))) {
+        const kamp = (stribeData.kampe || []).find(function (x) { return x.id === vis; });
+        if (!kamp || !minTur(kamp)) { if (kamp && kamp.status === "igang") lille("Vent på din tur ⏳"); return; }
+        gor(stribeKald("hv_kamp_traek", { p_id: vis, p_kol: +k.dataset.stkol }));
+      }
+    });
+    tegn();
+    stribeHent().then(tegn);
+    const t = setInterval(function () {
+      if (!api.aktiv()) { clearInterval(t); return; }
+      if (tlf.hidden || travl) return;
+      stribeHent().then(function () { if (!travl && !boks.querySelector(".sikker")) tegn(); });
+    }, 2500);
+  }
+
+  // Invitationer og "din tur" dukker op, selvom telefonen ikke er åben
+  let stribeSet = {};
+  try { stribeSet = JSON.parse(localStorage.getItem("mit-hotel-spil-set-" + mig()) || "{}"); } catch (e) {}
+  function stribeGemSet() { try { localStorage.setItem("mit-hotel-spil-set-" + mig(), JSON.stringify(stribeSet)); } catch (e) {} }
+  function visSpilPopup(tekst, knap, fn, nej) {
+    let p = document.getElementById("spil-popup");
+    if (!p) { p = document.createElement("div"); p.id = "spil-popup"; document.body.appendChild(p); }
+    p.innerHTML = "<div class='sp-pop-ik'>🎮</div><div class='sp-pop-tekst'>" + tekst + "</div><div class='sp-pop-knapper'><button class='ja'>" + knap + "</button><button class='nej'>" + (nej ? "Nej tak" : "Senere") + "</button></div>";
+    p.classList.remove("vis"); void p.offsetWidth; p.classList.add("vis");
+    p.querySelector(".ja").addEventListener("click", function () { p.classList.remove("vis"); fn(true); });
+    p.querySelector(".nej").addEventListener("click", function () { p.classList.remove("vis"); fn(false); });
+    ding();
+  }
+  function aabnKamp(id) {
+    if (tlf.hidden) aabnTelefon();
+    stribeAabn = id;
+    setTimeout(function () { aabnApp("stribe"); }, tlf.hidden ? 50 : 0);
+  }
+  setInterval(function () {
+    if (!harSpil("stribe") || !stribeOnline() || ind.bat <= 0) return;
+    if (appNu === "stribe" && !tlf.hidden) return;                       // appen henter selv
+    stribeHent().then(function () {
+      let aendret = false;
+      (stribeData.kampe || []).forEach(function (k) {
+        const noegle = k.id + ":" + k.status + ":" + k.tur;
+        if (stribeSet[noegle]) return;
+        if (k.status === "inviteret" && !erVaert(k)) {
+          stribeSet[noegle] = 1; aendret = true;
+          visSpilPopup("<b>" + esc(k.vaert) + "</b> inviterer dig til et spil <b>Stjernestribe</b>", "✅ Bekræft", function (ja) {
+            stribeKald("hv_kamp_svar", { p_id: k.id, p_ja: ja }).then(function () { if (ja) aabnKamp(k.id); });
+          }, true);
+        } else if (minTur(k) && Date.now() - k.opdateret < 120000) {
+          stribeSet[noegle] = 1; aendret = true;
+          const foerste = k.braet.every(function (v) { return !v; });
+          visSpilPopup(foerste ? "<b>" + esc(k.gaest) + "</b> sagde ja! Det er din tur i Stjernestribe" : "Det er din tur mod <b>" + esc(modstander(k)) + "</b> i Stjernestribe", "▶ Spil nu", function (ja) { if (ja) aabnKamp(k.id); });
+        }
+      });
+      if (aendret) stribeGemSet();
+      if (!tlf.hidden && skaermNu === "hjem" && !redigerer) tegnHjem();
+    });
+  }, 7000);
+  // hent-status sendes til serveren, så venner kan se, at man har spillet
+  setTimeout(function () { if (harSpil("stribe")) stribeInstalleret(true); }, 4000);
 
   // ---------------------------------------------------------------
   //  📝 Noter — man kan have mange noter (gemt som liste)
