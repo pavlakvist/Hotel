@@ -413,6 +413,7 @@
     ".doed-pb[hidden] { display: none; }",
     ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
     ".tlf-kabel[hidden] { display: none; }",
+    ".tlf-status .st-5g { font-size: 12px; font-weight: 700; letter-spacing: -.2px; line-height: 1; }",
     ".tlf-kode { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; padding-top: 70px; color: #fff; background: rgba(15,12,25,.55); backdrop-filter: blur(26px) saturate(1.2); -webkit-backdrop-filter: blur(26px) saturate(1.2); animation: kdInd .2s ease-out; }",
     "@keyframes kdInd { from { opacity: 0; } to { opacity: 1; } }",
     ".tlf-kode .kd-titel { font-size: 17px; font-weight: 600; }",
@@ -769,7 +770,7 @@
           "<div class='tlf-oe'></div>" +
           "<div class='tlf-status'><span class='st-kl'></span><span class='hoejre'>" +
             "<svg width='17' height='11' viewBox='0 0 17 11'><rect x='0' y='7' width='3' height='4' rx='1' fill='currentColor'/><rect x='4.5' y='5' width='3' height='6' rx='1' fill='currentColor'/><rect x='9' y='2.5' width='3' height='8.5' rx='1' fill='currentColor'/><rect x='13.5' y='0' width='3' height='11' rx='1' fill='currentColor'/></svg>" +
-            "<svg width='15' height='11' viewBox='0 0 15 11'><path d='M7.5 2.2c2.2 0 4.2.8 5.7 2.2l1.2-1.3A9.9 9.9 0 0 0 7.5.4 9.9 9.9 0 0 0 .6 3.1l1.2 1.3a8.2 8.2 0 0 1 5.7-2.2zM7.5 5.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3a6.7 6.7 0 0 0-9.2 0l1.2 1.3c.9-.8 2.1-1.3 3.4-1.3zM7.5 8.4l1.9 2-1.9 1-1.9-1z' fill='currentColor'/></svg>" +
+            "<span class='st-5g'>5G</span>" +
             "<svg class='st-batsvg' width='35' height='13' viewBox='0 0 35 13'><title>Batteri</title><rect x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor' opacity='.35'/><rect class='st-bat' x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor'/><path d='M26 4.5v4a2 2 0 0 0 0-4z' fill='currentColor' opacity='.45'/><text class='st-pct' x='12.5' y='10' text-anchor='middle' font-size='9.5' font-weight='700' font-family='Arial, sans-serif'></text><path class='st-lyn' d='M32 .8 28.2 7h2.6l-1.1 5.2 4-6.6h-2.7z' fill='currentColor' display='none'/></svg>" +
           "</span></div>" +
           "<div class='tlf-laas'>" +
