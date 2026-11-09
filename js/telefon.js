@@ -1945,7 +1945,7 @@
     tik++;
     const lader = laderNu();
     const foer = ind.bat;
-    if (lader) ind.bat = Math.min(100, ind.bat + 1);                                     // fuld på ca. 3 minutter
+    if (lader) { if (tik % 3 === 0) ind.bat = Math.min(100, ind.bat + 1); }              // 1 % hvert 6. sekund = fuld på ca. 10 minutter
     else if (!tlf.hidden && ind.bat > 0 && tik % (brugerMeget() ? 4 : 12) === 0) ind.bat = Math.max(0, ind.bat - 1);   // ca. 40 min (13 min med kamera/musik)
     else if (tlf.hidden && ind.bat > 0 && brugerMeget() && tik % 8 === 0) ind.bat = Math.max(0, ind.bat - 1);
     if (lader !== sidstLader) {
