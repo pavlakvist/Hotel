@@ -152,6 +152,7 @@
     noter: "<rect x='4.5' y='3' width='15' height='18' rx='2' fill='#fff'/><path d='M7.5 8h9M7.5 11.5h9M7.5 15h6' stroke='#d6b23a' stroke-width='1.4'/>",
     lager: "<path d='M3 9.5 12 5l9 4.5v9.5L12 21.5 3 19z' fill='#fff'/><path d='M3 9.5 12 14l9-4.5M12 14v7.5' stroke='#b7864a' stroke-width='1.3' fill='none'/>",
     gear: "<circle cx='12' cy='12' r='7.6' fill='none' stroke='#fff' stroke-width='3.6' stroke-dasharray='2.6 2.37'/><circle cx='12' cy='12' r='5.6' fill='#fff'/><circle cx='12' cy='12' r='2.4' fill='#7d838d'/>",
+    snake: "<path d='M5 18c0-3 3-3.5 6-3.5s6-.5 6-3.5-3-3.5-6-3.5' fill='none' stroke='#fff' stroke-width='3.4' stroke-linecap='round'/><circle cx='9.5' cy='7.5' r='2.6' fill='#fff'/><circle cx='9' cy='7' r='.8' fill='#1f8f5a'/><path d='M7 7.5H4.6' stroke='#ff5a5a' stroke-width='1' stroke-linecap='round'/>",
     tilbage: "<path d='M15 4 7 12l8 8' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>",
     send: "<path d='M12 19V6M6.5 11.5 12 6l5.5 5.5' fill='none' stroke='#fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>",
     laas: "<rect x='5' y='10.5' width='14' height='10.5' rx='2.4' fill='currentColor'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3' fill='none' stroke='currentColor' stroke-width='2.2'/>",
@@ -171,11 +172,12 @@
     kamera:    { navn: "Kamera",        ik: "kamera",  bg: "linear-gradient(#9aa0aa, #4c515a)" },
     fotos:     { navn: "Fotos",         ik: "fotos",   bg: "linear-gradient(#ffffff, #e7ebf1)", moerk: true },
     events:    { navn: "Events",        ik: null,      bg: "#fff" },
+    snake:     { navn: "Snake",         ik: "snake",   bg: "linear-gradient(#5fd38d, #1f8f5a)" },
     noter:     { navn: "Noter",         ik: "noter",   bg: "linear-gradient(#ffe57a, #f5c42c)" },
     lager:     { navn: "Mine ting",     ik: "lager",   bg: "linear-gradient(#d9a868, #9c6a32)" },
     indst:     { navn: "Indstillinger", ik: "gear",    bg: "linear-gradient(#a8aeb8, #6b717b)" },
   };
-  const GITTER = ["shop", "kamera", "fotos", "events", "noter", "lager"];
+  const GITTER = ["shop", "kamera", "fotos", "events", "noter", "lager", "snake"];
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
   // ---------------------------------------------------------------
@@ -199,7 +201,7 @@
 
   // Indstillinger gemmes for hver spiller
   function noegle() { return "mit-hotel-telefon-" + mig(); }
-  let ind = { farve: "rosa", baggrund: "solnedgang", lyd: true, laas: true, eget: null };
+  let ind = { farve: "rosa", baggrund: "solnedgang", lyd: true, laas: true, eget: null, bat: 100, powerbanks: 0 };
   function hentInd() {
     try {
       const g = JSON.parse(localStorage.getItem(noegle()) || localStorage.getItem("mit-hotel-telefon") || "null");
@@ -351,6 +353,47 @@
     ".ark-info span { display: flex; gap: 6px; flex-wrap: wrap; }",
     ".ark-info button { border: 0; border-radius: 13px; padding: 4px 10px; font-family: inherit; font-weight: 600; font-size: 12px; background: var(--t-acc); color: var(--t-hvid); cursor: pointer; }",
     ".ark-info button:disabled { background: var(--t-felt2); cursor: default; }",
+    // Batteri og oplader
+    ".tlf-status .st-pct { fill: #fff; stroke: rgba(0,0,0,.55); stroke-width: 1.6px; paint-order: stroke; }",
+    ".tlf-status.lav .st-bat { fill: var(--t-rod); } .tlf-status.lader .st-bat { fill: var(--t-on); }",
+    ".tlf-laas .lader { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 14px; background: var(--t-moerkglas); font-size: 13px; font-weight: 600; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }",
+    ".tlf-laas .lader[hidden] { display: none; }",
+    ".tlf-doed { position: absolute; inset: 0; z-index: 85; background: var(--t-sort); color: var(--t-graa); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; gap: 6px; cursor: default; }",
+    ".tlf-doed[hidden] { display: none; }",
+    ".tlf-doed p { margin: 14px 0 0; color: var(--t-hvid); font-size: 15px; font-weight: 600; } .tlf-doed small { font-size: 12px; line-height: 1.4; }",
+    ".doed-bat { width: 74px; height: 34px; border: 3px solid var(--t-graa); border-radius: 9px; position: relative; padding: 3px; box-sizing: border-box; animation: tlfPuls 2s ease-in-out infinite; }",
+    ".doed-bat::after { content: ''; position: absolute; right: -9px; top: 9px; width: 5px; height: 10px; border-radius: 0 3px 3px 0; background: var(--t-graa); }",
+    ".doed-bat i { display: block; width: 8%; height: 100%; border-radius: 4px; background: var(--t-rod); }",
+    ".tlf-doed.lader .doed-bat i { background: var(--t-on); }",
+    ".doed-pb { margin-top: 14px; border: 0; border-radius: 16px; padding: 7px 14px; background: var(--t-on); color: var(--t-hvid); font-family: inherit; font-weight: 600; cursor: pointer; }",
+    ".doed-pb[hidden] { display: none; }",
+    ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
+    ".tlf-kabel[hidden] { display: none; }",
+    ".tlf-kabel .stik { display: block; width: 18px; height: 22px; margin-top: -4px; border-radius: 3px 3px 5px 5px; background: linear-gradient(90deg, #d9d9de, #ffffff 45%, #c4c4ca); box-shadow: 0 2px 4px var(--t-skygge2); }",
+    ".tlf-kabel .ledning { display: block; width: 6px; height: 400px; margin: 0 auto; border-radius: 3px; background: linear-gradient(90deg, #d4d4da, #ffffff 50%, #cfcfd5); box-shadow: 0 2px 4px var(--t-skygge3); }",
+    ".tlf-w.w-batteri { background: var(--t-hvid); color: var(--t-tekst); backdrop-filter: none; align-items: center; justify-content: center; }",
+    ".tlf-w.w-batteri.bred { flex-direction: row; gap: 16px; justify-content: flex-start; }",
+    ".w-ring { width: 76px; height: 76px; flex: none; } .w-bat-tekst b { display: block; font-size: 22px; } .w-bat-tekst small { color: var(--t-graa); font-size: 12px; }",
+    // Snake
+    ".sn-indhold { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 10px 26px; overflow-y: auto; scrollbar-width: none; background: #0e1015; color: #e9e9ee; }",
+    ".sn-indhold > [hidden] { display: none !important; }",
+    ".sn-tal { width: 100%; display: flex; justify-content: space-between; font-size: 12px; color: #9a9aa6; padding: 0 4px 6px; }",
+    ".sn-tal b { color: #fff; font-size: 16px; margin-left: 4px; font-variant-numeric: tabular-nums; }",
+    ".sn-braet { position: relative; width: 100%; display: flex; justify-content: center; touch-action: none; }",
+    ".sn-braet canvas { border-radius: 12px; box-shadow: 0 0 0 2px #2a2d38, 0 6px 18px rgba(0,0,0,.5); }",
+    ".sn-over { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; background: rgba(10,12,18,.72); border-radius: 12px; margin: 0 auto; }",
+    ".sn-over[hidden] { display: none; }",
+    ".sn-over b { font-size: 22px; } .sn-over span { font-size: 13px; color: #c8c8d2; line-height: 1.4; }",
+    ".sn-over button { margin-top: 4px; border: 0; border-radius: 18px; padding: 8px 22px; background: var(--t-acc); color: #fff; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }",
+    ".sn-pile { margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; }",
+    ".sn-pile div { display: flex; gap: 4px; }",
+    ".sn-pile button { width: 54px; height: 40px; border: 0; border-radius: 12px; background: #262a35; color: #e9e9ee; font-size: 16px; cursor: pointer; box-shadow: 0 3px 0 #15171e; touch-action: none; }",
+    ".sn-pile button:active { transform: translateY(2px); box-shadow: 0 1px 0 #15171e; background: var(--t-acc); }",
+    ".sn-toplisten { width: 100%; padding-top: 6px; }",
+    ".sn-toplisten .tlf-liste { border-radius: 12px; overflow: hidden; color: var(--t-tekst); }",
+    ".sn-plads { width: 24px; text-align: center; font-weight: 700; } .sn-pt { font-weight: 700; font-variant-numeric: tabular-nums; }",
+    ".tlf-liste li.sn-mig { background: var(--t-hover); }",
+    ".sn-regel { font-size: 11px; color: #9a9aa6; text-align: center; margin: 10px 6px 0; }",
     // Hjemme-linjen nederst
     ".tlf-hjemlinje { position: absolute; z-index: 58; bottom: 7px; left: 50%; width: 120px; height: 5px; margin-left: -60px; border-radius: 3px; background: var(--t-hvid); cursor: pointer; opacity: .9; }",
     ".tlf-hjemlinje.moerk { background: var(--t-tekst); }",
@@ -486,11 +529,11 @@
           "<div class='tlf-status'><span class='st-kl'></span><span class='hoejre'>" +
             "<svg width='17' height='11' viewBox='0 0 17 11'><rect x='0' y='7' width='3' height='4' rx='1' fill='currentColor'/><rect x='4.5' y='5' width='3' height='6' rx='1' fill='currentColor'/><rect x='9' y='2.5' width='3' height='8.5' rx='1' fill='currentColor'/><rect x='13.5' y='0' width='3' height='11' rx='1' fill='currentColor'/></svg>" +
             "<svg width='15' height='11' viewBox='0 0 15 11'><path d='M7.5 2.2c2.2 0 4.2.8 5.7 2.2l1.2-1.3A9.9 9.9 0 0 0 7.5.4 9.9 9.9 0 0 0 .6 3.1l1.2 1.3a8.2 8.2 0 0 1 5.7-2.2zM7.5 5.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3a6.7 6.7 0 0 0-9.2 0l1.2 1.3c.9-.8 2.1-1.3 3.4-1.3zM7.5 8.4l1.9 2-1.9 1-1.9-1z' fill='currentColor'/></svg>" +
-            "<svg width='26' height='12' viewBox='0 0 26 12'><rect x='.5' y='.5' width='22' height='11' rx='3.2' fill='none' stroke='currentColor' opacity='.45'/><rect class='st-bat' x='2' y='2' width='17' height='8' rx='2' fill='currentColor'/><path d='M24 4v4a2 2 0 0 0 0-4z' fill='currentColor' opacity='.5'/></svg>" +
+            "<svg width='35' height='13' viewBox='0 0 35 13'><rect x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor' opacity='.35'/><rect class='st-bat' x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor'/><path d='M26 4.5v4a2 2 0 0 0 0-4z' fill='currentColor' opacity='.45'/><text class='st-pct' x='12.5' y='10' text-anchor='middle' font-size='9.5' font-weight='700' font-family='Arial, sans-serif'></text><path class='st-lyn' d='M32 .8 28.2 7h2.6l-1.1 5.2 4-6.6h-2.7z' fill='currentColor' display='none'/></svg>" +
           "</span></div>" +
           "<div class='tlf-laas'>" +
             "<span class='hl'>" + ik("laas", 22) + "</span>" +
-            "<div class='tid'></div><div class='dag'></div>" +
+            "<div class='tid'></div><div class='dag'></div><div class='lader' hidden></div>" +
             "<div class='notis'></div>" +
             "<div class='stryg'>Stryg op eller klik for at låse op</div>" +
             "<div class='bund'><button class='tlf-rund' data-l='lygte' title='Lommelygte'>" + ik("lygte", 20) + "</button><button class='tlf-rund' data-l='kamera' title='Kamera'>" + ik("kamera", 22) + "</button></div>" +
@@ -500,8 +543,10 @@
           "<div class='tlf-lille-besked'></div>" +
           "<div class='tlf-hjemlinje' title='Hjem'></div>" +
           "<div class='tlf-sluk'></div>" +
+          "<div class='tlf-doed' hidden><div class='doed-bat'><i></i></div><p>Telefonen er løbet tør for strøm</p><small>Sæt dig ved en oplader eller i caféen for at lade den op 🔌</small><button class='doed-pb' hidden>🔋 Brug powerbank</button></div>" +
         "</div>" +
       "</div>" +
+    "<div class='tlf-kabel' hidden><i class='stik'></i><i class='ledning'></i></div>" +
     "</div>";
   document.body.appendChild(tlf);
 
@@ -584,7 +629,8 @@
     // skærmen
     const g = x.createLinearGradient(0, 5, 0, 26);
     g.addColorStop(0, "#3b2a5c"); g.addColorStop(0.55, F.a); g.addColorStop(1, "#ffd39a");
-    x.fillStyle = g; x.fillRect(12, 5, 8, 22);
+    x.fillStyle = ind.bat > 0 ? g : "#0b0b0d"; x.fillRect(12, 5, 8, 22);
+    if (ind.bat <= 0) { px(14, 15, 4, 2, "#ff3b30"); try { img.src = c.toDataURL(); } catch (e) {} return; }
     // ø med kamera
     px(14, 6, 4, 1, "#111"); px(17, 6, 1, 1, "#4a5cff");
     // apps (3 × 2) og dock
@@ -746,9 +792,7 @@
     skaerm.querySelectorAll(".w-ur .vm").forEach(function (v) { v.setAttribute("transform", "rotate(" + (m * 6) + " 50 50)"); });
     const kal = hjemEl.querySelector(".tlf-kal");
     if (kal) kal.innerHTML = "<i>" + DAGE[nu.getDay()].slice(0, 3) + "</i><b>" + nu.getDate() + "</b>";
-    // batteriet går langsomt ned i løbet af dagen 🔋
-    const bat = 0.25 + 0.75 * (1 - ((nu.getHours() * 60 + nu.getMinutes()) % 1440) / 1440);
-    tlf.querySelector(".st-bat").setAttribute("width", Math.round(17 * bat));
+    visBatteri();
   }
 
   function laasNotiser() {
@@ -845,6 +889,7 @@
     venner:   { navn: "Venner online", tekst: "Hvem af dine venner er online",       str: ["bred", "lille"], app: "kontakter" },
     beskeder: { navn: "Beskeder",      tekst: "Ulæste beskeder",                     str: ["lille", "bred"], app: "beskeder" },
     events:   { navn: "Events",        tekst: "Den nyeste nyhed fra hotellet",       str: ["bred", "lille"], app: "events" },
+    batteri:  { navn: "Batteri",       tekst: "Hvor meget strøm telefonen har",      str: ["lille", "bred"] },
     noter:    { navn: "Noter",         tekst: "Din note på hjemmeskærmen",           str: ["lille", "bred"], app: "noter" },
   };
   const MAKS_WIDGETS = 8;
@@ -914,6 +959,14 @@
     if (w.id === "events") {
       const n = nyesteNyhed();
       return "<div class='w1'>🎉 Events</div>" + (n ? "<b class='w-tit'>" + esc(n.titel || "Nyhed") + "</b><div class='w3'>" + esc(n.tekst || "") + "</div>" : "<b class='w-tit'>Ingen events lige nu</b><div class='w3'>Kig forbi senere</div>");
+    }
+    if (w.id === "batteri") {
+      const b = Math.round(ind.bat), r = 30, om = 2 * Math.PI * r;
+      const farve = laderNu() || b > 20 ? "var(--t-on)" : "var(--t-rod)";
+      const ring = "<svg class='w-ring' viewBox='0 0 76 76'><circle cx='38' cy='38' r='" + r + "' fill='none' stroke='var(--t-felt)' stroke-width='7'/>" +
+        "<circle cx='38' cy='38' r='" + r + "' fill='none' stroke='" + farve + "' stroke-width='7' stroke-linecap='round' stroke-dasharray='" + (om * b / 100).toFixed(1) + " " + om.toFixed(1) + "' transform='rotate(-90 38 38)'/>" +
+        "<text x='38' y='44' text-anchor='middle' font-size='17' font-weight='700' fill='currentColor'>" + (laderNu() ? "⚡" : "") + b + "</text></svg>";
+      return w.str === "bred" ? ring + "<div class='w-bat-tekst'><b>" + b + " %</b><small>" + (laderNu() ? "⚡ Oplader" : b <= 20 ? "Lavt batteri – find en oplader" : "🔋 " + (ind.powerbanks || 0) + " powerbank" + (ind.powerbanks === 1 ? "" : "s")) + "</small></div>" : ring;
     }
     if (w.id === "noter") {
       return "<div class='w1'>📝 Note</div><div class='w-note'>" + (noter.trim() ? esc(noter.trim().slice(0, 160)) : "<i>Tryk for at skrive en note …</i>") + "</div>";
@@ -1104,6 +1157,7 @@
     else { chatMed = null; tegnApp(); }
   }
   function lukApp(straks) {
+    if (typeof stopSnake === "function") stopSnake();
     if (typeof beskedMed !== "undefined" && chatMed) beskedMed = null;
     chatMed = null;
     appNu = null;
@@ -1156,6 +1210,8 @@
       setTimeout(function () { t.focus(); }, 300);
     } else if (id === "indst") {
       tegnIndstillinger();
+    } else if (id === "snake") {
+      tegnSnake();
     }
   }
   function kobSoeg() {
@@ -1309,6 +1365,244 @@
   }
 
   // ---------------------------------------------------------------
+  //  🐍 Snake — saml Glimt-stjerner, få Glimt og kom på toplisten
+  // ---------------------------------------------------------------
+  const SN_B = 15, SN_H = 15;            // felter
+  const SN_MAKS_SPIL = 25, SN_MAKS_DAG = 100;
+  let snakeKoerer = false, sn = null, snakeVis = "spil", snakeTopFane = "hotel", snakeTop = null;
+  const snStjerne = new Image(); snStjerne.src = "billeder/glimt.png";
+  function snRekordNoegle() { return "mit-hotel-snake-" + mig(); }
+  function snRekord() { try { return JSON.parse(localStorage.getItem(snRekordNoegle()) || "{}"); } catch (e) { return {}; } }
+  function snGemRekord(r) { try { localStorage.setItem(snRekordNoegle(), JSON.stringify(r)); } catch (e) {} }
+  function snIdag() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+
+  function tegnSnake() {
+    const r = snRekord();
+    appEl.innerHTML = top("Snake", "hjem", "<button class='tlf-tb' data-sntop title='Topliste'>🏆</button>") +
+      "<div class='sn-indhold'>" +
+        "<div class='sn-tal'><span>Point <b class='sn-point'>0</b></span><span>Rekord <b class='sn-rek'>" + (r.bedst || 0) + "</b></span></div>" +
+        "<div class='sn-braet'><canvas></canvas><div class='sn-over'></div></div>" +
+        "<div class='sn-pile'><button data-sn='op'>▲</button><div><button data-sn='venstre'>◀</button><button data-sn='ned'>▼</button><button data-sn='hoejre'>▶</button></div></div>" +
+        "<div class='sn-toplisten' hidden></div>" +
+      "</div>";
+    const cv = appEl.querySelector("canvas");
+    const braet = appEl.querySelector(".sn-braet");
+    const stoer = Math.floor(Math.min(braet.clientWidth || 240, 250) / SN_B) * SN_B;
+    cv.width = stoer * 2; cv.height = stoer * 2;
+    cv.style.width = stoer + "px"; cv.style.height = stoer + "px";
+    snakeVis = "spil";
+    nytSnakeSpil();
+    snOverlay("start");
+    appEl.querySelector(".sn-pile").addEventListener("pointerdown", function (e) {
+      const k = e.target.closest("[data-sn]");
+      if (!k) return;
+      e.preventDefault();
+      styrSnake(k.dataset.sn);
+    });
+    // stryg på brættet
+    let start = null;
+    braet.addEventListener("pointerdown", function (e) { start = { x: e.clientX, y: e.clientY }; });
+    braet.addEventListener("pointerup", function (e) {
+      if (!start) return;
+      const dx = e.clientX - start.x, dy = e.clientY - start.y;
+      start = null;
+      if (Math.abs(dx) + Math.abs(dy) < 14) { if (!snakeKoerer) startSnake(); return; }
+      styrSnake(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "hoejre" : "venstre") : (dy > 0 ? "ned" : "op"));
+    });
+    appEl.querySelector("[data-sntop]").addEventListener("click", function () {
+      if (snakeVis === "top") visSnakeSpil(); else visTopliste();
+    });
+  }
+  function nytSnakeSpil() {
+    const m = Math.floor(SN_B / 2);
+    sn = { krop: [{ x: m - 2, y: m }, { x: m - 3, y: m }, { x: m - 4, y: m }], ret: { x: 1, y: 0 }, naeste: [], mad: null, point: 0, fart: 150, sidst: 0, slut: false };
+    nyMad();
+    tegnBraet();
+    const p = appEl && appEl.querySelector(".sn-point");
+    if (p) p.textContent = "0";
+  }
+  function nyMad() {
+    let x, y, n = 0;
+    do { x = Math.floor(Math.random() * SN_B); y = Math.floor(Math.random() * SN_H); n++; }
+    while (n < 500 && sn.krop.some(function (d) { return d.x === x && d.y === y; }));
+    sn.mad = { x: x, y: y, guld: Math.random() < 0.12 };      // en sjælden guldstjerne giver 3 point
+  }
+  const SN_RET = { op: { x: 0, y: -1 }, ned: { x: 0, y: 1 }, venstre: { x: -1, y: 0 }, hoejre: { x: 1, y: 0 } };
+  function styrSnake(hvor) {
+    if (!sn) return;
+    if (!snakeKoerer) { if (!sn.slut) startSnake(); else return; }
+    const r = SN_RET[hvor];
+    const sidste = sn.naeste.length ? sn.naeste[sn.naeste.length - 1] : sn.ret;
+    if (!r || (r.x === -sidste.x && r.y === -sidste.y) || (r.x === sidste.x && r.y === sidste.y)) return;
+    if (sn.naeste.length < 3) sn.naeste.push(r);
+  }
+  function startSnake() {
+    if (snakeKoerer || ind.bat <= 0) return;
+    if (!sn || sn.slut) nytSnakeSpil();
+    snakeKoerer = true;
+    snOverlay(null);
+    sn.sidst = performance.now();
+    requestAnimationFrame(snakeLoop);
+  }
+  function stopSnake() { snakeKoerer = false; }
+  function snakeLoop(t) {
+    if (!snakeKoerer) return;
+    if (!appEl || appNu !== "snake" || tlf.hidden) { snakeKoerer = false; return; }
+    if (t - sn.sidst >= sn.fart) { sn.sidst = t; snakeTrin(); }
+    if (snakeKoerer) requestAnimationFrame(snakeLoop);
+  }
+  function snakeTrin() {
+    if (sn.naeste.length) sn.ret = sn.naeste.shift();
+    const h = sn.krop[0], ny = { x: h.x + sn.ret.x, y: h.y + sn.ret.y };
+    const spiser = ny.x === sn.mad.x && ny.y === sn.mad.y;
+    const krop = spiser ? sn.krop : sn.krop.slice(0, -1);
+    if (ny.x < 0 || ny.y < 0 || ny.x >= SN_B || ny.y >= SN_H || krop.some(function (d) { return d.x === ny.x && d.y === ny.y; })) { snakeSlut(); return; }
+    sn.krop.unshift(ny);
+    if (spiser) {
+      sn.point += sn.mad.guld ? 3 : 1;
+      sn.fart = Math.max(70, 150 - sn.point * 3);
+      appEl.querySelector(".sn-point").textContent = sn.point;
+      if (ind.lyd) snLyd(sn.mad.guld ? 1568 : 1046, 0.07);
+      nyMad();
+    } else sn.krop.pop();
+    tegnBraet();
+  }
+  function snLyd(f, l) {
+    try {
+      lydKontekst = lydKontekst || new (window.AudioContext || window.webkitAudioContext)();
+      const o = lydKontekst.createOscillator(), g = lydKontekst.createGain(), nu = lydKontekst.currentTime;
+      o.type = "square"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.04, nu); g.gain.exponentialRampToValueAtTime(0.0001, nu + l + 0.08);
+      o.connect(g); g.connect(lydKontekst.destination); o.start(nu); o.stop(nu + l + 0.1);
+    } catch (e) {}
+  }
+  function snakeSlut() {
+    snakeKoerer = false;
+    sn.slut = true;
+    if (ind.lyd) { snLyd(330, 0.12); setTimeout(function () { snLyd(220, 0.2); }, 140); }
+    tegnBraet(true);
+    // Glimt: 1 for hvert andet point, højst 25 pr. spil og 100 pr. dag
+    const r = snRekord();
+    if (r.dag !== snIdag()) { r.dag = snIdag(); r.faaetIdag = 0; }
+    let glimtNu = Math.min(SN_MAKS_SPIL, Math.floor(sn.point / 2), SN_MAKS_DAG - (r.faaetIdag || 0));
+    glimtNu = Math.max(0, glimtNu);
+    if (glimtNu && typeof faaGlimt === "function") { faaGlimt(glimtNu); r.faaetIdag = (r.faaetIdag || 0) + glimtNu; }
+    const nyRekord = sn.point > (r.bedst || 0);
+    if (nyRekord) r.bedst = sn.point;
+    snGemRekord(r);
+    appEl.querySelector(".sn-rek").textContent = r.bedst || 0;
+    if (sn.point > 0) sendSnakePoint(sn.point);
+    snOverlay("slut", { point: sn.point, glimt: glimtNu, rekord: nyRekord, loft: (r.faaetIdag || 0) >= SN_MAKS_DAG });
+  }
+  function snOverlay(hvad, info) {
+    const o = appEl && appEl.querySelector(".sn-over");
+    if (!o) return;
+    if (!hvad) { o.hidden = true; return; }
+    o.hidden = false;
+    if (hvad === "start") o.innerHTML = "<b>🐍 Snake</b><span>Saml Glimt-stjerner ⭐<br>Styr med piletasterne,<br>knapperne eller stryg</span><button data-snstart>Start</button>";
+    else o.innerHTML = "<b>" + (info.rekord ? "🏆 Ny rekord!" : "Game over") + "</b><span>" + info.point + " point" +
+      (info.glimt ? "<br>+" + info.glimt + " Glimt ⭐" : info.loft ? "<br>Du har fået alle dagens Glimt" : "") + "</span><button data-snstart>Spil igen</button>";
+    o.querySelector("[data-snstart]").addEventListener("click", function (e) { e.stopPropagation(); startSnake(); });
+  }
+  function tegnBraet(doed) {
+    const cv = appEl && appEl.querySelector(".sn-braet canvas");
+    if (!cv || !sn) return;
+    const c = cv.getContext("2d"), f = cv.width / SN_B;
+    c.fillStyle = "#14161c"; c.fillRect(0, 0, cv.width, cv.height);
+    c.fillStyle = "#1b1e26";
+    for (let y = 0; y < SN_H; y++) for (let x = (y % 2); x < SN_B; x += 2) c.fillRect(x * f, y * f, f, f);
+    // maden: en Glimt-stjerne
+    const m = sn.mad, puls = 1 + Math.sin(performance.now() / 160) * 0.06;
+    if (snStjerne.complete && snStjerne.naturalWidth) {
+      c.save(); c.imageSmoothingEnabled = false;
+      const s = f * 0.92 * puls * (m.guld ? 1.1 : 1);
+      if (m.guld) { c.shadowColor = "#ffd34a"; c.shadowBlur = f * 0.8; }
+      c.drawImage(snStjerne, m.x * f + (f - s) / 2, m.y * f + (f - s) / 2, s, s);
+      c.restore();
+    } else { c.fillStyle = m.guld ? "#ffd34a" : "#ffb02e"; c.beginPath(); c.arc(m.x * f + f / 2, m.y * f + f / 2, f * 0.38, 0, 7); c.fill(); }
+    // slangen i telefonens accentfarve
+    const F = farveNu(), a = hexRgb(F.a);
+    sn.krop.forEach(function (d, i) {
+      const lys = 1 - (i / Math.max(1, sn.krop.length)) * 0.45;
+      c.fillStyle = doed ? "rgb(120,120,128)" : "rgb(" + a.map(function (v) { return Math.round(v * lys + 40 * (1 - lys)); }).join(",") + ")";
+      const ind2 = f * 0.08;
+      if (c.roundRect) { c.beginPath(); c.roundRect(d.x * f + ind2, d.y * f + ind2, f - ind2 * 2, f - ind2 * 2, f * (i === 0 ? 0.38 : 0.26)); c.fill(); }
+      else c.fillRect(d.x * f + ind2, d.y * f + ind2, f - ind2 * 2, f - ind2 * 2);
+    });
+    // øjne
+    const h = sn.krop[0], r = sn.ret;
+    [[-1, 1], [1, 1]].forEach(function (o) {
+      const ex = h.x * f + f / 2 + (r.x ? r.x * f * 0.18 : o[0] * f * 0.2) + (r.y ? o[0] * f * 0.2 : 0) * 0;
+      const ey = h.y * f + f / 2 + (r.y ? r.y * f * 0.18 : o[0] * f * 0.2);
+      const ex2 = r.x ? h.x * f + f / 2 + r.x * f * 0.18 : h.x * f + f / 2 + o[0] * f * 0.2;
+      c.fillStyle = "#fff"; c.beginPath(); c.arc(ex2, ey, f * 0.13, 0, 7); c.fill();
+      c.fillStyle = "#111"; c.beginPath(); c.arc(ex2 + r.x * f * 0.04, ey + r.y * f * 0.04, f * 0.07, 0, 7); c.fill();
+    });
+  }
+  // stjernen blinker, også når spillet står stille
+  setInterval(function () { if (!tlf.hidden && appNu === "snake" && !snakeKoerer && snakeVis === "spil" && sn && !sn.slut) tegnBraet(); }, 120);
+
+  // Piletasterne styrer slangen, mens Snake er åben
+  window.addEventListener("keydown", function (e) {
+    if (tlf.hidden || appNu !== "snake" || snakeVis !== "spil") return;
+    if (e.target && e.target.matches && e.target.matches("input, textarea")) return;
+    const k = { ArrowUp: "op", ArrowDown: "ned", ArrowLeft: "venstre", ArrowRight: "hoejre", w: "op", s: "ned", a: "venstre", d: "hoejre" }[e.key];
+    if (k) { e.preventDefault(); e.stopPropagation(); styrSnake(k); return; }
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (!snakeKoerer) startSnake(); }
+  }, true);
+
+  // ---- Topliste over hotellets bedste (database-36-snake.sql), ellers kun dine egne ----
+  function sendSnakePoint(point) {
+    if (typeof serverKald !== "function" || typeof mitToken !== "function" || !mitToken()) return;
+    serverKald("hv_snake_gem", { p_token: mitToken(), p_point: point }).then(function () { snakeTop = null; }).catch(function () {});
+  }
+  function hentSnakeTop() {
+    if (typeof serverKald !== "function" || typeof SERVER === "undefined" || !SERVER.til) return Promise.reject(new Error("ingen server"));
+    return serverKald("hv_snake_top", {});
+  }
+  function visSnakeSpil() {
+    snakeVis = "spil";
+    appEl.querySelector(".sn-toplisten").hidden = true;
+    ["sn-tal", "sn-braet", "sn-pile"].forEach(function (k) { appEl.querySelector("." + k).hidden = false; });
+  }
+  function visTopliste() {
+    stopSnake();
+    if (sn && !sn.slut) snOverlay("start");
+    snakeVis = "top";
+    ["sn-tal", "sn-braet", "sn-pile"].forEach(function (k) { appEl.querySelector("." + k).hidden = true; });
+    const boks = appEl.querySelector(".sn-toplisten");
+    boks.hidden = false;
+    const r = snRekord();
+    boks.innerHTML = "<div class='tlf-faner'><button data-snf='hotel'>🏨 Hotellet</button><button data-snf='mig'>🙋 Mig</button></div><ul class='tlf-liste'></ul>" +
+      "<p class='sn-regel'>Du får 1 Glimt for hvert andet point (højst " + SN_MAKS_SPIL + " pr. spil og " + SN_MAKS_DAG + " om dagen).</p>";
+    boks.querySelectorAll("[data-snf]").forEach(function (b) {
+      b.classList.toggle("valgt", b.dataset.snf === snakeTopFane);
+      b.addEventListener("click", function () { snakeTopFane = b.dataset.snf; visTopliste(); });
+    });
+    const ul = boks.querySelector("ul");
+    if (snakeTopFane === "mig") {
+      ul.innerHTML = "<li style='cursor:default'>" + avatarHtml(mig()) + "<span class='info'><b>" + esc(mig()) + "</b><span>Din rekord</span></span><span class='sn-pt'>" + (r.bedst || 0) + "</span></li>" +
+        "<li style='cursor:default'><span class='info'><b>Glimt i dag</b><span>Fra Snake</span></span><span class='sn-pt'>" + (r.dag === snIdag() ? r.faaetIdag || 0 : 0) + " / " + SN_MAKS_DAG + "</span></li>";
+      tegnAvatarer(ul);
+      return;
+    }
+    ul.innerHTML = "<li class='tlf-tom' style='cursor:default'><span>Henter toplisten …</span></li>";
+    hentSnakeTop().then(function (liste) {
+      if (snakeVis !== "top" || snakeTopFane !== "hotel" || !appEl) return;
+      liste = Array.isArray(liste) ? liste : [];
+      ul.innerHTML = liste.length ? liste.map(function (x, i) {
+        const medalje = ["🥇", "🥈", "🥉"][i] || (i + 1) + ".";
+        return "<li style='cursor:default'" + (x.navn === mig() ? " class='sn-mig'" : "") + "><span class='sn-plads'>" + medalje + "</span>" + avatarHtml(x.navn, true) +
+          "<span class='info'><b>" + esc(x.navn) + "</b></span><span class='sn-pt'>" + x.point + "</span></li>";
+      }).join("") : "<li class='tlf-tom' style='cursor:default'><span><span class='st'>🏆</span>Ingen har spillet endnu. Bliv den første!</span></li>";
+      tegnAvatarer(ul);
+    }).catch(function () {
+      if (!appEl || snakeVis !== "top") return;
+      ul.innerHTML = "<li class='tlf-tom' style='cursor:default'><span><span class='st'>🏆</span>Hotellets topliste virker, når database-36-snake.sql er kørt i Supabase.<br>Din rekord: <b>" + (r.bedst || 0) + "</b></span></li>";
+    });
+  }
+
+  // ---------------------------------------------------------------
   //  Events
   // ---------------------------------------------------------------
   function tegnEvents() {
@@ -1345,6 +1639,14 @@
         "<div class='tlf-raekke'><span>Du har " + mineWidgets().length + " widget" + (mineWidgets().length === 1 ? "" : "s") + "</span><button class='lnk' data-wred>Rediger</button></div>" +
         "<div class='tlf-raekke'><small>Tip: hold musen nede på hjemmeskærmen for at tilføje, fjerne og flytte widgets.</small></div>" +
       "</div>" +
+      "<div class='tlf-gruppe-navn'>Batteri</div>" +
+      "<div class='tlf-gruppe'>" +
+        "<div class='tlf-raekke'><span>🔋 Strøm</span><small>" + Math.round(ind.bat) + " %" + (laderNu() ? " · ⚡ oplader" : "") + "</small></div>" +
+        "<div class='tlf-raekke'><span>Powerbanks</span><small>" + (ind.powerbanks || 0) + " stk.</small>" + (ind.powerbanks ? "<button class='lnk' data-pbbrug>Brug</button>" : "") + "</div>" +
+        "<div class='tlf-raekke'><span>Køb powerbank (+" + PB_STROEM + " %)</span><button class='lnk' data-pbkoeb>" + PB_PRIS + " Glimt</button></div>" +
+        "<div class='tlf-raekke'><small>Lad op: sæt dig ved en 🔌 Ladestation (købes i Shoppen) eller sæt dig i caféen.</small></div>" +
+        (erEjer() ? "<div class='tlf-raekke'><span>👑 Fuld opladning</span><button class='lnk' data-fuld>Lad op</button></div>" : "") +
+      "</div>" +
       "<div class='tlf-gruppe-navn'>Lyd og lås</div>" +
       "<div class='tlf-gruppe'>" +
         "<div class='tlf-raekke'><span>🔔 Lyd ved nye beskeder</span><button class='tlf-kontakt" + (ind.lyd ? " til" : "") + "' data-slaa='lyd'></button></div>" +
@@ -1369,6 +1671,13 @@
       const s = e.target.closest("[data-slaa]");
       if (s) { ind[s.dataset.slaa] = !ind[s.dataset.slaa]; gemInd(); s.classList.toggle("til", ind[s.dataset.slaa]); return; }
       if (e.target.closest("[data-laasnu]")) sideknap();
+      if (e.target.closest("[data-fuld]")) { saetStroem(100); lille("⚡ Fuldt opladet"); bevarScroll(tegnIndstillinger); }
+      if (e.target.closest("[data-pbbrug]")) { brugPowerbank(); bevarScroll(tegnIndstillinger); }
+      if (e.target.closest("[data-pbkoeb]")) {
+        if (typeof brugGlimt === "function" && brugGlimt(PB_PRIS)) { ind.powerbanks = (ind.powerbanks || 0) + 1; gemInd(); lille("🔋 Du har købt en powerbank"); }
+        else lille("Du har ikke " + PB_PRIS + " Glimt");
+        bevarScroll(tegnIndstillinger);
+      }
       if (e.target.closest("[data-wred]")) { lukApp(); redigerer = true; galleriAabent = true; tegnHjem(); tegnGalleri(); }
     });
     inp.addEventListener("change", function () {
@@ -1560,6 +1869,127 @@
   });
   // tastatur i telefonens felter må ikke styre spillet
   tlf.addEventListener("keydown", function (e) { if (e.target.matches("input, textarea") && e.key !== "Escape") e.stopPropagation(); });
+
+  // ---------------------------------------------------------------
+  //  🔋 Batteri: falder, mens telefonen er tændt (hurtigere med kamera
+  //  eller musik), og lader op ved en Ladestation eller i caféen.
+  // ---------------------------------------------------------------
+  const PB_PRIS = 40, PB_STROEM = 50;
+  function erEjer() {
+    const liste = typeof EJER_NAVNE !== "undefined" ? EJER_NAVNE : (typeof EJERE !== "undefined" ? EJERE : []);
+    return liste.indexOf(mig()) >= 0;
+  }
+  function sidder() {
+    try { return typeof figur !== "undefined" && !!figur.sidde; } catch (e) { return false; }
+  }
+  function vedOplader(afstand) {
+    try {
+      if (typeof moeblerIRummet === "undefined" || typeof figur === "undefined") return false;
+      return moeblerIRummet.some(function (m) {
+        return m.type === "oplader" && Math.abs(m.x - figur.x) <= afstand && Math.abs(m.y - figur.y) <= afstand;
+      });
+    } catch (e) { return false; }
+  }
+  function iCafe() { try { return typeof iCafeen === "function" && iCafeen(); } catch (e) { return false; } }
+  // Man lader, når man sidder ved siden af en Ladestation (eller står helt op ad den), eller sidder i caféen
+  function laderNu() { return (sidder() && (vedOplader(2) || iCafe())) || (!sidder() && vedOplader(1) && !(typeof figur !== "undefined" && figur.rute && figur.rute.length)); }
+  function brugerMeget() {
+    const k = document.getElementById("kamera"), yt = document.getElementById("youtube-vindue");
+    const elev = document.getElementById("elevator"), tur = document.getElementById("elevator-tur");
+    return (k && !k.hidden) || (yt && !yt.hidden && yt.offsetParent !== null) || (elev && !elev.hidden) || (tur && !tur.hidden) ||
+      (appNu === "snake" && typeof snakeKoerer !== "undefined" && snakeKoerer);
+  }
+  function saetStroem(v) {
+    ind.bat = Math.max(0, Math.min(100, v));
+    gemInd();
+    tjekTom();
+    visBatteri();
+  }
+  function brugPowerbank() {
+    if (!ind.powerbanks) { lille("Du har ingen powerbank"); return; }
+    if (ind.bat >= 100) { lille("Telefonen er allerede fuld"); return; }
+    ind.powerbanks--;
+    saetStroem(ind.bat + PB_STROEM);
+    lille("🔋 +" + PB_STROEM + " % fra powerbanken");
+  }
+  let varslet = 100, varTom = ind.bat <= 0, sidstLader = false;
+  function tjekTom() {
+    const tom = ind.bat <= 0;
+    if (tom === varTom) return;
+    varTom = tom;
+    if (tom) { lukApp(true); skjulBanner(); }
+    else if (!tlf.hidden) laas();
+    tegnIkon();
+  }
+  function visBatteri() {
+    const b = Math.max(0, Math.min(100, ind.bat)), lader = laderNu();
+    tlf.querySelector(".st-bat").setAttribute("width", Math.max(1.5, 24 * b / 100).toFixed(1));
+    tlf.querySelector(".st-pct").textContent = Math.round(b) + "%";
+    tlf.querySelector(".st-lyn").setAttribute("display", lader ? "inline" : "none");
+    statusEl.classList.toggle("lav", b <= 20 && !lader);
+    statusEl.classList.toggle("lader", lader);
+    const l = laasEl.querySelector(".lader");
+    l.hidden = !lader;
+    l.textContent = "⚡ Oplader · " + Math.round(b) + " %";
+    tlf.querySelector(".tlf-kabel").hidden = !lader;
+    const d = tlf.querySelector(".tlf-doed");
+    d.hidden = b > 0;
+    d.classList.toggle("lader", lader);
+    d.querySelector("p").textContent = lader ? "⚡ Lader op …" : "Telefonen er løbet tør for strøm";
+    d.querySelector(".doed-pb").hidden = !ind.powerbanks;
+    d.querySelector(".doed-pb").textContent = "🔋 Brug powerbank (" + (ind.powerbanks || 0) + ")";
+  }
+  tlf.querySelector(".doed-pb").addEventListener("click", function (e) { e.stopPropagation(); brugPowerbank(); });
+  let tik = 0;
+  setInterval(function () {
+    tik++;
+    const lader = laderNu();
+    const foer = ind.bat;
+    if (lader) ind.bat = Math.min(100, ind.bat + 1);                                     // fuld på ca. 3 minutter
+    else if (!tlf.hidden && ind.bat > 0 && tik % (brugerMeget() ? 4 : 12) === 0) ind.bat = Math.max(0, ind.bat - 1);   // ca. 40 min (13 min med kamera/musik)
+    else if (tlf.hidden && ind.bat > 0 && brugerMeget() && tik % 8 === 0) ind.bat = Math.max(0, ind.bat - 1);
+    if (lader !== sidstLader) {
+      sidstLader = lader;
+      if (lader) { if (!tlf.hidden) lille("🔌 Telefonen lader op"); else besked && (besked.textContent = "🔌 Din telefon lader op ⚡"); }
+      if (appNu === "indst") bevarScroll(tegnIndstillinger);
+    }
+    if (ind.bat !== foer) {
+      gemInd();
+      if (!lader && (ind.bat === 20 || ind.bat === 10) && varslet !== ind.bat) {
+        varslet = ind.bat;
+        if (!tlf.hidden) visBatteriBanner();
+        else if (typeof besked !== "undefined" && besked) besked.textContent = "🔋 Din telefon har kun " + ind.bat + " % strøm tilbage.";
+      }
+      if (ind.bat > 20) varslet = 100;
+      tjekTom();
+    }
+    if (!tlf.hidden) visBatteri();
+  }, 2000);
+  function visBatteriBanner() {
+    bannerEl.innerHTML = "<div class='tlf-notis'><span class='ai' style='background:linear-gradient(#ff8a80,#ff3b30)'>🔋</span><span class='nt'><b>Lavt batteri<small>nu</small></b><span>" +
+      ind.bat + " % tilbage. Find en oplader 🔌</span></span></div>";
+    bannerEl.classList.add("vis");
+    clearTimeout(visBanner.t);
+    visBanner.t = setTimeout(skjulBanner, 4500);
+  }
+
+  // 🔌 Ladestationen er et møbel, man kan købe i Shoppen
+  (function ladestation(forsoeg) {
+    if (typeof MOEBLER === "undefined" || typeof MOEBEL_TYPER === "undefined") { if (forsoeg < 60) setTimeout(function () { ladestation(forsoeg + 1); }, 500); return; }
+    if (!MOEBEL_TYPER.oplader) {
+      const t = { id: "oplader", navn: "Ladestation til telefonen", kategori: "Elektronik",
+        retninger: [0, 1, 2, 3].map(function (i) { return "billeder/moebler/oplader/oplader-" + i + ".png"; }) };
+      MOEBLER.push(t);
+      MOEBEL_TYPER.oplader = t;
+      if (typeof forberedRetninger === "function") try { forberedRetninger(t); } catch (e) {}
+    }
+    (function iShoppen(n) {
+      if (typeof HOTEL_MOEBEL_PRISER === "undefined" || typeof hotelMoeblerIShop !== "function") { if (n < 60) setTimeout(function () { iShoppen(n + 1); }, 500); return; }
+      HOTEL_MOEBEL_PRISER.oplader = 150;
+      if (typeof HOTEL_SHOP_KAT !== "undefined" && !HOTEL_SHOP_KAT.some(function (k) { return k.kategori === "Elektronik"; })) HOTEL_SHOP_KAT.push({ kategori: "Elektronik", ikon: "🔌" });
+      hotelMoeblerIShop();
+    })(0);
+  })(0);
 
   setInterval(function () { if (!tlf.hidden) opdaterUr(); }, 10000);
   setInterval(function () { if (!tlf.hidden && skaermNu === "hjem" && !wTraek && !galleriAabent) tegnWidgets(); }, 5000);
