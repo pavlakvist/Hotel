@@ -188,6 +188,18 @@
     indst:     { navn: "Indstillinger", ik: "gear",    bg: "linear-gradient(#a8aeb8, #6b717b)" },
   };
   const GITTER = ["peep", "shop", "lager", "byg", "kamera", "fotos", "chatlog", "smileys", "boble", "events", "noter", "snake"];
+  // ----- App Butik: spil man kan hente for sjov (giver ingen Glimt) -----
+  function emojiIk(e) { return "<text x='12' y='17.5' font-size='15' text-anchor='middle'>" + e + "</text>"; }
+  IK.butik = "<path d='M12 3.5 14.4 9h5.8l-4.7 3.6 1.8 5.7L12 14.8l-5.3 3.5 1.8-5.7L3.8 9h5.8z' fill='#fff'/><path d='M12 9.2v5.2M9.8 12.4 12 14.6l2.2-2.2' stroke='#2f7de1' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/>";
+  IK.stjerner = emojiIk("🌟"); IK.flagre = emojiIk("🐤"); IK.huske = emojiIk("🃏"); IK.muldvarp = emojiIk("🐹"); IK.kryds = emojiIk("⭕");
+  APPS.butik = { navn: "App Butik", ik: "butik", bg: "linear-gradient(#6cc4ff, #2f6fe0)" };
+  APPS.stjerner = { navn: "Stjerneregn", ik: "stjerner", bg: "linear-gradient(#3a3f8f, #151a45)", spil: true, tekst: "Fang de faldende stjerner i kurven, men pas på tordenskyerne!" };
+  APPS.flagre = { navn: "Flagre", ik: "flagre", bg: "linear-gradient(#ffb98a, #e0567a)", spil: true, tekst: "Tryk for at flagre den lille fugl forbi hotellets søjler." };
+  APPS.huske = { navn: "Huskespil", ik: "huske", bg: "linear-gradient(#b7f0c8, #3fae6a)", spil: true, tekst: "Vend kortene og find alle par med så få træk som muligt." };
+  APPS.muldvarp = { navn: "Muldvarpe", ik: "muldvarp", bg: "linear-gradient(#d8b48a, #8a5a2b)", spil: true, tekst: "Slå de små hamstere, når de stikker hovedet op. 30 sekunder!" };
+  APPS.kryds = { navn: "Kryds & bolle", ik: "kryds", bg: "linear-gradient(#ffffff, #cfd6e4)", spil: true, tekst: "Spil mod telefonen. Kan du vinde mange gange i træk?" };
+  const ALLE_SPIL = ["stjerner", "flagre", "huske", "muldvarp", "kryds"];
+  GITTER.push("butik");
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
   // ---------------------------------------------------------------
@@ -399,6 +411,50 @@
     ".doed-pb[hidden] { display: none; }",
     ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
     ".tlf-kabel[hidden] { display: none; }",
+    ".tlf-app-ik .slet-x { position: absolute; top: -6px; left: 0; width: 20px; height: 20px; border-radius: 50%; background: rgba(120,120,128,.92); color: #fff; font: 700 16px/19px -apple-system, sans-serif; text-align: center; text-shadow: none; z-index: 3; box-shadow: 0 1px 3px rgba(0,0,0,.3); }",
+    ".ab-indhold { flex: 1; overflow-y: auto; scrollbar-width: none; background: var(--t-lys); padding: 10px 12px 30px; }",
+    ".ab-hero { border-radius: 18px; padding: 14px; color: #fff; background: linear-gradient(135deg, #5b6cff, #b05bff 60%, #ff7aa8); box-shadow: 0 4px 14px rgba(91,108,255,.3); }",
+    ".ab-hero b { display: block; font-size: 19px; } .ab-hero span { font-size: 12px; opacity: .92; line-height: 1.4; }",
+    ".ab-overskrift { font-size: 18px; font-weight: 700; margin: 14px 2px 6px; }",
+    ".ab-kort { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--t-linje); }",
+    ".ab-ik { flex: none; width: 52px; height: 52px; border-radius: 13px; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.18); }",
+    ".ab-ik svg { width: 32px; height: 32px; }",
+    ".ab-info { flex: 1; min-width: 0; } .ab-info b { display: block; font-size: 14px; } .ab-info small { display: block; font-size: 11px; color: var(--t-graa); line-height: 1.3; } .ab-info i { display: block; font-style: normal; font-size: 11px; color: #b07a00; margin-top: 2px; }",
+    ".ab-knapper { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; }",
+    ".ab-knapper button { border: 0; border-radius: 14px; padding: 5px 14px; background: rgba(47,111,224,.12); color: #2f6fe0; font: 700 12px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }",
+    ".ab-knapper button.ab-slet { background: none; color: var(--t-rod); font-weight: 500; font-size: 10px; padding: 0; }",
+    ".ab-knapper button.ab-slet.sikker { font-weight: 700; }",
+    ".ab-ring { width: 26px; height: 26px; border-radius: 50%; border: 3px solid rgba(47,111,224,.18); border-top-color: #2f6fe0; animation: abSpin .8s linear infinite; }",
+    "@keyframes abSpin { to { transform: rotate(360deg); } }",
+    ".ab-note { font-size: 11px; color: var(--t-graa); text-align: center; margin: 14px 6px 0; line-height: 1.4; }",
+    ".sp-indhold { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 10px 26px; overflow-y: auto; scrollbar-width: none; background: #0e1015; color: #e9e9ee; }",
+    ".sp-braet { position: relative; display: flex; justify-content: center; touch-action: none; min-height: 250px; }",
+    ".sp-braet canvas { border-radius: 12px; box-shadow: 0 0 0 2px #2a2d38, 0 6px 18px rgba(0,0,0,.5); cursor: pointer; }",
+    ".sp-hjaelp { font-size: 11px; color: #9a9aa6; text-align: center; margin: 10px 6px 0; line-height: 1.4; }",
+    ".hk-net { display: grid; grid-template-columns: repeat(4, 56px); gap: 7px; padding: 6px; }",
+    ".hk-kort { position: relative; width: 56px; height: 66px; border: 0; padding: 0; background: none; cursor: pointer; }",
+    ".hk-kort span { position: absolute; inset: 0; border-radius: 10px; display: grid; place-items: center; }",
+    ".hk-kort .bag { background: linear-gradient(135deg, #5b6cff, #b05bff); color: rgba(255,255,255,.7); font-size: 22px; }",
+    ".hk-kort .for { background: #fff; font-size: 30px; display: none; }",
+    ".hk-kort.vendt .bag { display: none; } .hk-kort.vendt .for { display: grid; animation: hkVend .25s ease-out; }",
+    "@keyframes hkVend { from { transform: scaleX(0); } to { transform: scaleX(1); } }",
+    ".hk-kort.par .for { background: #d9ffe3; box-shadow: 0 0 0 2px #34c759; }",
+    ".mv-net { display: grid; grid-template-columns: repeat(3, 76px); gap: 10px; padding: 14px; border-radius: 16px; background: linear-gradient(#6fbf5a, #3f8f3a); }",
+    ".mv-hul { position: relative; width: 76px; height: 76px; border: 0; padding: 0; border-radius: 50%; background: radial-gradient(ellipse at 50% 65%, #2b1a0e 45%, #5a3b22 47%, #7a5232 70%, transparent 72%); overflow: hidden; cursor: pointer; }",
+    ".mv-hul span { position: absolute; left: 0; right: 0; bottom: -40px; font-size: 40px; transition: bottom .12s; pointer-events: none; }",
+    ".mv-hul.oppe span { bottom: 14px; } .mv-hul.ramt span { bottom: -40px; }",
+    ".mv-hul.ramt { box-shadow: inset 0 0 0 3px #ffd60a; }",
+    ".kb-net { display: grid; grid-template-columns: repeat(3, 74px); gap: 6px; padding: 8px; border-radius: 16px; background: #262a35; }",
+    ".kb-felt { width: 74px; height: 74px; border: 0; border-radius: 12px; background: #11141b; color: #fff; font-size: 36px; cursor: pointer; }",
+    ".kb-felt:hover { background: #1a1e28; } .kb-felt.vind { background: #2f6b3f; }",
+    ".nt-liste { flex: 1; overflow-y: auto; scrollbar-width: none; background: var(--t-papir); }",
+    ".nt-antal { font-size: 12px; color: var(--t-graa); padding: 10px 16px 4px; }",
+    ".nt-liste ul { list-style: none; margin: 0; padding: 0 0 30px; }",
+    ".nt-liste li { padding: 10px 16px; border-bottom: 1px solid var(--t-linje); cursor: pointer; }",
+    ".nt-liste li:hover { background: var(--t-hover); }",
+    ".nt-liste li b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .nt-liste li small { display: block; font-size: 12px; color: var(--t-graa); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".tlf-tb.nt-tilbage { width: auto; display: flex; align-items: center; gap: 0; color: #d6a21e; font: 500 15px -apple-system, 'Segoe UI', sans-serif; }",
+    ".tlf-tb.sikker { color: var(--t-rod); font-size: 12px; font-weight: 700; width: auto; }",
     ".tlf-laas .tlf-pb-knap { font-size: 20px; line-height: 1; }",
     ".tlf-status .st-batsvg { pointer-events: auto; cursor: pointer; }",
     ".tlf-batmenu { position: absolute; z-index: 57; top: 44px; right: 12px; width: 206px; padding: 12px; border-radius: 22px; background: rgba(30,28,34,.82); color: var(--t-hvid); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); box-shadow: 0 8px 24px rgba(0,0,0,.35); transform-origin: 90% 0; animation: tlfBatInd .2s ease-out; font-size: 12px; }",
@@ -622,8 +678,11 @@
   ].map(function (regel) {
     // alle regler får "#telefon" foran, så hotellets egne knap-regler ikke vinder
     if (regel.charAt(0) === "@" || regel.indexOf("#") === 0) return regel;
-    const i = regel.indexOf("{");
-    return regel.slice(0, i).split(",").map(function (v) { return "#telefon " + v.trim(); }).join(", ") + " " + regel.slice(i);
+    // flere regler i én linje får også "#telefon" foran hver
+    return regel.split("}").filter(function (r) { return r.trim(); }).map(function (r) {
+      const i = r.indexOf("{");
+      return r.slice(0, i).split(",").map(function (v) { return "#telefon " + v.trim(); }).join(", ") + " " + r.slice(i) + "}";
+    }).join(" ");
   }).join("\n");
   document.head.appendChild(stil);
   // vinrødt-temaet og hotel-farven må ikke farve telefonens stilark om
@@ -1039,7 +1098,7 @@
     if (id === "peep" && typeof peepNye === "function") tal = peepNye().length;
     const indre = id === "events" ? "<span class='tlf-kal'></span>" : ik(A.ik);
     return "<button class='tlf-app-ik' data-app='" + id + "'><span class='fl' style='background:" + A.bg + "'>" + indre + "</span>" +
-      (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
+      (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + (redigerer && A.spil ? "<span class='slet-x' data-afinst='" + id + "' title='Afinstallér'>−</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
   }
   // ---------------------------------------------------------------
   //  Widgets på hjemmeskærmen — man vælger selv, hvilke og hvor
@@ -1201,15 +1260,15 @@
     const set = {};
     // ryd op: ukendte apps, dobbelte, tomme mapper
     l = l.map(function (x) {
-      if (typeof x === "string") { if (!APPS[x] || set[x] || DOCK.indexOf(x) >= 0) return null; set[x] = 1; return x; }
+      if (typeof x === "string") { if (!APPS[x] || set[x] || DOCK.indexOf(x) >= 0 || (APPS[x].spil && !harSpil(x))) return null; set[x] = 1; return x; }
       if (!x || !Array.isArray(x.apps)) return null;
-      const apps = x.apps.filter(function (a) { if (!APPS[a] || set[a] || DOCK.indexOf(a) >= 0) return false; set[a] = 1; return true; });
+      const apps = x.apps.filter(function (a) { if (!APPS[a] || set[a] || DOCK.indexOf(a) >= 0 || (APPS[a].spil && !harSpil(a))) return false; set[a] = 1; return true; });
       if (!apps.length) return null;
       if (apps.length === 1) return apps[0];
       return { mappe: String(x.mappe || "Mappe").slice(0, 20), apps: apps };
     }).filter(function (x) { return x !== null; });
     // nye apps kommer med til sidst
-    GITTER.forEach(function (a) { if (!set[a]) l.push(a); });
+    GITTER.concat(mineSpil()).forEach(function (a) { if (!set[a]) l.push(a); });
     ind.layout = l;
     return l;
   }
@@ -1308,6 +1367,8 @@
     const el = e.target.closest(".tlf-mappe-aaben");
     if (!el || Date.now() < undgaaKlik) return;
     if (e.target.closest(".mp-navn")) return;
+    const ax = e.target.closest("[data-afinst]");
+    if (ax) { afinstaller(ax.dataset.afinst); return; }
     const k = e.target.closest("[data-mi]");
     if (k && !redigerer) { const id = k.dataset.app; lukMappe(true); aabnApp(id); return; }
     if (!k && !e.target.closest(".mp-boks")) { lukMappe(); if (redigerer) tegnHjem(); }
@@ -1315,7 +1376,7 @@
   // hold nede i mappen = rediger, træk apps rundt eller ud
   let mTraek = null, mHold = null, mHoldStart = null;
   skaerm.addEventListener("pointerdown", function (e) {
-    if (e.button !== 0 || !e.target.closest(".tlf-mappe-aaben") || e.target.closest(".mp-navn")) return;
+    if (e.button !== 0 || !e.target.closest(".tlf-mappe-aaben") || e.target.closest(".mp-navn, [data-afinst]")) return;
     const k = e.target.closest("[data-mi]");
     if (redigerer && k) {
       mTraek = { el: k, fra: +k.dataset.mi, x: e.clientX, y: e.clientY, til: null, flyttet: false, ude: false };
@@ -1386,6 +1447,8 @@
     const t = e.target;
     if (t.closest("[data-wtilf]")) { galleriAabent = true; tegnGalleri(); return; }
     if (t.closest("[data-wfaerdig]")) { stopRediger(); return; }
+    const ax = t.closest("[data-afinst]");
+    if (ax) { afinstaller(ax.dataset.afinst); return; }
     const fj = t.closest("[data-wfjern]");
     if (fj) { mineWidgets().splice(+fj.dataset.wfjern, 1); gemInd(); tegnWidgets(); return; }
     const mp = t.closest("[data-mappe]");
@@ -1417,7 +1480,7 @@
   // Hold musen nede = rediger. I rediger kan widgets trækkes til en ny plads.
   let holdTimer = null, holdStart = null, wTraek = null;
   hjemEl.addEventListener("pointerdown", function (e) {
-    if (e.button !== 0 || e.target.closest(".tlf-redbar, .w-fjern")) return;
+    if (e.button !== 0 || e.target.closest(".tlf-redbar, .w-fjern, [data-afinst]")) return;
     holdStart = { x: e.clientX, y: e.clientY };
     const wEl = e.target.closest("[data-wi]");
     const aEl = e.target.closest(".tlf-gitter [data-gi]");
@@ -1548,6 +1611,7 @@
   }
   function lukApp(straks) {
     if (typeof stopSnake === "function") stopSnake();
+    if (typeof stopSpil === "function") stopSpil();
     if (typeof beskedMed !== "undefined" && chatMed) beskedMed = null;
     chatMed = null;
     appNu = null;
@@ -1590,22 +1654,442 @@
     } else if (id === "events") {
       tegnEvents();
     } else if (id === "noter") {
-      appEl.innerHTML = top("Noter") + "<textarea class='tlf-noter' placeholder='Skriv en note …'></textarea>";
-      const t = appEl.querySelector("textarea");
-      t.value = noter;
-      t.addEventListener("input", function () {
-        noter = t.value;
-        try { localStorage.setItem("mit-hotel-telefon-noter-" + mig(), noter); } catch (e) {}
-      });
-      setTimeout(function () { t.focus(); }, 300);
+      tegnNoter();
     } else if (id === "indst") {
       tegnIndstillinger();
     } else if (id === "snake") {
       tegnSnake();
     } else if (id === "peep") {
       tegnPeep();
+    } else if (id === "butik") {
+      tegnButik();
+    } else if (APPS[id] && APPS[id].spil) {
+      tegnSpil(id);
     }
   }
+  // ---------------------------------------------------------------
+  //  🛍 App Butik — hent spil for sjov (ingen Glimt). Hentede spil kan
+  //  afinstalleres; apps der fulgte med telefonen kan ikke slettes.
+  //  Hentede spil gemmes i ind.spil
+  // ---------------------------------------------------------------
+  function mineSpil() { if (!Array.isArray(ind.spil)) ind.spil = []; ind.spil = ind.spil.filter(function (s) { return ALLE_SPIL.indexOf(s) >= 0; }); return ind.spil; }
+  function harSpil(id) { return mineSpil().indexOf(id) >= 0; }
+  let henter = {};
+  function hentSpil(id) {
+    if (harSpil(id) || henter[id]) return;
+    henter[id] = true;
+    if (appNu === "butik") tegnButikListe();
+    setTimeout(function () {
+      delete henter[id];
+      if (!harSpil(id)) { mineSpil().push(id); gemInd(); }
+      lille("⬇️ " + APPS[id].navn + " er hentet");
+      if (appNu === "butik") tegnButikListe();
+    }, 1400);
+  }
+  function afinstaller(id) {
+    if (!APPS[id] || !APPS[id].spil) { lille("Apps der fulgte med telefonen kan ikke slettes"); return; }
+    ind.spil = mineSpil().filter(function (s) { return s !== id; });
+    gemInd();
+    lille("🗑 " + APPS[id].navn + " er afinstalleret");
+    if (appNu === "butik") tegnButikListe();
+    if (skaermNu === "hjem") { tegnHjem(); if (mappeAaben !== null) tegnMappe(); }
+  }
+  function tegnButik() {
+    appEl.innerHTML = top("App Butik") + "<div class='ab-indhold'></div>";
+    appEl.addEventListener("click", function (e) {
+      const h = e.target.closest("[data-abhent]"), a = e.target.closest("[data-abaabn]"), x = e.target.closest("[data-abslet]");
+      if (h) hentSpil(h.dataset.abhent);
+      if (a) aabnApp(a.dataset.abaabn);
+      if (x) {
+        if (x.classList.contains("sikker")) { afinstaller(x.dataset.abslet); return; }
+        x.classList.add("sikker"); x.textContent = "Er du sikker?";
+        setTimeout(function () { if (x.isConnected) { x.classList.remove("sikker"); x.textContent = "Afinstallér"; } }, 3000);
+      }
+    });
+    tegnButikListe();
+  }
+  function tegnButikListe() {
+    const b = appEl && appEl.querySelector(".ab-indhold");
+    if (!b) return;
+    b.innerHTML = "<div class='ab-hero'><b>Spil for sjov 🎮</b><span>Hent så mange du vil – de er gratis. Spillene giver ingen Glimt, de er bare for sjov.</span></div>" +
+      "<div class='ab-overskrift'>Spil</div>" +
+      ALLE_SPIL.map(function (id) {
+        const A = APPS[id], har = harSpil(id), r = spilRekord(id);
+        return "<div class='ab-kort'><span class='ab-ik' style='background:" + A.bg + "'>" + ik(A.ik) + "</span>" +
+          "<span class='ab-info'><b>" + A.navn + "</b><small>" + A.tekst + "</small>" + (har && r != null ? "<i>🏆 Din rekord: " + r + "</i>" : "") + "</span>" +
+          "<span class='ab-knapper'>" + (henter[id] ? "<span class='ab-ring'></span>" : har ? "<button data-abaabn='" + id + "'>ÅBN</button><button class='ab-slet' data-abslet='" + id + "'>Afinstallér</button>" : "<button data-abhent='" + id + "'>HENT</button>") + "</span></div>";
+      }).join("") +
+      "<p class='ab-note'>Apps der fulgte med telefonen kan ikke slettes. Hentede spil kan også slettes ved at holde musen nede på forsiden og trykke på −.</p>";
+  }
+
+  // ----- fælles for spillene -----
+  function spilNoegle(id) { return "mit-hotel-spil-" + id + "-" + mig(); }
+  function spilRekord(id) { try { const v = localStorage.getItem(spilNoegle(id)); return v === null ? null : +v; } catch (e) { return null; } }
+  let spilKoerer = false, spilToken = 0, spilTaster = null, spilPauseFn = null;
+  function stopSpil() { spilToken++; spilKoerer = false; spilTaster = null; spilPauseFn = null; }
+  function tegnSpil(id) {
+    stopSpil();
+    const A = APPS[id], S = SPIL[id], token = spilToken;
+    const r = spilRekord(id);
+    appEl.innerHTML = top(A.navn) + "<div class='sp-indhold sp-" + id + "'>" +
+      "<div class='sn-tal'><span>" + (S.pointNavn || "Point") + " <b class='sp-point'>0</b></span><span>Rekord <b class='sp-rek'>" + (r == null ? "–" : r) + "</b></span></div>" +
+      "<div class='sp-braet'></div><div class='sp-hjaelp'>" + S.hjaelp + "</div></div>";
+    const braet = appEl.querySelector(".sp-braet");
+    const api = {
+      aktiv: function () { return token === spilToken && appEl && appNu === id; },
+      point: function (n) { const p = appEl && appEl.querySelector(".sp-point"); if (p) p.textContent = n; },
+      hjaelp: function (t) { const h = appEl && appEl.querySelector(".sp-hjaelp"); if (h) h.innerHTML = t; },
+      koerer: function (v) { if (token === spilToken) spilKoerer = v; },
+      overlay: function (titel, tekst, knap, fn) {
+        let o = braet.querySelector(".sn-over");
+        if (!titel) { if (o) o.remove(); return; }
+        if (!o) { o = document.createElement("div"); o.className = "sn-over"; braet.appendChild(o); }
+        o.innerHTML = "<b>" + titel + "</b><span>" + tekst + "</span>" + (knap ? "<button>" + knap + "</button>" : "");
+        if (knap) o.querySelector("button").addEventListener("click", function (e) { e.stopPropagation(); o.remove(); fn(); });
+      },
+      slut: function (point, lavBedst) {
+        spilKoerer = false;
+        const gl = spilRekord(id);
+        const ny = point > 0 && (gl == null || (lavBedst ? point < gl : point > gl));
+        if (ny) { try { localStorage.setItem(spilNoegle(id), String(point)); } catch (e) {} const rk = appEl && appEl.querySelector(".sp-rek"); if (rk) rk.textContent = point; }
+        return ny;
+      },
+      // tegne-løkke der stopper, når appen lukkes, og holder pause, når telefonen lægges væk
+      loop: function (trin) {
+        let sidst = performance.now();
+        function f(t) {
+          if (token !== spilToken) return;
+          if (tlf.hidden || appNu !== id) { spilKoerer = false; if (spilPauseFn) spilPauseFn(); return; }
+          const dt = Math.min(3, (t - sidst) / 16.67); sidst = t;
+          if (trin(dt) !== false) requestAnimationFrame(f);
+        }
+        requestAnimationFrame(f);
+      },
+      taster: function (fn) { spilTaster = fn; },
+      pause: function (fn) { spilPauseFn = fn; },
+      lerred: function (b, h) {
+        const cv = document.createElement("canvas");
+        cv.width = b * 2; cv.height = h * 2; cv.style.width = b + "px"; cv.style.height = h + "px";
+        braet.appendChild(cv);
+        const c = cv.getContext("2d"); c.scale(2, 2);
+        return { cv: cv, c: c };
+      },
+    };
+    S.lav(braet, api);
+  }
+  window.addEventListener("keydown", function (e) {
+    if (tlf.hidden || !spilTaster || !APPS[appNu] || !APPS[appNu].spil) return;
+    if (e.target && e.target.matches && e.target.matches("input, textarea") && e.target.closest("#telefon")) return;
+    if (spilTaster(e.key, true) === true) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  window.addEventListener("keyup", function (e) {
+    if (tlf.hidden || !spilTaster || !APPS[appNu] || !APPS[appNu].spil) return;
+    if (spilTaster(e.key, false) === true) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  function blanding(l) { for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = l[i]; l[i] = l[j]; l[j] = t; } return l; }
+
+  const SPIL = {
+    // 🌟 Stjerneregn
+    stjerner: {
+      hjaelp: "Flyt kurven med musen eller ← →. Fang ⭐ (🌟 = 3 point). ⛈ koster et liv.",
+      lav: function (braet, api) {
+        const B = 250, H = 320, L = api.lerred(B, H), c = L.c;
+        let s, venstre = false, hoejre = false;
+        const himmel = []; for (let i = 0; i < 40; i++) himmel.push({ x: Math.random() * B, y: Math.random() * H, r: Math.random() * 1.2 + .3 });
+        function nyt() { s = { kurv: B / 2, ting: [], point: 0, liv: 3, tid: 0, naeste: 30, blink: 0, slut: false }; api.point(0); }
+        function tegn() {
+          const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#0d1033"); g.addColorStop(1, "#3a2a6b");
+          c.fillStyle = g; c.fillRect(0, 0, B, H);
+          c.fillStyle = "rgba(255,255,255,.7)"; himmel.forEach(function (p) { c.globalAlpha = .4 + .4 * Math.sin((s.tid + p.x) / 20); c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill(); }); c.globalAlpha = 1;
+          c.textAlign = "center"; c.textBaseline = "middle";
+          s.ting.forEach(function (t) { c.font = (t.type === "guld" ? 24 : 22) + "px serif"; c.fillText(t.type === "sky" ? "⛈️" : t.type === "guld" ? "🌟" : "⭐", t.x, t.y); });
+          c.font = "34px serif"; c.fillText("🧺", s.kurv, H - 24);
+          c.font = "14px serif"; c.textAlign = "left"; c.fillText("❤️".repeat(s.liv), 6, 14);
+          if (s.blink > 0) { c.fillStyle = "rgba(255,60,60," + (s.blink / 30) + ")"; c.fillRect(0, 0, B, H); }
+        }
+        function trin(dt) {
+          s.tid += dt;
+          if (venstre) s.kurv -= 5 * dt; if (hoejre) s.kurv += 5 * dt;
+          s.kurv = Math.max(20, Math.min(B - 20, s.kurv));
+          s.naeste -= dt;
+          if (s.naeste <= 0) {
+            const r = Math.random(), skyChance = Math.min(.38, .12 + s.point * .006);
+            s.ting.push({ x: 16 + Math.random() * (B - 32), y: -14, v: 1.6 + Math.random() * .8 + s.point * .025, type: r < skyChance ? "sky" : r < skyChance + .1 ? "guld" : "stjerne" });
+            s.naeste = Math.max(18, 48 - s.point * .6);
+          }
+          s.ting = s.ting.filter(function (t) {
+            t.y += t.v * dt;
+            if (t.y > H - 40 && t.y < H - 10 && Math.abs(t.x - s.kurv) < 28) {
+              if (t.type === "sky") { s.liv--; s.blink = 30; } else { s.point += t.type === "guld" ? 3 : 1; api.point(s.point); }
+              return false;
+            }
+            return t.y < H + 20;
+          });
+          if (s.blink > 0) s.blink -= dt;
+          tegn();
+          if (s.liv <= 0) { slut(); return false; }
+        }
+        function slut() {
+          const ny = api.slut(s.point);
+          api.overlay(ny ? "🏆 Ny rekord!" : "Spillet er slut", "Du fangede " + s.point + " point", "Spil igen", start);
+        }
+        function start() { nyt(); api.koerer(true); api.loop(trin); }
+        L.cv.addEventListener("pointermove", function (e) { const r = L.cv.getBoundingClientRect(); s.kurv = (e.clientX - r.left) / r.width * B; });
+        api.taster(function (k, ned) { if (k === "ArrowLeft") { venstre = ned; return true; } if (k === "ArrowRight") { hoejre = ned; return true; } });
+        api.pause(function () { api.overlay("⏸ Pause", "Spillet venter på dig", "Fortsæt", function () { api.koerer(true); api.loop(trin); }); });
+        nyt(); tegn();
+        api.overlay("🌟 Stjerneregn", "Fang stjernerne – undgå tordenskyerne", "Start", start);
+      },
+    },
+    // 🐤 Flagre
+    flagre: {
+      hjaelp: "Klik på skærmen (eller tryk mellemrum) for at flagre.",
+      lav: function (braet, api) {
+        const B = 250, H = 320, L = api.lerred(B, H), c = L.c, GAB = 104;
+        let s, koerer = false;
+        function nyt() { s = { y: H / 2, v: 0, soejler: [], point: 0, tid: 0, naeste: 60, jord: 0 }; api.point(0); }
+        function flagre() { if (!koerer) return; s.v = -5.4; }
+        function tegn() {
+          const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#ffd3a8"); g.addColorStop(.6, "#f59bb0"); g.addColorStop(1, "#8a5ea8");
+          c.fillStyle = g; c.fillRect(0, 0, B, H);
+          // søjler
+          s.soejler.forEach(function (p) {
+            [[0, p.y - GAB / 2], [p.y + GAB / 2, H - 20]].forEach(function (d) {
+              const top = d[0], bund = d[1];
+              c.fillStyle = "#7a2f2f"; c.fillRect(p.x, top, 38, bund - top);
+              c.fillStyle = "#9a4040"; c.fillRect(p.x + 4, top, 8, bund - top);
+              c.fillStyle = "#e8b64a"; c.fillRect(p.x - 4, top === 0 ? bund - 10 : top, 46, 10);
+            });
+          });
+          c.fillStyle = "#5a3b2a"; c.fillRect(0, H - 20, B, 20);
+          c.fillStyle = "#7a5238"; for (let x = -s.jord % 20; x < B; x += 20) c.fillRect(x, H - 20, 10, 4);
+          // fuglen
+          const vinkel = Math.max(-.5, Math.min(1, s.v / 8));
+          c.save(); c.translate(60, s.y); c.rotate(vinkel);
+          c.fillStyle = "#ffd23f"; c.beginPath(); c.arc(0, 0, 11, 0, 7); c.fill();
+          c.fillStyle = "#f5a623"; c.beginPath(); c.ellipse(-3, 3, 6, 4 + Math.sin(s.tid / 3) * 2, 0, 0, 7); c.fill();
+          c.fillStyle = "#fff"; c.beginPath(); c.arc(4, -4, 4, 0, 7); c.fill();
+          c.fillStyle = "#222"; c.beginPath(); c.arc(5, -4, 2, 0, 7); c.fill();
+          c.fillStyle = "#ff7a3d"; c.beginPath(); c.moveTo(9, 0); c.lineTo(16, 2); c.lineTo(9, 5); c.fill();
+          c.restore();
+        }
+        function trin(dt) {
+          s.tid += dt; s.jord += 2 * dt;
+          s.v += .32 * dt; s.y += s.v * dt;
+          s.naeste -= dt;
+          if (s.naeste <= 0) { s.soejler.push({ x: B + 10, y: 70 + Math.random() * (H - 160), talt: false }); s.naeste = 88; }
+          s.soejler.forEach(function (p) {
+            p.x -= 2 * dt;
+            if (!p.talt && p.x + 38 < 60) { p.talt = true; s.point++; api.point(s.point); }
+          });
+          s.soejler = s.soejler.filter(function (p) { return p.x > -50; });
+          if (s.y < 10) { s.y = 10; s.v = Math.max(0, s.v); }
+          const ramt = s.y > H - 31 || s.soejler.some(function (p) { return 60 + 10 > p.x - 4 && 60 - 10 < p.x + 42 && (s.y - 10 < p.y - GAB / 2 || s.y + 10 > p.y + GAB / 2); });
+          tegn();
+          if (ramt) { koerer = false; const ny = api.slut(s.point); api.overlay(ny ? "🏆 Ny rekord!" : "Av!", "Du kom forbi " + s.point + " søjle" + (s.point === 1 ? "" : "r"), "Prøv igen", start); return false; }
+        }
+        function start() { nyt(); koerer = true; api.koerer(true); s.v = -5.4; api.loop(trin); }
+        L.cv.addEventListener("pointerdown", function (e) { e.preventDefault(); flagre(); });
+        api.taster(function (k, ned) { if (k === " " || k === "ArrowUp") { if (ned) flagre(); return true; } });
+        api.pause(function () { koerer = false; api.overlay("⏸ Pause", "Spillet venter på dig", "Fortsæt", function () { koerer = true; api.koerer(true); api.loop(trin); }); });
+        nyt(); tegn();
+        api.overlay("🐤 Flagre", "Hjælp fuglen forbi søjlerne", "Start", start);
+      },
+    },
+    // 🃏 Huskespil
+    huske: {
+      pointNavn: "Træk",
+      hjaelp: "Find alle 8 par. Rekorden er færrest træk.",
+      lav: function (braet, api) {
+        const BILLEDER = ["🌸", "🍀", "🎈", "⭐", "🍩", "🐱", "🎵", "💎"];
+        let kort, vendt, traek, fundet, laast;
+        const net = document.createElement("div"); net.className = "hk-net"; braet.appendChild(net);
+        function nyt() {
+          kort = blanding(BILLEDER.concat(BILLEDER)); vendt = []; traek = 0; fundet = 0; laast = false; api.point(0);
+          net.innerHTML = kort.map(function (b, i) { return "<button class='hk-kort' data-hk='" + i + "'><span class='bag'>✦</span><span class='for'>" + b + "</span></button>"; }).join("");
+        }
+        net.addEventListener("click", function (e) {
+          const k = e.target.closest("[data-hk]");
+          if (!k || laast || k.classList.contains("vendt")) return;
+          k.classList.add("vendt"); vendt.push(k);
+          if (vendt.length < 2) return;
+          traek++; api.point(traek);
+          const a = vendt[0], b = vendt[1]; vendt = [];
+          if (kort[+a.dataset.hk] === kort[+b.dataset.hk]) {
+            a.classList.add("par"); b.classList.add("par"); fundet++;
+            if (fundet === BILLEDER.length) { const ny = api.slut(traek, true); setTimeout(function () { api.overlay(ny ? "🏆 Ny rekord!" : "🎉 Flot!", "Du fandt alle par på " + traek + " træk", "Spil igen", nyt); }, 500); }
+          } else {
+            laast = true;
+            setTimeout(function () { a.classList.remove("vendt"); b.classList.remove("vendt"); laast = false; }, 800);
+          }
+        });
+        nyt();
+      },
+    },
+    // 🐹 Muldvarpe
+    muldvarp: {
+      hjaelp: "Klik på 🐹 når de dukker op (⭐-hamster = 3 point). Du har 30 sekunder.",
+      lav: function (braet, api) {
+        const net = document.createElement("div"); net.className = "mv-net"; braet.appendChild(net);
+        net.innerHTML = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(function (i) { return "<button class='mv-hul' data-mv='" + i + "'><span></span></button>"; }).join("");
+        const huller = net.querySelectorAll(".mv-hul");
+        let point = 0, slutTid = 0, timer = null, koerer = false;
+        function ryd() { huller.forEach(function (h) { h.classList.remove("oppe", "guld", "ramt"); }); }
+        function tik() {
+          if (!api.aktiv() || tlf.hidden) { clearInterval(timer); koerer = false; api.koerer(false); if (api.aktiv()) api.overlay("⏸ Pause", "Spillet er stoppet", "Start forfra", start); return; }
+          const tilbage = Math.max(0, Math.ceil((slutTid - Date.now()) / 1000));
+          api.hjaelp("⏱ " + tilbage + " sekunder tilbage");
+          if (tilbage <= 0) {
+            clearInterval(timer); koerer = false; ryd();
+            const ny = api.slut(point);
+            api.hjaelp(APPS.muldvarp && SPIL.muldvarp.hjaelp);
+            api.overlay(ny ? "🏆 Ny rekord!" : "⏱ Tiden er gået", "Du ramte " + point + " point", "Spil igen", start);
+            return;
+          }
+          huller.forEach(function (h) { if (h.classList.contains("oppe") && Date.now() > +h.dataset.ned) h.classList.remove("oppe", "guld"); });
+          if (Math.random() < .55) {
+            const fri = Array.prototype.filter.call(huller, function (h) { return !h.classList.contains("oppe"); });
+            if (fri.length) {
+              const h = fri[Math.floor(Math.random() * fri.length)];
+              const guld = Math.random() < .12;
+              h.firstChild.textContent = guld ? "🌟" : "🐹";
+              h.classList.remove("ramt"); h.classList.add("oppe"); h.classList.toggle("guld", guld);
+              h.dataset.ned = Date.now() + Math.max(550, 1100 - point * 12);
+            }
+          }
+        }
+        net.addEventListener("pointerdown", function (e) {
+          const h = e.target.closest(".mv-hul");
+          if (!h || !koerer || !h.classList.contains("oppe")) return;
+          point += h.classList.contains("guld") ? 3 : 1; api.point(point);
+          h.classList.remove("oppe", "guld"); h.classList.add("ramt");
+          setTimeout(function () { h.classList.remove("ramt"); }, 250);
+        });
+        function start() { point = 0; api.point(0); ryd(); slutTid = Date.now() + 30000; koerer = true; api.koerer(true); clearInterval(timer); timer = setInterval(tik, 160); }
+        api.overlay("🐹 Muldvarpe", "Slå så mange som muligt på 30 sekunder", "Start", start);
+      },
+    },
+    // ⭕ Kryds & bolle
+    kryds: {
+      pointNavn: "Sejre i træk",
+      hjaelp: "Du er ✖, telefonen er ⭕. Rekorden er flest sejre i træk.",
+      lav: function (braet, api) {
+        const net = document.createElement("div"); net.className = "kb-net"; braet.appendChild(net);
+        const LINJER = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+        let felt, tur, iTraek = 0, slut;
+        function vinder(f) {
+          for (let i = 0; i < LINJER.length; i++) { const l = LINJER[i]; if (f[l[0]] && f[l[0]] === f[l[1]] && f[l[0]] === f[l[2]]) return { hvem: f[l[0]], linje: l }; }
+          return f.every(Boolean) ? { hvem: "uafgjort" } : null;
+        }
+        function tegn(v) {
+          net.innerHTML = felt.map(function (x, i) {
+            return "<button class='kb-felt" + (v && v.linje && v.linje.indexOf(i) >= 0 ? " vind" : "") + "' data-kb='" + i + "'>" + (x === "X" ? "✖" : x === "O" ? "⭕" : "") + "</button>";
+          }).join("");
+        }
+        function nyt() { felt = ["", "", "", "", "", "", "", "", ""]; tur = "X"; slut = false; tegn(); api.hjaelp(SPIL.kryds.hjaelp); }
+        function find(hvem) {
+          for (let i = 0; i < LINJER.length; i++) {
+            const l = LINJER[i], v = l.map(function (j) { return felt[j]; });
+            if (v.filter(function (x) { return x === hvem; }).length === 2 && v.indexOf("") >= 0) return l[v.indexOf("")];
+          }
+          return -1;
+        }
+        function computer() {
+          let i = find("O");
+          if (i < 0) i = find("X");
+          if (i < 0 && Math.random() < .15) i = -1;                    // nogle gange er telefonen lidt doven
+          if (i < 0 && !felt[4]) i = 4;
+          if (i < 0) { const fri = []; felt.forEach(function (x, j) { if (!x) fri.push(j); }); i = fri[Math.floor(Math.random() * fri.length)]; }
+          felt[i] = "O"; tur = "X"; tjek();
+        }
+        function tjek() {
+          const v = vinder(felt);
+          tegn(v);
+          if (!v) return;
+          slut = true;
+          if (v.hvem === "X") { iTraek++; api.point(iTraek); const ny = api.slut(iTraek); api.overlay(ny ? "🏆 Ny rekord!" : "🎉 Du vandt!", iTraek + " sejr" + (iTraek === 1 ? "" : "e") + " i træk", "Næste spil", nyt); }
+          else if (v.hvem === "O") { const før = iTraek; iTraek = 0; api.point(0); api.overlay("📱 Telefonen vandt", før ? "Din stime på " + før + " er slut" : "Prøv igen!", "Nyt spil", nyt); }
+          else api.overlay("🤝 Uafgjort", "Stimen fortsætter: " + iTraek, "Næste spil", nyt);
+        }
+        net.addEventListener("click", function (e) {
+          const k = e.target.closest("[data-kb]");
+          if (!k || slut || tur !== "X" || felt[+k.dataset.kb]) return;
+          felt[+k.dataset.kb] = "X"; tur = "O"; tjek();
+          if (!slut) { api.hjaelp("📱 Telefonen tænker …"); setTimeout(function () { if (api.aktiv() && !slut) { computer(); if (!slut) api.hjaelp(SPIL.kryds.hjaelp); } }, 450); }
+        });
+        nyt();
+      },
+    },
+  };
+
+  // ---------------------------------------------------------------
+  //  📝 Noter — man kan have mange noter (gemt som liste)
+  // ---------------------------------------------------------------
+  let noteListe = [];
+  (function () {
+    let raa = "";
+    try { raa = localStorage.getItem("mit-hotel-telefon-noter-" + mig()) || ""; } catch (e) {}
+    try { const l = JSON.parse(raa); if (Array.isArray(l)) noteListe = l; else throw 0; }
+    catch (e) { noteListe = raa.trim() ? [{ id: Date.now(), tekst: raa, tid: Date.now() }] : []; }
+    synkNoter();
+  })();
+  function synkNoter() {
+    noteListe.sort(function (a, b) { return b.tid - a.tid; });
+    noter = noteListe.length ? noteListe[0].tekst : "";
+  }
+  function gemNoter() {
+    synkNoter();
+    try { localStorage.setItem("mit-hotel-telefon-noter-" + mig(), JSON.stringify(noteListe)); } catch (e) {}
+  }
+  function noteTitel(n) { const l = n.tekst.trim().split("\n")[0]; return l ? l.slice(0, 40) : "Ny note"; }
+  function tegnNoter() {
+    appEl.innerHTML = top("Noter", "hjem", "<button class='tlf-tb' data-ntny title='Ny note'>" + ik("skriv", 20) + "</button>") + "<div class='nt-liste'></div>";
+    appEl.addEventListener("click", function (e) {
+      if (e.target.closest("[data-ntny]")) { const n = { id: Date.now(), tekst: "", tid: Date.now() }; noteListe.unshift(n); tegnNote(n.id); return; }
+      const li = e.target.closest("[data-nt]");
+      if (li) { tegnNote(+li.dataset.nt); return; }
+      if (e.target.closest("[data-nttilbage]")) { tilbageTilNoter(); return; }
+      const sl = e.target.closest("[data-ntslet]");
+      if (sl) {
+        if (!sl.classList.contains("sikker")) { sl.classList.add("sikker"); sl.textContent = "Slet?"; setTimeout(function () { if (sl.isConnected) { sl.classList.remove("sikker"); sl.textContent = "🗑"; } }, 3000); return; }
+        noteListe = noteListe.filter(function (n) { return n.id !== +sl.dataset.ntslet; }); gemNoter(); lille("🗑 Noten er slettet"); tegnNoteListe(true);
+      }
+    });
+    tegnNoteListe(false);
+  }
+  function tilbageTilNoter() {
+    noteListe = noteListe.filter(function (n) { return n.tekst.trim(); });
+    gemNoter();
+    tegnNoteListe(true);
+  }
+  function tegnNoteListe(skiftTop) {
+    if (skiftTop) appEl.querySelector(".tlf-top").outerHTML = top("Noter", "hjem", "<button class='tlf-tb' data-ntny title='Ny note'>" + ik("skriv", 20) + "</button>");
+    const omr = appEl.querySelector(".nt-liste, .tlf-noter");
+    const ny = document.createElement("div"); ny.className = "nt-liste";
+    ny.innerHTML = "<div class='nt-antal'>" + noteListe.length + " note" + (noteListe.length === 1 ? "" : "r") + "</div>" +
+      (noteListe.length ? "<ul>" + noteListe.map(function (n) {
+        const rest = n.tekst.trim().split("\n").slice(1).join(" ").trim();
+        return "<li data-nt='" + n.id + "'><b>" + esc(noteTitel(n)) + "</b><small>" + esc(noteDato(n.tid)) + " · " + (rest ? esc(rest.slice(0, 40)) : "Ingen ekstra tekst") + "</small></li>";
+      }).join("") + "</ul>" : "<div class='tlf-tom'><span class='st'>📝</span>Ingen noter endnu.<br>Tryk på ✏️ for at skrive en.</div>");
+    omr.replaceWith(ny);
+  }
+  function tegnNote(id) {
+    const n = noteListe.find(function (x) { return x.id === id; });
+    if (!n) return;
+    appEl.querySelector(".tlf-top").outerHTML = "<div class='tlf-top'><button class='tlf-tb nt-tilbage' data-nttilbage title='Alle noter'>" + ik("tilbage", 20) + "<span>Noter</span></button><h3></h3><button class='tlf-tb' data-ntslet='" + n.id + "' title='Slet noten'>🗑</button></div>";
+    const omr = appEl.querySelector(".nt-liste, .tlf-noter");
+    const t = document.createElement("textarea"); t.className = "tlf-noter"; t.placeholder = "Skriv en note …"; t.value = n.tekst;
+    omr.replaceWith(t);
+    t.addEventListener("keydown", function (e) { e.stopPropagation(); });
+    t.addEventListener("input", function () { n.tekst = t.value; n.tid = Date.now(); gemNoter(); });
+    t.focus();
+  }
+  function noteDato(t) {
+    const d = new Date(t), nu = new Date();
+    if (d.toDateString() === nu.toDateString()) return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    return d.getDate() + "/" + (d.getMonth() + 1);
+  }
+
   function kobSoeg() {
     const inp = appEl.querySelector(".tlf-soeg input");
     if (!inp) return;
@@ -2640,7 +3124,7 @@
     const k = document.getElementById("kamera"), yt = document.getElementById("youtube-vindue");
     const elev = document.getElementById("elevator"), tur = document.getElementById("elevator-tur");
     return (k && !k.hidden) || (yt && !yt.hidden && yt.offsetParent !== null) || (elev && !elev.hidden) || (tur && !tur.hidden) ||
-      (appNu === "snake" && typeof snakeKoerer !== "undefined" && snakeKoerer);
+      (appNu === "snake" && typeof snakeKoerer !== "undefined" && snakeKoerer) || (typeof spilKoerer !== "undefined" && spilKoerer);
   }
   function saetStroem(v) {
     ind.bat = Math.max(0, Math.min(100, v));
