@@ -553,6 +553,49 @@
     Object.keys(fast).forEach(function (k) { s.setProperty(k, fast[k]); });
     bgEl.style.backgroundImage = baggrundNu();
     laasEl.querySelector(".hl").style.color = "#fff";
+    tegnIkon();
+  }
+
+
+  // ---------------------------------------------------------------
+  //  Ikonet i chatbaren: en lille pixel-telefon i telefonens farve
+  // ---------------------------------------------------------------
+  function tegnIkon() {
+    const knap = document.getElementById("chat-venner-knap");
+    const img = knap && knap.querySelector(".knap-ikon");
+    if (!img) return;
+    const F = farveNu();
+    const c = document.createElement("canvas");
+    c.width = 32; c.height = 32;
+    const x = c.getContext("2d");
+    function px(fx, fy, b, h, farve) { x.fillStyle = farve; x.fillRect(fx, fy, b, h); }
+    const kant = "#24161b";
+    // sideknapper
+    px(7, 8, 1, 3, kant); px(7, 12, 1, 4, kant); px(24, 10, 1, 5, kant);
+    // omrids med runde hjørner
+    px(10, 1, 12, 1, kant); px(10, 30, 12, 1, kant); px(8, 3, 1, 26, kant); px(23, 3, 1, 26, kant);
+    px(9, 2, 1, 1, kant); px(22, 2, 1, 1, kant); px(9, 29, 1, 1, kant); px(22, 29, 1, 1, kant);
+    // metalrammen (2 pixels): lys foroven/venstre, mørk forneden/højre
+    px(9, 3, 14, 26, F.k[1]); px(10, 2, 12, 28, F.k[1]);
+    px(10, 2, 12, 1, F.k[0]); px(9, 3, 1, 26, F.k[0]);
+    px(10, 29, 12, 1, F.k[2]); px(22, 3, 1, 26, F.k[2]);
+    // sort kant om skærmen
+    px(11, 4, 10, 24, "#111");
+    // skærmen
+    const g = x.createLinearGradient(0, 5, 0, 26);
+    g.addColorStop(0, "#3b2a5c"); g.addColorStop(0.55, F.a); g.addColorStop(1, "#ffd39a");
+    x.fillStyle = g; x.fillRect(12, 5, 8, 22);
+    // ø med kamera
+    px(14, 6, 4, 1, "#111"); px(17, 6, 1, 1, "#4a5cff");
+    // apps (3 × 2) og dock
+    ["#4fd06a", "#a77cf0", "#f59a4a", "#ef6aa0", "#f5cf45", "#c9ced6"].forEach(function (f, i) { px(12 + (i % 3) * 3, 9 + Math.floor(i / 3) * 3, 2, 2, f); });
+    px(12, 21, 8, 4, "rgba(255,255,255,.4)");
+    px(12, 22, 2, 2, "#4fd06a"); px(15, 22, 2, 2, "#a77cf0"); px(18, 22, 2, 2, "#f59a4a");
+    // hjemme-linjen og glans
+    px(14, 26, 4, 1, "#fff");
+    px(19, 8, 1, 4, "rgba(255,255,255,.3)");
+    // ulæste beskeder ser man på det røde tal, som venner.js allerede viser
+    try { img.src = c.toDataURL(); img.alt = "Telefon"; } catch (e) {}
   }
 
   // ---------------------------------------------------------------
