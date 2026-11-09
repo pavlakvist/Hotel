@@ -412,3 +412,19 @@ document.head.appendChild(forklaringStil);
   s.src = "js/ejer-enkel.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎨 Hotellets farve (js/hotel-farve.js): knappen "🎨 Farve" øverst, hver spiller vælger selv farven.
+(function () {
+  if (document.querySelector("script[src^='js/hotel-farve.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/hotel-farve.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 👗 Den nye garderobe (js/garderobe-ny.js): faner, tøj-gitter, farvepalet, gemte udseender og 🎨 farve på vinduet.
+(function () {
+  if (document.querySelector("script[src^='js/garderobe-ny.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/garderobe-ny.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
