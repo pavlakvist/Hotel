@@ -413,6 +413,25 @@
     ".doed-pb[hidden] { display: none; }",
     ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
     ".tlf-kabel[hidden] { display: none; }",
+    ".tlf-kode { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; padding-top: 70px; color: #fff; background: rgba(15,12,25,.55); backdrop-filter: blur(26px) saturate(1.2); -webkit-backdrop-filter: blur(26px) saturate(1.2); animation: kdInd .2s ease-out; }",
+    "@keyframes kdInd { from { opacity: 0; } to { opacity: 1; } }",
+    ".tlf-kode .kd-titel { font-size: 17px; font-weight: 600; }",
+    ".tlf-kode .kd-under { min-height: 30px; font-size: 12px; opacity: .85; text-align: center; padding: 4px 24px 0; line-height: 1.3; }",
+    ".tlf-kode .kd-prikker { display: flex; gap: 14px; margin: 10px 0 26px; }",
+    ".tlf-kode .kd-prikker i { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #fff; box-sizing: border-box; transition: background .1s; }",
+    ".tlf-kode .kd-prikker i.fyldt { background: #fff; }",
+    ".tlf-kode .kd-prikker.ryst { animation: tlfVib .4s; }",
+    ".tlf-kode .kd-tal { display: grid; grid-template-columns: repeat(3, 66px); gap: 14px 20px; }",
+    ".tlf-kode .kd-tal button { width: 66px; height: 66px; border-radius: 50%; border: 0; background: rgba(255,255,255,.2); color: #fff; font: 400 28px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }",
+    ".tlf-kode .kd-tal button:hover { background: rgba(255,255,255,.28); } .tlf-kode .kd-tal button:active { background: rgba(255,255,255,.55); }",
+    ".tlf-kode .kd-tal button.slet { background: none; font-size: 22px; }",
+    ".tlf-kode .kd-bund { display: flex; justify-content: space-between; width: 230px; margin-top: 20px; }",
+    ".tlf-kode .kd-bund button { border: 0; background: none; color: #fff; font: 15px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }",
+    ".tlf-kode .kd-bund button[hidden] { visibility: hidden; display: inline; }",
+    "#ejer-indhold .tk-tabel { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }",
+    "#ejer-indhold .tk-tabel th, #ejer-indhold .tk-tabel td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(0,0,0,.1); }",
+    "#ejer-indhold .tk-kode { font-family: monospace; font-size: 16px; letter-spacing: 3px; font-weight: 700; }",
+    "#ejer-indhold .lv-knap.sikker { background: #c0392b; color: #fff; }",
     ".sp-stribe .sn-tal { display: none; }",
     ".sp-stribe .sp-braet { width: 100%; }",
     ".st-boks { width: 100%; }",
@@ -466,7 +485,9 @@
     ".ab-knapper button { border: 0; border-radius: 14px; padding: 5px 14px; background: rgba(47,111,224,.12); color: #2f6fe0; font: 700 12px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }",
     ".ab-knapper button.ab-slet { background: none; color: var(--t-rod); font-weight: 500; font-size: 10px; padding: 0; }",
     ".ab-knapper button.ab-slet.sikker { font-weight: 700; }",
-    ".ab-ring { width: 26px; height: 26px; border-radius: 50%; border: 3px solid rgba(47,111,224,.18); border-top-color: #2f6fe0; animation: abSpin .8s linear infinite; }",
+    ".ab-ring { position: relative; width: 30px; height: 30px; border-radius: 50%; background: conic-gradient(#2f6fe0 calc(var(--p, 0) * 1%), rgba(47,111,224,.16) 0); display: grid; place-items: center; }",
+    ".ab-ring::after { content: ''; width: 9px; height: 9px; border-radius: 2px; background: #2f6fe0; box-shadow: 0 0 0 8px var(--t-lys); }",
+    ".ab-pct { font-size: 10px; color: var(--t-graa); font-variant-numeric: tabular-nums; }",
     "@keyframes abSpin { to { transform: rotate(360deg); } }",
     ".ab-note { font-size: 11px; color: var(--t-graa); text-align: center; margin: 14px 6px 0; line-height: 1.4; }",
     ".sp-indhold { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 10px 26px; overflow-y: auto; scrollbar-width: none; background: #0e1015; color: #e9e9ee; }",
@@ -1721,7 +1742,7 @@
   let henter = {};
   function hentSpil(id) {
     if (harSpil(id) || henter[id]) return;
-    henter[id] = true;
+    henter[id] = { start: Date.now(), tid: 7000 + Math.random() * 4000 };   // 7–11 sekunder, som en rigtig download
     if (appNu === "butik") tegnButikListe();
     setTimeout(function () {
       delete henter[id];
@@ -1729,8 +1750,17 @@
       if (APPS[id].multi) stribeInstalleret(true);
       lille("⬇️ " + APPS[id].navn + " er hentet");
       if (appNu === "butik") tegnButikListe();
-    }, 1400);
+    }, henter[id].tid);
   }
+  function hentProcent(id) { const h = henter[id]; return h ? Math.min(100, Math.round((Date.now() - h.start) / h.tid * 100)) : 0; }
+  setInterval(function () {
+    if (appNu !== "butik" || !appEl) return;
+    Object.keys(henter).forEach(function (id) {
+      const r = appEl.querySelector("[data-abring='" + id + "']"), t = appEl.querySelector("[data-abpct='" + id + "']");
+      if (r) r.style.setProperty("--p", hentProcent(id));
+      if (t) t.textContent = hentProcent(id) + " %";
+    });
+  }, 150);
   function afinstaller(id) {
     if (!APPS[id] || !APPS[id].spil) { lille("Apps der fulgte med telefonen kan ikke slettes"); return; }
     ind.spil = mineSpil().filter(function (s) { return s !== id; });
@@ -1763,7 +1793,7 @@
         const A = APPS[id], har = harSpil(id), r = spilRekord(id);
         return "<div class='ab-kort'><span class='ab-ik' style='background:" + A.bg + "'>" + ik(A.ik) + "</span>" +
           "<span class='ab-info'><b>" + A.navn + "</b><small>" + A.tekst + "</small>" + (har && r != null ? "<i>🏆 Din rekord: " + r + "</i>" : "") + "</span>" +
-          "<span class='ab-knapper'>" + (henter[id] ? "<span class='ab-ring'></span>" : har ? "<button data-abaabn='" + id + "'>ÅBN</button><button class='ab-slet' data-abslet='" + id + "'>Afinstallér</button>" : "<button data-abhent='" + id + "'>HENT</button>") + "</span></div>";
+          "<span class='ab-knapper'>" + (henter[id] ? "<span class='ab-ring' data-abring='" + id + "' style='--p:" + hentProcent(id) + "'></span><span class='ab-pct' data-abpct='" + id + "'>" + hentProcent(id) + " %</span>" : har ? "<button data-abaabn='" + id + "'>ÅBN</button><button class='ab-slet' data-abslet='" + id + "'>Afinstallér</button>" : "<button data-abhent='" + id + "'>HENT</button>") + "</span></div>";
       }).join("") +
       "<p class='ab-note'>Apps der fulgte med telefonen kan ikke slettes. Hentede spil kan også slettes ved at holde musen nede på forsiden og trykke på −.</p>";
   }
@@ -3083,7 +3113,11 @@
       "<div class='tlf-gruppe-navn'>Lyd og lås</div>" +
       "<div class='tlf-gruppe'>" +
         "<div class='tlf-raekke'><span>🔔 Lyd ved nye beskeder</span><button class='tlf-kontakt" + (ind.lyd ? " til" : "") + "' data-slaa='lyd'></button></div>" +
-        "<div class='tlf-raekke'><span>🔒 Låseskærm når den åbnes</span><button class='tlf-kontakt" + (ind.laas ? " til" : "") + "' data-slaa='laas'></button></div>" +
+        (harKode() ? "<div class='tlf-raekke'><span>🔒 Låseskærm når den åbnes</span><small>Altid, når du har en kode</small></div>"
+          : "<div class='tlf-raekke'><span>🔒 Låseskærm når den åbnes</span><button class='tlf-kontakt" + (ind.laas ? " til" : "") + "' data-slaa='laas'></button></div>") +
+        (harKode() ? "<div class='tlf-raekke'><span>🔢 Telefonkode</span><small>●●●●●● · " + (skiftTilbage() === Infinity ? "ejer" : skiftTilbage() + " skift tilbage") + "</small>" +
+            (skiftTilbage() > 0 ? "<button class='lnk' data-kodeskift>Skift</button>" : "<small>Spørg ejeren</small>") + "</div>"
+          : "<div class='tlf-raekke'><span>🔢 Telefonkode (6 tal)</span><button class='lnk' data-kodeny>Lav kode</button></div>") +
         "<div class='tlf-raekke'><span>Lås telefonen nu</span><button class='lnk' data-laasnu>Lås</button></div>" +
       "</div>" +
       "<div class='tlf-gruppe-navn'>Om telefonen</div>" +
@@ -3104,6 +3138,8 @@
       const s = e.target.closest("[data-slaa]");
       if (s) { ind[s.dataset.slaa] = !ind[s.dataset.slaa]; gemInd(); s.classList.toggle("til", ind[s.dataset.slaa]); return; }
       if (e.target.closest("[data-laasnu]")) sideknap();
+      if (e.target.closest("[data-kodeny]")) { visKodeskaerm({ type: "ny", trin: "ny" }); return; }
+      if (e.target.closest("[data-kodeskift]")) { hentMinKode().then(function () { if (skiftTilbage() <= 0) { lille("Du har brugt dine 3 skift – spørg ejeren"); bevarScroll(tegnIndstillinger); return; } visKodeskaerm({ type: "skift", trin: "gammel" }); }); return; }
       if (e.target.closest("[data-fuld]")) { saetStroem(100); lille("⚡ Fuldt opladet"); bevarScroll(tegnIndstillinger); }
       if (e.target.closest("[data-pbbrug]")) { brugPowerbank(); bevarScroll(tegnIndstillinger); }
       if (e.target.closest("[data-pbkoeb]")) {
@@ -3259,6 +3295,214 @@
   // ---------------------------------------------------------------
   //  Åbn / luk
   // ---------------------------------------------------------------
+  // ---------------------------------------------------------------
+  //  🔢 Kode til telefonen (database-39-telefonkode.sql)
+  //  6 tal, laves i Indstillinger. Kan skiftes højst 3 gange (ejeren
+  //  kan give flere skift i Ejerpanelet og se koden, hvis man glemmer den).
+  //  Uden databasen gemmes koden kun på denne computer.
+  // ---------------------------------------------------------------
+  const KODE_MAKS_SKIFT = 3;
+  function kodeNoegle() { return "mit-hotel-telefon-kode-" + mig(); }
+  let kodeInfo = { har: false, skift: 0 };
+  try { kodeInfo = JSON.parse(localStorage.getItem(kodeNoegle()) || "null") || kodeInfo; } catch (e) {}
+  let kodeLokal = false;
+  function gemKodeInfo(i) { kodeInfo = i; try { localStorage.setItem(kodeNoegle(), JSON.stringify(i)); } catch (e) {} }
+  function harKode() { return !!(kodeInfo && kodeInfo.har && kodeInfo.kode); }
+  function kodeOnline() { return !kodeLokal && typeof serverKald === "function" && typeof SERVER !== "undefined" && SERVER.til && typeof mitToken === "function" && !!mitToken(); }
+  function kodeMangler(e) { return /function|schema cache|does not exist|Could not find/i.test(e && e.message || ""); }
+  function hentMinKode() {
+    if (!kodeOnline()) return Promise.resolve(kodeInfo);
+    return serverKald("hv_tlfkode_min", { p_token: mitToken() }).then(function (i) {
+      if (i && typeof i.har === "boolean") gemKodeInfo(i);
+      return kodeInfo;
+    }).catch(function (e) { if (kodeMangler(e)) kodeLokal = true; return kodeInfo; });
+  }
+  function gemNyKode(gammel, ny) {
+    if (kodeOnline()) {
+      return serverKald("hv_tlfkode_saet", { p_token: mitToken(), p_gammel: gammel, p_ny: ny }).then(function (i) { gemKodeInfo(i); return i; })
+        .catch(function (e) { if (kodeMangler(e)) { kodeLokal = true; return gemNyKode(gammel, ny); } throw e; });
+    }
+    if (harKode() && gammel !== kodeInfo.kode) return Promise.reject(new Error("Den nuværende kode er forkert."));
+    if (harKode() && kodeInfo.skift >= KODE_MAKS_SKIFT && !erEjer()) return Promise.reject(new Error("Du har brugt dine 3 skift. Spørg hotellets ejer om flere."));
+    gemKodeInfo({ har: true, kode: ny, skift: harKode() ? kodeInfo.skift + 1 : 0 });
+    return Promise.resolve(kodeInfo);
+  }
+  function skiftTilbage() { return erEjer() ? Infinity : Math.max(0, KODE_MAKS_SKIFT - (kodeInfo.skift || 0)); }
+  setTimeout(hentMinKode, 2500);
+
+  // Tastaturet (som på en rigtig telefon)
+  let kodeFlow = null;
+  function visKodeskaerm(flow) {
+    kodeFlow = flow;
+    kodeFlow.tal = "";
+    let el = skaerm.querySelector(".tlf-kode");
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "tlf-kode";
+      el.innerHTML = "<div class='kd-titel'></div><div class='kd-under'></div><div class='kd-prikker'>" + "<i></i>".repeat(6) + "</div>" +
+        "<div class='kd-tal'>" + ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].map(function (t) {
+          return t ? "<button data-kd='" + t + "'" + (t === "⌫" ? " class='slet'" : "") + ">" + t + "</button>" : "<span></span>";
+        }).join("") + "</div>" +
+        "<div class='kd-bund'><button data-kdannuller>Annullér</button><button data-kdglemt>Glemt kode?</button></div>";
+      skaerm.insertBefore(el, bannerEl);
+      el.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const k = e.target.closest("[data-kd]");
+        if (k) { kodeTast(k.dataset.kd); return; }
+        if (e.target.closest("[data-kdannuller]")) { lukKodeskaerm(); return; }
+        if (e.target.closest("[data-kdglemt]")) {
+          el.querySelector(".kd-under").textContent = "Skriv til hotellets ejer – ejeren kan se din kode i Ejerpanelet.";
+        }
+      });
+      el.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+    }
+    el.querySelector("[data-kdglemt]").hidden = flow.type === "ny";
+    kodeTrin();
+  }
+  function kodeTrin() {
+    const el = skaerm.querySelector(".tlf-kode");
+    if (!el || !kodeFlow) return;
+    const t = { laas: "Skriv kode", gammel: "Skriv din nuværende kode", ny: "Vælg en ny kode med 6 tal", igen: "Skriv den nye kode igen" }[kodeFlow.trin];
+    el.querySelector(".kd-titel").textContent = t;
+    el.querySelector(".kd-under").textContent = kodeFlow.besked || (kodeFlow.trin === "ny" && kodeFlow.type === "skift" ? (skiftTilbage() === Infinity ? "Du er ejer – du kan skifte så tit du vil" : "Du kan skifte koden " + skiftTilbage() + " gang" + (skiftTilbage() === 1 ? "" : "e") + " mere") : "");
+    kodeFlow.besked = "";
+    tegnPrikker();
+  }
+  function tegnPrikker() {
+    const el = skaerm.querySelector(".tlf-kode");
+    if (!el) return;
+    el.querySelectorAll(".kd-prikker i").forEach(function (p, i) { p.classList.toggle("fyldt", i < kodeFlow.tal.length); });
+  }
+  function kodeForkert(tekst) {
+    const el = skaerm.querySelector(".tlf-kode");
+    kodeFlow.tal = "";
+    kodeFlow.besked = tekst;
+    el.querySelector(".kd-prikker").classList.remove("ryst"); void el.offsetWidth; el.querySelector(".kd-prikker").classList.add("ryst");
+    kodeTrin();
+  }
+  function kodeTast(t) {
+    if (!kodeFlow || kodeFlow.travl) return;
+    if (t === "⌫") { kodeFlow.tal = kodeFlow.tal.slice(0, -1); tegnPrikker(); return; }
+    if (kodeFlow.tal.length >= 6) return;
+    kodeFlow.tal += t;
+    tegnPrikker();
+    if (kodeFlow.tal.length < 6) return;
+    const tal = kodeFlow.tal;
+    setTimeout(function () {
+      if (!kodeFlow) return;
+      if (kodeFlow.trin === "laas") {
+        if (tal === kodeInfo.kode) { const f = kodeFlow; lukKodeskaerm(); f.ok(); }
+        else kodeForkert("Forkert kode – prøv igen");
+      } else if (kodeFlow.trin === "gammel") {
+        if (tal === kodeInfo.kode) { kodeFlow.gammel = tal; kodeFlow.tal = ""; kodeFlow.trin = "ny"; kodeTrin(); }
+        else kodeForkert("Forkert kode – prøv igen");
+      } else if (kodeFlow.trin === "ny") {
+        kodeFlow.ny = tal; kodeFlow.tal = ""; kodeFlow.trin = "igen"; kodeTrin();
+      } else if (kodeFlow.trin === "igen") {
+        if (tal !== kodeFlow.ny) { kodeFlow.trin = "ny"; kodeForkert("Koderne var ikke ens – prøv igen"); return; }
+        kodeFlow.travl = true;
+        gemNyKode(kodeFlow.gammel || null, tal).then(function () {
+          const f = kodeFlow; lukKodeskaerm();
+          lille(f.type === "ny" ? "🔒 Din kode er lavet" : "🔒 Din kode er skiftet");
+          ind.laas = true; gemInd();
+          if (appNu === "indst") bevarScroll(tegnIndstillinger);
+        }).catch(function (e) { kodeFlow.travl = false; kodeFlow.trin = kodeFlow.type === "ny" ? "ny" : "gammel"; kodeForkert(e.message); });
+      }
+    }, 120);
+  }
+  function lukKodeskaerm() {
+    kodeFlow = null;
+    const el = skaerm.querySelector(".tlf-kode");
+    if (el) el.remove();
+  }
+  window.addEventListener("keydown", function (e) {
+    if (!kodeFlow || tlf.hidden) return;
+    if (/^[0-9]$/.test(e.key)) kodeTast(e.key);
+    else if (e.key === "Backspace") kodeTast("⌫");
+    else if (e.key === "Escape") lukKodeskaerm();
+    else return;
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+
+  // Låseskærmen kræver koden
+  const laasOpUdenKode = laasOp;
+  laasOp = function (til) {
+    if (!harKode()) { laasOpUdenKode(til); return; }
+    if (kodeFlow) return;
+    visKodeskaerm({ type: "laas", trin: "laas", ok: function () { laasOpUdenKode(til); } });
+  };
+  const laasUdenKode = laas;
+  laas = function () { if (kodeFlow && kodeFlow.type === "laas") lukKodeskaerm(); laasUdenKode(); };
+
+  // ----- 👑 Fanen i Ejerpanelet: alles telefonkoder -----
+  (function () {
+    const faner = document.getElementById("ejer-faner");
+    if (!faner || typeof visFane !== "function" || !erEjer()) return;
+    const knap = document.createElement("button");
+    knap.dataset.fane = "tlfkoder";
+    knap.textContent = "📱 Telefonkoder";
+    faner.appendChild(knap);
+    knap.addEventListener("click", function () { ejerFane = "tlfkoder"; visFane(); });
+    const visFaneFoerKoder = visFane;
+    visFane = function () {
+      visFaneFoerKoder.apply(this, arguments);
+      if (ejerFane === "tlfkoder") visTelefonkoder();
+    };
+    let soeg = "";
+    function lokaleKoder() {
+      const l = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.indexOf("mit-hotel-telefon-kode-") === 0) {
+          try { const v = JSON.parse(localStorage.getItem(k)); if (v && v.har) l.push({ navn: k.slice(23), kode: v.kode, skift: v.skift || 0 }); } catch (e) {}
+        }
+      }
+      return l;
+    }
+    function visTelefonkoder() {
+      const boks = document.getElementById("ejer-indhold");
+      boks.innerHTML = "<p class='ejer-info'>Henter telefonkoder …</p>";
+      const hent = kodeOnline() ? serverKald("hv_tlfkode_alle", { p_token: mitToken() }).then(function (l) { return { l: l || [] }; })
+        .catch(function (e) { return { l: lokaleKoder(), note: kodeMangler(e) ? "Koderne kommer fra alle spillere, når database-39-telefonkode.sql er kørt i Supabase. Lige nu ser du kun koder fra denne computer." : e.message }; })
+        : Promise.resolve({ l: lokaleKoder(), note: "Du ser kun koder fra denne computer." });
+      hent.then(function (r) {
+        if (ejerFane !== "tlfkoder") return;
+        const liste = r.l.filter(function (x) { return !soeg || x.navn.toLowerCase().indexOf(soeg) >= 0; });
+        boks.innerHTML = "<h3 style='margin:0 0 6px'>📱 Telefonkoder</h3>" +
+          "<p class='ejer-info'>Her kan du se alles 6-cifrede telefonkoder, hvis nogen glemmer deres. Hver spiller kan skifte koden " + KODE_MAKS_SKIFT + " gange – giv dem nye skift her.</p>" +
+          (r.note ? "<p class='ejer-info'>⚠️ " + esc(r.note) + "</p>" : "") +
+          "<label class='ejer-felt'>Søg efter spiller<input id='tk-soeg' type='text' value='" + esc(soeg) + "' placeholder='Navn …'></label>" +
+          (liste.length ? "<table class='tk-tabel'><tr><th>Spiller</th><th>Kode</th><th>Skift brugt</th><th></th></tr>" + liste.map(function (x) {
+            return "<tr><td><b>" + esc(x.navn) + "</b></td><td class='tk-kode'>" + esc(x.kode) + "</td><td>" + x.skift + " / " + KODE_MAKS_SKIFT + "</td>" +
+              "<td><button class='lv-knap' data-tkskift='" + esc(x.navn) + "'>🔁 Giv 3 nye skift</button> <button class='lv-knap' data-tkfjern='" + esc(x.navn) + "'>🗑 Fjern koden</button></td></tr>";
+          }).join("") + "</table>" : "<p class='ejer-info'>Ingen har lavet en telefonkode endnu.</p>");
+        const s = document.getElementById("tk-soeg");
+        s.addEventListener("input", function () { soeg = s.value.trim().toLowerCase(); const pos = s.selectionStart; visTelefonkoder(); setTimeout(function () { const n = document.getElementById("tk-soeg"); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 30); });
+        s.addEventListener("keydown", function (e) { e.stopPropagation(); });
+      });
+    }
+    document.addEventListener("click", function (e) {
+      const sk = e.target.closest && e.target.closest("[data-tkskift], [data-tkfjern]");
+      if (!sk || ejerFane !== "tlfkoder") return;
+      const navn = sk.dataset.tkskift || sk.dataset.tkfjern, hvad = sk.dataset.tkskift ? "skift" : "fjern";
+      if (hvad === "fjern" && !sk.classList.contains("sikker")) { sk.classList.add("sikker"); sk.textContent = "Er du sikker?"; return; }
+      const lokalt = function () {
+        const k = "mit-hotel-telefon-kode-" + navn;
+        try {
+          if (hvad === "fjern") localStorage.removeItem(k);
+          else { const v = JSON.parse(localStorage.getItem(k)); v.skift = 0; localStorage.setItem(k, JSON.stringify(v)); }
+        } catch (er) {}
+        if (navn === mig()) try { kodeInfo = JSON.parse(localStorage.getItem(kodeNoegle()) || "null") || { har: false, skift: 0 }; } catch (er) {}
+      };
+      const p = kodeOnline() ? serverKald("hv_tlfkode_ejer", { p_token: mitToken(), p_navn: navn, p_hvad: hvad }).then(lokalt).catch(function (er) { if (kodeMangler(er)) lokalt(); else throw er; }) : Promise.resolve(lokalt());
+      p.then(function () {
+        if (typeof adminSkriv === "function") try { adminSkriv("Telefonkode: " + navn + (hvad === "fjern" ? " fik fjernet sin kode" : " fik 3 nye skift")); } catch (er) {}
+        if (navn === mig()) hentMinKode();
+        visTelefonkoder();
+      }).catch(function (er) { alert(er.message); });
+    });
+  })();
+
   function aabnTelefon() {
     if (!tlf.hidden) return;
     hentInd();
@@ -3268,7 +3512,7 @@
     tlf.classList.remove("tlf-ind"); void tlf.offsetWidth; tlf.classList.add("tlf-ind");
     setTimeout(function () { tlf.classList.remove("tlf-ind"); placer(); }, 400);
     opdaterUr();
-    if (ind.laas) laas();
+    if (ind.laas || harKode()) laas();
     else if (skaermNu === "laas") laasOp();
     else opdaterAlt();
     const gl = document.getElementById("venner-vindue");
