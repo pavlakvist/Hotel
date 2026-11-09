@@ -428,3 +428,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/garderobe-ny.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 📱 Telefonen (js/telefon.js): venne-knappen i chatbaren åbner en mobiltelefon med apps, farver og baggrunde.
+(function () {
+  if (document.querySelector("script[src^='js/telefon.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/telefon.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
