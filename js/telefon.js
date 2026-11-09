@@ -399,6 +399,24 @@
     ".doed-pb[hidden] { display: none; }",
     ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
     ".tlf-kabel[hidden] { display: none; }",
+    ".tlf-status .st-batsvg { pointer-events: auto; cursor: pointer; }",
+    ".tlf-batmenu { position: absolute; z-index: 57; top: 44px; right: 12px; width: 206px; padding: 12px; border-radius: 22px; background: rgba(30,28,34,.82); color: var(--t-hvid); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); box-shadow: 0 8px 24px rgba(0,0,0,.35); transform-origin: 90% 0; animation: tlfBatInd .2s ease-out; font-size: 12px; }",
+    "@keyframes tlfBatInd { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }",
+    ".tlf-batmenu .bm-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }",
+    ".tlf-batmenu .bm-top b { font-size: 24px; } .tlf-batmenu .bm-top small { display: block; opacity: .75; font-size: 11px; }",
+    ".tlf-batmenu .bm-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.2); overflow: hidden; margin-bottom: 10px; } .tlf-batmenu .bm-bar i { display: block; height: 100%; border-radius: 4px; background: var(--t-on); }",
+    ".tlf-batmenu .bm-bar.lav i { background: var(--t-rod); }",
+    ".tlf-batmenu button { display: block; width: 100%; margin-top: 6px; border: 0; border-radius: 14px; padding: 8px 10px; font: 600 12px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; background: rgba(255,255,255,.16); color: var(--t-hvid); }",
+    ".tlf-batmenu button.groen { background: var(--t-on); } .tlf-batmenu button:disabled { opacity: .45; cursor: default; }",
+    ".tlf-batmenu .bm-info { opacity: .75; font-size: 11px; margin-top: 2px; }",
+    ".tlf-pb { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; z-index: -1; cursor: pointer; }",
+    ".tlf-pb[hidden] { display: none; }",
+    ".tlf-pb .stik { display: block; width: 18px; height: 22px; margin-top: -4px; border-radius: 3px 3px 5px 5px; background: linear-gradient(90deg, #d9d9de, #ffffff 45%, #c4c4ca); box-shadow: 0 2px 4px var(--t-skygge2); }",
+    ".tlf-pb .pb-ledning { display: block; width: 5px; height: 26px; margin: 0 auto; background: linear-gradient(90deg, #d4d4da, #ffffff 50%, #cfcfd5); }",
+    ".tlf-pb .pb-klods { position: absolute; left: 50%; top: 46px; width: 92px; height: 44px; margin-left: -46px; border-radius: 12px; background: linear-gradient(160deg, #3b3a42, #1d1c22); box-shadow: 0 4px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; gap: 7px; color: #fff; }",
+    ".tlf-pb .pb-klods b { color: #ffd60a; font-size: 15px; }",
+    ".tlf-pb .pb-led { display: flex; gap: 3px; } .tlf-pb .pb-led i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.18); } .tlf-pb .pb-led i.paa { background: #4cd964; box-shadow: 0 0 5px #4cd964; }",
+    ".tlf-pb .pb-pct { font-size: 10px; opacity: .8; }",
     ".tlf-kabel .stik { display: block; width: 18px; height: 22px; margin-top: -4px; border-radius: 3px 3px 5px 5px; background: linear-gradient(90deg, #d9d9de, #ffffff 45%, #c4c4ca); box-shadow: 0 2px 4px var(--t-skygge2); }",
     ".tlf-kabel .ledning { display: block; width: 6px; height: 400px; margin: 0 auto; border-radius: 3px; background: linear-gradient(90deg, #d4d4da, #ffffff 50%, #cfcfd5); box-shadow: 0 2px 4px var(--t-skygge3); }",
     ".tlf-w.w-batteri { background: var(--t-hvid); color: var(--t-tekst); backdrop-filter: none; align-items: center; justify-content: center; }",
@@ -629,7 +647,7 @@
           "<div class='tlf-status'><span class='st-kl'></span><span class='hoejre'>" +
             "<svg width='17' height='11' viewBox='0 0 17 11'><rect x='0' y='7' width='3' height='4' rx='1' fill='currentColor'/><rect x='4.5' y='5' width='3' height='6' rx='1' fill='currentColor'/><rect x='9' y='2.5' width='3' height='8.5' rx='1' fill='currentColor'/><rect x='13.5' y='0' width='3' height='11' rx='1' fill='currentColor'/></svg>" +
             "<svg width='15' height='11' viewBox='0 0 15 11'><path d='M7.5 2.2c2.2 0 4.2.8 5.7 2.2l1.2-1.3A9.9 9.9 0 0 0 7.5.4 9.9 9.9 0 0 0 .6 3.1l1.2 1.3a8.2 8.2 0 0 1 5.7-2.2zM7.5 5.6c1.3 0 2.5.5 3.4 1.3l1.2-1.3a6.7 6.7 0 0 0-9.2 0l1.2 1.3c.9-.8 2.1-1.3 3.4-1.3zM7.5 8.4l1.9 2-1.9 1-1.9-1z' fill='currentColor'/></svg>" +
-            "<svg width='35' height='13' viewBox='0 0 35 13'><rect x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor' opacity='.35'/><rect class='st-bat' x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor'/><path d='M26 4.5v4a2 2 0 0 0 0-4z' fill='currentColor' opacity='.45'/><text class='st-pct' x='12.5' y='10' text-anchor='middle' font-size='9.5' font-weight='700' font-family='Arial, sans-serif'></text><path class='st-lyn' d='M32 .8 28.2 7h2.6l-1.1 5.2 4-6.6h-2.7z' fill='currentColor' display='none'/></svg>" +
+            "<svg class='st-batsvg' width='35' height='13' viewBox='0 0 35 13'><title>Batteri</title><rect x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor' opacity='.35'/><rect class='st-bat' x='.5' y='.5' width='24' height='12' rx='3.6' fill='currentColor'/><path d='M26 4.5v4a2 2 0 0 0 0-4z' fill='currentColor' opacity='.45'/><text class='st-pct' x='12.5' y='10' text-anchor='middle' font-size='9.5' font-weight='700' font-family='Arial, sans-serif'></text><path class='st-lyn' d='M32 .8 28.2 7h2.6l-1.1 5.2 4-6.6h-2.7z' fill='currentColor' display='none'/></svg>" +
           "</span></div>" +
           "<div class='tlf-laas'>" +
             "<span class='hl'>" + ik("laas", 22) + "</span>" +
@@ -643,10 +661,11 @@
           "<div class='tlf-lille-besked'></div>" +
           "<div class='tlf-hjemlinje' title='Hjem'></div>" +
           "<div class='tlf-sluk'></div>" +
-          "<div class='tlf-doed' hidden><div class='doed-bat'><i></i></div><p>Telefonen er løbet tør for strøm</p><small>Sæt dig ved en oplader eller i caféen for at lade den op 🔌</small><button class='doed-pb' hidden>🔋 Brug powerbank</button></div>" +
+          "<div class='tlf-doed' hidden><div class='doed-bat'><i></i></div><p>Telefonen er løbet tør for strøm</p><small>Sæt dig ved en oplader eller i caféen for at lade den op 🔌</small><button class='doed-pb' hidden>🔋 Sæt powerbank til</button></div>" +
         "</div>" +
       "</div>" +
     "<div class='tlf-kabel' hidden><i class='stik'></i><i class='ledning'></i></div>" +
+    "<div class='tlf-pb' hidden title='Powerbank – klik for at tage den fra'><i class='stik'></i><i class='pb-ledning'></i><span class='pb-klods'><b>⚡</b><span class='pb-led'><i></i><i></i><i></i><i></i></span><small class='pb-pct'></small></span></div>" +
     "</div>";
   document.body.appendChild(tlf);
 
@@ -2345,7 +2364,7 @@
       "<div class='tlf-gruppe-navn'>Batteri</div>" +
       "<div class='tlf-gruppe'>" +
         "<div class='tlf-raekke'><span>🔋 Strøm</span><small>" + Math.round(ind.bat) + " %" + (laderNu() ? " · ⚡ oplader" : "") + "</small></div>" +
-        "<div class='tlf-raekke'><span>Powerbanks</span><small>" + (ind.powerbanks || 0) + " stk.</small>" + (ind.powerbanks ? "<button class='lnk' data-pbbrug>Brug</button>" : "") + "</div>" +
+        "<div class='tlf-raekke'><span>Powerbanks</span><small>" + (ind.powerbanks || 0) + " stk." + (ind.pbRest > 0 ? " · " + (ind.pbTil ? "sat til" : "brugt") + " " + ind.pbRest + " %" : "") + "</small>" + (ind.pbTil ? "<button class='lnk' data-pbbrug>Tag fra</button>" : harPowerbank() ? "<button class='lnk' data-pbbrug>Sæt til</button>" : "") + "</div>" +
         "<div class='tlf-raekke'><span>Køb powerbank (+" + PB_STROEM + " %)</span><button class='lnk' data-pbkoeb>" + PB_PRIS + " Glimt</button></div>" +
         "<div class='tlf-raekke'><small>Lad op: sæt dig ved en 🔌 Ladestation (købes i Shoppen) eller sæt dig i caféen.</small></div>" +
         (erEjer() ? "<div class='tlf-raekke'><span>👑 Fuld opladning</span><button class='lnk' data-fuld>Lad op</button></div>" : "") +
@@ -2608,7 +2627,10 @@
   }
   function iCafe() { try { return typeof iCafeen === "function" && iCafeen(); } catch (e) { return false; } }
   // Man lader, når man sidder ved siden af en Ladestation (eller står helt op ad den), eller sidder i caféen
-  function laderNu() { return (sidder() && (vedOplader(2) || iCafe())) || (!sidder() && vedOplader(1) && !(typeof figur !== "undefined" && figur.rute && figur.rute.length)); }
+  function laderVedVaeg() { return (sidder() && (vedOplader(2) || iCafe())) || (!sidder() && vedOplader(1) && !(typeof figur !== "undefined" && figur.rute && figur.rute.length)); }
+  // Powerbanken sidder i telefonen og lader, uanset hvor man er (den har PB_STROEM % i sig)
+  function laderPB() { return !!ind.pbTil && (ind.pbRest || 0) > 0 && !laderVedVaeg(); }
+  function laderNu() { return laderVedVaeg() || laderPB(); }
   function brugerMeget() {
     const k = document.getElementById("kamera"), yt = document.getElementById("youtube-vindue");
     const elev = document.getElementById("elevator"), tur = document.getElementById("elevator-tur");
@@ -2621,13 +2643,60 @@
     tjekTom();
     visBatteri();
   }
+  function harPowerbank() { return (ind.powerbanks || 0) > 0 || (ind.pbRest || 0) > 0; }
   function brugPowerbank() {
-    if (!ind.powerbanks) { lille("Du har ingen powerbank"); return; }
+    if (ind.pbTil) { tagPowerbankFra(); return; }
+    if (!harPowerbank()) { lille("Du har ingen powerbank – køb en i Indstillinger → Batteri"); return; }
     if (ind.bat >= 100) { lille("Telefonen er allerede fuld"); return; }
-    ind.powerbanks--;
-    saetStroem(ind.bat + PB_STROEM);
-    lille("🔋 +" + PB_STROEM + " % fra powerbanken");
+    if (!(ind.pbRest > 0)) { ind.powerbanks--; ind.pbRest = PB_STROEM; }
+    ind.pbTil = true;
+    gemInd();
+    visBatteri();
+    lille("🔌 Powerbanken er sat til");
+    if (appNu === "indst") bevarScroll(tegnIndstillinger);
+    tegnBatMenu();
   }
+  function tagPowerbankFra() {
+    ind.pbTil = false;
+    gemInd();
+    visBatteri();
+    lille((ind.pbRest > 0 ? "Powerbanken er taget fra (" + ind.pbRest + " % tilbage i den)" : "Powerbanken er taget fra"));
+    if (appNu === "indst") bevarScroll(tegnIndstillinger);
+    tegnBatMenu();
+  }
+  // Lille batteri-menu, når man klikker på batteriet øverst (virker overalt, også på låseskærmen)
+  function tegnBatMenu(aabn) {
+    let m = skaerm.querySelector(".tlf-batmenu");
+    if (!m && !aabn) return;
+    if (!m) { m = document.createElement("div"); m.className = "tlf-batmenu"; skaerm.insertBefore(m, bannerEl); }
+    const b = Math.round(Math.max(0, Math.min(100, ind.bat)));
+    const kilde = laderVedVaeg() ? "⚡ Lader ved en oplader" : laderPB() ? "⚡ Lader fra powerbank" : b <= 20 ? "Lavt batteri" : "Lader ikke";
+    const antal = (ind.powerbanks || 0) + (ind.pbRest > 0 && !ind.pbTil ? 1 : 0);
+    m.innerHTML = "<div class='bm-top'><span>🔋</span><span><b>" + b + " %</b><small>" + kilde + "</small></span></div>" +
+      "<div class='bm-bar" + (b <= 20 && !laderNu() ? " lav" : "") + "'><i style='width:" + b + "%'></i></div>" +
+      (ind.pbTil ? "<div class='bm-info'>Powerbank: " + (ind.pbRest || 0) + " % tilbage</div><button data-bmpb>Tag powerbanken fra</button>"
+        : "<div class='bm-info'>Du har " + antal + " powerbank" + (antal === 1 ? "" : "s") + (ind.pbRest > 0 ? " (en er brugt lidt: " + ind.pbRest + " %)" : "") + "</div>" +
+          "<button class='groen' data-bmpb" + (antal ? "" : " disabled") + ">🔌 Sæt powerbank til</button>") +
+      "<button data-bmkoeb>Køb powerbank · " + PB_PRIS + " Glimt</button>";
+  }
+  function lukBatMenu() { const m = skaerm.querySelector(".tlf-batmenu"); if (m) m.remove(); }
+  tlf.querySelector(".st-batsvg").addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (skaerm.querySelector(".tlf-batmenu")) lukBatMenu(); else tegnBatMenu(true);
+  });
+  skaerm.addEventListener("click", function (e) {
+    const m = skaerm.querySelector(".tlf-batmenu");
+    if (!m) return;
+    if (!m.contains(e.target)) { lukBatMenu(); return; }
+    e.stopPropagation();
+    if (e.target.closest("[data-bmpb]")) brugPowerbank();
+    if (e.target.closest("[data-bmkoeb]")) {
+      if (typeof brugGlimt === "function" && brugGlimt(PB_PRIS)) { ind.powerbanks = (ind.powerbanks || 0) + 1; gemInd(); lille("🔋 Du har købt en powerbank"); }
+      else lille("Du har ikke Glimt nok");
+      tegnBatMenu();
+    }
+  }, true);
+  tlf.querySelector(".tlf-pb").addEventListener("click", function (e) { e.stopPropagation(); tagPowerbankFra(); });
   let varslet = 100, varTom = ind.bat <= 0, sidstLader = false;
   function tjekTom() {
     const tom = ind.bat <= 0;
@@ -2647,13 +2716,18 @@
     const l = laasEl.querySelector(".lader");
     l.hidden = !lader;
     l.textContent = "⚡ Oplader · " + Math.round(b) + " %";
-    tlf.querySelector(".tlf-kabel").hidden = !lader;
+    tlf.querySelector(".tlf-kabel").hidden = !laderVedVaeg();
+    const pb = tlf.querySelector(".tlf-pb");
+    pb.hidden = !ind.pbTil;
+    const rest = ind.pbRest || 0;
+    pb.querySelectorAll(".pb-led i").forEach(function (l, i) { l.classList.toggle("paa", rest > i * PB_STROEM / 4); });
+    pb.querySelector(".pb-pct").textContent = rest + "%";
     const d = tlf.querySelector(".tlf-doed");
     d.hidden = b > 0;
     d.classList.toggle("lader", lader);
     d.querySelector("p").textContent = lader ? "⚡ Lader op …" : "Telefonen er løbet tør for strøm";
-    d.querySelector(".doed-pb").hidden = !ind.powerbanks;
-    d.querySelector(".doed-pb").textContent = "🔋 Brug powerbank (" + (ind.powerbanks || 0) + ")";
+    d.querySelector(".doed-pb").hidden = ind.pbTil || !harPowerbank();
+    d.querySelector(".doed-pb").textContent = "🔌 Sæt powerbank til";
   }
   tlf.querySelector(".doed-pb").addEventListener("click", function (e) { e.stopPropagation(); brugPowerbank(); });
   let tik = 0;
@@ -2661,7 +2735,15 @@
     tik++;
     const lader = laderNu();
     const foer = ind.bat;
-    if (lader) { if (tik % 3 === 0) ind.bat = Math.min(100, ind.bat + 1); }              // 1 % hvert 6. sekund = fuld på ca. 10 minutter
+    if (lader && laderPB()) {
+      // powerbanken lader lidt hurtigere end væggen: 1 % hvert 4. sekund
+      if (tik % 2 === 0 && ind.bat < 100) {
+        ind.bat = Math.min(100, ind.bat + 1);
+        ind.pbRest = Math.max(0, (ind.pbRest || 0) - 1);
+        if (ind.pbRest <= 0) { ind.pbTil = false; gemInd(); lille("🔋 Powerbanken er tom"); if (tlf.hidden && typeof besked !== "undefined" && besked) besked.textContent = "🔋 Din powerbank er tom"; }
+      }
+    }
+    else if (lader) { if (tik % 3 === 0) ind.bat = Math.min(100, ind.bat + 1); }              // 1 % hvert 6. sekund = fuld på ca. 10 minutter
     else if (!tlf.hidden && ind.bat > 0 && tik % (brugerMeget() ? 4 : 12) === 0) ind.bat = Math.max(0, ind.bat - 1);   // ca. 40 min (13 min med kamera/musik)
     else if (tlf.hidden && ind.bat > 0 && brugerMeget() && tik % 8 === 0) ind.bat = Math.max(0, ind.bat - 1);
     if (lader !== sidstLader) {
@@ -2679,11 +2761,11 @@
       if (ind.bat > 20) varslet = 100;
       tjekTom();
     }
-    if (!tlf.hidden) visBatteri();
+    if (!tlf.hidden) { visBatteri(); tegnBatMenu(); }
   }, 2000);
   function visBatteriBanner() {
     bannerEl.innerHTML = "<div class='tlf-notis'><span class='ai' style='background:linear-gradient(#ff8a80,#ff3b30)'>🔋</span><span class='nt'><b>Lavt batteri<small>nu</small></b><span>" +
-      ind.bat + " % tilbage. Find en oplader 🔌</span></span></div>";
+      ind.bat + " % tilbage. " + (harPowerbank() && !ind.pbTil ? "Tryk på batteriet øverst og sæt en powerbank til 🔌" : "Find en oplader 🔌") + "</span></span></div>";
     bannerEl.classList.add("vis");
     clearTimeout(visBanner.t);
     visBanner.t = setTimeout(skjulBanner, 4500);
