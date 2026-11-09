@@ -153,6 +153,10 @@
     lager: "<path d='M3 9.5 12 5l9 4.5v9.5L12 21.5 3 19z' fill='#fff'/><path d='M3 9.5 12 14l9-4.5M12 14v7.5' stroke='#b7864a' stroke-width='1.3' fill='none'/>",
     gear: "<circle cx='12' cy='12' r='7.6' fill='none' stroke='#fff' stroke-width='3.6' stroke-dasharray='2.6 2.37'/><circle cx='12' cy='12' r='5.6' fill='#fff'/><circle cx='12' cy='12' r='2.4' fill='#7d838d'/>",
     snake: "<path d='M5 18c0-3 3-3.5 6-3.5s6-.5 6-3.5-3-3.5-6-3.5' fill='none' stroke='#fff' stroke-width='3.4' stroke-linecap='round'/><circle cx='9.5' cy='7.5' r='2.6' fill='#fff'/><circle cx='9' cy='7' r='.8' fill='#1f8f5a'/><path d='M7 7.5H4.6' stroke='#ff5a5a' stroke-width='1' stroke-linecap='round'/>",
+    byg: "<path d='M13.5 4.5l6 6-2.2 2.2-6-6z' fill='#fff'/><path d='M11.8 8.4 4 16.2a1.6 1.6 0 0 0 2.3 2.3l7.8-7.8z' fill='#7a4a1c'/><path d='M12 3.5c2-1 4.5-.6 6 1l-1.6 1.6-3.4-.4z' fill='#fff'/>",
+    chatlog: "<path d='M6 4h10a2 2 0 0 1 2 2v12a2 2 0 0 0 2 2H8a2 2 0 0 1-2-2z' fill='#fff'/><path d='M9 8.5h6M9 11.5h6M9 14.5h4' stroke='#b08850' stroke-width='1.4'/>",
+    smiley: "<circle cx='12' cy='12' r='8.5' fill='#fff'/><circle cx='9' cy='10' r='1.3' fill='#c98a10'/><circle cx='15' cy='10' r='1.3' fill='#c98a10'/><path d='M8.3 13.6a4.2 4.2 0 0 0 7.4 0' fill='none' stroke='#c98a10' stroke-width='1.6' stroke-linecap='round'/>",
+    boble: "<path d='M4 6.5A3.5 3.5 0 0 1 7.5 3h9A3.5 3.5 0 0 1 20 6.5v5a3.5 3.5 0 0 1-3.5 3.5H11l-4.5 4v-4A3.5 3.5 0 0 1 4 11.5z' fill='#fff'/><circle cx='9' cy='9' r='1.6' fill='#ff6f9c'/><circle cx='12.5' cy='9' r='1.6' fill='#ffc23a'/><circle cx='16' cy='9' r='1.6' fill='#4fd06a'/>",
     tilbage: "<path d='M15 4 7 12l8 8' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>",
     send: "<path d='M12 19V6M6.5 11.5 12 6l5.5 5.5' fill='none' stroke='#fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>",
     laas: "<rect x='5' y='10.5' width='14' height='10.5' rx='2.4' fill='currentColor'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3' fill='none' stroke='currentColor' stroke-width='2.2'/>",
@@ -172,12 +176,16 @@
     kamera:    { navn: "Kamera",        ik: "kamera",  bg: "linear-gradient(#9aa0aa, #4c515a)" },
     fotos:     { navn: "Fotos",         ik: "fotos",   bg: "linear-gradient(#ffffff, #e7ebf1)", moerk: true },
     events:    { navn: "Events",        ik: null,      bg: "#fff" },
+    byg:       { navn: "Byg",           ik: "byg",     bg: "linear-gradient(#ffcf6b, #e08a1e)", knap: "byg-aabn" },
+    chatlog:   { navn: "Chatlog",       ik: "chatlog", bg: "linear-gradient(#f3e3c0, #c9a46a)", knap: "chat-log-knap" },
+    smileys:   { navn: "Smileys",       ik: "smiley",  bg: "linear-gradient(#ffe36b, #f5b821)", knap: "chat-smiley-knap" },
+    boble:     { navn: "Taleboble",     ik: "boble",   bg: "linear-gradient(#7fd3ff, #3a8fe0)", knap: "chat-farve-knap" },
     snake:     { navn: "Snake",         ik: "snake",   bg: "linear-gradient(#5fd38d, #1f8f5a)" },
     noter:     { navn: "Noter",         ik: "noter",   bg: "linear-gradient(#ffe57a, #f5c42c)" },
     lager:     { navn: "Mine ting",     ik: "lager",   bg: "linear-gradient(#d9a868, #9c6a32)" },
     indst:     { navn: "Indstillinger", ik: "gear",    bg: "linear-gradient(#a8aeb8, #6b717b)" },
   };
-  const GITTER = ["shop", "kamera", "fotos", "events", "noter", "lager", "snake"];
+  const GITTER = ["shop", "lager", "byg", "kamera", "fotos", "chatlog", "smileys", "boble", "events", "noter", "snake"];
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
   // ---------------------------------------------------------------
@@ -500,6 +508,8 @@
     "@keyframes tlfRing { 0%,100% { transform: rotate(0) } 15% { transform: rotate(-14deg) } 30% { transform: rotate(12deg) } 45% { transform: rotate(-9deg) } 60% { transform: rotate(6deg) } 75% { transform: rotate(-3deg) } }",
     // Den gamle venneliste og det gamle beskedvindue bruges ikke mere
     "#venner-vindue, #besked-vindue { display: none !important; }",
+    // Knapperne i chatbaren er flyttet ind i telefonen (Ejerpanel 🛡 og EJER-skiltet bliver)
+    "#chat-smiley-knap, #chat-farve-knap, #chat-nav-knap, #chat-shop-knap, #chat-lager-knap, #byg-aabn, #chat-kamera-knap, #chat-album-knap, #chat-log-knap { display: none !important; }",
   ].map(function (regel) {
     // alle regler får "#telefon" foran, så hotellets egne knap-regler ikke vinder
     if (regel.charAt(0) === "@" || regel.indexOf("#") === 0) return regel;
@@ -720,13 +730,55 @@
   function vennerListe() { return typeof venner !== "undefined" ? venner : []; }
   function anmodningerTilMig() { return typeof anmodninger !== "undefined" && anmodninger.tilMig ? anmodninger.tilMig : []; }
   function onlineOm(navn) { try { return typeof venOnline === "function" && venOnline(navn); } catch (e) { return false; } }
-  function stedFor(navn) {
-    if (typeof HAL_GAESTER !== "undefined" && HAL_GAESTER.some(function (g) { return g.navn === navn; })) return "Velkomsthallen";
+  // Hvilket rum er en ven i? (samme slags id som mitRumId: "hal", "cafe", "lej:hjem-ida", "Ida:mit" …)
+  function rumFor(navn) {
+    if (typeof HAL_GAESTER !== "undefined" && HAL_GAESTER.some(function (g) { return g.navn === navn; })) return "hal";
+    if (typeof ANDRE_SPILLERE !== "undefined" && ANDRE_SPILLERE[navn] && ANDRE_SPILLERE[navn].rumId) return ANDRE_SPILLERE[navn].rumId;
     if (typeof serverVenner !== "undefined") {
       const v = serverVenner.find(function (s) { return s.navn === navn; });
-      if (v && v.rum === "hal") return "Velkomsthallen";
+      if (v && v.rum) return v.rum;
     }
+    return null;
+  }
+  function herNu() { try { return typeof mitRumId === "function" ? mitRumId() : (rumValg === "hal" ? "hal" : aktivtVaerelse); } catch (e) { return null; } }
+  function lejMedId(id) {
+    try { return typeof lejligheder !== "undefined" && Array.isArray(lejligheder) ? lejligheder.find(function (x) { return x.id === id; }) || null : null; } catch (e) { return null; }
+  }
+  function rumNavnFor(id) {
+    if (!id) return "Online";
+    if (id === "hal") return "Velkomsthallen";
+    if (/^lej:/.test(id)) { const l = lejMedId(id.slice(4)); return l ? l.ejer + "s lejlighed" : "En lejlighed"; }
+    if (typeof INDBYGGEDE_RUM !== "undefined" && INDBYGGEDE_RUM[id] && INDBYGGEDE_RUM[id].navn) return INDBYGGEDE_RUM[id].navn;
+    if (typeof NAV_RUM !== "undefined") {
+      const r = NAV_RUM.find(function (x) { return x.vaerelse === id || x.id === id; });
+      if (r && r.navn) return String(r.navn).replace(/\s*[🔒🔑🔓]\s*$/u, "");
+    }
+    if (id.indexOf(":") > 0) return id.split(":")[0] + "s eget rum";
     return "Online";
+  }
+  function stedFor(navn) { return rumNavnFor(rumFor(navn)); }
+  // Kan man gå over til vennen?
+  function kanFoelge(navn) {
+    if (!onlineOm(navn)) return false;
+    const r = rumFor(navn);
+    return !!r && r !== herNu();
+  }
+  function foelgVen(navn) {
+    const r = rumFor(navn);
+    if (!r) { lille(navn + " er ikke online"); return; }
+    if (r === herNu()) { lille("Du er allerede her 🙂"); return; }
+    try {
+      if (r === "hal") skiftRum("hal");
+      else if (/^lej:/.test(r)) {
+        const l = lejMedId(r.slice(4));
+        if (!l || typeof gaaIndLej !== "function") { lille("Lejligheden kan ikke findes"); return; }
+        gaaIndLej(l);
+      }
+      else if (r.indexOf(":") > 0) { lille(r.split(":")[0] + " er i sit eget rum, som man ikke kan besøge"); return; }
+      else if (typeof gaaTilVaerelse === "function") gaaTilVaerelse(r);
+    } catch (e) { lille("Det gik ikke at komme derover"); return; }
+    lille("🚶 Du går over til " + navn);
+    setTimeout(opdaterAlt, 600);
   }
   function samtaler() {
     const navne = [];
@@ -1125,9 +1177,17 @@
         if (id === "lager") { if (typeof aabnLager === "function") { aabnLager(); return true; } return klik("chat-lager-knap"); }
         if (id === "kamera") return klik("chat-kamera-knap");
         if (id === "fotos") return klik("chat-album-knap") || klik("chat-lager-knap");
+        if (id === "byg") {
+          const b = document.getElementById("byg-aabn");
+          if (!b) return false;
+          if (b.hidden) { lille("🔨 Du kan kun bygge i dine egne rum"); return null; }
+          b.click(); return true;
+        }
+        if (APPS[id] && APPS[id].knap) return klik(APPS[id].knap);
       } catch (e) {}
       return false;
     })();
+    if (ok === null) return;
     lille(ok ? "Åbner " + APPS[id].navn + " …" : APPS[id].navn + " virker ikke lige nu");
   }
   function klik(id) {
@@ -1141,7 +1201,7 @@
   //  Apps inde i telefonen
   // ---------------------------------------------------------------
   function aabnApp(id, hvem) {
-    if (["rum", "shop", "lager", "kamera", "fotos"].indexOf(id) >= 0) { aabnUdeApp(id); return; }
+    if (["rum", "shop", "lager", "kamera", "fotos"].indexOf(id) >= 0 || (APPS[id] && APPS[id].knap)) { aabnUdeApp(id); return; }
     if (skaermNu === "laas") { laasOp({ app: id, hvem: hvem }); return; }
     lukApp(true);
     if (redigerer) { redigerer = false; galleriAabent = false; tegnGalleri(); }
@@ -1258,9 +1318,9 @@
         ul.innerHTML = liste.length ? liste.map(function (n) {
           const on = onlineOm(n);
           const sted = on ? stedFor(n) : "Offline";
-          const kanGaa = on && sted === "Velkomsthallen" && typeof rumValg !== "undefined" && rumValg !== "hal";
+          const kanGaa = kanFoelge(n);
           return "<li data-chat='" + esc(n) + "'>" + avatarHtml(n) + "<span class='info'><b>" + esc(n) + "</b><span class='" + (on ? "on" : "") + "'>" + esc(sted) + "</span></span>" +
-            (kanGaa ? "<button class='tlf-lk' data-gaa title='Gå derhen'>" + ik("gaa", 17) + "</button>" : "") +
+            (kanGaa ? "<button class='tlf-lk' data-gaa title='Følg " + esc(n) + "'>" + ik("gaa", 17) + "</button>" : "") +
             "<button class='tlf-lk' data-skriv title='Skriv'>" + ik("besked", 17).replace("fill='#fff'", "fill='currentColor'") + "</button>" +
             "<button class='tlf-lk rod' data-fjern title='Fjern ven'>" + ik("skrald", 17) + "</button></li>";
         }).join("") : "<li class='tlf-tom' style='cursor:default'><span><span class='st'>👫</span>" +
@@ -1292,7 +1352,7 @@
       return;
     }
     const navn = li.dataset.chat;
-    if (t.closest("[data-gaa]")) { if (typeof skiftRum === "function") skiftRum("hal"); lille("Du går til Velkomsthallen"); return; }
+    if (t.closest("[data-gaa]")) { foelgVen(navn); return; }
     const fj = t.closest("[data-fjern]");
     if (fj) {
       if (fj.classList.contains("sikker")) { if (typeof fjernVen === "function") fjernVen(navn); return; }
@@ -1318,10 +1378,13 @@
     const on = onlineOm(navn);
     appEl.innerHTML =
       "<div class='tlf-top'><button class='tlf-tb' data-tilbage='beskeder' title='Tilbage'>" + ik("tilbage", 20) + "</button>" +
-      "<span class='ti'>" + avatarHtml(navn, true) + "<b>" + (s.advarsel ? "⚠️ " : "") + esc(navn) + "</b><small>" + (on ? "🟢 " + esc(stedFor(navn)) : "Offline") + "</small></span><span class='tlf-tb'></span></div>" +
+      "<span class='ti'>" + avatarHtml(navn, true) + "<b>" + (s.advarsel ? "⚠️ " : "") + esc(navn) + "</b><small>" + (on ? "🟢 " + esc(stedFor(navn)) : "Offline") + "</small></span>" +
+      (kanFoelge(navn) ? "<button class='tlf-tb' data-foelg title='Følg " + esc(navn) + "'>" + ik("gaa", 20) + "</button>" : "<span class='tlf-tb'></span>") + "</div>" +
       "<div class='tlf-chat'></div>" +
       "<form class='tlf-skriv' autocomplete='off'><input maxlength='200' placeholder='Skriv en besked …'><button type='submit' disabled title='Send'>" + ik("send", 18) + "</button></form>";
     tegnAvatarer(appEl.querySelector(".tlf-top"));
+    const fk = appEl.querySelector("[data-foelg]");
+    if (fk) fk.addEventListener("click", function () { foelgVen(navn); });
     const form = appEl.querySelector("form"), inp = form.querySelector("input"), knap = form.querySelector("button");
     inp.addEventListener("input", function () { knap.disabled = !inp.value.trim(); });
     inp.addEventListener("keydown", function (e) { e.stopPropagation(); });   // så man ikke går rundt i rummet, mens man skriver
