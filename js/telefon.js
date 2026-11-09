@@ -288,6 +288,69 @@
     ".tlf-prikker i { width: 7px; height: 7px; border-radius: 50%; background: var(--t-hvid); opacity: .45; } .tlf-prikker i:first-child { opacity: 1; }",
     ".tlf-dock { position: absolute; left: 10px; right: 10px; bottom: 22px; padding: 12px 8px; border-radius: 32px; background: var(--t-dock); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); display: grid; grid-template-columns: repeat(4, 1fr); }",
     ".tlf-dock .tlf-app-ik span.nv { display: none; }",
+    // Widgets
+    ".tlf-hjem-rul { position: absolute; top: 50px; left: 0; right: 0; bottom: 132px; overflow-y: auto; overflow-x: hidden; padding: 4px 16px 10px; scrollbar-width: none; }",
+    ".tlf-hjem-rul::-webkit-scrollbar { display: none; }",
+    ".tlf-widgets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; grid-auto-flow: row dense; }",
+    ".tlf-widgets:empty { display: none; }",
+    ".tlf-w { position: relative; height: 122px; border-radius: 22px; padding: 12px 14px; box-sizing: border-box; overflow: visible; cursor: pointer; color: var(--t-hvid); background: var(--t-moerkglas); backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5); box-shadow: 0 4px 14px var(--t-skygge3); display: flex; flex-direction: column; transition: transform .15s; }",
+    ".tlf-w.bred { grid-column: span 2; }",
+    ".tlf-w .w1 { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .8; font-weight: 600; }",
+    ".tlf-w .w2 { font-size: 30px; font-weight: 600; margin: 2px 0; font-variant-numeric: tabular-nums; line-height: 1.1; }",
+    ".tlf-w .w2 small { font-size: 15px; opacity: .7; }",
+    ".tlf-w .w3 { font-size: 12px; opacity: .9; display: flex; justify-content: space-between; gap: 6px; margin-top: auto; overflow: hidden; }",
+    ".tlf-w .w3.lo { flex-direction: column; gap: 1px; } .tlf-w .w3 span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".tlf-w.w-ur, .tlf-w.w-kalender, .tlf-w.w-beskeder { background: var(--t-hvid); color: var(--t-tekst); backdrop-filter: none; }",
+    ".tlf-w.w-ur.lille { padding: 8px; align-items: center; justify-content: center; }",
+    ".w-ur { width: 100%; height: 100%; color: var(--t-tekst); }",
+    ".tlf-w.bred .w-ur { width: 98px; height: 98px; flex: none; }",
+    ".w-raekke { display: flex; align-items: center; gap: 14px; height: 100%; min-width: 0; }",
+    ".w-raekke .w3 { opacity: .6; }",
+    ".w-kal { display: flex; flex-direction: column; flex: none; }",
+    ".w-kal i { font-style: normal; color: var(--t-rod); font-weight: 600; font-size: 13px; text-transform: capitalize; }",
+    ".w-kal b { font-size: 48px; font-weight: 300; line-height: 1; } .w-kal small { color: var(--t-graa); font-size: 12px; }",
+    ".w-ev { flex: 1; min-width: 0; border-left: 3px solid var(--t-acc); padding-left: 10px; }",
+    ".w-ev small { color: var(--t-graa); font-size: 11px; text-transform: uppercase; } .w-ev b { display: block; font-size: 14px; } .w-ev span { display: block; font-size: 12px; color: var(--t-graa); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".tlf-w.w-penge { background: linear-gradient(145deg, #f7dc8a, #c9952f); color: #4a3008; backdrop-filter: none; }",
+    ".w-penge { display: flex; flex-direction: column; gap: 4px; margin-top: auto; } .w-penge.bred { flex-direction: row; gap: 18px; }",
+    ".w-penge span { display: flex; align-items: center; gap: 6px; } .w-penge img { width: 20px; height: 20px; image-rendering: pixelated; }",
+    ".w-penge b { font-size: 20px; font-variant-numeric: tabular-nums; } .w-penge small { font-size: 11px; opacity: .8; }",
+    ".w-av { display: flex; gap: 4px; margin-top: auto; align-items: center; } .w-av .tlf-av { box-shadow: 0 0 0 2px var(--t-hvid); }",
+    ".w-top { display: flex; align-items: center; gap: 7px; } .w-top svg { width: 26px; height: 26px; padding: 4px; border-radius: 8px; background: linear-gradient(#6ee67e, #22b43c); box-sizing: border-box; } .w-top b { font-size: 14px; }",
+    ".w-besked { margin-top: auto; font-size: 12.5px; min-width: 0; } .w-besked b { display: block; } .w-besked span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--t-graa); }",
+    ".tlf-w.w-beskeder .w3 { color: var(--t-graa); }",
+    ".tlf-w.w-events { background: linear-gradient(145deg, #7a4bd6, #2d1a6b); backdrop-filter: none; }",
+    ".w-tit { display: block; font-size: 16px; margin-top: 6px; line-height: 1.2; overflow: hidden; max-height: 40px; }",
+    ".tlf-w.w-noter { background: linear-gradient(#fff7c7, #ffe98a); color: #4a3a08; backdrop-filter: none; }",
+    ".w-note { margin-top: 6px; font-size: 13px; line-height: 1.35; white-space: pre-wrap; overflow: hidden; flex: 1; } .w-note i { opacity: .55; }",
+    // Rediger (vrikke-tilstand)
+    ".tlf-hjem.rediger .tlf-w, .tlf-hjem.rediger .tlf-app-ik .fl { animation: tlfVrik .28s ease-in-out infinite alternate; }",
+    ".tlf-hjem.rediger .tlf-w:nth-child(2n), .tlf-hjem.rediger .tlf-app-ik:nth-child(2n) .fl { animation-delay: -.14s; }",
+    "@keyframes tlfVrik { from { rotate: -1.2deg } to { rotate: 1.2deg } }",
+    ".tlf-w.traekkes { animation: none !important; z-index: 5; box-shadow: 0 14px 30px var(--t-skygge); opacity: .92; transition: none; }",
+    ".tlf-w.maal { outline: 3px dashed var(--t-hvid); outline-offset: 2px; }",
+    ".w-fjern { position: absolute; top: -7px; left: -7px; width: 24px; height: 24px; border-radius: 50%; border: 0; padding: 0; background: var(--t-glas2); color: var(--t-tekst); font-size: 20px; line-height: 22px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px var(--t-skygge2); z-index: 3; }",
+    ".tlf-redbar { position: absolute; top: 46px; left: 14px; right: 14px; z-index: 5; display: flex; justify-content: space-between; }",
+    ".tlf-redbar button { border: 0; border-radius: 16px; padding: 5px 13px; font-family: inherit; font-weight: 600; font-size: 13px; cursor: pointer; background: var(--t-glas2); color: var(--t-tekst); box-shadow: 0 2px 8px var(--t-skygge2); }",
+    ".tlf-hjem.rediger .tlf-hjem-rul { top: 80px; }",
+    // Galleriet med widgets
+    ".tlf-ark { position: absolute; inset: 0; z-index: 45; background: rgba(0,0,0,.0); transition: background .3s; }",
+    ".tlf-ark.vis { background: var(--t-moerkglas); }",
+    ".ark-inde { position: absolute; left: 0; right: 0; bottom: 0; top: 70px; border-radius: 26px 26px 0 0; background: var(--t-lys); display: flex; flex-direction: column; transform: translateY(100%); transition: transform .32s cubic-bezier(.2,.9,.3,1); }",
+    ".tlf-ark.vis .ark-inde { transform: translateY(0); }",
+    ".ark-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px 8px; } .ark-top b { font-size: 17px; }",
+    ".ark-top .lnk { border: 0; background: none; color: var(--t-acc); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; padding: 0; }",
+    ".ark-fuld { margin: 0 18px 6px; font-size: 12px; color: var(--t-rod); }",
+    ".ark-liste { flex: 1; overflow-y: auto; padding: 4px 14px 30px; scrollbar-width: none; }",
+    ".ark-liste::-webkit-scrollbar { display: none; }",
+    ".ark-w { display: flex; gap: 12px; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 16px; background: var(--t-hvid); }",
+    ".ark-vis { flex: none; width: 92px; height: 92px; position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, var(--t-k2), var(--t-k3)); }",
+    ".ark-vis .tlf-w { position: absolute; left: 0; top: 0; width: 122px; height: 122px; transform: scale(.754); transform-origin: 0 0; cursor: default; pointer-events: none; }",
+    ".ark-vis .tlf-w.bred { width: 256px; transform: scale(.36); top: 24px; }",
+    ".ark-info { flex: 1; min-width: 0; } .ark-info b { display: block; font-size: 14px; } .ark-info small { display: block; color: var(--t-graa); font-size: 12px; margin: 2px 0 6px; }",
+    ".ark-info span { display: flex; gap: 6px; flex-wrap: wrap; }",
+    ".ark-info button { border: 0; border-radius: 13px; padding: 4px 10px; font-family: inherit; font-weight: 600; font-size: 12px; background: var(--t-acc); color: var(--t-hvid); cursor: pointer; }",
+    ".ark-info button:disabled { background: var(--t-felt2); cursor: default; }",
     // Hjemme-linjen nederst
     ".tlf-hjemlinje { position: absolute; z-index: 58; bottom: 7px; left: 50%; width: 120px; height: 5px; margin-left: -60px; border-radius: 3px; background: var(--t-hvid); cursor: pointer; opacity: .9; }",
     ".tlf-hjemlinje.moerk { background: var(--t-tekst); }",
@@ -634,8 +697,10 @@
     tlf.querySelector(".st-kl").textContent = kl().replace(".", ":");
     laasEl.querySelector(".tid").textContent = kl().replace(".", ":");
     laasEl.querySelector(".dag").textContent = dato(nu).charAt(0).toUpperCase() + dato(nu).slice(1);
-    const w = hjemEl.querySelector(".w2");
-    if (w) w.textContent = kl().replace(".", ":");
+    hjemEl.querySelectorAll("[data-w-kl]").forEach(function (w) { w.textContent = kl().replace(".", ":"); });
+    const t = nu.getHours() % 12 + nu.getMinutes() / 60, m = nu.getMinutes() + nu.getSeconds() / 60;
+    skaerm.querySelectorAll(".w-ur .vt").forEach(function (v) { v.setAttribute("transform", "rotate(" + (t * 30) + " 50 50)"); });
+    skaerm.querySelectorAll(".w-ur .vm").forEach(function (v) { v.setAttribute("transform", "rotate(" + (m * 6) + " 50 50)"); });
     const kal = hjemEl.querySelector(".tlf-kal");
     if (kal) kal.innerHTML = "<i>" + DAGE[nu.getDay()].slice(0, 3) + "</i><b>" + nu.getDate() + "</b>";
     // batteriet går langsomt ned i løbet af dagen 🔋
@@ -673,6 +738,7 @@
   }
   function laas() {
     lukApp(true);
+    redigerer = false; galleriAabent = false; tegnGalleri();
     skaermNu = "laas";
     hjemEl.classList.add("bag");
     laasEl.classList.remove("vaek");
@@ -723,21 +789,228 @@
     return "<button class='tlf-app-ik' data-app='" + id + "'><span class='fl' style='background:" + A.bg + "'>" + indre + "</span>" +
       (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
   }
-  function tegnHjem() {
-    const online = document.getElementById("online-tal");
-    const rum = typeof rumNavnNu === "function" ? (function () { try { return rumNavnNu(); } catch (e) { return ""; } })() : "";
-    hjemEl.innerHTML =
-      "<div class='tlf-widget'><div class='w1'>Hello Vera</div><div class='w2'></div>" +
-      "<div class='w3'><span>" + esc(rum ? "📍 " + rum : dato()) + "</span><span>" + esc(online ? online.textContent.trim().slice(0, 18) : "") + "</span></div></div>" +
-      "<div class='tlf-gitter'>" + GITTER.map(appIkon).join("") + "</div>" +
-      "<div class='tlf-prikker'><i></i><i></i></div>" +
-      "<div class='tlf-dock'>" + DOCK.map(appIkon).join("") + "</div>";
+  // ---------------------------------------------------------------
+  //  Widgets på hjemmeskærmen — man vælger selv, hvilke og hvor
+  //  Hold musen nede på hjemmeskærmen (eller Indstillinger → Widgets)
+  //  for at tilføje, fjerne og flytte dem.
+  // ---------------------------------------------------------------
+  const WIDGETS = {
+    hotel:    { navn: "Hotellet",      tekst: "Ur, rum og hvor mange der er online", str: ["bred", "lille"] },
+    ur:       { navn: "Ur",            tekst: "Et rigtigt ur med visere",            str: ["lille", "bred"] },
+    kalender: { navn: "Kalender",      tekst: "Dagens dato og næste event",          str: ["lille", "bred"], app: "events" },
+    penge:    { navn: "Glimt & Stella", tekst: "Hvor mange penge du har",            str: ["lille", "bred"] },
+    venner:   { navn: "Venner online", tekst: "Hvem af dine venner er online",       str: ["bred", "lille"], app: "kontakter" },
+    beskeder: { navn: "Beskeder",      tekst: "Ulæste beskeder",                     str: ["lille", "bred"], app: "beskeder" },
+    events:   { navn: "Events",        tekst: "Den nyeste nyhed fra hotellet",       str: ["bred", "lille"], app: "events" },
+    noter:    { navn: "Noter",         tekst: "Din note på hjemmeskærmen",           str: ["lille", "bred"], app: "noter" },
+  };
+  const MAKS_WIDGETS = 8;
+  function mineWidgets() {
+    if (!Array.isArray(ind.widgets)) ind.widgets = [{ id: "hotel", str: "bred" }];
+    ind.widgets = ind.widgets.filter(function (w) { return w && WIDGETS[w.id]; });
+    return ind.widgets;
+  }
+  let redigerer = false;      // widgets vrikker og kan flyttes
+  let galleriAabent = false;
+
+  function tal(id) { const el = document.getElementById(id); return el ? el.textContent.trim() : "0"; }
+  function rumNu() { try { return typeof rumNavnNu === "function" ? rumNavnNu() : ""; } catch (e) { return ""; } }
+  function onlineVenner() { return vennerListe().filter(onlineOm); }
+  function nyesteNyhed() {
+    const l = (typeof nyheder !== "undefined" && Array.isArray(nyheder) ? nyheder : []).filter(function (n) { return n && (n.titel || n.tekst); });
+    return l.sort(function (a, b) { return (b.tid || 0) - (a.tid || 0); })[0] || null;
+  }
+  function viser(nu) {
+    // analogt ur som SVG
+    const t = nu.getHours() % 12 + nu.getMinutes() / 60, m = nu.getMinutes() + nu.getSeconds() / 60;
+    let streger = "";
+    for (let i = 0; i < 12; i++) {
+      const v = i * 30 * Math.PI / 180, l = i % 3 === 0 ? 9 : 5;
+      streger += "<line x1='" + (50 + Math.sin(v) * 44).toFixed(1) + "' y1='" + (50 - Math.cos(v) * 44).toFixed(1) + "' x2='" + (50 + Math.sin(v) * (44 - l)).toFixed(1) + "' y2='" + (50 - Math.cos(v) * (44 - l)).toFixed(1) + "' stroke='currentColor' stroke-width='" + (i % 3 === 0 ? 2.6 : 1.4) + "' stroke-linecap='round'/>";
+    }
+    [12, 3, 6, 9].forEach(function (n, i) {
+      const v = i * 90 * Math.PI / 180;
+      streger += "<text x='" + (50 + Math.sin(v) * 27).toFixed(1) + "' y='" + (50 - Math.cos(v) * 27 + 4.5).toFixed(1) + "' font-size='13' font-weight='600' text-anchor='middle' fill='currentColor'>" + n + "</text>";
+    });
+    return "<svg class='w-ur' viewBox='0 0 100 100'>" + streger +
+      "<line class='vt' x1='50' y1='50' x2='50' y2='26' stroke='currentColor' stroke-width='4' stroke-linecap='round' transform='rotate(" + (t * 30) + " 50 50)'/>" +
+      "<line class='vm' x1='50' y1='50' x2='50' y2='14' stroke='currentColor' stroke-width='3' stroke-linecap='round' transform='rotate(" + (m * 6) + " 50 50)'/>" +
+      "<circle cx='50' cy='50' r='3.6' fill='var(--t-acc)'/></svg>";
+  }
+
+  function widgetIndhold(w) {
+    const nu = new Date(), bred = w.str === "bred";
+    if (w.id === "hotel") {
+      return "<div class='w1'>Hello Vera</div><div class='w2' data-w-kl></div>" +
+        (bred ? "<div class='w3'><span>📍 " + esc(rumNu() || "Hotellet") + "</span><span>🟢 " + esc(tal("online-tal").replace(/\D+/g, " ").trim().split(" ")[0] || "0") + " online</span></div>"
+              : "<div class='w3 lo'><span>📍 " + esc(rumNu() || "Hotellet") + "</span><span>🟢 " + esc(tal("online-tal").replace(/\D+/g, " ").trim().split(" ")[0] || "0") + " online</span></div>");
+    }
+    if (w.id === "ur") {
+      return bred ? "<div class='w-raekke'>" + viser(nu) + "<div><div class='w2' data-w-kl></div><div class='w3'>" + esc(dato(nu)) + "</div></div></div>" : viser(nu);
+    }
+    if (w.id === "kalender") {
+      const n = nyesteNyhed();
+      const kort = "<div class='w-kal'><i>" + DAGE[nu.getDay()] + "</i><b>" + nu.getDate() + "</b><small>" + MDR[nu.getMonth()] + "</small></div>";
+      return bred ? "<div class='w-raekke'>" + kort + "<div class='w-ev'><small>Næste</small><b>" + esc(n ? n.titel || "Nyhed" : "Ingen events") + "</b>" + (n && n.tekst ? "<span>" + esc(n.tekst) + "</span>" : "") + "</div></div>" : kort;
+    }
+    if (w.id === "penge") {
+      return "<div class='w1'>Min pung</div><div class='w-penge" + (bred ? " bred" : "") + "'><span><img src='billeder/glimt.png' alt=''><b>" + esc(tal("glimt-tal")) + "</b><small>Glimt</small></span>" +
+        "<span><img src='billeder/krystal.png' alt=''><b>" + esc(tal("krystal-tal")) + "</b><small>Stella</small></span></div>";
+    }
+    if (w.id === "venner") {
+      const on = onlineVenner();
+      return "<div class='w1'>Venner online</div><div class='w2'>" + on.length + "<small> / " + vennerListe().length + "</small></div>" +
+        "<div class='w-av'>" + (on.length ? on.slice(0, bred ? 6 : 3).map(function (n) { return avatarHtml(n, true); }).join("") : "<span class='w3'>Ingen lige nu</span>") + "</div>";
+    }
+    if (w.id === "beskeder") {
+      const ul = ulaestIalt(), s = samtaler()[0];
+      const l = s ? beskeder[s].linjer[beskeder[s].linjer.length - 1] : null;
+      return "<div class='w-top'>" + ik("besked", 20) + "<b>" + (ul ? ul + " ulæst" + (ul === 1 ? "" : "e") : "Beskeder") + "</b></div>" +
+        (l ? "<div class='w-besked'><b>" + esc(s) + "</b><span>" + esc(l.tekst) + "</span></div>" : "<div class='w3'>Ingen beskeder endnu</div>");
+    }
+    if (w.id === "events") {
+      const n = nyesteNyhed();
+      return "<div class='w1'>🎉 Events</div>" + (n ? "<b class='w-tit'>" + esc(n.titel || "Nyhed") + "</b><div class='w3'>" + esc(n.tekst || "") + "</div>" : "<b class='w-tit'>Ingen events lige nu</b><div class='w3'>Kig forbi senere</div>");
+    }
+    if (w.id === "noter") {
+      return "<div class='w1'>📝 Note</div><div class='w-note'>" + (noter.trim() ? esc(noter.trim().slice(0, 160)) : "<i>Tryk for at skrive en note …</i>") + "</div>";
+    }
+    return "";
+  }
+  function widgetHtml(w, i) {
+    return "<div class='tlf-w w-" + w.id + " " + w.str + "' data-wi='" + i + "'>" + widgetIndhold(w) +
+      (redigerer && i >= 0 ? "<button class='w-fjern' data-wfjern='" + i + "' title='Fjern'>−</button>" : "") + "</div>";
+  }
+  function tegnWidgets() {
+    const boks = hjemEl.querySelector(".tlf-widgets");
+    if (!boks) return;
+    boks.innerHTML = mineWidgets().map(widgetHtml).join("");
+    tegnAvatarer(boks);
     opdaterUr();
   }
+
+  // Galleriet, hvor man vælger nye widgets
+  function tegnGalleri() {
+    let ark = skaerm.querySelector(".tlf-ark");
+    if (!galleriAabent) { if (ark) { ark.classList.remove("vis"); setTimeout(function () { if (!galleriAabent && ark.isConnected) ark.remove(); }, 300); } return; }
+    if (!ark) {
+      ark = document.createElement("div");
+      ark.className = "tlf-ark";
+      skaerm.insertBefore(ark, bannerEl);
+      setTimeout(function () { ark.classList.add("vis"); }, 10);
+    }
+    const fuld = mineWidgets().length >= MAKS_WIDGETS;
+    ark.innerHTML = "<div class='ark-inde'><div class='ark-top'><b>Tilføj widget</b><button class='lnk' data-arkluk>Luk</button></div>" +
+      (fuld ? "<p class='ark-fuld'>Du har " + MAKS_WIDGETS + " widgets. Fjern en for at tilføje en ny.</p>" : "") +
+      "<div class='ark-liste'>" + Object.keys(WIDGETS).map(function (id) {
+        const W = WIDGETS[id];
+        return "<div class='ark-w'><div class='ark-vis'>" + widgetHtml({ id: id, str: W.str[0] }, -1).replace("data-wi='-1'", "") + "</div>" +
+          "<div class='ark-info'><b>" + W.navn + "</b><small>" + W.tekst + "</small><span>" + W.str.map(function (s) {
+            return "<button data-wny='" + id + "' data-wstr='" + s + "'" + (fuld ? " disabled" : "") + ">＋ " + (s === "lille" ? "Lille" : "Bred") + "</button>";
+          }).join("") + "</span></div></div>";
+      }).join("") + "</div></div>";
+    tegnAvatarer(ark);
+    opdaterUr();
+  }
+
+  function startRediger() {
+    if (redigerer) return;
+    redigerer = true;
+    tegnHjem();
+  }
+  function stopRediger() {
+    redigerer = false;
+    galleriAabent = false;
+    tegnGalleri();
+    tegnHjem();
+  }
+
+  function tegnHjem() {
+    hjemEl.classList.toggle("rediger", redigerer);
+    hjemEl.innerHTML =
+      (redigerer ? "<div class='tlf-redbar'><button data-wtilf>＋ Widget</button><button data-wfaerdig>Færdig</button></div>" : "") +
+      "<div class='tlf-hjem-rul'><div class='tlf-widgets'></div>" +
+      "<div class='tlf-gitter'>" + GITTER.map(appIkon).join("") + "</div></div>" +
+      "<div class='tlf-prikker'><i></i><i></i></div>" +
+      "<div class='tlf-dock'>" + DOCK.map(appIkon).join("") + "</div>";
+    tegnWidgets();
+  }
+  let undgaaKlik = 0;     // klikket lige efter et langt tryk eller et træk tæller ikke
   hjemEl.addEventListener("click", function (e) {
-    const k = e.target.closest("[data-app]");
-    if (k) aabnApp(k.dataset.app);
+    if (Date.now() < undgaaKlik) return;
+    const t = e.target;
+    if (t.closest("[data-wtilf]")) { galleriAabent = true; tegnGalleri(); return; }
+    if (t.closest("[data-wfaerdig]")) { stopRediger(); return; }
+    const fj = t.closest("[data-wfjern]");
+    if (fj) { mineWidgets().splice(+fj.dataset.wfjern, 1); gemInd(); tegnWidgets(); return; }
+    if (redigerer) { if (!t.closest(".tlf-w, .tlf-app-ik")) stopRediger(); return; }
+    const k = t.closest("[data-app]");
+    if (k) { aabnApp(k.dataset.app); return; }
+    const wEl = t.closest("[data-wi]");
+    if (wEl) {
+      const w = mineWidgets()[+wEl.dataset.wi];
+      if (w && WIDGETS[w.id].app) aabnApp(WIDGETS[w.id].app);
+      else if (w && w.id === "penge" && typeof aabnShop === "function") aabnUdeApp("shop");
+      else if (w && w.id === "hotel") aabnUdeApp("rum");
+    }
   });
+  // Galleriet: tilføj eller luk
+  skaerm.addEventListener("click", function (e) {
+    const ny = e.target.closest("[data-wny]");
+    if (ny) {
+      if (mineWidgets().length < MAKS_WIDGETS) { mineWidgets().push({ id: ny.dataset.wny, str: ny.dataset.wstr }); gemInd(); }
+      galleriAabent = false; tegnGalleri(); tegnWidgets();
+      lille("Widget tilføjet ✨");
+      return;
+    }
+    if (e.target.closest("[data-arkluk]") || e.target.classList.contains("tlf-ark")) { galleriAabent = false; tegnGalleri(); }
+  });
+
+  // Hold musen nede = rediger. I rediger kan widgets trækkes til en ny plads.
+  let holdTimer = null, holdStart = null, wTraek = null;
+  hjemEl.addEventListener("pointerdown", function (e) {
+    if (e.button !== 0 || e.target.closest(".tlf-redbar, .w-fjern")) return;
+    holdStart = { x: e.clientX, y: e.clientY };
+    const wEl = e.target.closest("[data-wi]");
+    if (redigerer && wEl) {
+      wTraek = { el: wEl, fra: +wEl.dataset.wi, x: e.clientX, y: e.clientY, til: null, flyttet: false };
+      wEl.setPointerCapture && wEl.setPointerCapture(e.pointerId);
+      e.preventDefault();
+      return;
+    }
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(function () { holdTimer = null; undgaaKlik = Date.now() + 350; startRediger(); }, 550);
+  });
+  hjemEl.addEventListener("pointermove", function (e) {
+    if (holdTimer && holdStart && Math.abs(e.clientX - holdStart.x) + Math.abs(e.clientY - holdStart.y) > 8) { clearTimeout(holdTimer); holdTimer = null; }
+    if (!wTraek) return;
+    const s = skala();
+    const dx = (e.clientX - wTraek.x) / s, dy = (e.clientY - wTraek.y) / s;
+    if (Math.abs(dx) + Math.abs(dy) > 4) wTraek.flyttet = true;
+    wTraek.el.classList.add("traekkes");
+    wTraek.el.style.transform = "translate(" + dx + "px," + dy + "px) scale(1.05)";
+    wTraek.el.style.pointerEvents = "none";
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const maal = under && under.closest && under.closest("#telefon [data-wi]");
+    hjemEl.querySelectorAll(".tlf-w.maal").forEach(function (m) { m.classList.remove("maal"); });
+    wTraek.til = maal && maal !== wTraek.el ? +maal.dataset.wi : null;
+    if (maal && maal !== wTraek.el) maal.classList.add("maal");
+  });
+  function slutHold() {
+    clearTimeout(holdTimer); holdTimer = null;
+    if (!wTraek) return;
+    const t = wTraek; wTraek = null;
+    if (t.flyttet) undgaaKlik = Date.now() + 350;
+    if (t.til !== null) {
+      const liste = mineWidgets();
+      const w = liste.splice(t.fra, 1)[0];
+      liste.splice(t.til, 0, w);
+      gemInd();
+    }
+    tegnWidgets();
+  }
+  hjemEl.addEventListener("pointerup", slutHold);
+  hjemEl.addEventListener("pointercancel", slutHold);
   hjemLinje.addEventListener("click", function () {
     if (skaermNu === "app") lukApp();
     else if (skaermNu === "laas") laasOp();
@@ -775,6 +1048,7 @@
     if (["rum", "shop", "lager", "kamera", "fotos"].indexOf(id) >= 0) { aabnUdeApp(id); return; }
     if (skaermNu === "laas") { laasOp({ app: id, hvem: hvem }); return; }
     lukApp(true);
+    if (redigerer) { redigerer = false; galleriAabent = false; tegnGalleri(); }
     skaermNu = "app";
     appNu = id;
     soegTekst = "";
@@ -1023,6 +1297,11 @@
       (ind.eget ? "<button data-bg='eget' class='" + (ind.baggrund === "eget" ? "valgt" : "") + "' style='background-image:url(\"" + ind.eget + "\")'><span>Mit billede</span></button>" : "") +
       "<button class='eget' data-upload title='Brug dit eget billede'>＋</button>" +
       "</div></div>" +
+      "<div class='tlf-gruppe-navn'>Widgets på hjemmeskærmen</div>" +
+      "<div class='tlf-gruppe'>" +
+        "<div class='tlf-raekke'><span>Du har " + mineWidgets().length + " widget" + (mineWidgets().length === 1 ? "" : "s") + "</span><button class='lnk' data-wred>Rediger</button></div>" +
+        "<div class='tlf-raekke'><small>Tip: hold musen nede på hjemmeskærmen for at tilføje, fjerne og flytte widgets.</small></div>" +
+      "</div>" +
       "<div class='tlf-gruppe-navn'>Lyd og lås</div>" +
       "<div class='tlf-gruppe'>" +
         "<div class='tlf-raekke'><span>🔔 Lyd ved nye beskeder</span><button class='tlf-kontakt" + (ind.lyd ? " til" : "") + "' data-slaa='lyd'></button></div>" +
@@ -1047,6 +1326,7 @@
       const s = e.target.closest("[data-slaa]");
       if (s) { ind[s.dataset.slaa] = !ind[s.dataset.slaa]; gemInd(); s.classList.toggle("til", ind[s.dataset.slaa]); return; }
       if (e.target.closest("[data-laasnu]")) sideknap();
+      if (e.target.closest("[data-wred]")) { lukApp(); redigerer = true; galleriAabent = true; tegnHjem(); tegnGalleri(); }
     });
     inp.addEventListener("change", function () {
       const fil = inp.files && inp.files[0];
@@ -1147,7 +1427,7 @@
   function opdaterAlt() {
     if (tlf.hidden) return;
     if (skaermNu === "laas") laasNotiser();
-    else if (skaermNu === "hjem") tegnHjem();
+    else if (skaermNu === "hjem" && !wTraek) { if (galleriAabent) return; redigerer ? tegnWidgets() : tegnHjem(); }
     else if (chatMed) opdaterChat();
     else if (appNu === "beskeder" || appNu === "kontakter") opdaterListe();
   }
@@ -1231,12 +1511,15 @@
 
   window.addEventListener("keydown", function (e) {
     if (e.key !== "Escape" || tlf.hidden) return;
-    if (skaermNu === "app") lukApp(); else lukTelefon();
+    if (galleriAabent) { galleriAabent = false; tegnGalleri(); }
+    else if (redigerer) stopRediger();
+    else if (skaermNu === "app") lukApp(); else lukTelefon();
   });
   // tastatur i telefonens felter må ikke styre spillet
   tlf.addEventListener("keydown", function (e) { if (e.target.matches("input, textarea") && e.key !== "Escape") e.stopPropagation(); });
 
   setInterval(function () { if (!tlf.hidden) opdaterUr(); }, 10000);
+  setInterval(function () { if (!tlf.hidden && skaermNu === "hjem" && !wTraek && !galleriAabent) tegnWidgets(); }, 5000);
   saetFarver();
   opdaterUr();
 })();
