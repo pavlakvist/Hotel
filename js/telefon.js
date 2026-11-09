@@ -399,6 +399,7 @@
     ".doed-pb[hidden] { display: none; }",
     ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
     ".tlf-kabel[hidden] { display: none; }",
+    ".tlf-laas .tlf-pb-knap { font-size: 20px; line-height: 1; }",
     ".tlf-status .st-batsvg { pointer-events: auto; cursor: pointer; }",
     ".tlf-batmenu { position: absolute; z-index: 57; top: 44px; right: 12px; width: 206px; padding: 12px; border-radius: 22px; background: rgba(30,28,34,.82); color: var(--t-hvid); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); box-shadow: 0 8px 24px rgba(0,0,0,.35); transform-origin: 90% 0; animation: tlfBatInd .2s ease-out; font-size: 12px; }",
     "@keyframes tlfBatInd { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }",
@@ -654,7 +655,7 @@
             "<div class='tid'></div><div class='dag'></div><div class='lader' hidden></div>" +
             "<div class='notis'></div>" +
             "<div class='stryg'>Stryg op eller klik for at låse op</div>" +
-            "<div class='bund'><button class='tlf-rund' data-l='lygte' title='Lommelygte'>" + ik("lygte", 20) + "</button><button class='tlf-rund' data-l='kamera' title='Kamera'>" + ik("kamera", 22) + "</button></div>" +
+            "<div class='bund'><button class='tlf-rund' data-l='lygte' title='Lommelygte'>" + ik("lygte", 20) + "</button><button class='tlf-rund tlf-pb-knap' data-l='pb' title='Powerbank'>🔋</button><button class='tlf-rund' data-l='kamera' title='Kamera'>" + ik("kamera", 22) + "</button></div>" +
           "</div>" +
           "<div class='tlf-hjem bag'></div>" +
           "<div class='tlf-banner'></div>" +
@@ -1024,6 +1025,8 @@
     lille(this.classList.contains("taendt") ? "🔦 Lommelygte tændt" : "Lommelygte slukket");
   });
   laasEl.querySelector("[data-l='kamera']").addEventListener("click", function () { aabnUdeApp("kamera"); });
+  laasEl.querySelector("[data-l='pb']").addEventListener("click", function (e) { e.stopPropagation(); tegnBatMenu(true); });
+  laasEl.querySelector("[data-l='pb']").addEventListener("pointerdown", function (e) { e.stopPropagation(); });
 
   // ---------------------------------------------------------------
   //  Hjemmeskærmen
@@ -1128,7 +1131,7 @@
       const ring = "<svg class='w-ring' viewBox='0 0 76 76'><circle cx='38' cy='38' r='" + r + "' fill='none' stroke='var(--t-felt)' stroke-width='7'/>" +
         "<circle cx='38' cy='38' r='" + r + "' fill='none' stroke='" + farve + "' stroke-width='7' stroke-linecap='round' stroke-dasharray='" + (om * b / 100).toFixed(1) + " " + om.toFixed(1) + "' transform='rotate(-90 38 38)'/>" +
         "<text x='38' y='44' text-anchor='middle' font-size='17' font-weight='700' fill='currentColor'>" + (laderNu() ? "⚡" : "") + b + "</text></svg>";
-      return w.str === "bred" ? ring + "<div class='w-bat-tekst'><b>" + b + " %</b><small>" + (laderNu() ? "⚡ Oplader" : b <= 20 ? "Lavt batteri – find en oplader" : "🔋 " + (ind.powerbanks || 0) + " powerbank" + (ind.powerbanks === 1 ? "" : "s")) + "</small></div>" : ring;
+      return w.str === "bred" ? ring + "<div class='w-bat-tekst'><b>" + b + " %</b><small>" + (laderNu() ? "⚡ Oplader" : ind.pbTil ? "🔋 Powerbank sat til" : b <= 20 ? "Lavt – tryk her for powerbank" : "🔋 " + (ind.powerbanks || 0) + " powerbank" + (ind.powerbanks === 1 ? "" : "s")) + "</small></div>" : ring;
     }
     if (w.id === "noter") {
       return "<div class='w1'>📝 Note</div><div class='w-note'>" + (noter.trim() ? esc(noter.trim().slice(0, 160)) : "<i>Tryk for at skrive en note …</i>") + "</div>";
@@ -1393,7 +1396,8 @@
     const wEl = t.closest("[data-wi]");
     if (wEl) {
       const w = mineWidgets()[+wEl.dataset.wi];
-      if (w && WIDGETS[w.id].app) aabnApp(WIDGETS[w.id].app);
+      if (w && w.id === "batteri") tegnBatMenu(true);
+      else if (w && WIDGETS[w.id].app) aabnApp(WIDGETS[w.id].app);
       else if (w && w.id === "penge" && typeof aabnShop === "function") aabnUdeApp("shop");
       else if (w && w.id === "hotel") aabnUdeApp("rum");
     }
@@ -2647,7 +2651,6 @@
   function brugPowerbank() {
     if (ind.pbTil) { tagPowerbankFra(); return; }
     if (!harPowerbank()) { lille("Du har ingen powerbank – køb en i Indstillinger → Batteri"); return; }
-    if (ind.bat >= 100) { lille("Telefonen er allerede fuld"); return; }
     if (!(ind.pbRest > 0)) { ind.powerbanks--; ind.pbRest = PB_STROEM; }
     ind.pbTil = true;
     gemInd();
