@@ -1131,7 +1131,7 @@
       const ring = "<svg class='w-ring' viewBox='0 0 76 76'><circle cx='38' cy='38' r='" + r + "' fill='none' stroke='var(--t-felt)' stroke-width='7'/>" +
         "<circle cx='38' cy='38' r='" + r + "' fill='none' stroke='" + farve + "' stroke-width='7' stroke-linecap='round' stroke-dasharray='" + (om * b / 100).toFixed(1) + " " + om.toFixed(1) + "' transform='rotate(-90 38 38)'/>" +
         "<text x='38' y='44' text-anchor='middle' font-size='17' font-weight='700' fill='currentColor'>" + (laderNu() ? "⚡" : "") + b + "</text></svg>";
-      return w.str === "bred" ? ring + "<div class='w-bat-tekst'><b>" + b + " %</b><small>" + (laderNu() ? "⚡ Oplader" : ind.pbTil ? "🔋 Powerbank sat til" : b <= 20 ? "Lavt – tryk her for powerbank" : "🔋 " + (ind.powerbanks || 0) + " powerbank" + (ind.powerbanks === 1 ? "" : "s")) + "</small></div>" : ring;
+      return w.str === "bred" ? ring + "<div class='w-bat-tekst'><b>" + b + " %</b><small>" + (laderNu() ? "⚡ Oplader" : ind.pbTil ? "🔋 Powerbank sat til" : b <= 20 ? (harPowerbank() ? "Lavt – tryk her for powerbank" : "Lavt batteri – find en oplader") : harPowerbank() ? "🔋 Du har en powerbank" : "Ingen powerbank") + "</small></div>" : ring;
     }
     if (w.id === "noter") {
       return "<div class='w1'>📝 Note</div><div class='w-note'>" + (noter.trim() ? esc(noter.trim().slice(0, 160)) : "<i>Tryk for at skrive en note …</i>") + "</div>";
@@ -2368,8 +2368,8 @@
       "<div class='tlf-gruppe-navn'>Batteri</div>" +
       "<div class='tlf-gruppe'>" +
         "<div class='tlf-raekke'><span>🔋 Strøm</span><small>" + Math.round(ind.bat) + " %" + (laderNu() ? " · ⚡ oplader" : "") + "</small></div>" +
-        "<div class='tlf-raekke'><span>Powerbanks</span><small>" + (ind.powerbanks || 0) + " stk." + (ind.pbRest > 0 ? " · " + (ind.pbTil ? "sat til" : "brugt") + " " + ind.pbRest + " %" : "") + "</small>" + (ind.pbTil ? "<button class='lnk' data-pbbrug>Tag fra</button>" : harPowerbank() ? "<button class='lnk' data-pbbrug>Sæt til</button>" : "") + "</div>" +
-        "<div class='tlf-raekke'><span>Køb powerbank (+" + PB_STROEM + " %)</span><button class='lnk' data-pbkoeb>" + PB_PRIS + " Glimt</button></div>" +
+        (harPowerbank() ? "<div class='tlf-raekke'><span>Powerbank</span><small>" + (ind.pbTil ? "sat til ⚡" : "løber aldrig tør") + "</small><button class='lnk' data-pbbrug>" + (ind.pbTil ? "Tag fra" : "Sæt til") + "</button></div>"
+          : "<div class='tlf-raekke'><span>Køb powerbank (løber aldrig tør)</span><button class='lnk' data-pbkoeb>" + PB_PRIS + " Glimt</button></div>") +
         "<div class='tlf-raekke'><small>Lad op: sæt dig ved en 🔌 Ladestation (købes i Shoppen) eller sæt dig i caféen.</small></div>" +
         (erEjer() ? "<div class='tlf-raekke'><span>👑 Fuld opladning</span><button class='lnk' data-fuld>Lad op</button></div>" : "") +
       "</div>" +
@@ -2400,7 +2400,8 @@
       if (e.target.closest("[data-fuld]")) { saetStroem(100); lille("⚡ Fuldt opladet"); bevarScroll(tegnIndstillinger); }
       if (e.target.closest("[data-pbbrug]")) { brugPowerbank(); bevarScroll(tegnIndstillinger); }
       if (e.target.closest("[data-pbkoeb]")) {
-        if (typeof brugGlimt === "function" && brugGlimt(PB_PRIS)) { ind.powerbanks = (ind.powerbanks || 0) + 1; gemInd(); lille("🔋 Du har købt en powerbank"); }
+        if (harPowerbank()) lille("Du har allerede en powerbank");
+        else if (typeof brugGlimt === "function" && brugGlimt(PB_PRIS)) { ind.powerbanks = 1; gemInd(); lille("🔋 Du har købt en powerbank"); }
         else lille("Du har ikke " + PB_PRIS + " Glimt");
         bevarScroll(tegnIndstillinger);
       }
@@ -2613,7 +2614,7 @@
   //  🔋 Batteri: falder, mens telefonen er tændt (hurtigere med kamera
   //  eller musik), og lader op ved en Ladestation eller i caféen.
   // ---------------------------------------------------------------
-  const PB_PRIS = 40, PB_STROEM = 50;
+  const PB_PRIS = 40;
   function erEjer() {
     const liste = typeof EJER_NAVNE !== "undefined" ? EJER_NAVNE : (typeof EJERE !== "undefined" ? EJERE : []);
     return liste.indexOf(mig()) >= 0;
@@ -2632,8 +2633,8 @@
   function iCafe() { try { return typeof iCafeen === "function" && iCafeen(); } catch (e) { return false; } }
   // Man lader, når man sidder ved siden af en Ladestation (eller står helt op ad den), eller sidder i caféen
   function laderVedVaeg() { return (sidder() && (vedOplader(2) || iCafe())) || (!sidder() && vedOplader(1) && !(typeof figur !== "undefined" && figur.rute && figur.rute.length)); }
-  // Powerbanken sidder i telefonen og lader, uanset hvor man er (den har PB_STROEM % i sig)
-  function laderPB() { return !!ind.pbTil && (ind.pbRest || 0) > 0 && !laderVedVaeg(); }
+  // Powerbanken sidder i telefonen og lader, uanset hvor man er. Den løber aldrig tør, så man skal kun købe én.
+  function laderPB() { return !!ind.pbTil && harPowerbank() && !laderVedVaeg(); }
   function laderNu() { return laderVedVaeg() || laderPB(); }
   function brugerMeget() {
     const k = document.getElementById("kamera"), yt = document.getElementById("youtube-vindue");
@@ -2647,11 +2648,10 @@
     tjekTom();
     visBatteri();
   }
-  function harPowerbank() { return (ind.powerbanks || 0) > 0 || (ind.pbRest || 0) > 0; }
+  function harPowerbank() { return (ind.powerbanks || 0) > 0 || (ind.pbRest || 0) > 0 || !!ind.pbTil; }
   function brugPowerbank() {
     if (ind.pbTil) { tagPowerbankFra(); return; }
     if (!harPowerbank()) { lille("Du har ingen powerbank – køb en i Indstillinger → Batteri"); return; }
-    if (!(ind.pbRest > 0)) { ind.powerbanks--; ind.pbRest = PB_STROEM; }
     ind.pbTil = true;
     gemInd();
     visBatteri();
@@ -2663,7 +2663,7 @@
     ind.pbTil = false;
     gemInd();
     visBatteri();
-    lille((ind.pbRest > 0 ? "Powerbanken er taget fra (" + ind.pbRest + " % tilbage i den)" : "Powerbanken er taget fra"));
+    lille("Powerbanken er taget fra");
     if (appNu === "indst") bevarScroll(tegnIndstillinger);
     tegnBatMenu();
   }
@@ -2674,13 +2674,11 @@
     if (!m) { m = document.createElement("div"); m.className = "tlf-batmenu"; skaerm.insertBefore(m, bannerEl); }
     const b = Math.round(Math.max(0, Math.min(100, ind.bat)));
     const kilde = laderVedVaeg() ? "⚡ Lader ved en oplader" : laderPB() ? "⚡ Lader fra powerbank" : b <= 20 ? "Lavt batteri" : "Lader ikke";
-    const antal = (ind.powerbanks || 0) + (ind.pbRest > 0 && !ind.pbTil ? 1 : 0);
     m.innerHTML = "<div class='bm-top'><span>🔋</span><span><b>" + b + " %</b><small>" + kilde + "</small></span></div>" +
       "<div class='bm-bar" + (b <= 20 && !laderNu() ? " lav" : "") + "'><i style='width:" + b + "%'></i></div>" +
-      (ind.pbTil ? "<div class='bm-info'>Powerbank: " + (ind.pbRest || 0) + " % tilbage</div><button data-bmpb>Tag powerbanken fra</button>"
-        : "<div class='bm-info'>Du har " + antal + " powerbank" + (antal === 1 ? "" : "s") + (ind.pbRest > 0 ? " (en er brugt lidt: " + ind.pbRest + " %)" : "") + "</div>" +
-          "<button class='groen' data-bmpb" + (antal ? "" : " disabled") + ">🔌 Sæt powerbank til</button>") +
-      "<button data-bmkoeb>Køb powerbank · " + PB_PRIS + " Glimt</button>";
+      (ind.pbTil ? "<div class='bm-info'>Powerbanken er sat til ⚡</div><button data-bmpb>Tag powerbanken fra</button>"
+        : harPowerbank() ? "<div class='bm-info'>Din powerbank løber aldrig tør</div><button class='groen' data-bmpb>🔌 Sæt powerbank til</button>"
+        : "<div class='bm-info'>Du har ingen powerbank endnu. Den løber aldrig tør, så du skal kun købe én.</div><button class='groen' data-bmkoeb>Køb powerbank · " + PB_PRIS + " Glimt</button>");
   }
   function lukBatMenu() { const m = skaerm.querySelector(".tlf-batmenu"); if (m) m.remove(); }
   tlf.querySelector(".st-batsvg").addEventListener("click", function (e) {
@@ -2694,7 +2692,8 @@
     e.stopPropagation();
     if (e.target.closest("[data-bmpb]")) brugPowerbank();
     if (e.target.closest("[data-bmkoeb]")) {
-      if (typeof brugGlimt === "function" && brugGlimt(PB_PRIS)) { ind.powerbanks = (ind.powerbanks || 0) + 1; gemInd(); lille("🔋 Du har købt en powerbank"); }
+      if (harPowerbank()) lille("Du har allerede en powerbank");
+      else if (typeof brugGlimt === "function" && brugGlimt(PB_PRIS)) { ind.powerbanks = 1; gemInd(); lille("🔋 Du har købt en powerbank"); }
       else lille("Du har ikke Glimt nok");
       tegnBatMenu();
     }
@@ -2722,9 +2721,8 @@
     tlf.querySelector(".tlf-kabel").hidden = !laderVedVaeg();
     const pb = tlf.querySelector(".tlf-pb");
     pb.hidden = !ind.pbTil;
-    const rest = ind.pbRest || 0;
-    pb.querySelectorAll(".pb-led i").forEach(function (l, i) { l.classList.toggle("paa", rest > i * PB_STROEM / 4); });
-    pb.querySelector(".pb-pct").textContent = rest + "%";
+    pb.querySelectorAll(".pb-led i").forEach(function (l) { l.classList.add("paa"); });
+    pb.querySelector(".pb-pct").textContent = "";
     const d = tlf.querySelector(".tlf-doed");
     d.hidden = b > 0;
     d.classList.toggle("lader", lader);
@@ -2742,8 +2740,6 @@
       // powerbanken lader lidt hurtigere end væggen: 1 % hvert 4. sekund
       if (tik % 2 === 0 && ind.bat < 100) {
         ind.bat = Math.min(100, ind.bat + 1);
-        ind.pbRest = Math.max(0, (ind.pbRest || 0) - 1);
-        if (ind.pbRest <= 0) { ind.pbTil = false; gemInd(); lille("🔋 Powerbanken er tom"); if (tlf.hidden && typeof besked !== "undefined" && besked) besked.textContent = "🔋 Din powerbank er tom"; }
       }
     }
     else if (lader) { if (tik % 3 === 0) ind.bat = Math.min(100, ind.bat + 1); }              // 1 % hvert 6. sekund = fuld på ca. 10 minutter
