@@ -413,6 +413,19 @@
     ".doed-pb[hidden] { display: none; }",
     ".tlf-kabel { position: absolute; left: 50%; top: 100%; margin-left: -9px; width: 18px; pointer-events: none; z-index: -1; }",
     ".tlf-kabel[hidden] { display: none; }",
+    ".tlf-farver button .acc-som { font-size: 13px; }",
+    ".ab-faner { display: flex; gap: 4px; padding: 3px; border-radius: 12px; background: var(--t-felt); margin-bottom: 10px; }",
+    ".ab-faner button { flex: 1; border: 0; border-radius: 9px; padding: 6px 4px; background: none; color: var(--t-tekst); font: 600 12px -apple-system, 'Segoe UI', sans-serif; cursor: pointer; }",
+    ".ab-faner button.valgt { background: var(--t-hvid); box-shadow: 0 1px 3px rgba(0,0,0,.15); }",
+    ".ab-lille { font-size: 12px; color: var(--t-graa); margin: 0 2px 6px; }",
+    ".ab-fejl { font-size: 12px; background: #fff3d6; color: #7a5600; border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }",
+    ".ab-nr { flex: none; width: 18px; text-align: center; font-weight: 700; color: var(--t-graa); } .ab-nr.top { color: #e0a000; }",
+    ".ab-tal { display: flex; justify-content: space-around; background: var(--t-hvid); border-radius: 14px; padding: 10px 6px; text-align: center; font-size: 11px; color: var(--t-graa); }",
+    ".ab-tal b { display: block; font-size: 20px; color: var(--t-tekst); }",
+    ".ab-laast { font-size: 16px; opacity: .55; }",
+    ".ab-ik .tlf-kal { width: 52px; height: 52px; border-radius: 13px; background: #fff; }",
+    "#lommelygte-lys { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity .35s; }",
+    "#lommelygte-lys.til { opacity: 1; }",
     ".tlf-status .st-5g { font-size: 12px; font-weight: 700; letter-spacing: -.2px; line-height: 1; }",
     ".tlf-kode { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; padding-top: 70px; color: #fff; background: rgba(15,12,25,.55); backdrop-filter: blur(26px) saturate(1.2); -webkit-backdrop-filter: blur(26px) saturate(1.2); animation: kdInd .2s ease-out; }",
     "@keyframes kdInd { from { opacity: 0; } to { opacity: 1; } }",
@@ -819,12 +832,30 @@
     if (ind.baggrund === "eget" && ind.eget) return "url(\"" + ind.eget + "\")";
     return (BAGGRUNDE.find(function (b) { return b.id === ind.baggrund; }) || BAGGRUNDE[0]).b;
   }
+  // Farver man selv kan vælge i Indstillinger
+  const KNAP_FARVER = [
+    { id: "", navn: "Som telefonen", f: null }, { id: "blaa", navn: "Blå", f: "#2f7de1" }, { id: "lilla", navn: "Lilla", f: "#8a4fff" },
+    { id: "pink", navn: "Pink", f: "#ff4f9a" }, { id: "roed", navn: "Rød", f: "#e5383b" }, { id: "orange", navn: "Orange", f: "#ff8a1f" },
+    { id: "gul", navn: "Guld", f: "#d9a400" }, { id: "groen", navn: "Grøn", f: "#2fb35a" }, { id: "mint", navn: "Mint", f: "#14b8a6" },
+    { id: "brun", navn: "Brun", f: "#9a6a3a" }, { id: "graa", navn: "Grå", f: "#6b7280" }, { id: "sort", navn: "Sort", f: "#1c1c1e" },
+  ];
+  const APP_BAGGRUNDE = [
+    { id: "", navn: "Lys", lys: "#f4f2f5", papir: "#fffdf3", top: "rgba(248,247,250,.88)" },
+    { id: "rosa", navn: "Rosa", lys: "#fbeef3", papir: "#fff5f8", top: "rgba(252,240,245,.9)" },
+    { id: "lavendel", navn: "Lavendel", lys: "#f0edfb", papir: "#f7f5ff", top: "rgba(242,239,252,.9)" },
+    { id: "himmel", navn: "Himmel", lys: "#eaf3fb", papir: "#f4f9ff", top: "rgba(236,244,252,.9)" },
+    { id: "mint", navn: "Mint", lys: "#e9f7f1", papir: "#f3fcf8", top: "rgba(235,248,242,.9)" },
+    { id: "creme", navn: "Creme", lys: "#f8f1e3", papir: "#fffaf0", top: "rgba(249,243,231,.9)" },
+    { id: "fersken", navn: "Fersken", lys: "#fdf0e6", papir: "#fff7f0", top: "rgba(253,242,233,.9)" },
+  ];
   function saetFarver() {
     const F = farveNu();
     const s = tlf.style;
     s.setProperty("--t-k1", F.k[0]); s.setProperty("--t-k2", F.k[1]); s.setProperty("--t-k3", F.k[2]);
-    s.setProperty("--t-acc", F.a);
-    const a = hexRgb(F.a);
+    const acc = KNAP_FARVER.find(function (k) { return k.id === ind.acc; });
+    const accFarve = acc && acc.f ? acc.f : F.a;
+    s.setProperty("--t-acc", accFarve);
+    const a = hexRgb(accFarve);
     s.setProperty("--t-hover", "rgba(" + a.join(",") + ",.07)");
     s.setProperty("--t-kant", "rgba(" + hexRgb(F.k[2]).join(",") + ",.6)");
     // faste toner (sat her, så intet farve-tema kan ændre dem)
@@ -838,6 +869,8 @@
       "--t-topbg": "rgba(248,247,250,.88)", "--t-felt": "#ececf0", "--t-felt2": "#d7d7dc",
       "--t-papir": "#fffdf3", "--t-advbg": "#ffe9e7", "--t-advtekst": "#9a1d14", "--t-advkant": "#f3b4ad",
     };
+    const appBg = APP_BAGGRUNDE.find(function (k) { return k.id === ind.appbg; }) || APP_BAGGRUNDE[0];
+    fast["--t-lys"] = appBg.lys; fast["--t-papir"] = appBg.papir; fast["--t-topbg"] = appBg.top;
     Object.keys(fast).forEach(function (k) { s.setProperty(k, fast[k]); });
     bgEl.style.backgroundImage = baggrundNu();
     laasEl.querySelector(".hl").style.color = "#fff";
@@ -1144,8 +1177,8 @@
   laasEl.addEventListener("pointerup", slutStryg);
   laasEl.addEventListener("pointerleave", function (e) { if (strygStart) slutStryg(e); });
   laasEl.querySelector("[data-l='lygte']").addEventListener("click", function () {
-    this.classList.toggle("taendt");
-    lille(this.classList.contains("taendt") ? "🔦 Lommelygte tændt" : "Lommelygte slukket");
+    saetLygte(!lygteTaendt);
+    lille(lygteTaendt ? "🔦 Lommelygte tændt" : "Lommelygte slukket");
   });
   laasEl.querySelector("[data-l='kamera']").addEventListener("click", function () { aabnUdeApp("kamera"); });
   laasEl.querySelector("[data-l='pb']").addEventListener("click", function (e) { e.stopPropagation(); tegnBatMenu(true); });
@@ -1750,6 +1783,7 @@
       if (!harSpil(id)) { mineSpil().push(id); gemInd(); }
       if (APPS[id].multi) stribeInstalleret(true);
       lille("⬇️ " + APPS[id].navn + " er hentet");
+      if (!APPS[id].multi && stribeOnline()) serverKald("hv_spil_installeret", { p_token: mitToken(), p_spil: id, p_har: true }).then(function () { if (butikFane === "top") return hentSpilTop(); }).then(function () { if (appNu === "butik") tegnButikListe(); }).catch(function () {});
       if (appNu === "butik") tegnButikListe();
     }, henter[id].tid);
   }
@@ -1766,15 +1800,23 @@
     if (!APPS[id] || !APPS[id].spil) { lille("Apps der fulgte med telefonen kan ikke slettes"); return; }
     ind.spil = mineSpil().filter(function (s) { return s !== id; });
     if (APPS[id].multi) stribeInstalleret(false);
+    else if (stribeOnline()) serverKald("hv_spil_installeret", { p_token: mitToken(), p_spil: id, p_har: false }).catch(function () {});
     gemInd();
     lille("🗑 " + APPS[id].navn + " er afinstalleret");
     if (appNu === "butik") tegnButikListe();
     if (skaermNu === "hjem") { tegnHjem(); if (mappeAaben !== null) tegnMappe(); }
   }
   function tegnButik() {
+    butikFane = "spil";
     appEl.innerHTML = top("App Butik") + "<div class='ab-indhold'></div>";
     appEl.addEventListener("click", function (e) {
       const h = e.target.closest("[data-abhent]"), a = e.target.closest("[data-abaabn]"), x = e.target.closest("[data-abslet]");
+      const fn = e.target.closest("[data-abfane]");
+      if (fn) {
+        butikFane = fn.dataset.abfane; tegnButikListe(); appEl.querySelector(".ab-indhold").scrollTop = 0;
+        if (butikFane === "top") { meldAlleSpil(); hentSpilTop().then(function () { if (appNu === "butik" && butikFane === "top") tegnButikListe(); }); }
+        return;
+      }
       if (h) hentSpil(h.dataset.abhent);
       if (a) aabnApp(a.dataset.abaabn);
       if (x) {
@@ -1788,7 +1830,9 @@
   function tegnButikListe() {
     const b = appEl && appEl.querySelector(".ab-indhold");
     if (!b) return;
-    b.innerHTML = "<div class='ab-hero'><b>Spil for sjov 🎮</b><span>Hent så mange du vil – de er gratis. Spillene giver ingen Glimt, de er bare for sjov.</span></div>" +
+    if (butikFane === "top") { tegnButikTop(b); return; }
+    if (butikFane === "mine") { tegnButikMine(b); return; }
+    b.innerHTML = butikFanerHtml() + "<div class='ab-hero'><b>Spil for sjov 🎮</b><span>Hent så mange du vil – de er gratis. Spillene giver ingen Glimt, de er bare for sjov.</span></div>" +
       "<div class='ab-overskrift'>Spil</div>" +
       ALLE_SPIL.map(function (id) {
         const A = APPS[id], har = harSpil(id), r = spilRekord(id);
@@ -1797,6 +1841,103 @@
           "<span class='ab-knapper'>" + (henter[id] ? "<span class='ab-ring' data-abring='" + id + "' style='--p:" + hentProcent(id) + "'></span><span class='ab-pct' data-abpct='" + id + "'>" + hentProcent(id) + " %</span>" : har ? "<button data-abaabn='" + id + "'>ÅBN</button><button class='ab-slet' data-abslet='" + id + "'>Afinstallér</button>" : "<button data-abhent='" + id + "'>HENT</button>") + "</span></div>";
       }).join("") +
       "<p class='ab-note'>Apps der fulgte med telefonen kan ikke slettes. Hentede spil kan også slettes ved at holde musen nede på forsiden og trykke på −.</p>";
+  }
+
+  // ----- App Butik: Top (mest hentede blandt spillerne) og Mine apps -----
+  let butikFane = "spil", spilTop = null, spilTopFejl = "";
+  function hentSpilTop() {
+    if (!stribeOnline()) { spilTopFejl = "Toplisten virker, når du er logget ind på hotellets server."; return Promise.resolve(null); }
+    return serverKald("hv_spil_top", {}).then(function (l) { spilTop = Array.isArray(l) ? l : []; spilTopFejl = ""; return spilTop; })
+      .catch(function (e) { spilTopFejl = /function|schema cache|does not exist|Could not find/i.test(e.message) ? "Toplisten virker, når database-40-app-top.sql er kørt i Supabase." : e.message; return null; });
+  }
+  // fortæl serveren, hvilke spil man har (så toplisten passer)
+  let spilMeldt = false;
+  function meldAlleSpil() {
+    if (spilMeldt || !stribeOnline()) return;
+    spilMeldt = true;
+    mineSpil().forEach(function (id) { serverKald("hv_spil_installeret", { p_token: mitToken(), p_spil: id, p_har: true }).catch(function () {}); });
+  }
+  setTimeout(meldAlleSpil, 5000);
+  function butikFanerHtml() {
+    return "<div class='ab-faner'>" + [["spil", "🎮 Spil"], ["top", "🔥 Top"], ["mine", "📱 Mine apps"]].map(function (f) {
+      return "<button data-abfane='" + f[0] + "' class='" + (butikFane === f[0] ? "valgt" : "") + "'>" + f[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function kortKnapper(id) {
+    const har = harSpil(id);
+    return "<span class='ab-knapper'>" + (henter[id] ? "<span class='ab-ring' data-abring='" + id + "' style='--p:" + hentProcent(id) + "'></span><span class='ab-pct' data-abpct='" + id + "'>" + hentProcent(id) + " %</span>"
+      : har ? "<button data-abaabn='" + id + "'>ÅBN</button><button class='ab-slet' data-abslet='" + id + "'>Afinstallér</button>" : "<button data-abhent='" + id + "'>HENT</button>") + "</span>";
+  }
+  function tegnButikTop(b) {
+    let h = butikFanerHtml() + "<div class='ab-overskrift'>🔥 Mest hentede</div><p class='ab-lille'>Hvilke spil hotellets spillere har hentet mest lige nu.</p>";
+    if (spilTopFejl) h += "<div class='ab-fejl'>⚠️ " + esc(spilTopFejl) + "</div>";
+    if (!spilTop) {
+      h += spilTopFejl ? "" : "<div class='ab-lille'>Henter toplisten …</div>";
+    } else {
+      const tael = {};
+      spilTop.forEach(function (x) { tael[x.spil] = x.antal; });
+      const liste = ALLE_SPIL.slice().sort(function (a, c) { return (tael[c] || 0) - (tael[a] || 0); });
+      h += liste.map(function (id, i) {
+        const A = APPS[id], n = tael[id] || 0;
+        return "<div class='ab-kort'><span class='ab-nr" + (i < 3 ? " top" : "") + "'>" + (i + 1) + "</span><span class='ab-ik' style='background:" + A.bg + "'>" + ik(A.ik) + "</span>" +
+          "<span class='ab-info'><b>" + A.navn + "</b><small>⬇️ Hentet af " + n + " spiller" + (n === 1 ? "" : "e") + "</small></span>" + kortKnapper(id) + "</div>";
+      }).join("");
+    }
+    b.innerHTML = h;
+  }
+  function tegnButikMine(b) {
+    const medfulgt = GITTER.concat(DOCK).filter(function (id) { return APPS[id] && !APPS[id].spil; });
+    const hentet = mineSpil();
+    const raekke = function (id, hentetApp) {
+      const A = APPS[id];
+      return "<div class='ab-kort'><span class='ab-ik' style='background:" + A.bg + "'>" + (id === "events" ? "<span class='tlf-kal'></span>" : ik(A.ik)) + "</span>" +
+        "<span class='ab-info'><b>" + A.navn + "</b><small>" + (hentetApp ? "Hentet fra App Butik" : "Fulgte med telefonen · kan ikke slettes") + "</small></span>" +
+        (hentetApp ? kortKnapper(id) : "<span class='ab-knapper'><span class='ab-laast' title='Kan ikke slettes'>🔒</span></span>") + "</div>";
+    };
+    b.innerHTML = butikFanerHtml() +
+      "<div class='ab-tal'><span><b>" + (medfulgt.length + hentet.length) + "</b>apps i alt</span><span><b>" + hentet.length + "</b>hentet</span><span><b>" + medfulgt.length + "</b>fulgte med</span></div>" +
+      "<div class='ab-overskrift'>⬇️ Hentede apps</div>" + (hentet.length ? hentet.map(function (id) { return raekke(id, true); }).join("") : "<p class='ab-lille'>Du har ikke hentet nogen spil endnu.</p>") +
+      "<div class='ab-overskrift'>📱 Fulgte med telefonen</div>" + medfulgt.map(function (id) { return raekke(id, false); }).join("");
+    tegnKalendere(b);
+  }
+  function tegnKalendere(rod) {
+    if (typeof opdaterUr === "function") try { opdaterUr(); } catch (e) {}
+  }
+
+  // ----- 🔦 Lommelygten lyser rummet op omkring din figur -----
+  let lygteTaendt = false, lygteEl = null;
+  function figurPaaSkaermen() {
+    try {
+      if (typeof laerred === "undefined" || typeof figur === "undefined" || typeof punkt !== "function") return null;
+      const p = punkt(figur.x + 0.5, figur.y + 0.5);
+      const r = laerred.getBoundingClientRect();
+      const sx = r.width / (typeof BREDDE !== "undefined" ? BREDDE : laerred.width), sy = r.height / (typeof HOEJDE !== "undefined" ? HOEJDE : laerred.height);
+      return { x: r.left + p.x * sx, y: r.top + p.y * sy, s: sx };
+    } catch (e) { return null; }
+  }
+  function saetLygte(til) {
+    lygteTaendt = til;
+    const k = laasEl.querySelector("[data-l='lygte']");
+    if (k) k.classList.toggle("taendt", til);
+    if (til && !lygteEl) {
+      lygteEl = document.createElement("div");
+      lygteEl.id = "lommelygte-lys";
+      const lr = typeof laerred !== "undefined" ? laerred : null;
+      if (lr && lr.parentNode) lr.parentNode.insertBefore(lygteEl, lr.nextSibling); else document.body.appendChild(lygteEl);
+      requestAnimationFrame(lygteLoop);
+    }
+    if (lygteEl) lygteEl.classList.toggle("til", til);
+  }
+  function lygteLoop() {
+    if (!lygteEl) return;
+    if (!lygteTaendt) { lygteEl.remove(); lygteEl = null; return; }
+    if (ind.bat <= 0) { saetLygte(false); lille("🔦 Lommelygten slukkede – telefonen er løbet tør"); return; }
+    const f = figurPaaSkaermen();
+    if (f) {
+      const r = Math.max(110, 150 * f.s), y = f.y - 34 * f.s;
+      lygteEl.style.background = "radial-gradient(circle " + Math.round(r * 2.4) + "px at " + Math.round(f.x) + "px " + Math.round(y) + "px, rgba(255,246,200,.42) 0, rgba(255,240,180,.22) " + Math.round(r * .55) + "px, rgba(255,235,170,.06) " + Math.round(r) + "px, rgba(5,6,20,.55) " + Math.round(r * 1.6) + "px, rgba(5,6,20,.7) 100%)";
+    }
+    requestAnimationFrame(lygteLoop);
   }
 
   // ----- fælles for spillene -----
@@ -3091,6 +3232,14 @@
       "<div class='tlf-gruppe'><div class='tlf-farver'>" + TLF_FARVER.map(function (f) {
         return "<button data-farve='" + f.id + "' title='" + f.navn + "' class='" + (f.id === ind.farve ? "valgt" : "") + "' style='background:linear-gradient(135deg," + f.k[0] + "," + f.k[1] + " 50%," + f.k[2] + ")'></button>";
       }).join("") + "</div></div>" +
+      "<div class='tlf-gruppe-navn'>Farve på knapper og menuer</div>" +
+      "<div class='tlf-gruppe'><div class='tlf-farver'>" + KNAP_FARVER.map(function (k) {
+        return "<button data-acc='" + k.id + "' title='" + k.navn + "' class='" + ((ind.acc || "") === k.id ? "valgt" : "") + "' style='background:" + (k.f || "linear-gradient(135deg," + F.k[0] + "," + F.a + ")") + "'>" + (k.f ? "" : "<small class='acc-som'>📱</small>") + "</button>";
+      }).join("") + "</div></div>" +
+      "<div class='tlf-gruppe-navn'>Baggrundsfarve i apps</div>" +
+      "<div class='tlf-gruppe'><div class='tlf-farver app-bg'>" + APP_BAGGRUNDE.map(function (k) {
+        return "<button data-appbg='" + k.id + "' title='" + k.navn + "' class='" + ((ind.appbg || "") === k.id ? "valgt" : "") + "' style='background:" + k.lys + "'></button>";
+      }).join("") + "</div></div>" +
       "<div class='tlf-gruppe-navn'>Baggrund</div>" +
       "<div class='tlf-gruppe'><div class='tlf-bgs'>" + BAGGRUNDE.map(function (b) {
         return "<button data-bg='" + b.id + "' class='" + (b.id === ind.baggrund ? "valgt" : "") + "' style='background-image:" + b.b.replace(/'/g, "&#39;") + "'><span>" + b.navn + "</span></button>";
@@ -3133,6 +3282,10 @@
     appEl.querySelector(".tlf-indhold").addEventListener("click", function (e) {
       const f = e.target.closest("[data-farve]");
       if (f) { ind.farve = f.dataset.farve; gemInd(); saetFarver(); bevarScroll(tegnIndstillinger); return; }
+      const ac = e.target.closest("[data-acc]");
+      if (ac) { ind.acc = ac.dataset.acc; gemInd(); saetFarver(); bevarScroll(tegnIndstillinger); return; }
+      const ab = e.target.closest("[data-appbg]");
+      if (ab) { ind.appbg = ab.dataset.appbg; gemInd(); saetFarver(); bevarScroll(tegnIndstillinger); return; }
       const b = e.target.closest("[data-bg]");
       if (b) { ind.baggrund = b.dataset.bg; gemInd(); saetFarver(); bevarScroll(tegnIndstillinger); return; }
       if (e.target.closest("[data-upload]")) { inp.click(); return; }
@@ -3592,7 +3745,7 @@
     const k = document.getElementById("kamera"), yt = document.getElementById("youtube-vindue");
     const elev = document.getElementById("elevator"), tur = document.getElementById("elevator-tur");
     return (k && !k.hidden) || (yt && !yt.hidden && yt.offsetParent !== null) || (elev && !elev.hidden) || (tur && !tur.hidden) ||
-      (appNu === "snake" && typeof snakeKoerer !== "undefined" && snakeKoerer) || (typeof spilKoerer !== "undefined" && spilKoerer);
+      (appNu === "snake" && typeof snakeKoerer !== "undefined" && snakeKoerer) || (typeof spilKoerer !== "undefined" && spilKoerer) || (typeof lygteTaendt !== "undefined" && lygteTaendt);
   }
   function saetStroem(v) {
     ind.bat = Math.max(0, Math.min(100, v));
