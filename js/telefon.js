@@ -157,6 +157,7 @@
     chatlog: "<path d='M6 4h10a2 2 0 0 1 2 2v12a2 2 0 0 0 2 2H8a2 2 0 0 1-2-2z' fill='#fff'/><path d='M9 8.5h6M9 11.5h6M9 14.5h4' stroke='#b08850' stroke-width='1.4'/>",
     smiley: "<circle cx='12' cy='12' r='8.5' fill='#fff'/><circle cx='9' cy='10' r='1.3' fill='#c98a10'/><circle cx='15' cy='10' r='1.3' fill='#c98a10'/><path d='M8.3 13.6a4.2 4.2 0 0 0 7.4 0' fill='none' stroke='#c98a10' stroke-width='1.6' stroke-linecap='round'/>",
     boble: "<path d='M4 6.5A3.5 3.5 0 0 1 7.5 3h9A3.5 3.5 0 0 1 20 6.5v5a3.5 3.5 0 0 1-3.5 3.5H11l-4.5 4v-4A3.5 3.5 0 0 1 4 11.5z' fill='#fff'/><circle cx='9' cy='9' r='1.6' fill='#ff6f9c'/><circle cx='12.5' cy='9' r='1.6' fill='#ffc23a'/><circle cx='16' cy='9' r='1.6' fill='#4fd06a'/>",
+    peep: "<path d='M5 14.5c0-4.6 3.2-8.5 7.6-8.5 3 0 5.4 2 5.4 4.8 0 .5 0 .9-.1 1.3l2.6.9-2.9 1.4c-.9 3.3-4 5.6-7.6 5.6H5.5c-.3 0-.5-.2-.5-.5z' fill='#fff'/><circle cx='14.4' cy='9.6' r='1.2' fill='#3a2a10'/><path d='M7.8 13.6c1.3 1.5 3.4 1.8 5 .9' fill='none' stroke='#ffb03a' stroke-width='1.5' stroke-linecap='round'/>",
     tilbage: "<path d='M15 4 7 12l8 8' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>",
     send: "<path d='M12 19V6M6.5 11.5 12 6l5.5 5.5' fill='none' stroke='#fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/>",
     laas: "<rect x='5' y='10.5' width='14' height='10.5' rx='2.4' fill='currentColor'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3' fill='none' stroke='currentColor' stroke-width='2.2'/>",
@@ -180,12 +181,13 @@
     chatlog:   { navn: "Chatlog",       ik: "chatlog", bg: "linear-gradient(#f3e3c0, #c9a46a)", knap: "chat-log-knap" },
     smileys:   { navn: "Smileys",       ik: "smiley",  bg: "linear-gradient(#ffe36b, #f5b821)", knap: "chat-smiley-knap" },
     boble:     { navn: "Taleboble",     ik: "boble",   bg: "linear-gradient(#7fd3ff, #3a8fe0)", knap: "chat-farve-knap" },
+    peep:      { navn: "Peep",          ik: "peep",    bg: "linear-gradient(#ffc94a, #ff7a3d)" },
     snake:     { navn: "Snake",         ik: "snake",   bg: "linear-gradient(#5fd38d, #1f8f5a)" },
     noter:     { navn: "Noter",         ik: "noter",   bg: "linear-gradient(#ffe57a, #f5c42c)" },
     lager:     { navn: "Mine ting",     ik: "lager",   bg: "linear-gradient(#d9a868, #9c6a32)" },
     indst:     { navn: "Indstillinger", ik: "gear",    bg: "linear-gradient(#a8aeb8, #6b717b)" },
   };
-  const GITTER = ["shop", "lager", "byg", "kamera", "fotos", "chatlog", "smileys", "boble", "events", "noter", "snake"];
+  const GITTER = ["peep", "shop", "lager", "byg", "kamera", "fotos", "chatlog", "smileys", "boble", "events", "noter", "snake"];
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
   // ---------------------------------------------------------------
@@ -337,6 +339,26 @@
     ".tlf-hjem.rediger .tlf-w, .tlf-hjem.rediger .tlf-app-ik .fl { animation: tlfVrik .28s ease-in-out infinite alternate; }",
     ".tlf-hjem.rediger .tlf-w:nth-child(2n), .tlf-hjem.rediger .tlf-app-ik:nth-child(2n) .fl { animation-delay: -.14s; }",
     "@keyframes tlfVrik { from { rotate: -1.2deg } to { rotate: 1.2deg } }",
+    ".tlf-mappe-ik .fl { background: rgba(255,255,255,.3); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5); }",
+    ".tlf-mappe-ik .mp-mini { display: grid; grid-template-columns: repeat(3, 12px); grid-auto-rows: 12px; gap: 3px; padding: 6px; width: 100%; height: 100%; box-sizing: border-box; align-content: start; }",
+    ".tlf-mappe-ik .mp-mini i { border-radius: 3.5px; display: grid; place-items: center; box-shadow: 0 1px 1px rgba(0,0,0,.18); }",
+    ".tlf-mappe-ik .mp-mini i svg { width: 8px; height: 8px; filter: none; }",
+    ".tlf-app-ik.traekkes { z-index: 6; }",
+    ".tlf-gitter .tlf-app-ik.maal-mappe .fl { transform: scale(1.2); box-shadow: 0 0 0 4px rgba(255,255,255,.6), 0 4px 14px rgba(0,0,0,.3); }",
+    ".tlf-gitter .tlf-app-ik.maal-foer .fl { box-shadow: -7px 0 0 -2px rgba(255,255,255,.95); }",
+    ".tlf-gitter .tlf-app-ik.maal-efter .fl { box-shadow: 7px 0 0 -2px rgba(255,255,255,.95); }",
+    ".tlf-mappe-aaben { position: absolute; inset: 0; z-index: 44; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(20,14,30,.2); backdrop-filter: blur(24px) saturate(1.3); -webkit-backdrop-filter: blur(24px) saturate(1.3); opacity: 0; transition: opacity .25s; }",
+    ".tlf-mappe-aaben.vis { opacity: 1; }",
+    ".tlf-mappe-aaben .mp-boks { width: 252px; min-height: 120px; padding: 20px 12px; border-radius: 34px; background: rgba(255,255,255,.28); box-sizing: border-box; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); transform: scale(.35); transition: transform .32s cubic-bezier(.2,.9,.3,1.15), background .2s; }",
+    ".tlf-mappe-aaben.vis .mp-boks { transform: scale(1); }",
+    ".tlf-mappe-aaben .mp-boks.ud-af { background: rgba(255,255,255,.1); }",
+    ".tlf-mappe-aaben .mp-gitter { display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 16px; }",
+    ".tlf-mappe-aaben .mp-navn input { background: transparent; border: 0; outline: 0; color: var(--t-hvid); font: 700 26px -apple-system, 'Segoe UI', sans-serif; text-align: center; width: 240px; padding: 4px 10px; border-radius: 12px; text-shadow: 0 1px 6px rgba(0,0,0,.35); cursor: text; box-sizing: border-box; }",
+    ".tlf-mappe-aaben .mp-navn input:hover { background: rgba(255,255,255,.12); }",
+    ".tlf-mappe-aaben .mp-navn input:focus { background: rgba(255,255,255,.25); }",
+    ".tlf-mappe-aaben .mp-hjaelp { color: var(--t-hvid); font-size: 11px; opacity: .85; text-align: center; width: 220px; text-shadow: 0 1px 3px rgba(0,0,0,.4); }",
+    ".tlf-mappe-aaben.rediger .tlf-app-ik .fl { animation: tlfVrik .28s ease-in-out infinite alternate; }",
+    ".tlf-mappe-aaben.rediger .tlf-app-ik:nth-child(2n) .fl { animation-delay: -.14s; }",
     ".tlf-w.traekkes { animation: none !important; z-index: 5; box-shadow: 0 14px 30px var(--t-skygge); opacity: .92; transition: none; }",
     ".tlf-w.maal { outline: 3px dashed var(--t-hvid); outline-offset: 2px; }",
     ".w-fjern { position: absolute; top: -7px; left: -7px; width: 24px; height: 24px; border-radius: 50%; border: 0; padding: 0; background: var(--t-glas2); color: var(--t-tekst); font-size: 20px; line-height: 22px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px var(--t-skygge2); z-index: 3; }",
@@ -402,6 +424,70 @@
     ".sn-plads { width: 24px; text-align: center; font-weight: 700; } .sn-pt { font-weight: 700; font-variant-numeric: tabular-nums; }",
     ".tlf-liste li.sn-mig { background: var(--t-hover); }",
     ".sn-regel { font-size: 11px; color: #9a9aa6; text-align: center; margin: 10px 6px 0; }",
+    // Peep
+    ".pp-top { background: var(--t-hvid); }",
+    ".pp-logo { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 24px; font-weight: 800; letter-spacing: -1px; color: #ff8a2b; }",
+    ".pp-logo svg { color: #ffb02e; }",
+    ".pp-indhold { flex: 1; overflow-y: auto; overflow-x: hidden; background: #efe9e2; padding-bottom: 8px; scrollbar-width: none; }",
+    ".pp-indhold::-webkit-scrollbar { display: none; }",
+    ".pp-faner { flex: none; display: flex; background: var(--t-hvid); border-top: 1px solid var(--t-linje); padding: 4px 0 20px; }",
+    ".pp-faner button { flex: 1; border: 0; background: none; font-size: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; position: relative; opacity: .55; padding: 2px; }",
+    ".pp-faner button small { font-size: 9.5px; font-family: inherit; color: var(--t-tekst); }",
+    ".pp-faner button.valgt { opacity: 1; } .pp-faner button.valgt small { color: #ff7a2b; font-weight: 700; }",
+    ".pp-notis-tal { position: absolute; top: -2px; left: 52%; min-width: 16px; height: 16px; border-radius: 8px; background: var(--t-rod); color: #fff; font: 700 10px/16px sans-serif; font-style: normal; padding: 0 4px; box-sizing: border-box; }",
+    ".pp-notis-tal[hidden] { display: none; }",
+    ".pp-note { margin: 8px; padding: 8px 10px; border-radius: 10px; background: #fff4cf; color: #6b4e00; font-size: 11.5px; line-height: 1.35; }",
+    ".pp-skriv { display: flex; align-items: center; gap: 10px; margin: 8px 0; padding: 10px 12px; background: var(--t-hvid); cursor: pointer; }",
+    ".pp-skriv span:last-child { flex: 1; padding: 9px 14px; border-radius: 20px; border: 1px solid var(--t-linje); color: var(--t-graa); font-size: 13px; }",
+    ".pp-kort { background: var(--t-hvid); margin-bottom: 8px; padding: 10px 0 0; }",
+    ".pp-hoved { display: flex; align-items: center; gap: 9px; padding: 0 12px; }",
+    ".pp-hoved .tlf-av { width: 38px; height: 38px; cursor: pointer; }",
+    ".pp-hvem { flex: 1; min-width: 0; } .pp-hvem b { display: block; font-size: 14px; cursor: pointer; } .pp-hvem small { color: var(--t-graa); font-size: 11.5px; }",
+    ".pp-slet { border: 0; background: none; font-size: 18px; color: var(--t-graa); cursor: pointer; padding: 2px 6px; border-radius: 12px; font-family: inherit; }",
+    ".pp-slet.sikker { background: var(--t-rod); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; }",
+    ".pp-tekst { padding: 8px 12px 10px; font-size: 14.5px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; user-select: text; -webkit-user-select: text; }",
+    ".pp-farvet { margin-top: 8px; min-height: 150px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px; color: #fff; font-size: 20px; font-weight: 700; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,.25); white-space: pre-wrap; word-wrap: break-word; box-sizing: border-box; }",
+    ".pp-stat { display: flex; justify-content: space-between; padding: 6px 12px; font-size: 12px; color: var(--t-graa); }",
+    ".pp-stat [data-ppvis] { cursor: pointer; }",
+    ".pp-hjerte { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(#ff6b8b, #e0245e); color: #fff; font-size: 9px; font-style: normal; vertical-align: -3px; }",
+    ".pp-knapper { display: flex; border-top: 1px solid var(--t-linje); margin: 0 12px; }",
+    ".pp-knapper button { flex: 1; border: 0; background: none; padding: 8px 4px; font-family: inherit; font-size: 12.5px; font-weight: 600; color: var(--t-graa); cursor: pointer; border-radius: 6px; }",
+    ".pp-knapper button:hover { background: var(--t-felt); } .pp-knapper button.liker { color: #e0245e; }",
+    ".pp-kommentarer { padding: 4px 12px 10px; border-top: 1px solid var(--t-linje); }",
+    ".pp-flere { border: 0; background: none; color: var(--t-graa); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px 0; }",
+    ".pp-kom { display: flex; gap: 6px; margin-top: 6px; } .pp-kom > div { min-width: 0; }",
+    ".pp-kom .tlf-av, .pp-skriv-kom .tlf-av { width: 28px; height: 28px; font-size: 12px; cursor: pointer; }",
+    ".pp-boble { display: inline-block; background: var(--t-felt); border-radius: 14px; padding: 6px 10px; font-size: 13px; line-height: 1.3; word-wrap: break-word; max-width: 100%; box-sizing: border-box; user-select: text; -webkit-user-select: text; }",
+    ".pp-boble b { display: block; font-size: 12px; cursor: pointer; }",
+    ".pp-kom small { display: block; font-size: 10.5px; color: var(--t-graa); margin: 2px 0 0 10px; }",
+    ".pp-kom small button { border: 0; background: none; color: var(--t-graa); font: inherit; font-weight: 700; cursor: pointer; padding: 0; }",
+    ".pp-skriv-kom { display: flex; gap: 6px; align-items: center; margin-top: 8px; }",
+    ".pp-skriv-kom input { flex: 1; min-width: 0; border: 0; border-radius: 16px; background: var(--t-felt); padding: 7px 12px; font: inherit; font-size: 13px; outline: 0; color: var(--t-tekst); user-select: text; }",
+    ".pp-ny { background: var(--t-hvid); margin: 8px 0; padding: 12px; }",
+    ".pp-ny-top { display: flex; gap: 9px; align-items: center; } .pp-ny-top b { display: block; } .pp-ny-top small { color: var(--t-graa); font-size: 12px; }",
+    ".pp-ny textarea { width: 100%; box-sizing: border-box; min-height: 110px; margin-top: 10px; border: 0; outline: 0; resize: none; font-family: inherit; font-size: 16px; color: var(--t-tekst); background: none; border-radius: 12px; padding: 6px 2px; user-select: text; }",
+    ".pp-ny textarea.farvet { color: #fff; font-weight: 700; font-size: 19px; text-align: center; padding: 30px 14px; min-height: 150px; }",
+    ".pp-ny textarea.farvet::placeholder { color: rgba(255,255,255,.75); }",
+    ".pp-ny-lbl { font-size: 11px; color: var(--t-graa); text-transform: uppercase; letter-spacing: .04em; margin: 10px 0 5px; }",
+    ".pp-ny-farver { display: flex; gap: 6px; } .pp-ny-farver button { width: 28px; height: 28px; border-radius: 8px; border: 0; cursor: pointer; background: var(--t-felt); font: 700 11px inherit; font-family: inherit; color: var(--t-tekst); padding: 0; }",
+    ".pp-ny-farver button.valgt { box-shadow: 0 0 0 2px var(--t-hvid), 0 0 0 4px #ff8a2b; }",
+    ".pp-ny-humoer-valg { display: flex; flex-wrap: wrap; gap: 5px; } .pp-ny-humoer-valg button { border: 1px solid var(--t-linje); background: var(--t-hvid); border-radius: 14px; padding: 4px 9px; font-family: inherit; font-size: 12px; cursor: pointer; color: var(--t-tekst); }",
+    ".pp-ny-humoer-valg button.valgt { background: #fff1de; border-color: #ff8a2b; }",
+    ".pp-ny-knapper { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }",
+    ".pp-ny-knapper button { border: 0; border-radius: 16px; padding: 8px 14px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; background: var(--t-felt); color: var(--t-tekst); }",
+    ".pp-ny-knapper button.send { background: linear-gradient(#ffb03a, #ff7a2b); color: #fff; } .pp-ny-knapper button:disabled { opacity: .5; }",
+    ".pp-overskrift { font-size: 20px; font-weight: 800; padding: 12px 14px 6px; }",
+    ".pp-notiser li.ny { background: #fff4e4; } .pp-mini { font-size: 11px; color: var(--t-graa); max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".pp-profil { background: var(--t-hvid); text-align: center; padding-bottom: 14px; margin-bottom: 8px; position: relative; }",
+    ".pp-cover { height: 84px; background: linear-gradient(135deg, #ffc94a, #ff7a3d 60%, var(--t-acc)); }",
+    ".pp-profil > .tlf-av { width: 84px; height: 84px; margin: -44px auto 0; border: 4px solid var(--t-hvid); font-size: 32px; box-sizing: content-box; }",
+    ".pp-profil h2 { margin: 6px 0 2px; font-size: 20px; }",
+    ".pp-bio { font-size: 13px; color: var(--t-tekst); padding: 2px 20px; cursor: default; } .pp-bio[data-ppbio] { cursor: pointer; } .pp-bio i { color: var(--t-graa); }",
+    ".pp-bio-ret { display: flex; gap: 6px; padding: 4px 16px; } .pp-bio-ret input { flex: 1; min-width: 0; border: 1px solid var(--t-linje); border-radius: 12px; padding: 6px 10px; font: inherit; font-size: 13px; outline: 0; user-select: text; }",
+    ".pp-bio-ret button, .pp-profil-knapper button { border: 0; border-radius: 14px; padding: 6px 12px; font-family: inherit; font-weight: 700; font-size: 12.5px; cursor: pointer; background: linear-gradient(#ffb03a, #ff7a2b); color: #fff; }",
+    ".pp-profil-knapper { display: flex; gap: 6px; justify-content: center; margin-top: 10px; } .pp-profil-knapper button:disabled { background: var(--t-felt); color: var(--t-tekst); }",
+    ".pp-tal { display: flex; justify-content: center; gap: 22px; margin-top: 10px; font-size: 11px; color: var(--t-graa); }",
+    ".pp-tal b { display: block; font-size: 17px; color: var(--t-tekst); }",
     // Hjemme-linjen nederst
     ".tlf-hjemlinje { position: absolute; z-index: 58; bottom: 7px; left: 50%; width: 120px; height: 5px; margin-left: -60px; border-radius: 3px; background: var(--t-hvid); cursor: pointer; opacity: .9; }",
     ".tlf-hjemlinje.moerk { background: var(--t-tekst); }",
@@ -509,7 +595,7 @@
     // Den gamle venneliste og det gamle beskedvindue bruges ikke mere
     "#venner-vindue, #besked-vindue { display: none !important; }",
     // Knapperne i chatbaren er flyttet ind i telefonen (Ejerpanel 🛡 og EJER-skiltet bliver)
-    "#chat-smiley-knap, #chat-farve-knap, #chat-nav-knap, #chat-shop-knap, #chat-lager-knap, #byg-aabn, #chat-kamera-knap, #chat-album-knap, #chat-log-knap { display: none !important; }",
+    "#chat-smiley-knap, #chat-farve-knap, #chat-shop-knap, #chat-lager-knap, #chat-kamera-knap, #chat-album-knap, #chat-log-knap { display: none !important; }",
   ].map(function (regel) {
     // alle regler får "#telefon" foran, så hotellets egne knap-regler ikke vinder
     if (regel.charAt(0) === "@" || regel.indexOf("#") === 0) return regel;
@@ -924,6 +1010,7 @@
     let tal = 0;
     if (id === "beskeder") tal = ulaestIalt();
     if (id === "kontakter") tal = anmodningerTilMig().length;
+    if (id === "peep" && typeof peepNye === "function") tal = peepNye().length;
     const indre = id === "events" ? "<span class='tlf-kal'></span>" : ik(A.ik);
     return "<button class='tlf-app-ik' data-app='" + id + "'><span class='fl' style='background:" + A.bg + "'>" + indre + "</span>" +
       (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
@@ -1071,14 +1158,198 @@
     galleriAabent = false;
     tegnGalleri();
     tegnHjem();
+    if (mappeAaben !== null) tegnMappe();
   }
+
+  // ---------------------------------------------------------------
+  //  📁 Mapper på hjemmeskærmen — ligesom på en iPhone
+  //  Hold musen nede (rediger), træk en app oven på en anden app =
+  //  ny mappe. Træk en app ud af en åben mappe for at tage den ud.
+  //  Gemmes i ind.layout: app-id'er og { mappe: navn, apps: [...] }
+  // ---------------------------------------------------------------
+  const MAPPE_SLAGS = { peep: "Socialt", beskeder: "Socialt", kontakter: "Socialt", shop: "Shopping", lager: "Shopping",
+    byg: "Kreativitet", kamera: "Kreativitet", fotos: "Kreativitet", chatlog: "Chat", smileys: "Chat", boble: "Chat",
+    events: "Hotel", rum: "Hotel", noter: "Værktøjer", indst: "Værktøjer", snake: "Spil" };
+  function mitLayout() {
+    let l = Array.isArray(ind.layout) ? ind.layout : GITTER.slice();
+    const set = {};
+    // ryd op: ukendte apps, dobbelte, tomme mapper
+    l = l.map(function (x) {
+      if (typeof x === "string") { if (!APPS[x] || set[x] || DOCK.indexOf(x) >= 0) return null; set[x] = 1; return x; }
+      if (!x || !Array.isArray(x.apps)) return null;
+      const apps = x.apps.filter(function (a) { if (!APPS[a] || set[a] || DOCK.indexOf(a) >= 0) return false; set[a] = 1; return true; });
+      if (!apps.length) return null;
+      if (apps.length === 1) return apps[0];
+      return { mappe: String(x.mappe || "Mappe").slice(0, 20), apps: apps };
+    }).filter(function (x) { return x !== null; });
+    // nye apps kommer med til sidst
+    GITTER.forEach(function (a) { if (!set[a]) l.push(a); });
+    ind.layout = l;
+    return l;
+  }
+  function appTal(id) {
+    if (id === "beskeder") return ulaestIalt();
+    if (id === "kontakter") return anmodningerTilMig().length;
+    if (id === "peep" && typeof peepNye === "function") return peepNye().length;
+    return 0;
+  }
+  function mappeIkon(m, i) {
+    const tal = m.apps.reduce(function (s, a) { return s + appTal(a); }, 0);
+    const mini = m.apps.slice(0, 9).map(function (a) {
+      const A = APPS[a];
+      return "<i style='background:" + A.bg + "'>" + (a === "events" ? "" : ik(A.ik)) + "</i>";
+    }).join("");
+    return "<button class='tlf-app-ik tlf-mappe-ik' data-gi='" + i + "' data-mappe='" + i + "'><span class='fl'><span class='mp-mini'>" + mini + "</span></span>" +
+      (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + "<span class='nv'>" + esc(m.mappe) + "</span></button>";
+  }
+  function gitterHtml() {
+    return mitLayout().map(function (x, i) {
+      return typeof x === "string" ? appIkon(x).replace("<button class='tlf-app-ik'", "<button class='tlf-app-ik' data-gi='" + i + "'") : mappeIkon(x, i);
+    }).join("");
+  }
+  function nytMappeNavn(a, b) {
+    const s1 = MAPPE_SLAGS[a], s2 = MAPPE_SLAGS[b];
+    return s1 && s1 === s2 ? s1 : "Mappe";
+  }
+  // læg app (eller mappe) nr. fra oven på nr. til
+  function slaaSammen(fra, til) {
+    const l = mitLayout(), a = l[fra], b = l[til];
+    if (typeof a !== "string" || fra === til) return false;
+    if (typeof b === "string") l[til] = { mappe: nytMappeNavn(b, a), apps: [b, a] };
+    else b.apps.push(a);
+    l.splice(fra, 1);
+    gemInd();
+    return true;
+  }
+  function flytPlads(fra, til, efter) {
+    const l = mitLayout();
+    const x = l.splice(fra, 1)[0];
+    let ny = til + (efter ? 1 : 0);
+    if (fra < ny) ny--;
+    l.splice(ny, 0, x);
+    gemInd();
+  }
+
+  // Den åbne mappe (sløret baggrund, stort navn, apps i gitter)
+  let mappeAaben = null;   // plads i layout
+  function aabnMappe(i) {
+    mappeAaben = i;
+    let el = skaerm.querySelector(".tlf-mappe-aaben");
+    const ny = !el;
+    if (ny) { el = document.createElement("div"); el.className = "tlf-mappe-aaben"; skaerm.insertBefore(el, bannerEl); }
+    tegnMappe(ny);
+  }
+  function tegnMappe(ny) {
+    const el = skaerm.querySelector(".tlf-mappe-aaben");
+    const m = mitLayout()[mappeAaben];
+    if (!el) return;
+    if (!m || typeof m === "string") { lukMappe(); return; }
+    const navnFelt = el.querySelector(".mp-navn input");
+    if (navnFelt && document.activeElement === navnFelt && !ny) {
+      // skriver navnet: tegn kun apps om
+      el.querySelector(".mp-gitter").innerHTML = m.apps.map(function (a, j) { return appIkon(a).replace("<button class='tlf-app-ik'", "<button class='tlf-app-ik' data-mi='" + j + "'"); }).join("");
+      return;
+    }
+    el.classList.toggle("rediger", redigerer);
+    el.innerHTML = "<div class='mp-navn'><input maxlength='20' value='" + esc(m.mappe) + "' title='Klik for at give mappen et nyt navn' spellcheck='false'></div>" +
+      "<div class='mp-boks'><div class='mp-gitter'>" + m.apps.map(function (a, j) { return appIkon(a).replace("<button class='tlf-app-ik'", "<button class='tlf-app-ik' data-mi='" + j + "'"); }).join("") + "</div></div>" +
+      (redigerer ? "<div class='mp-hjaelp'>Træk en app ud af boksen for at tage den ud af mappen</div>" : "");
+    if (ny) setTimeout(function () { el.classList.add("vis"); }, 10); else el.classList.add("vis");
+    const inp = el.querySelector(".mp-navn input");
+    inp.addEventListener("keydown", function (e) { e.stopPropagation(); if (e.key === "Enter" || e.key === "Escape") inp.blur(); });
+    inp.addEventListener("blur", function () {
+      const mm = mitLayout()[mappeAaben];
+      if (!mm || typeof mm === "string") return;
+      const v = inp.value.replace(/\s+/g, " ").trim().slice(0, 20);
+      mm.mappe = v || nytMappeNavn(mm.apps[0], mm.apps[1]);
+      inp.value = mm.mappe;
+      gemInd();
+      if (skaermNu === "hjem") tegnHjem();
+    });
+  }
+  function lukMappe(straks) {
+    const el = skaerm.querySelector(".tlf-mappe-aaben");
+    mappeAaben = null;
+    if (!el) return;
+    const inp = el.querySelector(".mp-navn input");
+    if (inp && document.activeElement === inp) inp.blur();
+    if (straks) { el.remove(); return; }
+    el.classList.remove("vis");
+    setTimeout(function () { if (el.isConnected && mappeAaben === null) el.remove(); }, 260);
+  }
+  // klik i den åbne mappe
+  skaerm.addEventListener("click", function (e) {
+    const el = e.target.closest(".tlf-mappe-aaben");
+    if (!el || Date.now() < undgaaKlik) return;
+    if (e.target.closest(".mp-navn")) return;
+    const k = e.target.closest("[data-mi]");
+    if (k && !redigerer) { const id = k.dataset.app; lukMappe(true); aabnApp(id); return; }
+    if (!k && !e.target.closest(".mp-boks")) { lukMappe(); if (redigerer) tegnHjem(); }
+  });
+  // hold nede i mappen = rediger, træk apps rundt eller ud
+  let mTraek = null, mHold = null, mHoldStart = null;
+  skaerm.addEventListener("pointerdown", function (e) {
+    if (e.button !== 0 || !e.target.closest(".tlf-mappe-aaben") || e.target.closest(".mp-navn")) return;
+    const k = e.target.closest("[data-mi]");
+    if (redigerer && k) {
+      mTraek = { el: k, fra: +k.dataset.mi, x: e.clientX, y: e.clientY, til: null, flyttet: false, ude: false };
+      k.setPointerCapture && k.setPointerCapture(e.pointerId);
+      e.preventDefault();
+      return;
+    }
+    mHoldStart = { x: e.clientX, y: e.clientY };
+    clearTimeout(mHold);
+    mHold = setTimeout(function () { mHold = null; undgaaKlik = Date.now() + 350; redigerer = true; tegnHjem(); tegnMappe(); }, 550);
+  });
+  skaerm.addEventListener("pointermove", function (e) {
+    if (mHold && mHoldStart && Math.abs(e.clientX - mHoldStart.x) + Math.abs(e.clientY - mHoldStart.y) > 8) { clearTimeout(mHold); mHold = null; }
+    if (!mTraek) return;
+    const s = skala();
+    const dx = (e.clientX - mTraek.x) / s, dy = (e.clientY - mTraek.y) / s;
+    if (Math.abs(dx) + Math.abs(dy) > 4) mTraek.flyttet = true;
+    mTraek.el.classList.add("traekkes");
+    mTraek.el.style.transform = "translate(" + dx + "px," + dy + "px) scale(1.1)";
+    mTraek.el.style.pointerEvents = "none";
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const boks = skaerm.querySelector(".mp-boks");
+    mTraek.ude = !(under && boks && boks.contains(under));
+    if (boks) boks.classList.toggle("ud-af", mTraek.ude);
+    const maal = under && under.closest && under.closest("#telefon [data-mi]");
+    mTraek.til = maal && maal !== mTraek.el ? +maal.dataset.mi : null;
+  });
+  function slutMappeTraek() {
+    clearTimeout(mHold); mHold = null;
+    if (!mTraek) return;
+    const t = mTraek; mTraek = null;
+    if (t.flyttet) undgaaKlik = Date.now() + 350;
+    const l = mitLayout(), m = l[mappeAaben];
+    if (t.flyttet && m && typeof m !== "string") {
+      if (t.ude) {
+        // ud af mappen: appen lægges lige efter mappen
+        const id = m.apps.splice(t.fra, 1)[0];
+        const plads = mappeAaben;
+        l.splice(plads + 1, 0, id);
+        if (m.apps.length === 1) l[plads] = m.apps[0];
+        gemInd();
+        lukMappe(true);
+        tegnHjem();
+        lille("📤 " + APPS[id].navn + " er taget ud af mappen");
+        return;
+      }
+      if (t.til !== null) { const a = m.apps.splice(t.fra, 1)[0]; m.apps.splice(t.til, 0, a); gemInd(); }
+    }
+    tegnMappe();
+    tegnHjem();
+  }
+  skaerm.addEventListener("pointerup", slutMappeTraek);
+  skaerm.addEventListener("pointercancel", slutMappeTraek);
 
   function tegnHjem() {
     hjemEl.classList.toggle("rediger", redigerer);
     hjemEl.innerHTML =
       (redigerer ? "<div class='tlf-redbar'><button data-wtilf>＋ Widget</button><button data-wfaerdig>Færdig</button></div>" : "") +
       "<div class='tlf-hjem-rul'><div class='tlf-widgets'></div>" +
-      "<div class='tlf-gitter'>" + GITTER.map(appIkon).join("") + "</div></div>" +
+      "<div class='tlf-gitter'>" + gitterHtml() + "</div></div>" +
       "<div class='tlf-prikker'><i></i><i></i></div>" +
       "<div class='tlf-dock'>" + DOCK.map(appIkon).join("") + "</div>";
     tegnWidgets();
@@ -1091,6 +1362,8 @@
     if (t.closest("[data-wfaerdig]")) { stopRediger(); return; }
     const fj = t.closest("[data-wfjern]");
     if (fj) { mineWidgets().splice(+fj.dataset.wfjern, 1); gemInd(); tegnWidgets(); return; }
+    const mp = t.closest("[data-mappe]");
+    if (mp) { aabnMappe(+mp.dataset.mappe); return; }
     if (redigerer) { if (!t.closest(".tlf-w, .tlf-app-ik")) stopRediger(); return; }
     const k = t.closest("[data-app]");
     if (k) { aabnApp(k.dataset.app); return; }
@@ -1120,6 +1393,13 @@
     if (e.button !== 0 || e.target.closest(".tlf-redbar, .w-fjern")) return;
     holdStart = { x: e.clientX, y: e.clientY };
     const wEl = e.target.closest("[data-wi]");
+    const aEl = e.target.closest(".tlf-gitter [data-gi]");
+    if (redigerer && aEl) {
+      wTraek = { app: true, el: aEl, fra: +aEl.dataset.gi, x: e.clientX, y: e.clientY, til: null, maade: null, flyttet: false };
+      aEl.setPointerCapture && aEl.setPointerCapture(e.pointerId);
+      e.preventDefault();
+      return;
+    }
     if (redigerer && wEl) {
       wTraek = { el: wEl, fra: +wEl.dataset.wi, x: e.clientX, y: e.clientY, til: null, flyttet: false };
       wEl.setPointerCapture && wEl.setPointerCapture(e.pointerId);
@@ -1139,6 +1419,21 @@
     wTraek.el.style.transform = "translate(" + dx + "px," + dy + "px) scale(1.05)";
     wTraek.el.style.pointerEvents = "none";
     const under = document.elementFromPoint(e.clientX, e.clientY);
+    if (wTraek.app) {
+      // app: midt på en anden app = mappe, i kanten = ny plads
+      wTraek.el.style.transform = "translate(" + dx + "px," + dy + "px) scale(1.12)";
+      hjemEl.querySelectorAll(".maal-mappe, .maal-foer, .maal-efter").forEach(function (m) { m.classList.remove("maal-mappe", "maal-foer", "maal-efter"); });
+      const am = under && under.closest && under.closest("#telefon .tlf-gitter [data-gi]");
+      wTraek.til = null; wTraek.maade = null;
+      if (am && am !== wTraek.el) {
+        const r = am.getBoundingClientRect(), rel = (e.clientX - r.left) / r.width;
+        const kanMappe = !wTraek.el.dataset.mappe;
+        wTraek.til = +am.dataset.gi;
+        wTraek.maade = kanMappe && rel > .22 && rel < .78 ? "mappe" : rel < .5 ? "foer" : "efter";
+        am.classList.add("maal-" + wTraek.maade);
+      }
+      return;
+    }
     const maal = under && under.closest && under.closest("#telefon [data-wi]");
     hjemEl.querySelectorAll(".tlf-w.maal").forEach(function (m) { m.classList.remove("maal"); });
     wTraek.til = maal && maal !== wTraek.el ? +maal.dataset.wi : null;
@@ -1149,6 +1444,13 @@
     if (!wTraek) return;
     const t = wTraek; wTraek = null;
     if (t.flyttet) undgaaKlik = Date.now() + 350;
+    if (t.app) {
+      if (t.til !== null && t.maade === "mappe") {
+        if (slaaSammen(t.fra, t.til)) { tegnHjem(); lille("📁 Mappe lavet"); return; }
+      } else if (t.til !== null) flytPlads(t.fra, t.til, t.maade === "efter");
+      tegnHjem();
+      return;
+    }
     if (t.til !== null) {
       const liste = mineWidgets();
       const w = liste.splice(t.fra, 1)[0];
@@ -1201,6 +1503,7 @@
   //  Apps inde i telefonen
   // ---------------------------------------------------------------
   function aabnApp(id, hvem) {
+    if (mappeAaben !== null) lukMappe(true);
     if (["rum", "shop", "lager", "kamera", "fotos"].indexOf(id) >= 0 || (APPS[id] && APPS[id].knap)) { aabnUdeApp(id); return; }
     if (skaermNu === "laas") { laasOp({ app: id, hvem: hvem }); return; }
     lukApp(true);
@@ -1272,6 +1575,8 @@
       tegnIndstillinger();
     } else if (id === "snake") {
       tegnSnake();
+    } else if (id === "peep") {
+      tegnPeep();
     }
   }
   function kobSoeg() {
@@ -1663,6 +1968,337 @@
       if (!appEl || snakeVis !== "top") return;
       ul.innerHTML = "<li class='tlf-tom' style='cursor:default'><span><span class='st'>🏆</span>Hotellets topliste virker, når database-36-snake.sql er kørt i Supabase.<br>Din rekord: <b>" + (r.bedst || 0) + "</b></span></li>";
     });
+  }
+
+  // ---------------------------------------------------------------
+  //  🐤 Peep — hotellets eget sociale netværk (database-37-peep.sql)
+  //  Feed med opslag, ❤️ likes, 💬 kommentarer, profiler og notifikationer.
+  //  Uden databasen virker Peep kun på denne computer.
+  // ---------------------------------------------------------------
+  const PEEP_FARVER = {
+    solnedgang: "linear-gradient(135deg, #ff9a6b, #c94b7d)", hav: "linear-gradient(135deg, #4fc3f7, #3a5fd6)",
+    skov: "linear-gradient(135deg, #7dd87a, #2f8a5a)", lilla: "linear-gradient(135deg, #c79bff, #6a3fd0)",
+    guld: "linear-gradient(135deg, #ffe08a, #e0a12c)", nat: "linear-gradient(135deg, #3a3f6b, #12142a)",
+  };
+  const PEEP_HUMOER = ["😊 glad", "🥳 fejrer", "😍 forelsket", "😎 cool", "😴 træt", "🤩 spændt", "😢 trist", "🏨 på hotellet"];
+  let peepData = [], peepLokal = false, peepFane = "feed", peepProfil = null, peepAaben = {}, peepSkriver = null, peepHentet = 0, peepFejl = "";
+  let peepProfilInfo = {};
+  function peepRens(t) {
+    t = String(t || "");
+    try { if (typeof lavSmileyer === "function") t = lavSmileyer(t); } catch (e) {}
+    try { if (typeof rensTekst === "function") t = rensTekst(t); } catch (e) {}
+    return t.trim();
+  }
+  function peepOnline() { return typeof serverKald === "function" && typeof SERVER !== "undefined" && SERVER.til && typeof mitToken === "function" && !!mitToken(); }
+  function peepMaaSlette(navn) {
+    if (navn === mig() || erEjer()) return true;
+    try { return typeof minRolle === "function" && minRolle() === "mod"; } catch (e) { return false; }
+  }
+  function peepSiden(t) {
+    const s = (Date.now() - new Date(t).getTime()) / 1000;
+    if (s < 60) return "lige nu";
+    if (s < 3600) return Math.floor(s / 60) + " min";
+    if (s < 86400) return Math.floor(s / 3600) + " t";
+    if (s < 604800) return Math.floor(s / 86400) + " d";
+    const d = new Date(t); return d.getDate() + ". " + MDR[d.getMonth()].slice(0, 3);
+  }
+  // ----- lokal reserve (kun denne computer) -----
+  function peepLokalHent() { try { return JSON.parse(localStorage.getItem("mit-hotel-peep") || "[]"); } catch (e) { return []; } }
+  function peepLokalGem(l) { try { localStorage.setItem("mit-hotel-peep", JSON.stringify(l.slice(0, 60))); } catch (e) {} }
+  function peepMangler(e) { return /function|schema cache|does not exist|Could not find/i.test(e && e.message || ""); }
+
+  function peepKald(fn, data, lokal) {
+    if (!peepLokal && peepOnline()) {
+      return serverKald(fn, data).catch(function (e) {
+        if (peepMangler(e)) { peepLokal = true; return lokal(); }
+        throw e;
+      });
+    }
+    peepLokal = true;
+    return Promise.resolve().then(lokal);
+  }
+  function peepHent() {
+    return peepKald("hv_peep_hent", { p_navn: null }, function () { return peepLokalHent(); }).then(function (l) {
+      peepData = Array.isArray(l) ? l : [];
+      peepHentet = Date.now();
+      peepFejl = "";
+      opdaterPeepTal();
+      if (appNu === "peep" && !peepSkriver) tegnPeepIndhold();
+    }).catch(function (e) { peepFejl = e.message; if (appNu === "peep") tegnPeepIndhold(); });
+  }
+  function peepSend(tekst, stil) {
+    return peepKald("hv_peep_send", { p_token: mitToken && mitToken(), p_tekst: tekst, p_stil: stil }, function () {
+      const l = peepLokalHent();
+      l.unshift({ id: Date.now(), navn: mig(), tekst: tekst, stil: stil, tid: new Date().toISOString(), likes: [], kommentarer: [] });
+      peepLokalGem(l);
+    }).then(peepHent);
+  }
+  function peepLike(id) {
+    const o = peepData.find(function (x) { return x.id === id; });
+    if (o) {   // vis det med det samme
+      const i = o.likes.indexOf(mig());
+      if (i >= 0) o.likes.splice(i, 1); else o.likes.push(mig());
+      tegnPeepIndhold();
+      if (i < 0 && ind.lyd) snLyd(1318, 0.05);
+    }
+    return peepKald("hv_peep_like", { p_token: mitToken && mitToken(), p_id: id }, function () {
+      const l = peepLokalHent(), x = l.find(function (y) { return y.id === id; });
+      if (x) { const i = x.likes.indexOf(mig()); if (i >= 0) x.likes.splice(i, 1); else x.likes.push(mig()); peepLokalGem(l); }
+    }).then(peepHent).catch(function (e) { lille(e.message); peepHent(); });
+  }
+  function peepKommenter(id, tekst) {
+    return peepKald("hv_peep_kommenter", { p_token: mitToken && mitToken(), p_id: id, p_tekst: tekst }, function () {
+      const l = peepLokalHent(), x = l.find(function (y) { return y.id === id; });
+      if (x) { x.kommentarer.push({ id: Date.now(), navn: mig(), tekst: tekst, tid: new Date().toISOString() }); peepLokalGem(l); }
+    }).then(peepHent).catch(function (e) { lille(e.message); });
+  }
+  function peepSlet(id, kommentar, opslagId) {
+    return peepKald("hv_peep_slet", { p_token: mitToken && mitToken(), p_id: id, p_kommentar: !!kommentar }, function () {
+      let l = peepLokalHent();
+      if (kommentar) { const x = l.find(function (y) { return y.id === opslagId; }); if (x) x.kommentarer = x.kommentarer.filter(function (k) { return k.id !== id; }); }
+      else l = l.filter(function (y) { return y.id !== id; });
+      peepLokalGem(l);
+    }).then(peepHent).catch(function (e) { lille(e.message); });
+  }
+  function peepHentProfil(navn) {
+    if (peepLokal || !peepOnline()) {
+      let bio = ""; try { bio = localStorage.getItem("mit-hotel-peep-bio-" + navn) || ""; } catch (e) {}
+      peepProfilInfo[navn] = { bio: bio }; return Promise.resolve();
+    }
+    return Promise.all([serverKald("hv_peep_profil_hent", { p_navn: navn }), serverKald("hv_peep_hent", { p_navn: navn })]).then(function (r) {
+      peepProfilInfo[navn] = r[0] || {};
+      (Array.isArray(r[1]) ? r[1] : []).forEach(function (o) { if (!peepData.some(function (x) { return x.id === o.id; })) peepData.push(o); });
+    }).catch(function () { peepProfilInfo[navn] = peepProfilInfo[navn] || { bio: "" }; });
+  }
+  function peepGemBio(bio) {
+    return peepKald("hv_peep_bio", { p_token: mitToken && mitToken(), p_bio: bio }, function () {
+      try { localStorage.setItem("mit-hotel-peep-bio-" + mig(), bio); } catch (e) {}
+    }).then(function () { peepProfilInfo[mig()] = Object.assign(peepProfilInfo[mig()] || {}, { bio: bio }); });
+  }
+
+  // ----- notifikationer: likes og kommentarer fra andre på dine opslag -----
+  function peepNotiser() {
+    const ud = [];
+    peepData.forEach(function (o) {
+      if (o.navn !== mig()) return;
+      (o.likes || []).forEach(function (n) { if (n !== mig()) ud.push({ noegle: o.id + ":L:" + n, navn: n, hvad: "synes godt om dit opslag", o: o, tid: null }); });
+      (o.kommentarer || []).forEach(function (k) { if (k.navn !== mig()) ud.push({ noegle: o.id + ":K:" + k.id, navn: k.navn, hvad: "kommenterede: " + k.tekst, o: o, tid: k.tid }); });
+    });
+    return ud;
+  }
+  function peepSete() { try { return JSON.parse(localStorage.getItem("mit-hotel-peep-set-" + mig()) || "[]"); } catch (e) { return []; } }
+  function peepNye() { const s = peepSete(); return peepNotiser().filter(function (n) { return s.indexOf(n.noegle) < 0; }); }
+  function peepMarkerSet() {
+    const alle = peepNotiser().map(function (n) { return n.noegle; });
+    try { localStorage.setItem("mit-hotel-peep-set-" + mig(), JSON.stringify(alle.slice(-500))); } catch (e) {}
+    opdaterPeepTal();
+  }
+  let peepSidsteTal = -1;
+  function opdaterPeepTal() {
+    const n = peepNye().length;
+    if (peepSidsteTal >= 0 && n > peepSidsteTal) {
+      const ny = peepNye()[0];
+      if (ny && !(appNu === "peep" && peepFane === "notis")) {
+        ding();
+        if (!tlf.hidden && skaermNu !== "laas") {
+          bannerEl.innerHTML = "<div class='tlf-notis' data-notis='peep'><span class='ai' style='background:" + APPS.peep.bg + "'>" + ik("peep") + "</span><span class='nt'><b>Peep<small>nu</small></b><span>" +
+            esc(ny.navn + " " + ny.hvad) + "</span></span></div>";
+          bannerEl.classList.add("vis"); clearTimeout(visBanner.t); visBanner.t = setTimeout(skjulBanner, 4200);
+        }
+      }
+    }
+    peepSidsteTal = n;
+    if (skaermNu === "hjem" && !tlf.hidden && !redigerer) {
+      const k = hjemEl.querySelector("[data-app=peep]");
+      if (k) { const gl = k.querySelector(".tal"); if (gl) gl.remove(); if (n) k.insertAdjacentHTML("beforeend", "<span class='tal'>" + n + "</span>"); }
+    }
+    if (appEl && appNu === "peep") { const t = appEl.querySelector(".pp-notis-tal"); if (t) { t.textContent = n; t.hidden = !n; } }
+  }
+  setInterval(function () {
+    const aaben = !tlf.hidden && appNu === "peep";
+    if (aaben || (peepOnline() && Date.now() - peepHentet > 45000)) peepHent();
+  }, 8000);
+  setTimeout(peepHent, 4000);
+
+  // ----- tegning -----
+  function tegnPeep() {
+    peepFane = "feed"; peepProfil = null; peepSkriver = null;
+    appEl.innerHTML =
+      "<div class='tlf-top pp-top'><button class='tlf-tb' data-tilbage='hjem' title='Tilbage'>" + ik("tilbage", 20) + "</button>" +
+      "<span class='pp-logo'>" + ik("peep", 24).replace(/fill='#fff'/g, "fill='currentColor'") + "peep</span>" +
+      "<button class='tlf-tb' data-ppny title='Nyt opslag'>" + ik("skriv", 20) + "</button></div>" +
+      "<div class='pp-indhold'></div>" +
+      "<div class='pp-faner'><button data-ppf='feed'>🏠<small>Feed</small></button><button data-ppf='notis'>🔔<i class='pp-notis-tal' hidden></i><small>Notifikationer</small></button><button data-ppf='mig'>👤<small>Mig</small></button></div>";
+    appEl.addEventListener("click", peepKlik);
+    appEl.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.matches(".pp-kom-felt")) { e.preventDefault(); sendKom(e.target); }
+    });
+    tegnPeepIndhold();
+    peepHent();
+  }
+  function sendKom(felt) {
+    const t = peepRens(felt.value);
+    if (!t) return;
+    felt.value = "";
+    peepKommenter(+felt.dataset.ppkom, t);
+  }
+  function peepKortHtml(o) {
+    const st = o.stil || {}, farve = PEEP_FARVER[st.farve];
+    const likes = o.likes || [], kom = o.kommentarer || [], liker = likes.indexOf(mig()) >= 0;
+    const aaben = !!peepAaben[o.id];
+    const visKom = aaben ? kom : kom.slice(-2);
+    return "<div class='pp-kort' data-ppid='" + o.id + "'>" +
+      "<div class='pp-hoved'>" + avatarHtml(o.navn) + "<span class='pp-hvem'><b data-pprofil='" + esc(o.navn) + "'>" + esc(o.navn) + "</b>" +
+        "<small>" + peepSiden(o.tid) + (st.humoer ? " · føler sig " + esc(st.humoer) : "") + "</small></span>" +
+        (peepMaaSlette(o.navn) ? "<button class='pp-slet' data-ppslet='" + o.id + "' title='Slet opslag'>⋯</button>" : "") + "</div>" +
+      (farve ? "<div class='pp-farvet' style='background:" + farve + "'>" + esc(o.tekst) + "</div>" : "<div class='pp-tekst'>" + esc(o.tekst) + "</div>") +
+      ((likes.length || kom.length) ? "<div class='pp-stat'><span>" + (likes.length ? "<i class='pp-hjerte'>❤</i> " + (liker ? (likes.length > 1 ? "Dig og " + (likes.length - 1) + " andre" : "Dig") : likes.length) : "") + "</span>" +
+        "<span data-ppvis='" + o.id + "'>" + (kom.length ? kom.length + (kom.length === 1 ? " kommentar" : " kommentarer") : "") + "</span></div>" : "") +
+      "<div class='pp-knapper'><button data-pplike='" + o.id + "' class='" + (liker ? "liker" : "") + "'>" + (liker ? "❤️" : "🤍") + " Synes godt om</button>" +
+        "<button data-ppkomknap='" + o.id + "'>💬 Kommentér</button></div>" +
+      (visKom.length || aaben ? "<div class='pp-kommentarer'>" +
+        (kom.length > visKom.length ? "<button class='pp-flere' data-ppvis='" + o.id + "'>Se alle " + kom.length + " kommentarer</button>" : "") +
+        visKom.map(function (k) {
+          return "<div class='pp-kom'>" + avatarHtml(k.navn, true) + "<div><span class='pp-boble'><b data-pprofil='" + esc(k.navn) + "'>" + esc(k.navn) + "</b>" + esc(k.tekst) + "</span>" +
+            "<small>" + peepSiden(k.tid) + (peepMaaSlette(k.navn) ? " · <button data-ppkslet='" + k.id + "' data-ppo='" + o.id + "'>Slet</button>" : "") + "</small></div></div>";
+        }).join("") +
+        (aaben ? "<div class='pp-skriv-kom'>" + avatarHtml(mig(), true) + "<input class='pp-kom-felt' data-ppkom='" + o.id + "' maxlength='200' placeholder='Skriv en kommentar …'></div>" : "") +
+      "</div>" : "") +
+    "</div>";
+  }
+  function peepLokalNote() {
+    if (peepFejl) return "<div class='pp-note'>⚠️ " + esc(peepFejl) + "</div>";
+    return peepLokal ? "<div class='pp-note'>🐤 Peep virker kun på denne computer, indtil database-37-peep.sql er kørt i Supabase.</div>" : "";
+  }
+  function tegnPeepIndhold() {
+    if (!appEl || appNu !== "peep" || peepSkriver) return;
+    const boks = appEl.querySelector(".pp-indhold");
+    if (!boks) return;
+    // husk hvad man er i gang med at skrive og hvor man er
+    const fokus = document.activeElement && document.activeElement.matches && document.activeElement.matches(".pp-kom-felt") ? { id: document.activeElement.dataset.ppkom, v: document.activeElement.value } : null;
+    const y = boks.scrollTop;
+    appEl.querySelectorAll("[data-ppf]").forEach(function (b) { b.classList.toggle("valgt", b.dataset.ppf === (peepProfil && peepProfil !== mig() ? "" : peepFane)); });
+    let html = peepLokalNote();
+    if (peepFane === "feed" && !peepProfil) {
+      html += "<div class='pp-skriv' data-ppny>" + avatarHtml(mig()) + "<span>Hvad sker der, " + esc(mig()) + "?</span></div>";
+      html += peepData.length ? peepData.slice().sort(function (a, b) { return new Date(b.tid) - new Date(a.tid); }).map(peepKortHtml).join("")
+        : "<div class='tlf-tom'><span class='st'>🐤</span>Ingen har peepet endnu.<br>Skriv det første opslag!</div>";
+    } else if (peepFane === "notis" && !peepProfil) {
+      const sete = peepSete(), liste = peepNotiser().reverse();
+      html += "<div class='pp-overskrift'>Notifikationer</div>" + (liste.length ? "<ul class='tlf-liste pp-notiser'>" + liste.slice(0, 40).map(function (n) {
+        return "<li data-ppgaa='" + n.o.id + "' class='" + (sete.indexOf(n.noegle) < 0 ? "ny" : "") + "'>" + avatarHtml(n.navn) + "<span class='info'><b>" + esc(n.navn) + "</b><span>" + esc(n.hvad) + "</span></span>" +
+          "<span class='pp-mini'>" + esc(n.o.tekst.slice(0, 18)) + "</span></li>";
+      }).join("") + "</ul>" : "<div class='tlf-tom'><span class='st'>🔔</span>Ingen notifikationer endnu.</div>");
+      setTimeout(peepMarkerSet, 1500);
+    } else {
+      const navn = peepProfil || mig(), info = peepProfilInfo[navn] || {};
+      const mine = peepData.filter(function (o) { return o.navn === navn; }).sort(function (a, b) { return new Date(b.tid) - new Date(a.tid); });
+      const likes = mine.reduce(function (s, o) { return s + (o.likes || []).length; }, 0);
+      const gaest = (typeof ANDRE_SPILLERE !== "undefined" && ANDRE_SPILLERE[navn]) || (typeof HAL_GAESTER !== "undefined" && HAL_GAESTER.find(function (g) { return g.navn === navn; }));
+      const ven = vennerListe().indexOf(navn) >= 0;
+      html += "<div class='pp-profil'><div class='pp-cover'></div>" + avatarHtml(navn) + "<h2>" + esc(navn) + "</h2>" +
+        (navn === mig() ? "<div class='pp-bio' data-ppbio>" + (info.bio ? esc(info.bio) : "<i>✏️ Skriv lidt om dig selv …</i>") + "</div>" : (info.bio ? "<div class='pp-bio'>" + esc(info.bio) + "</div>" : "")) +
+        "<div class='pp-tal'><span><b>" + mine.length + "</b>opslag</span><span><b>" + likes + "</b>❤ fået</span>" + (navn === mig() ? "<span><b>" + vennerListe().length + "</b>venner</span>" : "") + "</div>" +
+        (navn !== mig() ? "<div class='pp-profil-knapper'>" +
+          (ven ? "<button disabled>💚 Venner</button>" : gaest ? "<button data-ppven='" + esc(navn) + "'>➕ Tilføj ven</button>" : "") +
+          "<button data-ppbesked='" + esc(navn) + "'>💬 Skriv</button>" + (ven && kanFoelge(navn) ? "<button data-ppfoelg='" + esc(navn) + "'>➡ Følg</button>" : "") + "</div>" : "") +
+        "</div>" + (mine.length ? mine.map(peepKortHtml).join("") : "<div class='tlf-tom'>" + (navn === mig() ? "Du har ikke peepet endnu." : esc(navn) + " har ikke peepet endnu.") + "</div>");
+    }
+    boks.innerHTML = html;
+    tegnAvatarer(boks);
+    boks.scrollTop = y;
+    if (fokus) {
+      const f = boks.querySelector(".pp-kom-felt[data-ppkom='" + fokus.id + "']");
+      if (f) { f.value = fokus.v; f.focus(); }
+    }
+  }
+  function visPeepProfil(navn) {
+    peepProfil = navn === mig() ? null : navn;
+    peepFane = navn === mig() ? "mig" : "profil";
+    tegnPeepIndhold();
+    const b = appEl.querySelector(".pp-indhold"); if (b) b.scrollTop = 0;
+    peepHentProfil(navn).then(tegnPeepIndhold);
+  }
+  function tegnPeepSkriv() {
+    peepSkriver = { farve: "", humoer: "" };
+    const boks = appEl.querySelector(".pp-indhold");
+    boks.innerHTML = "<div class='pp-ny'>" +
+      "<div class='pp-ny-top'>" + avatarHtml(mig()) + "<span><b>" + esc(mig()) + "</b><small class='pp-ny-humoer'></small></span></div>" +
+      "<textarea maxlength='400' placeholder='Hvad sker der, " + esc(mig()) + "?'></textarea>" +
+      "<div class='pp-ny-lbl'>Baggrund</div><div class='pp-ny-farver'><button data-ppfarve='' class='valgt' title='Ingen'>Aa</button>" +
+        Object.keys(PEEP_FARVER).map(function (k) { return "<button data-ppfarve='" + k + "' style='background:" + PEEP_FARVER[k] + "'></button>"; }).join("") + "</div>" +
+      "<div class='pp-ny-lbl'>Hvordan har du det?</div><div class='pp-ny-humoer-valg'>" +
+        PEEP_HUMOER.map(function (h) { return "<button data-pphum='" + h + "'>" + h + "</button>"; }).join("") + "</div>" +
+      "<div class='pp-ny-knapper'><button data-ppannuller>Annullér</button><button data-ppsend class='send'>🐤 Peep!</button></div></div>";
+    tegnAvatarer(boks);
+    const t = boks.querySelector("textarea");
+    t.addEventListener("keydown", function (e) { e.stopPropagation(); });
+    setTimeout(function () { t.focus(); }, 50);
+  }
+  function peepKlik(e) {
+    const t = e.target;
+    const g = function (s) { return t.closest(s); };
+    let k;
+    if (g("[data-ppny]")) { tegnPeepSkriv(); return; }
+    if ((k = g("[data-ppf]"))) { peepSkriver = null; peepProfil = null; peepFane = k.dataset.ppf; if (peepFane === "mig") { visPeepProfil(mig()); return; } tegnPeepIndhold(); appEl.querySelector(".pp-indhold").scrollTop = 0; return; }
+    if ((k = g("[data-pplike]"))) { peepLike(+k.dataset.pplike); return; }
+    if ((k = g("[data-ppkomknap]"))) {
+      peepAaben[k.dataset.ppkomknap] = true; tegnPeepIndhold();
+      const f = appEl.querySelector(".pp-kom-felt[data-ppkom='" + k.dataset.ppkomknap + "']"); if (f) f.focus();
+      return;
+    }
+    if ((k = g("[data-ppvis]"))) { peepAaben[k.dataset.ppvis] = !peepAaben[k.dataset.ppvis] || t.classList.contains("pp-flere"); tegnPeepIndhold(); return; }
+    if ((k = g("[data-pprofil]"))) { visPeepProfil(k.dataset.pprofil); return; }
+    if ((k = g(".pp-hoved [data-av], .pp-kom [data-av]"))) { visPeepProfil(k.dataset.av); return; }
+    if ((k = g("[data-ppslet]"))) {
+      if (k.classList.contains("sikker")) { peepSlet(+k.dataset.ppslet); return; }
+      k.classList.add("sikker"); k.textContent = "Slet?"; setTimeout(function () { if (k.isConnected) { k.classList.remove("sikker"); k.textContent = "⋯"; } }, 3000); return;
+    }
+    if ((k = g("[data-ppkslet]"))) { peepSlet(+k.dataset.ppkslet, true, +k.dataset.ppo); return; }
+    if ((k = g("[data-ppgaa]"))) { peepFane = "feed"; peepAaben[k.dataset.ppgaa] = true; tegnPeepIndhold(); const kort = appEl.querySelector(".pp-kort[data-ppid='" + k.dataset.ppgaa + "']"); if (kort) kort.scrollIntoView({ block: "start" }); return; }
+    if ((k = g("[data-ppven]"))) {
+      const n = k.dataset.ppven;
+      const gaest = (typeof ANDRE_SPILLERE !== "undefined" && ANDRE_SPILLERE[n]) || (typeof HAL_GAESTER !== "undefined" && HAL_GAESTER.find(function (x) { return x.navn === n; }));
+      if (gaest && typeof tilfoejVen === "function") { try { tilfoejVen(gaest); } catch (er) {} lille("📨 Venneanmodning sendt"); k.disabled = true; }
+      return;
+    }
+    if ((k = g("[data-ppbesked]"))) { aabnApp("beskeder", k.dataset.ppbesked); return; }
+    if ((k = g("[data-ppfoelg]"))) { foelgVen(k.dataset.ppfoelg); return; }
+    if (g("[data-ppbio]")) {
+      const bioEl = g("[data-ppbio]");
+      const gl = (peepProfilInfo[mig()] || {}).bio || "";
+      bioEl.outerHTML = "<div class='pp-bio-ret'><input maxlength='150' value='" + esc(gl) + "' placeholder='Skriv lidt om dig selv …'><button data-ppbiogem>Gem</button></div>";
+      const inp = appEl.querySelector(".pp-bio-ret input"); inp.focus();
+      inp.addEventListener("keydown", function (ev) { ev.stopPropagation(); if (ev.key === "Enter") appEl.querySelector("[data-ppbiogem]").click(); });
+      return;
+    }
+    if (g("[data-ppbiogem]")) { const v = peepRens(appEl.querySelector(".pp-bio-ret input").value); peepGemBio(v).then(tegnPeepIndhold).catch(function (er) { lille(er.message); }); return; }
+    // skriv nyt opslag
+    if (peepSkriver) {
+      if ((k = g("[data-ppfarve]"))) {
+        peepSkriver.farve = k.dataset.ppfarve;
+        appEl.querySelectorAll("[data-ppfarve]").forEach(function (b) { b.classList.toggle("valgt", b === k); });
+        const ta = appEl.querySelector(".pp-ny textarea");
+        ta.style.background = PEEP_FARVER[peepSkriver.farve] || ""; ta.classList.toggle("farvet", !!peepSkriver.farve);
+        return;
+      }
+      if ((k = g("[data-pphum]"))) {
+        peepSkriver.humoer = peepSkriver.humoer === k.dataset.pphum ? "" : k.dataset.pphum;
+        appEl.querySelectorAll("[data-pphum]").forEach(function (b) { b.classList.toggle("valgt", b.dataset.pphum === peepSkriver.humoer); });
+        appEl.querySelector(".pp-ny-humoer").textContent = peepSkriver.humoer ? "føler sig " + peepSkriver.humoer : "";
+        return;
+      }
+      if (g("[data-ppannuller]")) { peepSkriver = null; tegnPeepIndhold(); return; }
+      if ((k = g("[data-ppsend]"))) {
+        const tekst = peepRens(appEl.querySelector(".pp-ny textarea").value);
+        if (!tekst) { lille("Skriv noget først"); return; }
+        k.disabled = true;
+        const stil = { farve: peepSkriver.farve, humoer: peepSkriver.humoer };
+        peepSend(tekst, stil).then(function () { peepSkriver = null; peepFane = "feed"; peepProfil = null; tegnPeepIndhold(); appEl.querySelector(".pp-indhold").scrollTop = 0; lille("🐤 Peepet!"); })
+          .catch(function (er) { k.disabled = false; lille(er.message); });
+        return;
+      }
+    }
   }
 
   // ---------------------------------------------------------------
