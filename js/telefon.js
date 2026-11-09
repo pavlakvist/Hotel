@@ -596,6 +596,10 @@
     "#venner-vindue, #besked-vindue { display: none !important; }",
     // Knapperne i chatbaren er flyttet ind i telefonen (Ejerpanel 🛡 og EJER-skiltet bliver)
     "#chat-smiley-knap, #chat-farve-knap, #chat-shop-knap, #chat-lager-knap, #chat-kamera-knap, #chat-album-knap, #chat-log-knap { display: none !important; }",
+    // Byg-hammeren står i baren for alle — også i rum, hvor man ikke må bygge (så forklarer den hvorfor)
+    "#byg-aabn[hidden] { display: inline-block !important; opacity: .55; }",
+    "#byg-toast { position: fixed; z-index: 60; left: 50%; bottom: 74px; transform: translateX(-50%); background: rgba(20,16,24,.85); color: #fff; padding: 8px 16px; border-radius: 16px; font: 13px -apple-system, 'Segoe UI', sans-serif; pointer-events: none; opacity: 0; transition: opacity .25s; }",
+    "#byg-toast.vis { opacity: 1; }",
   ].map(function (regel) {
     // alle regler får "#telefon" foran, så hotellets egne knap-regler ikke vinder
     if (regel.charAt(0) === "@" || regel.indexOf("#") === 0) return regel;
@@ -2556,6 +2560,19 @@
     e.stopPropagation();
     e.preventDefault();
     if (tlf.hidden) aabnTelefon(); else lukTelefon();
+  }, true);
+  // Byg-knappen: i rum hvor man ikke må bygge, forklares det i stedet
+  document.addEventListener("click", function (e) {
+    const k = e.target.closest && e.target.closest("#byg-aabn");
+    if (!k || !k.hidden) return;
+    e.stopPropagation();
+    e.preventDefault();
+    let t = document.getElementById("byg-toast");
+    if (!t) { t = document.createElement("div"); t.id = "byg-toast"; document.body.appendChild(t); }
+    t.textContent = rumValg === "hal" ? "🔨 Her i hallen må kun Bygmestre bygge – byg i dit eget værelse" : "🔨 Du kan kun bygge i dine egne rum";
+    t.classList.add("vis");
+    clearTimeout(t.timer);
+    t.timer = setTimeout(function () { t.classList.remove("vis"); }, 2600);
   }, true);
   const vk = document.getElementById("chat-venner-knap");
   if (vk) vk.title = "Telefon";
