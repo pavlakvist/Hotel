@@ -214,6 +214,14 @@
   IK.regn = "<rect x='5' y='3' width='14' height='18' rx='2.6' fill='#fff'/><rect x='7.2' y='5.2' width='9.6' height='4' rx='1' fill='#ff9f0a'/><g fill='#4c515a'><circle cx='8.8' cy='12.6' r='1.15'/><circle cx='12' cy='12.6' r='1.15'/><circle cx='15.2' cy='12.6' r='1.15'/><circle cx='8.8' cy='16.2' r='1.15'/><circle cx='12' cy='16.2' r='1.15'/></g><circle cx='15.2' cy='16.2' r='1.15' fill='#ff9f0a'/>";
   APPS.regn = { navn: "Lommeregner", ik: "regn", bg: "linear-gradient(#5a5f69, #1f2126)" };
   GITTER.push("regn");
+  // 🛡 Staff chat — kun for ejeren og de ansatte (forsvinder, når man ikke er ansat mere)
+  IK.staff = "<path d='M12 3C6.5 3 2 6.6 2 11c0 2.5 1.4 4.7 3.6 6.1L4.6 21l4.3-2.2c1 .3 2 .4 3.1.4 5.5 0 10-3.6 10-8S17.5 3 12 3z' fill='#fff'/><path d='M12 6.6l1.3 2.7 3 .4-2.2 2.1.5 3-2.6-1.4-2.6 1.4.5-3-2.2-2.1 3-.4z' fill='#d9a441'/>";
+  function erStaffMig() {
+    try { return erEjer() || (typeof erAnsat === "function" && erAnsat(mig())); } catch (e) { return false; }
+  }
+  APPS.staff = { navn: "Staff chat", ik: "staff", bg: "linear-gradient(#3d4b7a, #1c2544)", kun: erStaffMig };
+  GITTER.push("staff");
+  function appSkjult(id) { return !!(APPS[id] && APPS[id].kun && !APPS[id].kun()); }
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
   // ---------------------------------------------------------------
@@ -1219,6 +1227,7 @@
     if (id === "peep" && typeof peepNye === "function") tal = peepNye().length;
     if (id === "stribe") tal = stribeTal();
     if (id === "mail" && typeof mailUlaeste === "function") tal = mailUlaeste();
+    if (id === "staff") tal = sfUlaeste();
     const indre = id === "events" ? "<span class='tlf-kal'></span>" : ik(A.ik);
     return "<button class='tlf-app-ik' data-app='" + id + "'><span class='fl' style='background:" + A.bg + "'>" + indre + "</span>" +
       (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + (redigerer && A.spil ? "<span class='slet-x' data-afinst='" + id + "' title='Afinstallér'>−</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
@@ -1377,21 +1386,21 @@
   // ---------------------------------------------------------------
   const MAPPE_SLAGS = { peep: "Socialt", beskeder: "Socialt", kontakter: "Socialt", shop: "Shopping", lager: "Shopping",
     byg: "Kreativitet", kamera: "Kreativitet", fotos: "Kreativitet", chatlog: "Chat", smileys: "Chat", boble: "Chat",
-    events: "Hotel", rum: "Hotel", noter: "Værktøjer", indst: "Værktøjer", snake: "Spil", net: "Værktøjer", mail: "Socialt", musik: "Underholdning", regn: "Værktøjer" };
+    events: "Hotel", rum: "Hotel", staff: "Hotel", noter: "Værktøjer", indst: "Værktøjer", snake: "Spil", net: "Værktøjer", mail: "Socialt", musik: "Underholdning", regn: "Værktøjer" };
   function mitLayout() {
     let l = Array.isArray(ind.layout) ? ind.layout : GITTER.slice();
     const set = {};
     // ryd op: ukendte apps, dobbelte, tomme mapper
     l = l.map(function (x) {
-      if (typeof x === "string") { if (!APPS[x] || set[x] || DOCK.indexOf(x) >= 0 || (APPS[x].spil && !harSpil(x))) return null; set[x] = 1; return x; }
+      if (typeof x === "string") { if (!APPS[x] || set[x] || DOCK.indexOf(x) >= 0 || (APPS[x].spil && !harSpil(x)) || appSkjult(x)) return null; set[x] = 1; return x; }
       if (!x || !Array.isArray(x.apps)) return null;
-      const apps = x.apps.filter(function (a) { if (!APPS[a] || set[a] || DOCK.indexOf(a) >= 0 || (APPS[a].spil && !harSpil(a))) return false; set[a] = 1; return true; });
+      const apps = x.apps.filter(function (a) { if (!APPS[a] || set[a] || DOCK.indexOf(a) >= 0 || (APPS[a].spil && !harSpil(a)) || appSkjult(a)) return false; set[a] = 1; return true; });
       if (!apps.length) return null;
       if (apps.length === 1) return apps[0];
       return { mappe: String(x.mappe || "Mappe").slice(0, 20), apps: apps };
     }).filter(function (x) { return x !== null; });
     // nye apps kommer med til sidst
-    GITTER.concat(mineSpil()).forEach(function (a) { if (!set[a]) l.push(a); });
+    GITTER.concat(mineSpil()).forEach(function (a) { if (!set[a] && !appSkjult(a)) l.push(a); });
     ind.layout = l;
     return l;
   }
@@ -1401,6 +1410,7 @@
     if (id === "peep" && typeof peepNye === "function") return peepNye().length;
     if (id === "stribe" && typeof stribeTal === "function") return stribeTal();
     if (id === "mail" && typeof mailUlaeste === "function") return mailUlaeste();
+    if (id === "staff" && typeof sfUlaeste === "function") return sfUlaeste();
     return 0;
   }
   function mappeIkon(m, i) {
@@ -1792,6 +1802,10 @@
       tegnRegner();
     } else if (id === "koder") {
       tegnKoder();
+    } else if (id === "staff") {
+      if (!erStaffMig()) { lukApp(true); return; }
+      sfSamtale = null;
+      tegnStaff();
     } else if (id === "net") {
       tegnNet();
     } else if (id === "mail") {
@@ -1928,7 +1942,7 @@
     b.innerHTML = h;
   }
   function tegnButikMine(b) {
-    const medfulgt = GITTER.concat(DOCK).filter(function (id) { return APPS[id] && !APPS[id].spil; });
+    const medfulgt = GITTER.concat(DOCK).filter(function (id) { return APPS[id] && !APPS[id].spil && !appSkjult(id); });
     const hentet = mineSpil();
     const raekke = function (id, hentetApp) {
       const A = APPS[id];
@@ -5993,7 +6007,7 @@
       { ik: "🛍", t: "App Butik", h: "<p>I <b>App Butik</b> henter du gratis spil og apps: fx <b>Vera-Net</b> (browser), <b>Vera-Mail</b>, <b>Music Box</b>, Stjernestribe, Snake og flere spil.</p><p>Apps du har hentet, kan du slette igen. Apps der fulgte med telefonen, bliver der.</p>" },
       { ik: "🔋", t: "Batteri og powerbank", h: "<p>Batteriet falder, når telefonen er tændt (hurtigere med kamera, musik og spil).</p><p><b>🔌 Ladestation:</b> køb en Ladestation i kataloget i Shoppen og sæt den i dit rum. Du skal <b>sidde ned</b> lige ved siden af den, så lader telefonen.</p><p><b>☕ Caféen:</b> her lader du <b>gratis</b>. Sæt dig bare på en stol.</p><p>En <b>powerbank</b> koster 40 Glimt og kan lade telefonen op <b>10 gange</b>. Så skal du købe en ny. Tryk på batteriet øverst på telefonen for at sætte den til.</p><p>Ved 15, 10 og 5 % kommer der en advarsel, og du kan slå <b>strømsparetilstand</b> til.</p><p>🎖 Hotellets <b>ansatte</b> bruger powerbanken gratis, så længe de er ansat.</p>" },
       { ik: "⚙️", t: "Indstillinger", h: "<p>I <b>Indstillinger</b> vælger du telefonens farve, baggrund (også dit eget billede), lyd ved nye beskeder, kode og batteri.</p>" },
-      { ik: "🎖", t: "For personalet", kun: function () { return kanHjaelpeKode(); }, h: "<p>Er du <b>Hjælper</b>, <b>MOD</b> eller ejer, har du <b>Indstillinger → 🎖 Hjælp med telefonkoder</b>.</p><p>Gæster der har trykket <b>Glemt kode?</b>, står øverst med 🆘. Du kan <b>se koden</b>, <b>sende koden</b> til gæsten i en privat besked eller <b>nulstille</b> den.</p>" },
+      { ik: "🎖", t: "For personalet", kun: function () { return erStaffMig(); }, h: "<p>Alle ansatte har appen <b>🛡 Staff chat</b> på telefonen. Der kan du skrive i den fælles chat for hele personalet eller privat med én ansat. Er du ikke ansat længere, forsvinder appen.</p><p>Er du <b>Hjælper</b>, <b>MOD</b> eller ejer, har du <b>Indstillinger → 🎖 Hjælp med telefonkoder</b>.</p><p>Gæster der har trykket <b>Glemt kode?</b>, står øverst med 🆘. Du kan <b>se koden</b>, <b>sende koden</b> til gæsten i en privat besked eller <b>nulstille</b> den.</p>" },
     ];
     const vindue = document.createElement("div");
     vindue.id = "tlf-guide";
@@ -6058,6 +6072,130 @@
     }
     laegKnap(0);
   })();
+
+  // ---------------------------------------------------------------
+  //  🛡 Staff chat på telefonen – kun for ejeren og de ansatte.
+  //  Bruger Staff chatten fra js/staff-chat.js (database-13-staff.sql):
+  //  samme beskeder, samme "læst", samme samtaler. Bliver man fyret,
+  //  forsvinder appen igen.
+  // ---------------------------------------------------------------
+  let sfSamtale = null, sfSidst = "", sfVarStaff = null;
+  function sfData() { try { return typeof staffBeskeder !== "undefined" ? staffBeskeder : null; } catch (e) { return null; } }
+  function sfKlar() { return sfData() !== null && typeof samtaleFor === "function"; }
+  function sfUlaeste(s) { try { return sfKlar() && typeof ulaeste === "function" ? ulaeste(s) : 0; } catch (e) { return 0; } }
+  function sfOnline(n) { try { return typeof erOnline === "function" && erOnline(n); } catch (e) { return false; } }
+  function sfRangNavn(n) {
+    try { const r = staffRang(n); const x = STAFF_RANG.filter(function (y) { return y[0] === r; })[0]; return x ? x[1] : ""; } catch (e) { return ""; }
+  }
+  function sfSidsteBesked(s) { const l = (sfData() || []).filter(function (m) { return samtaleFor(m) === s; }); return l[l.length - 1]; }
+  function tegnStaff() {
+    if (!appEl || appNu !== "staff") return;
+    if (sfSamtale) { tegnStaffSamtale(); return; }
+    appEl.innerHTML = top("Staff chat", "hjem", "<button class='tlf-tb' data-sfpanel title='Åbn i panelet'>🛡</button>") +
+      "<div class='tlf-indhold'><p class='sf-forkl'>Kun hotellets ejer og ansatte kan se Staff chatten.</p><ul class='tlf-liste sf-liste'></ul></div>";
+    sfListe();
+  }
+  function sfListe() {
+    const ul = appEl && appEl.querySelector(".sf-liste");
+    if (!ul) return;
+    if (!sfKlar()) { ul.innerHTML = "<li class='tlf-tom' style='cursor:default'><span><span class='st'>🛡</span>Staff chatten er ikke klar endnu. Prøv igen om lidt.</span></li>"; return; }
+    const raekke = function (id, titel, under, avatar) {
+      const s = sfSidsteBesked(id), u = sfUlaeste(id);
+      const tekst = s ? (s.fra === mig() ? "Dig: " : (id === "faelles" ? s.fra + ": " : "")) + s.tekst : under;
+      return "<li data-sf='" + esc(id) + "'>" + avatar +
+        "<span class='info'><b>" + titel + (s ? "<small>" + naarTekst(s.tid) + "</small>" : "") + "</b><span>" + esc(tekst) + "</span></span>" +
+        (u ? "<span class='ul'>" + u + "</span>" : "") + "</li>";
+    };
+    let h = raekke("faelles", "Fælles chat", "Hele personalet", "<span class='sf-ava'>👥</span>");
+    let navne = [];
+    try { navne = staffNavne(); } catch (e) {}
+    const rang = (typeof STAFF_RANG !== "undefined" ? STAFF_RANG : [["andet", ""]]);
+    rang.forEach(function (r) {
+      const her = navne.filter(function (n) { try { return staffRang(n) === r[0]; } catch (e) { return r[0] === "andet"; } }).sort(function (a, b) { return a.localeCompare(b); });
+      if (!her.length) return;
+      h += "<li class='sf-rang'>" + esc(r[1]) + "</li>" + her.map(function (n) {
+        return raekke(n, (sfOnline(n) ? "🟢 " : "") + esc(n), sfOnline(n) ? "Online" : "Offline", avatarHtml(n));
+      }).join("");
+    });
+    ul.innerHTML = h;
+    tegnAvatarer(ul);
+  }
+  function tegnStaffSamtale() {
+    const s = sfSamtale;
+    appEl.innerHTML = "<div class='tlf-top'><button class='tlf-tb' data-sftilb title='Tilbage'>" + ik("tilbage", 20) + "</button>" +
+      "<span class='ti'>" + (s === "faelles" ? "<span class='sf-ava lille'>👥</span>" : avatarHtml(s, true)) + "<b>" + (s === "faelles" ? "Fælles staff chat" : esc(s)) + "</b><small>" +
+      (s === "faelles" ? "Hele personalet" : esc(sfRangNavn(s)) + (sfOnline(s) ? " · 🟢 Online" : "")) + "</small></span><span class='tlf-tb'></span></div>" +
+      "<div class='tlf-chat sf-chat'></div><div class='sf-fejl' hidden></div>" +
+      "<form class='tlf-skriv' autocomplete='off'><input maxlength='300' placeholder='" + (s === "faelles" ? "Skriv til hele personalet …" : "Skriv til " + esc(s) + " …") + "'><button type='submit' disabled title='Send'>" + ik("send", 18) + "</button></form>";
+    tegnAvatarer(appEl.querySelector(".tlf-top"));
+    const form = appEl.querySelector("form"), inp = form.querySelector("input"), knap = form.querySelector("button");
+    inp.addEventListener("input", function () { knap.disabled = !inp.value.trim(); });
+    inp.addEventListener("keydown", function (e) { e.stopPropagation(); });
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const tekst = inp.value.trim();
+      if (!tekst) return;
+      inp.value = ""; knap.disabled = true;
+      const fejl = appEl.querySelector(".sf-fejl");
+      serverKald("hv_staff_send", { p_token: mitToken(), p_til: s === "faelles" ? "" : s, p_tekst: tekst })
+        .then(function () { fejl.hidden = true; if (typeof hentStaff === "function") hentStaff(); })
+        .catch(function (er) { inp.value = tekst; knap.disabled = false; fejl.hidden = false; fejl.textContent = /hv_staff/.test(er.message) ? "Staff chatten virker, når database-13-staff.sql er kørt." : er.message; });
+    });
+    sfBeskeder();
+    setTimeout(function () { inp.focus(); }, 300);
+  }
+  function sfBeskeder() {
+    const boks = appEl && appEl.querySelector(".sf-chat");
+    if (!boks || !sfKlar()) return;
+    const l = sfData().filter(function (m) { return samtaleFor(m) === sfSamtale; });
+    let html = "", dag = "";
+    if (!l.length) html = "<div class='tlf-tom'><span class='st'>🛡</span>Ingen beskeder endnu. Skriv den første 👋</div>";
+    l.forEach(function (m) {
+      const d = new Date(m.tid).toDateString();
+      if (d !== dag) { dag = d; html += "<div class='dag'>" + (d === new Date().toDateString() ? "I dag" : dato(new Date(m.tid))) + "</div>"; }
+      const minB = m.fra === mig();
+      html += "<div class='tlf-b " + (minB ? "mig" : "dem") + "'>" + esc(m.tekst) + "<small>" + (minB || sfSamtale !== "faelles" ? "" : esc(m.fra) + " · ") + kl(m.tid) + "</small></div>";
+    });
+    const nede = boks.scrollHeight - boks.scrollTop - boks.clientHeight < 40 || !boks.dataset.set;
+    boks.innerHTML = html;
+    if (nede) boks.scrollTop = boks.scrollHeight;
+    boks.dataset.set = "1";
+    try { saetLaest(sfSamtale); } catch (e) {}
+  }
+  // klik i appen
+  skaerm.addEventListener("click", function (e) {
+    if (appNu !== "staff" || !appEl || !appEl.contains(e.target)) return;
+    const li = e.target.closest("[data-sf]");
+    if (li) { sfSamtale = li.dataset.sf; tegnStaffSamtale(); return; }
+    if (e.target.closest("[data-sftilb]")) { sfSamtale = null; tegnStaff(); return; }
+    if (e.target.closest("[data-sfpanel]")) {
+      try { if (typeof ejerVindue !== "undefined" && ejerVindue.hidden && typeof ejerKnap !== "undefined") ejerKnap.click(); ejerFane = "staffchat"; visFane(); } catch (er) {}
+    }
+  });
+  // nye beskeder: tegn igen; mist man jobbet, lukkes appen og forsvinder
+  setInterval(function () {
+    const nu = erStaffMig();
+    if (sfVarStaff !== null && nu !== sfVarStaff) {
+      if (!nu && appNu === "staff") { lukApp(); lille("Du er ikke ansat længere – Staff chat er fjernet"); }
+      else if (skaermNu === "hjem" && !tlf.hidden) tegnHjem();
+    }
+    sfVarStaff = nu;
+    if (!nu || tlf.hidden) return;
+    const d = sfData() || [];
+    const sidst = d.length + ":" + (d.length ? d[d.length - 1].id : 0) + ":" + sfUlaeste();
+    if (sidst === sfSidst) return;
+    sfSidst = sidst;
+    if (appNu === "staff") { if (sfSamtale) sfBeskeder(); else sfListe(); }
+    else if (skaermNu === "hjem") tegnHjem();
+  }, 1500);
+  nyStil("telefon-stil-staff", [
+    ".sf-forkl { margin: 6px 16px 2px; font-size: 11.5px; color: var(--t-graa); }",
+    ".sf-ava { width: 40px; height: 40px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; background: linear-gradient(#3d4b7a, #1c2544); }",
+    ".sf-ava.lille { width: 28px; height: 28px; font-size: 14px; }",
+    ".sf-liste li.sf-rang { cursor: default; padding: 10px 16px 3px; font-size: 11px; font-weight: 700; color: var(--t-graa); text-transform: uppercase; letter-spacing: .03em; min-height: 0; }",
+    ".sf-liste li.sf-rang::before, .sf-liste li.sf-rang::after { display: none; }",
+    ".sf-fejl { margin: 0 12px 4px; padding: 6px 10px; border-radius: 10px; background: #fff3d6; color: #7a5200; font-size: 11.5px; }",
+  ]);
 
   setInterval(function () { if (!tlf.hidden) opdaterUr(); }, 10000);
   setInterval(function () { if (!tlf.hidden && skaermNu === "hjem" && !wTraek && !galleriAabent) tegnWidgets(); }, 5000);
