@@ -4061,8 +4061,8 @@
       }
     }
     else if (lader) { if (tik % 3 === 0) ind.bat = Math.min(100, ind.bat + 1); }              // 1 % hvert 6. sekund = fuld på ca. 10 minutter
-    else if (!tlf.hidden && ind.bat > 0 && tik % ((brugerMeget() ? 4 : 12) * (ind.spare ? 2 : 1)) === 0) ind.bat = Math.max(0, ind.bat - 1);   // ca. 40 min (13 min med kamera/musik), dobbelt så længe med strømspare
-    else if (tlf.hidden && ind.bat > 0 && brugerMeget() && tik % (ind.spare ? 16 : 8) === 0) ind.bat = Math.max(0, ind.bat - 1);
+    else if (!tlf.hidden && ind.bat > 0 && tik % ((brugerMeget() ? 6 : 18) * (ind.spare ? 2 : 1)) === 0) ind.bat = Math.max(0, ind.bat - 1);   // ca. 1 time (20 min med kamera/musik), dobbelt så længe med strømspare
+    else if (tlf.hidden && ind.bat > 0 && brugerMeget() && tik % (ind.spare ? 24 : 12) === 0) ind.bat = Math.max(0, ind.bat - 1);
     if (lader !== sidstLader) {
       sidstLader = lader;
       if (lader) { if (!tlf.hidden) lille("🔌 Telefonen lader op"); else besked && (besked.textContent = "🔌 Din telefon lader op ⚡"); }
