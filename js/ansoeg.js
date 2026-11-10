@@ -13,6 +13,7 @@ const ANSOEG_STILLINGER = [
   { id: "bygmester", navn: "Bygmester", tekst: "Bygger og indretter de fælles rum, så de bliver flotte." },
   { id: "support", navn: "Support", tekst: "Hjælper, når noget driller, fx log ind eller ting der ikke virker." },
   { id: "content-creator", navn: "Content creator", tekst: "Laver videoer, billeder og opslag om hotellet." },
+  { id: "radiovaert", navn: "Radiovært", tekst: "Laver Vera-radio med snak og musik, som alle på hotellet kan lytte med på." },
 ];
 const ANSOEG_ONLINE = ["Hver dag", "Et par gange om ugen", "Mest i weekenden", "En gang imellem"];
 

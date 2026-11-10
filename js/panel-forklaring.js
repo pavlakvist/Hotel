@@ -469,3 +469,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/beskeder-adgang.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 📻 Vera-radio (js/vera-radio.js): Radiovært-job, radiostudie, Radio-fane i ejerpanelet,
+// lytte-knap i hotellet og appen Vera-radio på telefonen. Kræver database-45-radio.sql.
+(function () {
+  if (document.querySelector("script[src^='js/vera-radio.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vera-radio.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();

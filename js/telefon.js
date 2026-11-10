@@ -222,6 +222,20 @@
   APPS.staff = { navn: "Staff chat", ik: "staff", bg: "linear-gradient(#3d4b7a, #1c2544)", kun: erStaffMig };
   GITTER.push("staff");
   function appSkjult(id) { return !!(APPS[id] && APPS[id].kun && !APPS[id].kun()); }
+  // 🔌 Andre filer kan lægge egne apps i telefonen (fx 📻 Vera-radio fra js/vera-radio.js):
+  //   window.tlfEkstraApps[id] = { navn, ikSvg, bg, fast, kun(), tal(), tegn(el, api), luk() }
+  //   og faste kontakter: window.tlfFasteKontakter = [{ id, navn, nummer, ikon, bg, app, tekst, aabn() }]
+  window.tlfEkstraApps = window.tlfEkstraApps || {};
+  function tagEkstraApps() {
+    Object.keys(window.tlfEkstraApps).forEach(function (id) {
+      const e = window.tlfEkstraApps[id];
+      if (APPS[id] && APPS[id].ekstra === e) return;
+      if (e.ikSvg) IK["x-" + id] = e.ikSvg;
+      APPS[id] = { navn: e.navn, ik: e.ikSvg ? "x-" + id : "gear", bg: e.bg, kun: e.kun, ekstra: e };
+      if (e.fast && GITTER.indexOf(id) < 0) GITTER.push(id);
+    });
+  }
+  tagEkstraApps();
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
   // ---------------------------------------------------------------
@@ -1228,6 +1242,7 @@
     if (id === "stribe") tal = stribeTal();
     if (id === "mail" && typeof mailUlaeste === "function") tal = mailUlaeste();
     if (id === "staff") tal = sfUlaeste();
+    if (A.ekstra && typeof A.ekstra.tal === "function") { try { tal = A.ekstra.tal() || 0; } catch (e) {} }
     const indre = id === "events" ? "<span class='tlf-kal'></span>" : ik(A.ik);
     return "<button class='tlf-app-ik' data-app='" + id + "'><span class='fl' style='background:" + A.bg + "'>" + indre + "</span>" +
       (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + (redigerer && A.spil ? "<span class='slet-x' data-afinst='" + id + "' title='Afinstallér'>−</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
@@ -1745,6 +1760,7 @@
     else { chatMed = null; tegnApp(); }
   }
   function lukApp(straks) {
+    if (appNu && APPS[appNu] && APPS[appNu].ekstra && typeof APPS[appNu].ekstra.luk === "function") { try { APPS[appNu].ekstra.luk(); } catch (e) {} }
     if (typeof stopSnake === "function") stopSnake();
     if (typeof stopSpil === "function") stopSpil();
     if (typeof beskedMed !== "undefined" && chatMed) beskedMed = null;
@@ -1812,9 +1828,16 @@
       tegnMail();
     } else if (id === "musik") {
       tegnMusik();
+    } else if (APPS[id] && APPS[id].ekstra) {
+      try { APPS[id].ekstra.tegn(appEl, tlfApi()); } catch (e) { console.error(e); }
     } else if (APPS[id] && APPS[id].spil) {
       tegnSpil(id);
     }
+  }
+  // Det, en ekstra app (fx Vera-radio) må bruge fra telefonen
+  function tlfApi() {
+    return { top: top, ik: ik, esc: esc, lille: lille, luk: lukApp, aabn: aabnApp,
+      el: function () { return appEl; }, appNu: function () { return appNu; }, ding: ding };
   }
   // ---------------------------------------------------------------
   //  🛍 App Butik — hent spil for sjov (ingen Glimt). Hentede spil kan
@@ -2582,7 +2605,14 @@
         }).join("") : "<li class='tlf-tom' style='cursor:default'><span><span class='st'>📭</span>Ingen venneanmodninger lige nu.</span></li>";
       } else {
         const liste = vennerListe().filter(passer).slice().sort(function (a, b) { return onlineOm(b) - onlineOm(a) || a.localeCompare(b); });
-        ul.innerHTML = liste.length ? liste.map(function (n) {
+        // 📌 faste kontakter (fx 📻 Vera-radio) står altid øverst og kan ikke slettes
+        const faste = (window.tlfFasteKontakter || []).filter(function (k) { return !soegTekst || (k.navn + " " + k.nummer).toLowerCase().indexOf(soegTekst) >= 0 || k.nummer.replace(/\s/g, "").indexOf(soegTekst.replace(/\s/g, "")) >= 0; });
+        const fasteHtml = faste.map(function (k) {
+          return "<li data-fast='" + esc(k.id) + "' class='tlf-fast'><span class='tlf-av' style='background:" + (k.bg || "#7a1f2e") + "'>" + esc(k.ikon || "📌") + "</span>" +
+            "<span class='info'><b>" + esc(k.navn) + " <small class='tlf-fast-pin' title='Fast kontakt'>📌</small></b><span>☎ " + esc(k.nummer) + (k.tekst ? " · " + esc(typeof k.tekst === "function" ? k.tekst() : k.tekst) : "") + "</span></span>" +
+            "<button class='tlf-lk' data-skriv title='Skriv'>" + ik("besked", 17).replace("fill='#fff'", "fill='currentColor'") + "</button></li>";
+        }).join("");
+        ul.innerHTML = fasteHtml + (liste.length ? liste.map(function (n) {
           const on = onlineOm(n);
           const sted = on ? stedFor(n) : "Offline";
           const kanGaa = kanFoelge(n);
@@ -2591,7 +2621,7 @@
             "<button class='tlf-lk' data-skriv title='Skriv'>" + ik("besked", 17).replace("fill='#fff'", "fill='currentColor'") + "</button>" +
             "<button class='tlf-lk rod' data-fjern title='Fjern ven'>" + ik("skrald", 17) + "</button></li>";
         }).join("") : "<li class='tlf-tom' style='cursor:default'><span><span class='st'>👫</span>" +
-          (soegTekst ? "Ingen venner passer." : "Du har ingen venner endnu.<br>Klik på en gæst i hotellet og vælg <b>➕ Tilføj ven</b>.") + "</span></li>";
+          (soegTekst ? "Ingen venner passer." : "Du har ingen venner endnu.<br>Klik på en gæst i hotellet og vælg <b>➕ Tilføj ven</b>.") + "</span></li>");
       }
     }
     tegnAvatarer(ul);
@@ -2610,6 +2640,13 @@
     const ja = t.closest("[data-ja]"), nej = t.closest("[data-nej]");
     if (ja || nej) {
       if (typeof svarAnmodning === "function") svarAnmodning((ja || nej).dataset[ja ? "ja" : "nej"], !!ja);
+      return;
+    }
+    const fast = t.closest("li[data-fast]");
+    if (fast) {
+      const k = (window.tlfFasteKontakter || []).find(function (x) { return x.id === fast.dataset.fast; });
+      if (k && typeof k.aabn === "function") k.aabn(!!t.closest("[data-skriv]"));
+      else if (k && k.app) aabnApp(k.app);
       return;
     }
     const li = t.closest("li[data-chat]");
@@ -3861,6 +3898,31 @@
   }
   window.aabnTelefon = aabnTelefon;
   window.lukTelefon = lukTelefon;
+  // 🔌 Til ekstra apps: læg en app i telefonen, åbn den, tegn den igen, og vis en notifikation
+  window.tlfTilfoejApp = function (id, e) {
+    window.tlfEkstraApps[id] = e;
+    tagEkstraApps();
+    if (!tlf.hidden && skaermNu === "hjem" && !redigerer) tegnHjem();
+  };
+  window.tlfAabnApp = function (id) { aabnTelefon(); setTimeout(function () { aabnApp(id); }, 30); };
+  window.tlfTegnApp = function (id) { if (appNu === id && appEl && !tlf.hidden) tegnApp(); };
+  window.tlfAppAaben = function (id) { return !tlf.hidden && appNu === id && !!appEl; };
+  window.tlfOpdaterHjem = function () { if (!tlf.hidden && skaermNu === "hjem" && !redigerer && !galleriAabent) tegnHjem(); };
+  window.tlfNotis = function (app, titel, tekst) {
+    ding();
+    if (tlf.hidden) {
+      const k = document.getElementById("chat-venner-knap");
+      if (k) { k.classList.remove("tlf-ring"); void k.offsetWidth; k.classList.add("tlf-ring"); }
+      return;
+    }
+    tlf.classList.remove("tlf-vib"); void tlf.offsetWidth; tlf.classList.add("tlf-vib");
+    if (appNu === app) return;
+    if (!APPS[app]) return;
+    bannerEl.innerHTML = notisHtml(app, titel, tekst, "nu");
+    bannerEl.classList.add("vis");
+    clearTimeout(visBanner.t);
+    visBanner.t = setTimeout(skjulBanner, 4200);
+  };
 
   // Venne-knappen i chatbaren åbner telefonen i stedet for vennelisten
   document.addEventListener("click", function (e) {
