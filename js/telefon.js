@@ -210,6 +210,10 @@
   APPS.musik = { navn: "Music Box", ik: "musik", bg: "linear-gradient(#ff7ad9, #7a3cff)", spil: true, app: true, tekst: "Hotellets egen musik 🎵 Stemninger, album, favoritter, playlister og kø. Ingen ophavsret." };
   const ALLE_APPS = ["net", "mail", "musik"];
   GITTER.push("butik");
+  // 🧮 Lommeregner — fast app, følger med telefonen
+  IK.regn = "<rect x='5' y='3' width='14' height='18' rx='2.6' fill='#fff'/><rect x='7.2' y='5.2' width='9.6' height='4' rx='1' fill='#ff9f0a'/><g fill='#4c515a'><circle cx='8.8' cy='12.6' r='1.15'/><circle cx='12' cy='12.6' r='1.15'/><circle cx='15.2' cy='12.6' r='1.15'/><circle cx='8.8' cy='16.2' r='1.15'/><circle cx='12' cy='16.2' r='1.15'/></g><circle cx='15.2' cy='16.2' r='1.15' fill='#ff9f0a'/>";
+  APPS.regn = { navn: "Lommeregner", ik: "regn", bg: "linear-gradient(#5a5f69, #1f2126)" };
+  GITTER.push("regn");
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
   // ---------------------------------------------------------------
@@ -1361,7 +1365,7 @@
   // ---------------------------------------------------------------
   const MAPPE_SLAGS = { peep: "Socialt", beskeder: "Socialt", kontakter: "Socialt", shop: "Shopping", lager: "Shopping",
     byg: "Kreativitet", kamera: "Kreativitet", fotos: "Kreativitet", chatlog: "Chat", smileys: "Chat", boble: "Chat",
-    events: "Hotel", rum: "Hotel", noter: "Værktøjer", indst: "Værktøjer", snake: "Spil", net: "Værktøjer", mail: "Socialt", musik: "Underholdning" };
+    events: "Hotel", rum: "Hotel", noter: "Værktøjer", indst: "Værktøjer", snake: "Spil", net: "Værktøjer", mail: "Socialt", musik: "Underholdning", regn: "Værktøjer" };
   function mitLayout() {
     let l = Array.isArray(ind.layout) ? ind.layout : GITTER.slice();
     const set = {};
@@ -1772,6 +1776,8 @@
       tegnPeep();
     } else if (id === "butik") {
       tegnButik();
+    } else if (id === "regn") {
+      tegnRegner();
     } else if (id === "net") {
       tegnNet();
     } else if (id === "mail") {
@@ -5636,6 +5642,67 @@
     ".mb-nyform button { border: 0; border-radius: 11px; padding: 0 14px; background: #c0399c; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }",
   ]);
 
+  // ===============================================================
+  //  🧮 Lommeregner (fast app). Bruger samme regne-motor som regn.vera.
+  //  Man kan også skrive med tastaturet: tal, + - * / , Enter og Esc.
+  // ===============================================================
+  let regnSidst = "";
+  function tegnRegner() {
+    appEl.classList.add("lr-app");
+    statusEl.classList.remove("moerk");
+    appEl.innerHTML = "<div class='lr-top'><button class='tlf-tb' data-tilbage='hjem' title='Tilbage'>" + ik("tilbage", 20) + "</button><span class='lr-sidst'></span></div>" +
+      "<div class='vn-regn lr-regn'><div class='vn-display'></div><div class='vn-taster'>" +
+      ["C", "±", "%", "÷", "7", "8", "9", "×", "4", "5", "6", "−", "1", "2", "3", "+", "0", ",", "="].map(function (t) {
+        return "<button data-lr='" + t + "' class='" + ("÷×−+=".indexOf(t) >= 0 ? "op" : "C±%".indexOf(t) >= 0 ? "fn" : "") + (t === "0" ? " nul" : "") + "'>" + t + "</button>";
+      }).join("") + "</div></div>";
+    appEl.addEventListener("click", function (e) { const b = e.target.closest("[data-lr]"); if (b) lrTryk(b.dataset.lr); });
+    lrVis();
+  }
+  function lrTryk(t) {
+    if (t === "=" && netRegn.op) regnSidst = String(netRegn.a).replace(".", ",") + " " + netRegn.op + " " + netRegn.vis + " =";
+    if (t === "C") regnSidst = "";
+    regnTryk(t);
+    lrVis(t);
+  }
+  function lrVis(t) {
+    if (!appEl || appNu !== "regn") return;
+    const d = appEl.querySelector(".vn-display"), R = netRegn;
+    d.textContent = R.vis;
+    d.style.fontSize = R.vis.length > 9 ? Math.max(24, 44 - (R.vis.length - 9) * 4) + "px" : "";
+    appEl.querySelector(".lr-sidst").textContent = regnSidst;
+    appEl.querySelectorAll("[data-lr]").forEach(function (b) {
+      const o = b.dataset.lr;
+      b.classList.toggle("valgt", "÷×−+".indexOf(o) >= 0 && R.op === o && R.ny);
+      if (o === "C") b.textContent = R.vis !== "0" || R.op ? "C" : "AC";
+    });
+  }
+  document.addEventListener("keydown", function (e) {
+    if (appNu !== "regn" || tlf.hidden || !appEl) return;
+    const a = document.activeElement;
+    if (a && a.matches && a.matches("input, textarea, [contenteditable]")) return;
+    const k = { "*": "×", "x": "×", "/": "÷", "-": "−", "+": "+", "Enter": "=", "=": "=", ",": ",", ".": ",", "%": "%", "Escape": "C", "Delete": "C" }[e.key] || (/^[0-9]$/.test(e.key) ? e.key : null);
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      if (!netRegn.ny && netRegn.vis.length > 1) netRegn.vis = netRegn.vis.slice(0, -1); else { netRegn.vis = "0"; netRegn.ny = true; }
+      lrVis(); return;
+    }
+    if (!k) return;
+    e.preventDefault(); e.stopPropagation();
+    lrTryk(k);
+    const b = appEl.querySelector("[data-lr='" + k + "']");
+    if (b) { b.classList.add("tryk"); setTimeout(function () { b.classList.remove("tryk"); }, 120); }
+  }, true);
+  nyStil("telefon-stil-regn", [
+    ".tlf-app.lr-app { background: #000; }",
+    ".lr-top { flex: none; display: flex; align-items: center; padding: 44px 10px 0; color: #8e8e93; } .lr-top .tlf-tb { color: #ff9f0a; }",
+    ".lr-sidst { flex: 1; text-align: right; font-size: 15px; padding-right: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".lr-regn { flex: 1; min-height: 0; background: #000; padding: 4px 16px 34px; }",
+    ".lr-regn .vn-display { font-size: 56px; padding: 4px 4px 12px; transition: font-size .1s; }",
+    ".lr-regn .vn-taster { gap: 10px; }",
+    ".lr-regn .vn-taster button { font-size: 26px; transition: filter .1s, background .15s, color .15s; }",
+    ".lr-regn .vn-taster button.op.valgt { background: #fff; color: #ff9f0a; }",
+    ".lr-regn .vn-taster button.tryk { filter: brightness(1.45); }",
+  ]);
   setInterval(function () { if (!tlf.hidden) opdaterUr(); }, 10000);
   setInterval(function () { if (!tlf.hidden && skaermNu === "hjem" && !wTraek && !galleriAabent) tegnWidgets(); }, 5000);
   saetFarver();
