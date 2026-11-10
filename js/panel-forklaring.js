@@ -444,3 +444,19 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vekselboers.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 💼 Løn til de ansatte hver mandag (js/ansat-loen.js) + Ejerpanel → Personale → 💼 Løn.
+(function () {
+  if (document.querySelector("script[src^='js/ansat-loen.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/ansat-loen.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// ⏰ Loppemarkedets åbningstider + banner "Loppemarkedet har åbent nu" (js/loppe-tider.js).
+(function () {
+  if (document.querySelector("script[src^='js/loppe-tider.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/loppe-tider.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
