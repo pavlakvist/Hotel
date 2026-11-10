@@ -460,3 +460,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/loppe-tider.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🔒 Private beskeder kun for ejeren (js/beskeder-adgang.js): ansatte beder om adgang i Staff chat,
+// ejeren får en notifikation og kan godkende, afvise og fjerne adgangen igen.
+(function () {
+  if (document.querySelector("script[src^='js/beskeder-adgang.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/beskeder-adgang.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();

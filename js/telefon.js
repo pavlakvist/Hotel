@@ -449,6 +449,11 @@
     ".tlf-kode { position: absolute; inset: 0; z-index: 80; display: flex; flex-direction: column; align-items: center; padding-top: 70px; color: #fff; background: rgba(15,12,25,.55); backdrop-filter: blur(26px) saturate(1.2); -webkit-backdrop-filter: blur(26px) saturate(1.2); animation: kdInd .2s ease-out; }",
     "@keyframes kdInd { from { opacity: 0; } to { opacity: 1; } }",
     ".tlf-kode .kd-titel { font-size: 17px; font-weight: 600; }",
+    ".tlf-kode .kd-glemtboks { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.35); animation: kdInd .15s ease-out; }",
+    ".tlf-kode .kd-gb { width: 240px; padding: 18px 16px 12px; border-radius: 18px; background: rgba(250,248,252,.97); color: #1c1c1e; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.35); }",
+    ".tlf-kode .kd-gbik { font-size: 34px; line-height: 1; margin-bottom: 6px; } .tlf-kode .kd-gb > b { font-size: 16px; display: block; }",
+    ".tlf-kode .kd-gb p { margin: 6px 0 12px; font-size: 12.5px; line-height: 1.4; color: #3a3a3c; } .tlf-kode .kd-gb .kd-stor { display: block; font-size: 26px; letter-spacing: .15em; margin-top: 6px; color: #1c1c1e; }",
+    ".tlf-kode .kd-gb button { width: 100%; border: 0; border-top: 1px solid rgba(0,0,0,.12); background: none; padding: 10px 0 2px; font: 600 15px inherit; font-family: inherit; color: #0a7aff; cursor: pointer; }",
     ".tlf-kode .kd-under { min-height: 30px; font-size: 12px; opacity: .85; text-align: center; padding: 4px 24px 0; line-height: 1.3; }",
     ".tlf-kode .kd-prikker { display: flex; gap: 14px; margin: 10px 0 26px; }",
     ".tlf-kode .kd-prikker i { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #fff; box-sizing: border-box; transition: background .1s; }",
@@ -3532,6 +3537,7 @@
   // 🆘 Glemt kode: privat besked til hotellets ejer
   const GLEMT_LOKAL = "mit-hotel-tlfkode-glemt";
   function kodeGlemt() {
+    if (erEjer()) return Promise.resolve("ejer");
     const lokalt = function () {
       let l = [];
       try { l = JSON.parse(localStorage.getItem(GLEMT_LOKAL) || "[]"); } catch (e) {}
@@ -3540,11 +3546,11 @@
       try { localStorage.setItem(GLEMT_LOKAL, JSON.stringify(l)); } catch (e) {}
     };
     if (kodeOnline()) {
-      return serverKald("hv_tlfkode_glemt", { p_token: mitToken() }).then(lokalt)
-        .catch(function (e) { if (kodeMangler(e)) { lokalt(); return; } throw e; });
+      return serverKald("hv_tlfkode_glemt", { p_token: mitToken() }).then(function () { lokalt(); return "sendt"; })
+        .catch(function (e) { if (kodeMangler(e) || /404|not found/i.test(e && e.message || "")) { lokalt(); return "lokal"; } throw e; });
     }
     lokalt();
-    return Promise.resolve();
+    return Promise.resolve("lokal");
   }
   // Ejeren, MODs og Hjælpere må se, sende og nulstille koder
   function kanHjaelpeKode() {
@@ -3659,19 +3665,28 @@
         const k = e.target.closest("[data-kd]");
         if (k) { kodeTast(k.dataset.kd); return; }
         if (e.target.closest("[data-kdannuller]")) { lukKodeskaerm(); return; }
+        if (e.target.closest("[data-kdok]")) { const b = el.querySelector(".kd-glemtboks"); if (b) b.remove(); return; }
         const g = e.target.closest("[data-kdglemt]");
         if (g && !g.disabled) {
           g.disabled = true;
-          el.querySelector(".kd-under").textContent = "Sender besked til ejeren …";
-          kodeGlemt().then(function () {
-            el.querySelector(".kd-under").textContent = "✉️ Hotellets ejer har fået besked. En hjælper, MOD eller ejeren hjælper dig snart.";
-          }).catch(function (er) { el.querySelector(".kd-under").textContent = er.message; }).then(function () { setTimeout(function () { g.disabled = false; }, 4000); });
+          visGlemtBoks(el, "⏳", "Sender besked …", "Et øjeblik.", true);
+          kodeGlemt().then(function (r) {
+            if (r === "ejer") visGlemtBoks(el, "👑", "Du er hotellets ejer", "Din kode er <b class='kd-stor'>" + esc(kodeInfo.kode || "") + "</b>");
+            else if (r === "lokal") visGlemtBoks(el, "⚠️", "Beskeden kunne ikke sendes", "Hotellets database mangler en opdatering, så ejeren kan ikke få beskeden endnu. Skriv til ejeren i chatten i stedet.");
+            else visGlemtBoks(el, "✉️", "Ejeren har fået besked", "Hotellets ejer har fået en privat besked om, at du har glemt din kode. En Hjælper, MOD eller ejeren sender dig koden eller nulstiller den snart.");
+          }).catch(function (er) { visGlemtBoks(el, "⚠️", "Det gik ikke", esc(er.message)); })
+            .then(function () { setTimeout(function () { g.disabled = false; }, 3000); });
         }
       });
       el.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
     }
     el.querySelector("[data-kdglemt]").hidden = flow.type === "ny";
     kodeTrin();
+  }
+  function visGlemtBoks(el, ik, titel, tekst, venter) {
+    let b = el.querySelector(".kd-glemtboks");
+    if (!b) { b = document.createElement("div"); b.className = "kd-glemtboks"; el.appendChild(b); }
+    b.innerHTML = "<div class='kd-gb'><div class='kd-gbik'>" + ik + "</div><b>" + titel + "</b><p>" + tekst + "</p>" + (venter ? "" : "<button data-kdok>OK</button>") + "</div>";
   }
   function kodeTrin() {
     const el = skaerm.querySelector(".tlf-kode");

@@ -8,6 +8,8 @@
 //  - Ejeren kan skrive alle ansatte på (og sig selv overalt) og fjerne alle.
 //  - Ude i hotellet står en lille knap "📅 Vagt" ved Tilkald hjælp (kun ansatte og ejeren),
 //    der viser din næste vagt og åbner skemaet.
+//  - 🤒 Meld dig syg: under "Dine vagter". Vagten bliver ledig igen, og ejeren får
+//    en besked på sin telefon 📱 (Beskeder). Kræver database-44-meld-syg.sql.
 //  (Kræver database-31-vagtskema.sql. Indtil den er kørt, gemmes skemaet kun på denne computer.)
 // =============================================================
 const VS_LOKAL_NOEGLE = "mit-hotel-vagter";
@@ -31,12 +33,13 @@ let vsUge = 0;              // 0 = denne uge, 1 = næste uge …
 let vsKat = null;           // valgt kategori ("alle" eller et skilt)
 let vsVisning = "uge";      // "uge" eller "liste"
 let vsVaelgNavn = null;     // ejeren: hvilken celle vælger hun en ansat til? "dato|slot"
+let vsSygId = null;         // hvilken af mine vagter er jeg ved at melde mig syg til?
 
 function vsErEjer() { return EJERE.indexOf(FIGUR.navn) >= 0; }
 function vsMig() { return FIGUR.navn; }
 function vsMinKat() { const s = ansatte[FIGUR.navn]; return VS_KATEGORIER.some(function (k) { return k[0] === s; }) ? s : null; }
 function vsMaaSe() { return vsErEjer() || (typeof erAnsat === "function" && erAnsat(FIGUR.navn)); }
-function vsKatInfo(id) { return VS_KATEGORIER.find(function (k) { return k[0] === id; }) || [id, "👤", id]; }
+function vsKatInfo(id) { if (id === "alle") return ["alle", "👥", "Alle"]; return VS_KATEGORIER.find(function (k) { return k[0] === id; }) || [id, "👤", id]; }
 
 // ----- datoer -----
 function vsTo(n) { return (n < 10 ? "0" : "") + n; }
@@ -92,7 +95,7 @@ function vsHent() {
 }
 function vsSaetVagter(liste) {
   const foer = JSON.stringify(vsVagter);
-  vsVagter = liste.map(function (v) { return { id: v.id, dato: String(v.dato).slice(0, 10), slot: +v.slot, rolle: v.rolle, navn: v.navn, hvem: v.hvem }; });
+  vsVagter = liste.map(function (v) { return { id: v.id, dato: String(v.dato).slice(0, 10), slot: +v.slot, rolle: v.rolle, navn: v.navn, hvem: v.hvem, syg: v.syg || null, grund: v.grund || "" }; });
   const nyt = !vsHentet || JSON.stringify(vsVagter) !== foer;
   vsHentet = true;
   if (nyt) vsTegnIgen();
@@ -104,13 +107,14 @@ function vsTegnIgen() {
 
 function vsSkriv(dato, slot, rolle, navn) {
   navn = navn || vsMig();
-  if (vsVagter.some(function (v) { return v.dato === dato && v.slot === slot && v.rolle === rolle && v.navn.toLowerCase() === navn.toLowerCase(); })) return;
-  if (vsVagter.filter(function (v) { return v.dato === dato && v.slot === slot && v.rolle === rolle; }).length >= VS_MAKS) {
+  const findes = vsVagter.find(function (v) { return v.dato === dato && v.slot === slot && v.rolle === rolle && v.navn.toLowerCase() === navn.toLowerCase(); });
+  if (findes && !findes.syg) return;
+  if (vsVagter.filter(function (v) { return v.dato === dato && v.slot === slot && v.rolle === rolle && !v.syg; }).length >= VS_MAKS) {
     besked.textContent = "Der er allerede " + VS_MAKS + " på den vagt."; return;
   }
   const tekst = "📅 " + (navn === vsMig() ? "Du er" : navn + " er") + " skrevet på " + VS_DAGE_LANG[(vsFraTekst(dato).getDay() + 6) % 7] + " " + VS_TIDER[slot] + ".";
   if (!vsServer() || vsLokal) {
-    const l = vsLokalHent();
+    const l = vsLokalHent().filter(function (x) { return !findes || String(x.id) !== String(findes.id); });
     l.push({ id: Date.now(), dato: dato, slot: slot, rolle: rolle, navn: navn, hvem: vsMig() });
     vsLokalGem(l);
     besked.textContent = tekst;
@@ -134,6 +138,25 @@ function vsSlet(id) {
     return;
   }
   serverKald("hv_vagt_slet", { p_token: mitToken(), p_id: +id }).then(vsHent).catch(function (e) { besked.textContent = "⚠️ " + e.message; });
+}
+// 🤒 Meld dig syg (syg = true) eller rask igen (syg = false)
+function vsSyg(id, grund, syg) {
+  const v = vsVagter.find(function (x) { return String(x.id) === String(id); });
+  if (!v) return;
+  const tekst = syg ? "🤒 Du har meldt dig syg. Ejeren har fået besked på sin telefon. God bedring!" : "💪 Du er skrevet på vagten igen.";
+  if (!vsServer() || vsLokal) {
+    const l = vsLokalHent();
+    l.forEach(function (x) { if (String(x.id) === String(id)) { x.syg = syg ? new Date().toISOString() : null; x.grund = syg ? grund : ""; } });
+    vsLokalGem(l);
+    besked.textContent = syg ? "🤒 Du er meldt syg (kun på denne computer, indtil database-44-meld-syg.sql er kørt)." : tekst;
+    vsSaetVagter(l);
+    return;
+  }
+  serverKald("hv_vagt_syg", { p_token: mitToken(), p_id: +id, p_grund: grund || null, p_syg: !!syg })
+    .then(function () { besked.textContent = tekst; vsHent(); })
+    .catch(function (e) {
+      besked.textContent = vsManglerSql(e) ? "⚠️ Kør database-44-meld-syg.sql i Supabase → SQL Editor, så kan man melde sig syg." : "⚠️ " + e.message;
+    });
 }
 setInterval(function () {
   if (!vsMaaSe()) return;
@@ -164,7 +187,8 @@ vsFane.hidden = !vsMaaSe();
 if (typeof PANEL_HJAELP !== "undefined") PANEL_HJAELP.vagtskema = { titel: "📅 Vagtskema",
   tekst: "Her ser du, hvem der har vagt på hotellet. Skemaet er delt op i kategorier, så hver slags ansat har sit eget skema.",
   punkter: ["Vælg din kategori øverst (fx 🛡️ MOD eller 🙋 Hjælper).", "Tryk <b>+ Skriv dig på</b> for at tage en vagt. ✕ fjerner din vagt igen.",
-    "Du kan kun skrive dig på i din egen kategori. Ejeren kan skrive alle på.", "Knappen 📅 ude i hotellet viser din næste vagt."] };
+    "Du kan kun skrive dig på i din egen kategori. Ejeren kan skrive alle på.", "Knappen 📅 ude i hotellet viser din næste vagt.",
+    "Er du syg, så tryk <b>🤒 Meld syg</b> under Dine vagter. Ejeren får en besked på sin telefon 📱, og vagten bliver ledig igen. <b>💪 Rask</b> fortryder det."] };
 if (typeof JOB_KAN !== "undefined") VS_KATEGORIER.forEach(function (k) {
   const l = JOB_KAN[k[0]];
   if (l && l.indexOf("📅 Kan skrive sig på vagter i vagtskemaet") < 0) l.push("📅 Kan skrive sig på vagter i vagtskemaet");
@@ -196,8 +220,17 @@ function vsVagterI(dato, slot, kat) {
 }
 function vsMineVagter() {
   const mig = vsMig().toLowerCase();
-  return vsVagter.filter(function (v) { return v.navn.toLowerCase() === mig && !vsSlut(v.dato, v.slot); })
+  return vsVagter.filter(function (v) { return v.navn.toLowerCase() === mig && !v.syg && !vsSlut(v.dato, v.slot); })
     .sort(function (a, b) { return (a.dato + a.slot) < (b.dato + b.slot) ? -1 : 1; });
+}
+function vsSygeVagter(kunMine) {
+  const mig = vsMig().toLowerCase();
+  return vsVagter.filter(function (v) { return v.syg && !vsSlut(v.dato, v.slot) && (!kunMine || v.navn.toLowerCase() === mig); })
+    .sort(function (a, b) { return (a.dato + a.slot) < (b.dato + b.slot) ? -1 : 1; });
+}
+function vsNaarTekst(v) {
+  const d = vsFraTekst(v.dato);
+  return (v.dato === vsIdag() ? "I dag" : VS_DAGE[(d.getDay() + 6) % 7] + " " + vsKort(d));
 }
 function vsMaaSkriveI(kat) { return kat !== "alle" && (vsErEjer() || vsMinKat() === kat); }
 
@@ -205,8 +238,9 @@ function vsNavnChip(v, visRolle) {
   const k = vsKatInfo(v.rolle);
   const mig = v.navn.toLowerCase() === vsMig().toLowerCase();
   const maaFjerne = mig || vsErEjer();
-  return "<span class='vs-navn" + (mig ? " mig" : "") + "' title='" + rens(k[2]) + (v.hvem && v.hvem !== v.navn ? " · skrevet på af " + rens(v.hvem) : "") + "'>" +
-    (visRolle ? "<i>" + k[1] + "</i>" : "") + "<b>" + rens(v.navn) + "</b>" +
+  return "<span class='vs-navn" + (mig ? " mig" : "") + (v.syg ? " syg" : "") + "' title='" + rens(k[2]) + (v.syg ? " · 🤒 meldt syg" + (v.grund ? ": " + rens(v.grund) : "") : "") +
+    (v.hvem && v.hvem !== v.navn ? " · skrevet på af " + rens(v.hvem) : "") + "'>" +
+    (v.syg ? "<i>🤒</i>" : visRolle ? "<i>" + k[1] + "</i>" : "") + "<b>" + rens(v.navn) + "</b>" +
     (maaFjerne ? "<button type='button' class='vs-fjern' data-vs-slet='" + rens(String(v.id)) + "' title='Fjern vagten'>✕</button>" : "") + "</span>";
 }
 
@@ -254,13 +288,14 @@ function visVagtskema(sek) {
         const dato = vsDatoTekst(d);
         const her = vsVagterI(dato, slot, kat);
         const slut = vsSlut(dato, slot);
-        const mig = her.some(function (v) { return v.navn.toLowerCase() === vsMig().toLowerCase(); });
+        const mig = her.some(function (v) { return !v.syg && v.navn.toLowerCase() === vsMig().toLowerCase(); });
+        const raske = her.filter(function (v) { return !v.syg; }).length;
         const cls = [dato === idag ? "idag" : "", slut ? "slut" : "", vsIgang(dato, slot) ? "nu" : ""].join(" ");
         html += "<td class='" + cls + "'>" + her.map(function (v) { return vsNavnChip(v, kat === "alle"); }).join("");
-        if (vsMaaSkriveI(kat) && (!slut || vsErEjer()) && her.length < VS_MAKS) {
+        if (vsMaaSkriveI(kat) && (!slut || vsErEjer()) && raske < VS_MAKS) {
           const noegle = dato + "|" + slot;
           if (vsErEjer() && vsVaelgNavn === noegle) {
-            const valg = [vsMig()].concat(vsAnsatteI(kat)).filter(function (n) { return !her.some(function (v) { return v.navn.toLowerCase() === n.toLowerCase(); }); });
+            const valg = [vsMig()].concat(vsAnsatteI(kat)).filter(function (n) { return !her.some(function (v) { return !v.syg && v.navn.toLowerCase() === n.toLowerCase(); }); });
             html += "<select class='vs-vaelg' data-vs-dato='" + dato + "' data-vs-slot='" + slot + "'><option value=''>Vælg …</option>" +
               valg.map(function (n) { return "<option value='" + rens(n) + "'>" + rens(n === vsMig() ? n + " (mig)" : n) + "</option>"; }).join("") + "</select>";
           } else if (!mig || vsErEjer()) {
@@ -295,7 +330,7 @@ function visVagtskema(sek) {
     dage.forEach(function (d) {
       const dato = vsDatoTekst(d);
       VS_TIDER.forEach(function (t, slot) {
-        if (!vsSlut(dato, slot) && !vsVagterI(dato, slot, minKat).length) ledige.push([dato, slot, d]);
+        if (!vsSlut(dato, slot) && !vsVagterI(dato, slot, minKat).some(function (v) { return !v.syg; })) ledige.push([dato, slot, d]);
       });
     });
     html += "<section class='vs-boks'><h4>🕒 Ledige vagter <small>" + vsKatInfo(minKat)[1] + " " + rens(vsKatInfo(minKat)[2]) + "</small></h4>" +
@@ -310,10 +345,24 @@ function visVagtskema(sek) {
       const d = vsFraTekst(v.dato);
       return "<li class='" + (vsIgang(v.dato, v.slot) ? "nu" : "") + "'><span><b>" + (v.dato === idag ? "I dag" : VS_DAGE[(d.getDay() + 6) % 7] + " " + vsKort(d)) + "</b><small>" +
         VS_TIDER[v.slot] + " · " + vsKatInfo(v.rolle)[1] + " " + rens(vsKatInfo(v.rolle)[2]) + "</small></span>" +
-        (vsIgang(v.dato, v.slot) ? "<em>🟢 Nu</em>" : "") + "</li>";
+        (vsIgang(v.dato, v.slot) ? "<em>🟢 Nu</em>" : "") +
+        (vsSygId === String(v.id) ? "" : "<button type='button' class='vs-syg-knap' data-vs-syg='" + rens(String(v.id)) + "' title='Meld dig syg til vagten'>🤒 Meld syg</button>") + "</li>" +
+        (vsSygId === String(v.id) ? "<li class='vs-syg-form'><label>🤒 Meld dig syg til " + vsNaarTekst(v).toLowerCase() + " " + VS_TIDER[v.slot] +
+          "<input id='vs-syg-grund' type='text' maxlength='200' placeholder='Hvad er der galt? (kan springes over)'></label>" +
+          "<span class='vs-syg-knapper'><button type='button' class='vs-syg-send' data-vs-syg-send='" + rens(String(v.id)) + "'>📱 Send til ejeren</button>" +
+          "<button type='button' class='vs-syg-fortryd'>Fortryd</button></span></li>" : "");
     }).join("") + "</ul>" : "<p class='vs-lille'>Du har ingen vagter endnu." + (vsMinKat() ? " Tryk <b>+ Skriv dig på</b> i skemaet." : "") + "</p>") + "</section>";
+  // mine sygemeldinger, og ejeren ser alle
+  const syge = vsSygeVagter(!vsErEjer());
+  if (syge.length) html += "<section class='vs-boks vs-syge'><h4>🤒 " + (vsErEjer() ? "Sygemeldinger" : "Du er meldt syg") + "</h4><ul>" + syge.slice(0, 8).map(function (v) {
+    const mig = v.navn.toLowerCase() === vsMig().toLowerCase();
+    return "<li><span><b>" + (vsErEjer() ? rens(v.navn) + " · " : "") + vsNaarTekst(v) + "</b><small>" + VS_TIDER[v.slot] + " · " + vsKatInfo(v.rolle)[1] + " " + rens(vsKatInfo(v.rolle)[2]) +
+      (v.grund ? "<br>💬 " + rens(v.grund) : "") + "</small></span>" +
+      (mig || vsErEjer() ? "<button type='button' class='vs-rask' data-vs-rask='" + rens(String(v.id)) + "' title='" + (mig ? "Jeg kan alligevel" : "Sæt på vagten igen") + "'>💪 Rask</button>" : "") + "</li>";
+  }).join("") + "</ul></section>";
   html += "<section class='vs-boks vs-info'><h4>ℹ️ Information</h4><ul class='vs-punkter'>" +
     "<li>Vælg en ledig vagt ved at trykke på <b>+ Skriv dig på</b>.</li><li>Du kan altid fjerne din vagt igen med ✕.</li>" +
+    "<li>Er du syg? Tryk <b>🤒 Meld syg</b> under Dine vagter, så får ejeren besked på sin telefon.</li>" +
     "<li>Husk at møde til tiden og følge hotellets regler.</li></ul></section>";
   html += "</aside></div>";
   sek.innerHTML = html;
@@ -347,6 +396,31 @@ function visVagtskema(sek) {
       s.blur(); visFane();
     });
     s.addEventListener("blur", function () { setTimeout(function () { if (vsVaelgNavn) { vsVaelgNavn = null; visFane(); } }, 200); });
+  });
+  sek.querySelectorAll("[data-vs-syg]").forEach(function (k) {
+    k.addEventListener("click", function () { vsSygId = k.dataset.vsSyg; visFane(); const f = document.getElementById("vs-syg-grund"); if (f) f.focus(); });
+  });
+  sek.querySelectorAll(".vs-syg-fortryd").forEach(function (k) {
+    k.addEventListener("click", function () { vsSygId = null; visFane(); });
+  });
+  function sendSyg(id) {
+    const f = document.getElementById("vs-syg-grund");
+    const grund = f ? f.value.trim() : "";
+    vsSygId = null;
+    if (f) f.blur();
+    vsSyg(id, grund, true);
+    visFane();
+  }
+  sek.querySelectorAll("[data-vs-syg-send]").forEach(function (k) {
+    k.addEventListener("click", function () { sendSyg(k.dataset.vsSygSend); });
+  });
+  const sygFelt = document.getElementById("vs-syg-grund");
+  if (sygFelt) sygFelt.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); sendSyg(vsSygId); }
+    if (e.key === "Escape") { e.stopPropagation(); vsSygId = null; visFane(); }
+  });
+  sek.querySelectorAll("[data-vs-rask]").forEach(function (k) {
+    k.addEventListener("click", function () { vsSyg(k.dataset.vsRask, "", false); });
   });
   sek.querySelectorAll("[data-vs-slet]").forEach(function (k) {
     k.addEventListener("click", function () {
@@ -472,6 +546,18 @@ vsOpdaterKnap();
   "  background: #f1dfbd; border: 1px solid #b98d4f; font-size: 11px; color: #3b2614; }" +
   "#ejer-vindue #ejer-indhold#ejer-indhold .vs-navn b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }" +
   "#ejer-vindue #ejer-indhold#ejer-indhold .vs-navn i { font-style: normal; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-navn.syg { background: #fde3df; border-color: #d48a80; color: #8a2a1a; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-navn.syg b { text-decoration: line-through; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-boks .vs-syg-knap, #ejer-vindue #ejer-indhold#ejer-indhold .vs-boks .vs-rask { width: auto; margin: 0; padding: 3px 7px; border: 1px solid #b5574b; border-radius: 9px; background: #fff0ed; color: #8a2a1a; font: bold 10px Verdana, sans-serif; cursor: pointer; box-shadow: none; text-shadow: none; white-space: nowrap; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-boks .vs-rask { border-color: #4f8a3a; background: #eaf6e2; color: #2f6b1c; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-boks li.vs-syg-form { display: block; padding: 6px; margin: 0 0 6px; border: 2px solid #e0a9a0; border-radius: 10px; background: #fff6f4; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-syg-form label { display: block; font-size: 11px; font-weight: bold; color: #8a2a1a; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-syg-form input { display: block; width: 100%; box-sizing: border-box; margin: 4px 0 6px; padding: 5px; font-size: 12px; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-syg-knapper { display: flex; gap: 6px; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-syg-knapper button { width: auto; margin: 0; padding: 4px 8px; border-radius: 9px; font: bold 11px Verdana, sans-serif; cursor: pointer; box-shadow: none; text-shadow: none; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-syg-knapper .vs-syg-send { border: 2px solid #8a2a1a; background: linear-gradient(#ff8f80, #d9534f); color: #fff; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-syg-knapper .vs-syg-fortryd { border: 1px solid #b98d4f; background: #fbf1dc; color: #4a2a10; }" +
+  "#ejer-vindue #ejer-indhold#ejer-indhold .vs-syge h4 { background: linear-gradient(#a8443a, #7a2a20); }" +
   "#ejer-vindue #ejer-indhold#ejer-indhold .vs-navn.mig { background: linear-gradient(#ffe39a, #f1c25a); border-color: #a2731c; }" +
   "#ejer-vindue #ejer-indhold#ejer-indhold .vs-fjern { width: auto; margin: 0 0 0 2px; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; color: #8a2a1a; font-size: 10px; line-height: 14px; cursor: pointer; box-shadow: none; }" +
   "#ejer-vindue #ejer-indhold#ejer-indhold .vs-fjern.sikker { background: #d9534f; color: #fff; }" +
