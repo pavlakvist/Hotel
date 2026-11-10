@@ -411,7 +411,14 @@
     ".ark-info button:disabled { background: var(--t-felt2); cursor: default; }",
     // Batteri og oplader
     ".tlf-status .st-pct { fill: #fff; stroke: rgba(0,0,0,.55); stroke-width: 1.6px; paint-order: stroke; }",
-    ".tlf-status.lav .st-bat { fill: var(--t-rod); } .tlf-status.lader .st-bat { fill: var(--t-on); }",
+    ".tlf-status.lav .st-bat { fill: var(--t-rod); } .tlf-status.lader .st-bat { fill: var(--t-on); } .tlf-status.spare .st-bat { fill: #ffcc00; }",
+    ".tlf-batadv { position: absolute; inset: 0; z-index: 74; background: rgba(0,0,0,.35); display: grid; place-items: center; animation: tlfApp .2s ease-out; }",
+    ".tlf-batadv.ud { opacity: 0; transition: opacity .2s; }",
+    ".ba-boks { width: 230px; border-radius: 16px; background: rgba(250,250,252,.96); color: #1c1c1e; text-align: center; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.35); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }",
+    ".ba-ik { font-size: 30px; padding-top: 14px; } .ba-boks b { display: block; font-size: 16px; margin-top: 2px; } .ba-boks.kritisk b { color: #ff3b30; }",
+    ".ba-boks p { margin: 4px 14px 14px; font-size: 12.5px; line-height: 1.4; color: #3a3a3c; }",
+    ".ba-boks button { display: block; width: 100%; border: 0; border-top: 1px solid rgba(60,60,67,.18); background: none; padding: 11px; font: inherit; font-size: 15px; color: #0a84ff; cursor: pointer; }",
+    ".ba-boks button:hover { background: rgba(0,0,0,.04); } .ba-boks button.luk { font-weight: 700; }",
     ".tlf-laas .lader { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 14px; background: var(--t-moerkglas); font-size: 13px; font-weight: 600; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }",
     ".tlf-laas .lader[hidden] { display: none; }",
     ".tlf-doed { position: absolute; inset: 0; z-index: 85; background: var(--t-sort); color: var(--t-graa); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 30px; gap: 6px; cursor: default; }",
@@ -3846,7 +3853,8 @@
     tlf.querySelector(".st-bat").setAttribute("width", Math.max(1.5, 24 * b / 100).toFixed(1));
     tlf.querySelector(".st-pct").textContent = Math.round(b) + "%";
     tlf.querySelector(".st-lyn").setAttribute("display", lader ? "inline" : "none");
-    statusEl.classList.toggle("lav", b <= 20 && !lader);
+    statusEl.classList.toggle("lav", b <= 20 && !lader && !ind.spare);
+    statusEl.classList.toggle("spare", !!ind.spare && !lader);
     statusEl.classList.toggle("lader", lader);
     const l = laasEl.querySelector(".lader");
     l.hidden = !lader;
@@ -3876,8 +3884,8 @@
       }
     }
     else if (lader) { if (tik % 3 === 0) ind.bat = Math.min(100, ind.bat + 1); }              // 1 % hvert 6. sekund = fuld på ca. 10 minutter
-    else if (!tlf.hidden && ind.bat > 0 && tik % (brugerMeget() ? 4 : 12) === 0) ind.bat = Math.max(0, ind.bat - 1);   // ca. 40 min (13 min med kamera/musik)
-    else if (tlf.hidden && ind.bat > 0 && brugerMeget() && tik % 8 === 0) ind.bat = Math.max(0, ind.bat - 1);
+    else if (!tlf.hidden && ind.bat > 0 && tik % ((brugerMeget() ? 4 : 12) * (ind.spare ? 2 : 1)) === 0) ind.bat = Math.max(0, ind.bat - 1);   // ca. 40 min (13 min med kamera/musik), dobbelt så længe med strømspare
+    else if (tlf.hidden && ind.bat > 0 && brugerMeget() && tik % (ind.spare ? 16 : 8) === 0) ind.bat = Math.max(0, ind.bat - 1);
     if (lader !== sidstLader) {
       sidstLader = lader;
       if (lader) { if (!tlf.hidden) lille("🔌 Telefonen lader op"); else besked && (besked.textContent = "🔌 Din telefon lader op ⚡"); }
@@ -3885,16 +3893,54 @@
     }
     if (ind.bat !== foer) {
       gemInd();
-      if (!lader && (ind.bat === 20 || ind.bat === 10) && varslet !== ind.bat) {
+      if (!lader && BAT_ADVARSLER.indexOf(ind.bat) >= 0 && varslet !== ind.bat) {
         varslet = ind.bat;
-        if (!tlf.hidden) visBatteriBanner();
-        else if (typeof besked !== "undefined" && besked) besked.textContent = "🔋 Din telefon har kun " + ind.bat + " % strøm tilbage.";
+        batVenter = ind.bat;
+        if (tlf.hidden) {
+          if (typeof besked !== "undefined" && besked) besked.textContent = "🔋 Din telefon har kun " + ind.bat + " % strøm tilbage.";
+          const k = document.getElementById("chat-venner-knap");
+          if (k) { k.classList.remove("tlf-ring"); void k.offsetWidth; k.classList.add("tlf-ring"); }
+          ding();
+        }
       }
-      if (ind.bat > 20) varslet = 100;
+      if (ind.bat > 15) varslet = 100;
+      // strømsparetilstand slukker selv, når telefonen er ladet op til 80 %
+      if (ind.spare && lader && ind.bat >= 80) { ind.spare = false; gemInd(); if (!tlf.hidden) lille("🔋 Strømsparetilstand er slået fra – telefonen er ladet op"); }
       tjekTom();
     }
+    if (batVenter && !tlf.hidden && ind.bat > 0) visBatAdvarsel(batVenter);
+    if (batVenter && laderNu()) batVenter = 0;
     if (!tlf.hidden) { visBatteri(); tegnBatMenu(); }
   }, 2000);
+  // 🪫 Advarsel midt på skærmen ved 15 %, 10 % og 5 % – ligesom på en rigtig telefon
+  const BAT_ADVARSLER = [15, 10, 5];
+  let batVenter = 0;
+  function visBatAdvarsel(pct) {
+    batVenter = 0;
+    const gl = skaerm.querySelector(".tlf-batadv");
+    if (gl) gl.remove();
+    const el = document.createElement("div");
+    el.className = "tlf-batadv";
+    const pb = harPowerbank() && !ind.pbTil;
+    el.innerHTML = "<div class='ba-boks" + (pct <= 5 ? " kritisk" : "") + "'><div class='ba-ik'>" + (pct <= 5 ? "🪫" : "🔋") + "</div><b>Lavt batteri</b>" +
+      "<p>" + pct + " % batteri tilbage." + (pct <= 5 ? " Telefonen slukker snart!" : "") + "<br>" + (pb ? "Sæt din powerbank til, eller find en oplader 🔌" : "Find en oplader 🔌") + "</p>" +
+      (pb ? "<button data-baknap='pb'>🔋 Sæt powerbank til</button>" : "") +
+      (ind.spare ? "" : "<button data-baknap='spare'>Strømsparetilstand</button>") +
+      "<button data-baknap='luk' class='luk'>Luk</button></div>";
+    el.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const k = e.target.closest("[data-baknap]");
+      if (!k && e.target !== el) return;
+      const h = k ? k.dataset.baknap : "luk";
+      if (h === "pb") brugPowerbank();
+      if (h === "spare") { ind.spare = true; gemInd(); visBatteri(); lille("🟡 Strømsparetilstand er slået til"); }
+      el.classList.add("ud");
+      setTimeout(function () { el.remove(); }, 200);
+    });
+    skaerm.appendChild(el);
+    ding();
+    tlf.classList.remove("tlf-vib"); void tlf.offsetWidth; tlf.classList.add("tlf-vib");
+  }
   function visBatteriBanner() {
     bannerEl.innerHTML = "<div class='tlf-notis'><span class='ai' style='background:linear-gradient(#ff8a80,#ff3b30)'>🔋</span><span class='nt'><b>Lavt batteri<small>nu</small></b><span>" +
       ind.bat + " % tilbage. " + (harPowerbank() && !ind.pbTil ? "Tryk på batteriet øverst og sæt en powerbank til 🔌" : "Find en oplader 🔌") + "</span></span></div>";
