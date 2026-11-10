@@ -196,8 +196,15 @@
     });
     INDBYGGEDE_RUM.radio = { id: "radio", navn: "Radiostudiet", ejer: EJER_NAVNE[0], bredde: 10, dybde: 8,
       vaeg: "#4a1824", gulv1: "#3b3036", gulv2: "#352a30", vaegHoejde: 210, doer: null };
+    // Radiostudiet får sin egen etage i elevatoren og navigatøren (2. sal blev til Lejlighederne)
+    if (typeof ETAGER !== "undefined" && !ETAGER.some(function (e) { return e.id === "radio"; })) {
+      const efter = ETAGER.findIndex(function (e) { return e.id === "lej"; });
+      const tag = ETAGER.findIndex(function (e) { return e.id === "tag"; });
+      const plads = efter >= 0 ? efter + 1 : (tag >= 0 ? tag : ETAGER.length);
+      ETAGER.splice(plads, 0, { id: "radio", navn: "Radiostudiet", ikon: "📻" });
+    }
     if (!NAV_RUM.some(function (r) { return r.id === "radio"; })) {
-      NAV_RUM.push({ id: "radio", etage: "sal2", navn: "Radiostudiet", om: "Vera-radio 🎙 Kun for radioværter", billede: "billeder/rum/radio.png",
+      NAV_RUM.push({ id: "radio", etage: "radio", navn: "Radiostudiet", om: "Vera-radio 🎙 Kun for radioværter", billede: "billeder/rum/radio.png",
         maks: 12, rum: "vaerelse", vaerelse: "radio", radio: true });
     }
     // Kun radioværter og ejeren kommer ind
