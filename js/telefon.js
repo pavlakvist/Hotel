@@ -201,6 +201,14 @@
   IK.stribe = "<circle cx='7' cy='7' r='3.2' fill='#ff5c8a'/><circle cx='17' cy='7' r='3.2' fill='#ffc93c'/><circle cx='7' cy='17' r='3.2' fill='#ffc93c'/><circle cx='12' cy='12' r='3.2' fill='#ff5c8a'/><circle cx='17' cy='17' r='3.2' fill='#ff5c8a'/>";
   APPS.stribe = { navn: "Stjernestribe", ik: "stribe", bg: "linear-gradient(#3b4aa8, #1c2366)", spil: true, multi: true, tekst: "👫 Spil mod dine venner! Invitér en ven og læg fire på stribe. I skal begge have hentet spillet." };
   const ALLE_SPIL = ["stribe", "stjerner", "flagre", "huske", "muldvarp", "kryds"];
+  // 3 apps man kan hente i App Butik (ikke spil)
+  IK.net = "<circle cx='12' cy='12' r='8.2' fill='none' stroke='#fff' stroke-width='1.7'/><ellipse cx='12' cy='12' rx='3.6' ry='8.2' fill='none' stroke='#fff' stroke-width='1.5'/><path d='M4 12h16M5.4 7.8h13.2M5.4 16.2h13.2' stroke='#fff' stroke-width='1.4'/>";
+  IK.mail = "<rect x='3.5' y='6' width='17' height='12.5' rx='2.4' fill='#fff'/><path d='M4.5 7.5 12 13l7.5-5.5' fill='none' stroke='#e0445a' stroke-width='1.7' stroke-linejoin='round'/>";
+  IK.musik = "<path d='M9.5 17V6.5l9-2v10.5' fill='none' stroke='#fff' stroke-width='1.9' stroke-linejoin='round'/><ellipse cx='7.4' cy='17.2' rx='2.6' ry='2.1' fill='#fff'/><ellipse cx='16.4' cy='15.2' rx='2.6' ry='2.1' fill='#fff'/>";
+  APPS.net = { navn: "Vera-Net", ik: "net", bg: "linear-gradient(#5fd0ff, #2a5fd6)", spil: true, app: true, tekst: "Hotellets egen browser 🌐 Søg, faner, bogmærker, favoritter, seneste besøg – og design din egen forside." };
+  APPS.mail = { navn: "Vera-Mail", ik: "mail", bg: "linear-gradient(#ff9a8a, #e0445a)", spil: true, app: true, tekst: "Send mails til de andre gæster ✉️ Indbakke, sendt, emne, stjerner og svar." };
+  APPS.musik = { navn: "Music Box", ik: "musik", bg: "linear-gradient(#ff7ad9, #7a3cff)", spil: true, app: true, tekst: "Hotellets egen musik 🎵 Stemninger, album, favoritter, playlister og kø. Ingen ophavsret." };
+  const ALLE_APPS = ["net", "mail", "musik"];
   GITTER.push("butik");
   const DOCK = ["beskeder", "kontakter", "rum", "indst"];
 
@@ -1194,6 +1202,7 @@
     if (id === "kontakter") tal = anmodningerTilMig().length;
     if (id === "peep" && typeof peepNye === "function") tal = peepNye().length;
     if (id === "stribe") tal = stribeTal();
+    if (id === "mail" && typeof mailUlaeste === "function") tal = mailUlaeste();
     const indre = id === "events" ? "<span class='tlf-kal'></span>" : ik(A.ik);
     return "<button class='tlf-app-ik' data-app='" + id + "'><span class='fl' style='background:" + A.bg + "'>" + indre + "</span>" +
       (tal ? "<span class='tal'>" + (tal > 99 ? "99+" : tal) + "</span>" : "") + (redigerer && A.spil ? "<span class='slet-x' data-afinst='" + id + "' title='Afinstallér'>−</span>" : "") + "<span class='nv'>" + A.navn + "</span></button>";
@@ -1352,7 +1361,7 @@
   // ---------------------------------------------------------------
   const MAPPE_SLAGS = { peep: "Socialt", beskeder: "Socialt", kontakter: "Socialt", shop: "Shopping", lager: "Shopping",
     byg: "Kreativitet", kamera: "Kreativitet", fotos: "Kreativitet", chatlog: "Chat", smileys: "Chat", boble: "Chat",
-    events: "Hotel", rum: "Hotel", noter: "Værktøjer", indst: "Værktøjer", snake: "Spil" };
+    events: "Hotel", rum: "Hotel", noter: "Værktøjer", indst: "Værktøjer", snake: "Spil", net: "Værktøjer", mail: "Socialt", musik: "Underholdning" };
   function mitLayout() {
     let l = Array.isArray(ind.layout) ? ind.layout : GITTER.slice();
     const set = {};
@@ -1375,6 +1384,7 @@
     if (id === "kontakter") return anmodningerTilMig().length;
     if (id === "peep" && typeof peepNye === "function") return peepNye().length;
     if (id === "stribe" && typeof stribeTal === "function") return stribeTal();
+    if (id === "mail" && typeof mailUlaeste === "function") return mailUlaeste();
     return 0;
   }
   function mappeIkon(m, i) {
@@ -1762,6 +1772,12 @@
       tegnPeep();
     } else if (id === "butik") {
       tegnButik();
+    } else if (id === "net") {
+      tegnNet();
+    } else if (id === "mail") {
+      tegnMail();
+    } else if (id === "musik") {
+      tegnMusik();
     } else if (APPS[id] && APPS[id].spil) {
       tegnSpil(id);
     }
@@ -1771,7 +1787,7 @@
   //  afinstalleres; apps der fulgte med telefonen kan ikke slettes.
   //  Hentede spil gemmes i ind.spil
   // ---------------------------------------------------------------
-  function mineSpil() { if (!Array.isArray(ind.spil)) ind.spil = []; ind.spil = ind.spil.filter(function (s) { return ALLE_SPIL.indexOf(s) >= 0; }); return ind.spil; }
+  function mineSpil() { if (!Array.isArray(ind.spil)) ind.spil = []; ind.spil = ind.spil.filter(function (s) { return ALLE_SPIL.indexOf(s) >= 0 || ALLE_APPS.indexOf(s) >= 0; }); return ind.spil; }
   function harSpil(id) { return mineSpil().indexOf(id) >= 0; }
   let henter = {};
   function hentSpil(id) {
@@ -1799,6 +1815,7 @@
   function afinstaller(id) {
     if (!APPS[id] || !APPS[id].spil) { lille("Apps der fulgte med telefonen kan ikke slettes"); return; }
     ind.spil = mineSpil().filter(function (s) { return s !== id; });
+    if (id === "musik" && typeof mbStop === "function") mbStop();
     if (APPS[id].multi) stribeInstalleret(false);
     else if (stribeOnline()) serverKald("hv_spil_installeret", { p_token: mitToken(), p_spil: id, p_har: false }).catch(function () {});
     gemInd();
@@ -1832,7 +1849,12 @@
     if (!b) return;
     if (butikFane === "top") { tegnButikTop(b); return; }
     if (butikFane === "mine") { tegnButikMine(b); return; }
-    b.innerHTML = butikFanerHtml() + "<div class='ab-hero'><b>Spil for sjov 🎮</b><span>Hent så mange du vil – de er gratis. Spillene giver ingen Glimt, de er bare for sjov.</span></div>" +
+    b.innerHTML = butikFanerHtml() + "<div class='ab-hero'><b>Apps og spil for sjov 🎮</b><span>Hent så mange du vil – de er gratis. De giver ingen Glimt, de er bare for sjov.</span></div>" +
+      "<div class='ab-overskrift'>Apps</div>" +
+      ALLE_APPS.map(function (id) {
+        const A = APPS[id];
+        return "<div class='ab-kort'><span class='ab-ik' style='background:" + A.bg + "'>" + ik(A.ik) + "</span><span class='ab-info'><b>" + A.navn + "</b><small>" + A.tekst + "</small></span>" + kortKnapper(id) + "</div>";
+      }).join("") +
       "<div class='ab-overskrift'>Spil</div>" +
       ALLE_SPIL.map(function (id) {
         const A = APPS[id], har = harSpil(id), r = spilRekord(id);
@@ -1840,7 +1862,7 @@
           "<span class='ab-info'><b>" + A.navn + "</b><small>" + A.tekst + "</small>" + (har && r != null ? "<i>🏆 Din rekord: " + r + "</i>" : "") + "</span>" +
           "<span class='ab-knapper'>" + (henter[id] ? "<span class='ab-ring' data-abring='" + id + "' style='--p:" + hentProcent(id) + "'></span><span class='ab-pct' data-abpct='" + id + "'>" + hentProcent(id) + " %</span>" : har ? "<button data-abaabn='" + id + "'>ÅBN</button><button class='ab-slet' data-abslet='" + id + "'>Afinstallér</button>" : "<button data-abhent='" + id + "'>HENT</button>") + "</span></div>";
       }).join("") +
-      "<p class='ab-note'>Apps der fulgte med telefonen kan ikke slettes. Hentede spil kan også slettes ved at holde musen nede på forsiden og trykke på −.</p>";
+      "<p class='ab-note'>Apps der fulgte med telefonen kan ikke slettes. Hentede apps og spil kan også slettes ved at holde musen nede på forsiden og trykke på −.</p>";
   }
 
   // ----- App Butik: Top (mest hentede blandt spillerne) og Mine apps -----
@@ -1859,7 +1881,7 @@
   }
   setTimeout(meldAlleSpil, 5000);
   function butikFanerHtml() {
-    return "<div class='ab-faner'>" + [["spil", "🎮 Spil"], ["top", "🔥 Top"], ["mine", "📱 Mine apps"]].map(function (f) {
+    return "<div class='ab-faner'>" + [["spil", "🛍 Butik"], ["top", "🔥 Top"], ["mine", "📱 Mine apps"]].map(function (f) {
       return "<button data-abfane='" + f[0] + "' class='" + (butikFane === f[0] ? "valgt" : "") + "'>" + f[1] + "</button>";
     }).join("") + "</div>";
   }
@@ -1869,14 +1891,14 @@
       : har ? "<button data-abaabn='" + id + "'>ÅBN</button><button class='ab-slet' data-abslet='" + id + "'>Afinstallér</button>" : "<button data-abhent='" + id + "'>HENT</button>") + "</span>";
   }
   function tegnButikTop(b) {
-    let h = butikFanerHtml() + "<div class='ab-overskrift'>🔥 Mest hentede</div><p class='ab-lille'>Hvilke spil hotellets spillere har hentet mest lige nu.</p>";
+    let h = butikFanerHtml() + "<div class='ab-overskrift'>🔥 Mest hentede</div><p class='ab-lille'>Hvilke apps og spil hotellets spillere har hentet mest lige nu.</p>";
     if (spilTopFejl) h += "<div class='ab-fejl'>⚠️ " + esc(spilTopFejl) + "</div>";
     if (!spilTop) {
       h += spilTopFejl ? "" : "<div class='ab-lille'>Henter toplisten …</div>";
     } else {
       const tael = {};
       spilTop.forEach(function (x) { tael[x.spil] = x.antal; });
-      const liste = ALLE_SPIL.slice().sort(function (a, c) { return (tael[c] || 0) - (tael[a] || 0); });
+      const liste = ALLE_APPS.concat(ALLE_SPIL).sort(function (a, c) { return (tael[c] || 0) - (tael[a] || 0); });
       h += liste.map(function (id, i) {
         const A = APPS[id], n = tael[id] || 0;
         return "<div class='ab-kort'><span class='ab-nr" + (i < 3 ? " top" : "") + "'>" + (i + 1) + "</span><span class='ab-ik' style='background:" + A.bg + "'>" + ik(A.ik) + "</span>" +
@@ -1896,7 +1918,7 @@
     };
     b.innerHTML = butikFanerHtml() +
       "<div class='ab-tal'><span><b>" + (medfulgt.length + hentet.length) + "</b>apps i alt</span><span><b>" + hentet.length + "</b>hentet</span><span><b>" + medfulgt.length + "</b>fulgte med</span></div>" +
-      "<div class='ab-overskrift'>⬇️ Hentede apps</div>" + (hentet.length ? hentet.map(function (id) { return raekke(id, true); }).join("") : "<p class='ab-lille'>Du har ikke hentet nogen spil endnu.</p>") +
+      "<div class='ab-overskrift'>⬇️ Hentede apps</div>" + (hentet.length ? hentet.map(function (id) { return raekke(id, true); }).join("") : "<p class='ab-lille'>Du har ikke hentet nogen apps eller spil endnu.</p>") +
       "<div class='ab-overskrift'>📱 Fulgte med telefonen</div>" + medfulgt.map(function (id) { return raekke(id, false); }).join("");
     tegnKalendere(b);
   }
@@ -3892,6 +3914,1727 @@
       hotelMoeblerIShop();
     })(0);
   })(0);
+
+  // ---------------------------------------------------------------
+  //  Fælles for de 3 nye apps: stilark med "#telefon" foran
+  // ---------------------------------------------------------------
+  function tlfPrefix(regel) {
+    if (regel.charAt(0) === "@" || regel.indexOf("#") === 0) return regel;
+    return regel.split("}").filter(function (r) { return r.trim(); }).map(function (r) {
+      const i = r.indexOf("{");
+      return r.slice(0, i).split(",").map(function (v) { return "#telefon " + v.trim(); }).join(", ") + " " + r.slice(i) + "}";
+    }).join(" ");
+  }
+  function nyStil(id, regler) {
+    const s = document.createElement("style");
+    s.id = id;
+    s.textContent = regler.map(tlfPrefix).join("\n");
+    document.head.appendChild(s);
+    if (typeof vinFaerdige !== "undefined" && s.sheet) try { vinFaerdige.add(s.sheet); } catch (e) {}
+  }
+  function hentGemt(n, standard) { try { const v = JSON.parse(localStorage.getItem(n) || "null"); return v == null ? standard : v; } catch (e) { return standard; } }
+  function gemGemt(n, v) { try { localStorage.setItem(n, JSON.stringify(v)); } catch (e) {} }
+  // tal der altid bliver de samme for samme "frø" (så vejret i dag er det samme hele dagen)
+  function froe(s) { let h = 2166136261; s = String(s); for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function rngFra(s) { let a = froe(s) || 1; return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function dagNoegle(d) { d = d || new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+
+  // ===============================================================
+  //  🌐 Vera-Net — hotellets egen browser
+  //  Søgefelt, faner, bogmærker, seneste besøg, favoritter og en
+  //  forside man selv designer. Alle siderne virker inde i telefonen.
+  //  Gemmes i mit-hotel-telefon-net-<navn>
+  // ===============================================================
+  function netNoegle() { return "mit-hotel-telefon-net-" + mig(); }
+  const NET_STANDARD_FAV = ["hotel.vera", "nyt.vera", "vejr.vera", "wiki.vera", "opskrift.vera", "vits.vera", "quiz.vera", "tegn.vera"];
+  let net = null;
+  function netData() {
+    if (net && net.ejer === mig()) return net;
+    net = hentGemt(netNoegle(), null) || {};
+    net.ejer = mig();
+    if (!Array.isArray(net.faner) || !net.faner.length) net.faner = [{ id: Date.now(), hist: ["vera.net"], pos: 0 }];
+    if (!Array.isArray(net.bogm)) net.bogm = [];
+    if (!Array.isArray(net.fav)) net.fav = NET_STANDARD_FAV.map(function (u) { return { url: u, titel: netSide(u).titel }; });
+    if (!Array.isArray(net.seneste)) net.seneste = [];
+    if (!net.forside) net.forside = {};
+    net.forside = Object.assign({ titel: "Min forside", emoji: "🌐", bg: "himmel", moerk: false, form: "rund", widgets: ["soeg", "fav", "ur", "vejr", "nyt", "vits"] }, net.forside);
+    if (!net.faner.some(function (f) { return f.id === net.aktiv; })) net.aktiv = net.faner[0].id;
+    return net;
+  }
+  function gemNet() { const d = netData(); gemGemt(netNoegle(), { faner: d.faner, aktiv: d.aktiv, bogm: d.bogm, fav: d.fav, seneste: d.seneste.slice(0, 60), forside: d.forside, quiz: d.quiz, vitsLike: d.vitsLike }); }
+  function netFane() { const d = netData(); return d.faner.filter(function (f) { return f.id === d.aktiv; })[0] || d.faner[0]; }
+  function netUrl(f) { f = f || netFane(); return f.hist[f.pos] || "vera.net"; }
+
+  // ----- adresser: "wiki.vera/glimt?q=…" -----
+  function netRens(u) {
+    u = String(u || "").trim().toLowerCase().replace(/^[a-z]+:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+    return u || "vera.net";
+  }
+  function netDel(u) {
+    u = netRens(u);
+    const q = u.indexOf("?"), sporg = q >= 0 ? decodeURIComponent(u.slice(q + 1).replace(/^q=/, "").replace(/\+/g, " ")) : "";
+    const uden = q >= 0 ? u.slice(0, q) : u;
+    const s = uden.indexOf("/");
+    return { domaene: s >= 0 ? uden.slice(0, s) : uden, sti: s >= 0 ? uden.slice(s + 1) : "", q: sporg };
+  }
+  const NET_BG = {
+    himmel: "linear-gradient(160deg, #8fd3ff, #4a7fe0)", solnedgang: "linear-gradient(160deg, #ffb37a, #e0567a)",
+    skov: "linear-gradient(160deg, #a8e6a1, #2f8a5a)", lilla: "linear-gradient(160deg, #e2c4ff, #7a4ae0)",
+    guld: "linear-gradient(160deg, #fff1b8, #e0a12c)", nat: "linear-gradient(160deg, #3a3f7a, #10122a)",
+    rosa: "linear-gradient(160deg, #ffd6e6, #ff7aa8)", hav: "linear-gradient(160deg, #7af0e0, #1a7fa0)",
+    sky: "radial-gradient(circle at 30% 20%, #fff 0 8%, transparent 9%), radial-gradient(circle at 75% 35%, #fff 0 6%, transparent 7%), linear-gradient(#bfe6ff, #7fb8f0)",
+    prikker: "radial-gradient(#ffffff55 2px, transparent 2.5px) 0 0/16px 16px, linear-gradient(160deg, #ff9ad5, #8f6bff)",
+    stjerner: "radial-gradient(#fff 1px, transparent 1.5px) 0 0/22px 22px, radial-gradient(#fff9 1px, transparent 1.5px) 11px 11px/22px 22px, linear-gradient(#1d2150, #3b2a6b)",
+    hotel: "repeating-linear-gradient(90deg, #f7e7c8 0 14px, #f1dcb4 14px 28px)",
+  };
+  const NET_EMOJI = ["🌐", "🏨", "⭐", "🌸", "🐱", "🐶", "🦄", "🎮", "🎵", "🍕", "⚽", "🌈", "🔮", "🚀", "🍀", "💎"];
+  const NET_WIDGETS = { soeg: "🔎 Søgefelt", fav: "⭐ Favoritter", ur: "🕐 Ur og dato", vejr: "⛅ Vejret", nyt: "📰 Nyheder", vits: "😂 Dagens vits", seneste: "🕘 Seneste besøg", bogm: "🔖 Bogmærker" };
+
+  // ----- indhold til siderne -----
+  const NET_WIKI = {
+    "hello-vera": { titel: "HELLO VERA", tekst: "HELLO VERA er et online hotel, hvor man har sin egen figur, sit eget værelse og en masse venner. Hotellet er bygget af ejeren [[pall|Pall]].\n\nMan betaler med [[glimt|Glimt]] og den sjældne [[stella|Stella]]. Man kommer rundt med [[navigatoren|Navigatøren]] eller [[elevatoren|elevatoren]]." },
+    pall: { titel: "Pall", tekst: "Pall er hotellets ejer. Man kan kende ejeren på det gyldne EJER-skilt over hovedet. Ejeren har Ejerpanelet, hvor hotellet styres." },
+    glimt: { titel: "Glimt ⭐", tekst: "Glimt er hotellets almindelige penge. Man bruger Glimt i Shoppen til møbler, tøj og ting. Se også [[stella|Stella]]." },
+    stella: { titel: "Stella 🔮", tekst: "Stella er en sjælden, lilla valuta. Særlige møbler koster Stella. Man kan bytte [[glimt|Glimt]] til Stella." },
+    telefonen: { titel: "Telefonen 📱", tekst: "Alle gæster har en telefon med Beskeder, Kontakter, [[peep|Peep]], Noter, kamera og meget mere. I [[app-butik|App Butik]] kan man hente flere apps og spil. Telefonen kan låses med en 6-cifret kode, og den skal lades op – fx med en [[powerbank|powerbank]]." },
+    peep: { titel: "Peep 🐤", tekst: "Peep er hotellets eget sociale netværk. Man laver opslag, giver likes og skriver kommentarer. Peep findes på [[telefonen|telefonen]]." },
+    "app-butik": { titel: "App Butik", tekst: "I App Butik henter man gratis apps og spil til [[telefonen|telefonen]]: fx [[vera-net|Vera-Net]], [[vera-mail|Vera-Mail]], [[music-box|Music Box]] og [[stjernestribe|Stjernestribe]]. Hentede apps kan afinstalleres igen." },
+    "vera-net": { titel: "Vera-Net 🌐", tekst: "Vera-Net er hotellets browser. Den har faner, bogmærker, favoritter, seneste besøg og en forside, man selv kan designe. Du bruger den lige nu!" },
+    "vera-mail": { titel: "Vera-Mail ✉️", tekst: "Med Vera-Mail sender man mails til andre gæster på hotellet. En mail har et emne og en tekst, og man kan svare, stjernemarkere og slette." },
+    "music-box": { titel: "Music Box 🎵", tekst: "Music Box spiller hotellets egen musik. Al musikken bliver lavet af telefonen selv, så der er ingen ophavsret. Man kan lave playlister, vælge favoritter og finde musik til hver stemning." },
+    stjernestribe: { titel: "Stjernestribe", tekst: "Stjernestribe er et spil for to venner. Man skiftes til at lægge stjerner, og den første med fire på stribe vinder." },
+    navigatoren: { titel: "Navigatøren 🛎", tekst: "Navigatøren viser alle hotellets rum, etage for etage. Man kan også oprette sine egne rum. Se også [[elevatoren|elevatoren]]." },
+    elevatoren: { titel: "Elevatoren", tekst: "Elevatoren står i Velkomsthallen. Den kører til alle etager – og der siges at være en hemmelig etage, som kun gæster med en nøgle kommer op på …" },
+    powerbank: { titel: "Powerbank 🔋", tekst: "En powerbank sættes til [[telefonen|telefonen]], så den lader, uanset hvor man er. Den løber aldrig tør, så man skal kun købe én." },
+    venner: { titel: "Venner 👫", tekst: "Klik på en gæst og vælg Tilføj ven. Venner kan skrive sammen i Beskeder, spille [[stjernestribe|Stjernestribe]] og sende [[vera-mail|mails]]." },
+  };
+  const NET_OPSKRIFTER = {
+    pandekager: { titel: "Pandekager", ik: "🥞", tid: "30 min", til: 4, ingr: [[3, "", "æg"], [3, "dl", "hvedemel"], [5, "dl", "mælk"], [1, "spsk", "sukker"], [0.5, "tsk", "salt"], [25, "g", "smør"]], trin: ["Pisk æg, sukker og salt sammen.", "Pisk melet i lidt ad gangen.", "Rør mælken i, til dejen er glat.", "Smelt smørret og rør det i.", "Bag tynde pandekager på en varm pande – bed en voksen om hjælp."] },
+    kakao: { titel: "Varm kakao", ik: "☕", tid: "10 min", til: 2, ingr: [[5, "dl", "mælk"], [2, "spsk", "kakao"], [2, "spsk", "sukker"], [1, "knsp", "salt"]], trin: ["Rør kakao, sukker og salt sammen i en gryde.", "Hæld lidt mælk i og rør det til en glat masse.", "Hæld resten af mælken i og varm op uden at koge.", "Server med flødeskum eller skumfiduser."] },
+    boller: { titel: "Hotellets boller", ik: "🥐", tid: "1½ time", til: 12, ingr: [[25, "g", "gær"], [3, "dl", "lunken mælk"], [50, "g", "smør"], [1, "", "æg"], [1, "spsk", "sukker"], [1, "tsk", "salt"], [550, "g", "hvedemel"]], trin: ["Rør gæren ud i den lunkne mælk.", "Tilsæt smeltet smør, æg, sukker og salt.", "Ælt melet i, til dejen slipper skålen.", "Lad dejen hæve i 45 minutter.", "Form boller og lad dem hæve igen i 20 minutter.", "Bag ved 220 grader i ca. 12 minutter."] },
+    smoothie: { titel: "Regnbue-smoothie", ik: "🥤", tid: "5 min", til: 2, ingr: [[1, "", "banan"], [2, "dl", "frosne bær"], [2, "dl", "yoghurt"], [1, "dl", "æblejuice"], [1, "tsk", "honning"]], trin: ["Kom det hele i en blender.", "Blend, til den er helt glat.", "Hæld i høje glas og pynt med et bær på kanten."] },
+    pizzatoast: { titel: "Pizza-toast", ik: "🍕", tid: "15 min", til: 2, ingr: [[4, "skiver", "toastbrød"], [4, "spsk", "tomatsauce"], [100, "g", "revet ost"], [8, "skiver", "pepperoni"], [1, "tsk", "oregano"]], trin: ["Smør tomatsauce på brødet.", "Læg pepperoni på og drys med ost og oregano.", "Bag i ovnen ved 200 grader i 8 minutter."] },
+    krus: { titel: "Kage i et krus", ik: "🧁", tid: "5 min", til: 1, ingr: [[4, "spsk", "hvedemel"], [3, "spsk", "sukker"], [2, "spsk", "kakao"], [3, "spsk", "mælk"], [2, "spsk", "olie"], [1, "knsp", "bagepulver"]], trin: ["Rør det hele sammen i et stort krus.", "Varm kruset i mikroovnen i ca. 1 minut.", "Lad den køle lidt af – den er varm!"] },
+    frugtspyd: { titel: "Frugtspyd", ik: "🍓", tid: "10 min", til: 4, ingr: [[10, "", "jordbær"], [2, "", "bananer"], [1, "", "æble"], [20, "", "vindruer"], [8, "", "grillspyd"]], trin: ["Skyl frugten og skær den i stykker.", "Sæt frugten på spyddene i flotte farver.", "Dyp evt. spidsen i smeltet chokolade."] },
+  };
+  const NET_VITSER = [
+    "Hvorfor tog skelettet ikke med til festen?|Det havde ingen at gå med.",
+    "Hvad siger den ene væg til den anden?|Vi ses ved hjørnet!",
+    "Hvorfor kan elefanter ikke bruge computer?|De er bange for musen.",
+    "Hvad kalder man en sovende dinosaur?|En dino-snore.",
+    "Hvorfor gik tomaten rød i hovedet?|Den så salatdressingen.",
+    "Hvad er det, der går og går, men aldrig kommer frem?|Et ur.",
+    "Hvorfor tog kagen til lægen?|Den følte sig lidt smuldrende.",
+    "Hvad sagde nul til otte?|Flot bælte!",
+    "Hvorfor tager fisk ikke på hotel?|De har allerede en masse skæl.",
+    "Hvad får man, hvis man krydser en ko med en trampolin?|Milkshake.",
+    "Hvorfor læser spøgelser altid bøger?|De elsker gyser-historier.",
+    "Hvorfor tog blyanten på ferie?|Den var helt udtømt for ideer.",
+    "Hvad er gult og kan ikke svømme?|En gravko.",
+    "Hvorfor var matematikbogen trist?|Den havde for mange problemer.",
+    "Hvad siger man til en hest, der er ked af det?|Op med hestehovedet!",
+    "Hvorfor tager receptionisten altid en stige med på arbejde?|Fordi hotellet har fem stjerner.",
+    "Hvad siger elevatoren, når den er træt?|Jeg er helt nede.",
+    "Hvorfor sidder bananen alene?|Den blev skrællet af de andre.",
+    "Hvad er en pirats yndlingsbogstav?|Rrrrr!",
+    "Hvorfor gik kattetungen på biblioteket?|Den ville læse om mus.",
+    "Hvad kalder man en ko uden ben?|Hakket oksekød.",
+    "Hvorfor kan man ikke stole på atomer?|De finder på alting.",
+  ];
+  const NET_QUIZ = [
+    ["Hvad hedder hotellets penge?", ["Glimt", "Kroner", "Mønter", "Stjerner"], 0],
+    ["Hvad hedder den sjældne, lilla valuta?", ["Rubin", "Stella", "Krystal", "Perle"], 1],
+    ["Hvad hedder hotellet?", ["Hotel Sol", "HELLO VERA", "Vera Inn", "Pixel Hotel"], 1],
+    ["Hvad hedder hotellets sociale app?", ["Pip", "Peep", "Snak", "Kvidder"], 1],
+    ["Hvor mange cifre har koden til telefonen?", ["4", "5", "6", "8"], 2],
+    ["Hvor mange ben har en edderkop?", ["6", "8", "10", "4"], 1],
+    ["Hvad får man, når man blander blå og gul?", ["Lilla", "Orange", "Grøn", "Brun"], 2],
+    ["Hvad er Danmarks hovedstad?", ["Aarhus", "Odense", "Aalborg", "København"], 3],
+    ["Hvor mange dage er der i et skudår?", ["365", "366", "364", "360"], 1],
+    ["Hvilket dyr er verdens største?", ["Elefant", "Blåhval", "Giraf", "Haj"], 1],
+    ["Hvor mange på stribe skal man have i Stjernestribe?", ["3", "4", "5", "6"], 1],
+    ["Hvad hedder ejeren af hotellet?", ["Pall", "Ida", "Noah", "Vera"], 0],
+    ["Hvilken planet er nærmest solen?", ["Venus", "Mars", "Merkur", "Jorden"], 2],
+    ["Hvad bruger man en powerbank til?", ["At lade telefonen op", "At bage kager", "At købe møbler", "At svømme"], 0],
+  ];
+  const NET_TEGN = [["♈", "Vædderen"], ["♉", "Tyren"], ["♊", "Tvillingerne"], ["♋", "Krebsen"], ["♌", "Løven"], ["♍", "Jomfruen"], ["♎", "Vægten"], ["♏", "Skorpionen"], ["♐", "Skytten"], ["♑", "Stenbukken"], ["♒", "Vandbæreren"], ["♓", "Fiskene"]];
+  const NET_NYT_FAST = [
+    ["🛗 Elevatoren har fået en ny knap", "Ingen ved helt, hvad den gør. Receptionen siger bare: \"Den er til den hemmelige etage.\""],
+    ["☕ Caféens kakao er hotellets mest populære drik", "Kokken afslører opskriften i Hotelkøkkenet på opskrift.vera."],
+    ["🎵 Music Box er landet i App Butik", "Nu kan gæsterne høre hotellets helt egen musik – lavet af telefonen selv."],
+    ["🐤 Rekord på Peep", "Aldrig har så mange skrevet opslag på én dag. Det mest likede opslag handlede om pandekager."],
+    ["🌐 Vera-Net åbner", "Hotellets egen browser er klar. Prøv at designe din egen forside!"],
+  ];
+
+  function netSide(u) {
+    const p = netDel(u), d = NET_SIDER[p.domaene];
+    if (!d) return { titel: "Siden findes ikke", ik: "🤷", farve: "#8a8a8f" };
+    let titel = d.titel;
+    if (p.domaene === "wiki.vera" && NET_WIKI[p.sti]) titel = NET_WIKI[p.sti].titel + " – Verapedia";
+    if (p.domaene === "opskrift.vera" && NET_OPSKRIFTER[p.sti]) titel = NET_OPSKRIFTER[p.sti].titel;
+    if (p.domaene === "soeg.vera" && p.q) titel = p.q + " – Vera Søg";
+    return { titel: titel, ik: d.ik, farve: d.farve };
+  }
+  function lnk(url, tekst, kl) { return "<a class='vn-a" + (kl ? " " + kl : "") + "' data-vnlink='" + esc(url) + "'>" + tekst + "</a>"; }
+  function wikiTekst(t) {
+    return esc(t).split("\n\n").map(function (afs) {
+      return "<p>" + afs.replace(/\[\[([a-z0-9-]+)\|([^\]]+)\]\]/g, function (m, id, tx) { return lnk("wiki.vera/" + id, tx); }) + "</p>";
+    }).join("");
+  }
+  function vejrFor(d, sted) {
+    const r = rngFra(dagNoegle(d) + (sted || "hotel")), m = d.getMonth();
+    const base = [2, 2, 5, 9, 14, 18, 20, 20, 16, 11, 7, 4][m];
+    const typer = [["☀️", "Sol"], ["🌤", "Mest sol"], ["⛅", "Halvskyet"], ["☁️", "Overskyet"], ["🌧", "Regn"], ["⛈", "Torden"], [m >= 10 || m <= 2 ? "🌨" : "🌦", m >= 10 || m <= 2 ? "Sne" : "Byger"]];
+    const t = typer[Math.floor(r() * typer.length)];
+    return { ik: t[0], navn: t[1], temp: Math.round(base + r() * 8 - 3), lav: Math.round(base - 3 - r() * 4), vind: Math.round(2 + r() * 10) };
+  }
+  function vitsNr(i) { const v = NET_VITSER[(i % NET_VITSER.length + NET_VITSER.length) % NET_VITSER.length].split("|"); return { q: v[0], a: v[1] }; }
+  function dagensVits() { return vitsNr(froe(dagNoegle()) % NET_VITSER.length); }
+  let netNyheder = null, netNyhedHentet = 0;
+  function hentNetNyheder() {
+    if (Date.now() - netNyhedHentet < 60000) return Promise.resolve(netNyheder);
+    netNyhedHentet = Date.now();
+    const lokal = function () { try { return typeof nyheder !== "undefined" && Array.isArray(nyheder) ? nyheder.slice() : []; } catch (e) { return []; } };
+    if (typeof serverKald !== "function" || typeof mitToken !== "function" || !mitToken()) { netNyheder = lokal(); return Promise.resolve(netNyheder); }
+    return serverKald("hv_nyheder_hent", { p_token: mitToken() }).then(function (l) { netNyheder = Array.isArray(l) ? l : lokal(); return netNyheder; })
+      .catch(function () { netNyheder = lokal(); return netNyheder; });
+  }
+  function nyhedListe() {
+    const egne = (netNyheder || []).slice().sort(function (a, b) { return (b.tid || 0) - (a.tid || 0); }).map(function (n) { return { titel: n.titel, tekst: n.tekst || "", tid: n.tid, hotel: true }; });
+    return egne.concat(NET_NYT_FAST.map(function (n) { return { titel: n[0], tekst: n[1] }; }));
+  }
+
+  // ----- søgning -----
+  function netIndeks() {
+    const l = [];
+    Object.keys(NET_SIDER).forEach(function (dom) { if (dom !== "soeg.vera") l.push({ url: dom, titel: NET_SIDER[dom].titel, tekst: NET_SIDER[dom].om || "", ord: NET_SIDER[dom].ord || "" }); });
+    Object.keys(NET_WIKI).forEach(function (id) { l.push({ url: "wiki.vera/" + id, titel: NET_WIKI[id].titel + " – Verapedia", tekst: NET_WIKI[id].tekst.replace(/\[\[[a-z0-9-]+\|([^\]]+)\]\]/g, "$1"), ord: "wiki" }); });
+    Object.keys(NET_OPSKRIFTER).forEach(function (id) { const o = NET_OPSKRIFTER[id]; l.push({ url: "opskrift.vera/" + id, titel: o.ik + " " + o.titel + " – Hotelkøkkenet", tekst: "Opskrift · " + o.tid + " · " + o.ingr.map(function (x) { return x[2]; }).join(", "), ord: "opskrift mad bage" }); });
+    netData().bogm.forEach(function (b) { if (!l.some(function (x) { return x.url === b.url; })) l.push({ url: b.url, titel: b.titel, tekst: "Dit bogmærke", ord: "" }); });
+    return l;
+  }
+  function netSoeg(q) {
+    const ord = q.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!ord.length) return [];
+    return netIndeks().map(function (x) {
+      const hel = (x.titel + " " + x.tekst + " " + x.ord + " " + x.url).toLowerCase(), t = x.titel.toLowerCase();
+      let s = 0;
+      ord.forEach(function (o) { if (t.indexOf(o) >= 0) s += 5; if (hel.indexOf(o) >= 0) s += 2; if (x.url.indexOf(o) >= 0) s += 3; });
+      return { x: x, s: s };
+    }).filter(function (r) { return r.s > 0; }).sort(function (a, b) { return b.s - a.s; }).map(function (r) { return r.x; });
+  }
+
+  // ----- siderne -----
+  const NET_SIDER = {
+    "vera.net": { titel: "Startside", ik: "🏠", farve: "#2a6fd6", om: "Din egen forside", vis: function () { return netForsideHtml(); } },
+    "soeg.vera": { titel: "Vera Søg", ik: "🔎", farve: "#2a6fd6", vis: function (p) {
+      const res = p.q ? netSoeg(p.q) : [];
+      return "<div class='vn-pg vn-soeg'><div class='vn-logo'><b style='color:#2a6fd6'>V</b><b style='color:#e0445a'>e</b><b style='color:#f5b821'>r</b><b style='color:#2a6fd6'>a</b> <span>Søg</span></div>" +
+        "<form class='vn-sf' data-vnsoegform><input name='q' value='" + esc(p.q) + "' placeholder='Søg på Vera-Net …' autocomplete='off'><button>🔎</button></form>" +
+        (p.q ? "<div class='vn-antal'>Ca. " + res.length + " resultat" + (res.length === 1 ? "" : "er") + "</div>" + (res.length ? res.map(function (r) {
+          return "<div class='vn-res'>" + lnk(r.url, "<small>" + esc(r.url) + "</small><b>" + esc(r.titel) + "</b>") + "<p>" + esc(r.tekst.slice(0, 110)) + (r.tekst.length > 110 ? " …" : "") + "</p></div>";
+        }).join("") : "<div class='vn-intet'>Ingen sider passer på <b>" + esc(p.q) + "</b>.<br>Prøv fx " + lnk("soeg.vera?q=opskrift", "opskrift") + ", " + lnk("soeg.vera?q=glimt", "glimt") + " eller " + lnk("soeg.vera?q=quiz", "quiz") + ".</div>")
+          : "<div class='vn-tips'>Prøv at søge efter <b>pandekager</b>, <b>vejret</b>, <b>Stella</b> eller <b>vits</b>.</div>") + "</div>";
+    } },
+    "hotel.vera": { titel: "HELLO VERA", ik: "🏨", farve: "#b5652e", om: "Hotellets officielle side", ord: "hotel hello vera officiel velkommen",
+      vis: function () {
+        return "<div class='vn-pg vn-hotel'><div class='vn-hero' style='background:linear-gradient(135deg,#f7d58a,#c47a32)'><span>🏨</span><b>HELLO VERA</b><small>Velkommen til hotellet!</small></div>" +
+          "<p>Her bor du, møder venner, bygger dit eget værelse og hygger dig i caféen. Hotellet er åbent døgnet rundt.</p>" +
+          "<h4>Gå på opdagelse</h4><div class='vn-knapgrid'>" +
+          lnk("wiki.vera/hello-vera", "📖 Læs om hotellet", "vn-k") + lnk("nyt.vera", "📰 Nyheder", "vn-k") + lnk("vejr.vera", "⛅ Vejret", "vn-k") + lnk("quiz.vera", "❓ Hotel-quiz", "vn-k") + "</div>" +
+          "<h4>Telefonen</h4><p>Hent flere apps og spil gratis i App Butik.</p><button class='vn-stor' data-vnapp='butik'>🛍 Åbn App Butik</button>" +
+          "<p class='vn-lille'>© HELLO VERA · Lavet af Pall</p></div>";
+      } },
+    "nyt.vera": { titel: "Vera Nyt", ik: "📰", farve: "#d6453a", om: "Nyheder fra hotellet", ord: "nyheder nyt avis",
+      vis: function () {
+        const l = nyhedListe();
+        return "<div class='vn-pg vn-nyt'><div class='vn-avis'>VERA NYT<small>" + esc(dato()) + "</small></div>" +
+          l.map(function (n, i) {
+            return "<div class='vn-artikel" + (i === 0 ? " stor" : "") + "'>" + (n.hotel ? "<i>📢 Fra hotellet" + (n.tid ? " · " + esc(naarTekst(n.tid)) : "") + "</i>" : "") + "<b>" + esc(n.titel) + "</b><p>" + esc(n.tekst) + "</p></div>";
+          }).join("") + (netNyheder === null ? "<div class='vn-lille'>Henter nyheder …</div>" : "") + "</div>";
+      }, efter: function () { if (netNyheder === null || Date.now() - netNyhedHentet > 60000) hentNetNyheder().then(function () { if (netUrl() === "nyt.vera") netTegnSide(); }); } },
+    "vejr.vera": { titel: "Vera Vejret", ik: "⛅", farve: "#3a9be0", om: "Vejret på hotellet i dag og de næste dage", ord: "vejr vejret regn sol temperatur",
+      vis: function (p) {
+        const steder = [["hotel", "Hotellet"], ["tag", "Tagterrassen"], ["strand", "Stranden"]], st = steder.some(function (s) { return s[0] === p.sti; }) ? p.sti : "hotel";
+        const nu = vejrFor(new Date(), st);
+        let dage = "";
+        for (let i = 1; i <= 5; i++) { const d = new Date(); d.setDate(d.getDate() + i); const v = vejrFor(d, st); dage += "<div><span>" + DAGE[d.getDay()].slice(0, 3) + "</span><b>" + v.ik + "</b><span>" + v.temp + "° <i>" + v.lav + "°</i></span></div>"; }
+        return "<div class='vn-pg vn-vejr'><div class='vn-steder'>" + steder.map(function (s) { return lnk("vejr.vera/" + s[0], s[1], s[0] === st ? "valgt" : ""); }).join("") + "</div>" +
+          "<div class='vn-nu'><span>" + nu.ik + "</span><b>" + nu.temp + "°</b><small>" + nu.navn + " · laveste " + nu.lav + "° · vind " + nu.vind + " m/s</small></div>" +
+          "<div class='vn-5'>" + dage + "</div><p class='vn-lille'>Vejret gælder i hotellets verden 😉</p></div>";
+      } },
+    "wiki.vera": { titel: "Verapedia", ik: "📖", farve: "#555", om: "Opslagsværket om alt på hotellet", ord: "wiki leksikon opslag",
+      vis: function (p) {
+        const a = NET_WIKI[p.sti];
+        if (a) return "<div class='vn-pg vn-wiki'>" + lnk("wiki.vera", "‹ Verapedia", "vn-brod") + "<h2>" + esc(a.titel) + "</h2>" + wikiTekst(a.tekst) +
+          "<div class='vn-lille'>Se også: " + Object.keys(NET_WIKI).filter(function (k) { return k !== p.sti; }).slice(0, 4).map(function (k) { return lnk("wiki.vera/" + k, esc(NET_WIKI[k].titel)); }).join(" · ") + "</div></div>";
+        return "<div class='vn-pg vn-wiki'><h2>📖 Verapedia</h2><p>Opslagsværket om alt på HELLO VERA.</p>" +
+          "<form class='vn-sf' data-vnsoegform><input name='q' placeholder='Søg i Verapedia …' autocomplete='off'><button>🔎</button></form>" +
+          "<ul class='vn-liste'>" + Object.keys(NET_WIKI).sort().map(function (k) { return "<li>" + lnk("wiki.vera/" + k, esc(NET_WIKI[k].titel)) + "</li>"; }).join("") + "</ul></div>";
+      } },
+    "opskrift.vera": { titel: "Hotelkøkkenet", ik: "🍳", farve: "#e08a1e", om: "Opskrifter fra hotellets køkken", ord: "opskrift mad bage kage",
+      vis: function (p) {
+        const o = NET_OPSKRIFTER[p.sti];
+        if (o) {
+          const pers = netPortioner[p.sti] || o.til, f = pers / o.til;
+          return "<div class='vn-pg vn-ops'>" + lnk("opskrift.vera", "‹ Alle opskrifter", "vn-brod") + "<div class='vn-ops-top'><span>" + o.ik + "</span><b>" + esc(o.titel) + "</b><small>⏱ " + o.tid + "</small></div>" +
+            "<div class='vn-pers'><button data-vnpers='-1'>−</button><span>" + pers + " " + (o.til >= 8 ? "stk." : "pers.") + "</span><button data-vnpers='1'>+</button></div>" +
+            "<h4>Det skal du bruge <small>(tryk for at krydse af)</small></h4><ul class='vn-ingr'>" + o.ingr.map(function (x, i) {
+              let m = x[0] * f; m = !x[1] || x[1] === "skiver" ? Math.max(1, Math.round(m)) : m >= 10 ? Math.round(m) : Math.round(m * 4) / 4;
+              return "<li data-vningr='" + i + "' class='" + (netAfkrydset[p.sti + i] ? "af" : "") + "'>" + String(m).replace(".", ",") + " " + x[1] + " " + esc(x[2]) + "</li>";
+            }).join("") + "</ul><h4>Sådan gør du</h4><ol>" + o.trin.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ol></div>";
+        }
+        return "<div class='vn-pg vn-ops'><h2>🍳 Hotelkøkkenet</h2><p>Kokkens bedste opskrifter.</p><div class='vn-ops-grid'>" + Object.keys(NET_OPSKRIFTER).map(function (k) {
+          const x = NET_OPSKRIFTER[k]; return lnk("opskrift.vera/" + k, "<span>" + x.ik + "</span><b>" + esc(x.titel) + "</b><small>⏱ " + x.tid + "</small>", "vn-ops-kort");
+        }).join("") + "</div></div>";
+      } },
+    "vits.vera": { titel: "Grineren", ik: "😂", farve: "#f5b821", om: "Sjove vittigheder", ord: "vits vitser joke sjov grine",
+      vis: function () {
+        const v = vitsNr(netVitsNr), likes = netData().vitsLike || {};
+        return "<div class='vn-pg vn-vits'><h2>😂 Grineren</h2><div class='vn-vitskort'><b>" + esc(v.q) + "</b>" + (netVitsSvar ? "<p>" + esc(v.a) + "</p>" : "<button data-vnvitssvar>Vis svaret 👀</button>") + "</div>" +
+          "<div class='vn-vitsknap'><button data-vnvitslike class='" + (likes[netVitsNr] ? "liker" : "") + "'>" + (likes[netVitsNr] ? "❤️ Sjov!" : "🤍 Sjov?") + "</button><button data-vnvitsny>🎲 Ny vits</button></div>" +
+          "<p class='vn-lille'>Vits " + (netVitsNr % NET_VITSER.length + 1) + " af " + NET_VITSER.length + " · Du synes " + Object.keys(likes).length + " er sjove</p></div>";
+      } },
+    "quiz.vera": { titel: "Hotel-quiz", ik: "❓", farve: "#8152e0", om: "Hvor meget ved du om hotellet?", ord: "quiz spørgsmål",
+      vis: function () {
+        const z = netQuiz, rek = (netData().quiz || 0);
+        if (!z) return "<div class='vn-pg vn-quiz'><h2>❓ Hotel-quiz</h2><p>8 spørgsmål om hotellet og verden. Hvor mange kan du?</p><p>🏆 Din rekord: <b>" + rek + " / 8</b></p><button class='vn-stor' data-vnquizstart>Start quizzen</button></div>";
+        if (z.nr >= z.sp.length) return "<div class='vn-pg vn-quiz'><h2>" + (z.rigtige >= 7 ? "🏆 Fantastisk!" : z.rigtige >= 4 ? "👏 Godt klaret!" : "🙂 Godt forsøgt!") + "</h2><div class='vn-quizres'>" + z.rigtige + " / " + z.sp.length + "</div><p>🏆 Din rekord: <b>" + rek + " / 8</b></p><button class='vn-stor' data-vnquizstart>Prøv igen</button></div>";
+        const s = NET_QUIZ[z.sp[z.nr]];
+        return "<div class='vn-pg vn-quiz'><div class='vn-quiztop'><span>Spørgsmål " + (z.nr + 1) + " af " + z.sp.length + "</span><span>✅ " + z.rigtige + "</span></div><h3>" + esc(s[0]) + "</h3><div class='vn-svar'>" +
+          s[1].map(function (t, i) { return "<button data-vnsvar='" + i + "' class='" + (z.valgt == null ? "" : i === s[2] ? "rigtig" : i === z.valgt ? "forkert" : "") + "'>" + esc(t) + "</button>"; }).join("") + "</div>" +
+          (z.valgt != null ? "<button class='vn-stor' data-vnquiznaeste>" + (z.nr + 1 < z.sp.length ? "Næste ›" : "Se resultatet") + "</button>" : "") + "</div>";
+      } },
+    "regn.vera": { titel: "Lommeregner", ik: "🧮", farve: "#4c515a", om: "Regn ud", ord: "lommeregner regne matematik plus minus",
+      vis: function () {
+        return "<div class='vn-pg vn-regn'><div class='vn-display'>" + esc(netRegn.vis) + "</div><div class='vn-taster'>" +
+          ["C", "±", "%", "÷", "7", "8", "9", "×", "4", "5", "6", "−", "1", "2", "3", "+", "0", ",", "="].map(function (t) { return "<button data-vnregn='" + t + "' class='" + ("÷×−+=".indexOf(t) >= 0 ? "op" : "C±%".indexOf(t) >= 0 ? "fn" : "") + (t === "0" ? " nul" : "") + "'>" + t + "</button>"; }).join("") + "</div></div>";
+      } },
+    "ur.vera": { titel: "Ur & stopur", ik: "⏱", farve: "#1f8f5a", om: "Klokken, stopur og nedtælling", ord: "ur tid stopur timer nedtælling",
+      vis: function () {
+        return "<div class='vn-pg vn-ur'><div class='vn-klok' data-vnklok>" + kl() + "</div><div class='vn-lille' style='text-align:center'>" + esc(dato()) + "</div>" +
+          "<h4>⏱ Stopur</h4><div class='vn-stop' data-vnstopvis>" + stopTekst(stopTid()) + "</div><div class='vn-knapper'><button data-vnstop>" + (netStop.koerer ? "Stop" : "Start") + "</button><button data-vnstopnul>Nulstil</button></div>" +
+          "<h4>⏲ Nedtælling</h4><div class='vn-stop' data-vnnedvis>" + nedTekst() + "</div><div class='vn-knapper'>" + [1, 3, 5, 10].map(function (m) { return "<button data-vnned='" + m + "'>" + m + " min</button>"; }).join("") + "<button data-vnned='0'>Stop</button></div></div>";
+      } },
+    "tegn.vera": { titel: "Tegnebræt", ik: "🎨", farve: "#e0447e", om: "Tegn med fingeren eller musen", ord: "tegne tegning male",
+      vis: function () {
+        return "<div class='vn-pg vn-tegn'><canvas width='520' height='520' data-vncanvas></canvas><div class='vn-farver'>" +
+          ["#1c1c1e", "#e0445a", "#f5b821", "#34c759", "#2a6fd6", "#8152e0", "#ff8fb8", "#8a5a2b", "#ffffff"].map(function (c) { return "<button data-vnfarve='" + c + "' style='background:" + c + "' class='" + (netPen.farve === c ? "valgt" : "") + "'></button>"; }).join("") +
+          "</div><div class='vn-knapper'>" + [3, 7, 14].map(function (s) { return "<button data-vnpen='" + s + "' class='" + (netPen.str === s ? "valgt" : "") + "'>" + (s === 3 ? "Tynd" : s === 7 ? "Mellem" : "Tyk") + "</button>"; }).join("") + "<button data-vnryd>🗑 Ryd</button></div></div>";
+      }, efter: function (el) { bindTegn(el.querySelector("[data-vncanvas]")); } },
+    "horoskop.vera": { titel: "Dagens horoskop", ik: "🔮", farve: "#6a3fd0", om: "Hvad siger stjernerne i dag?", ord: "horoskop stjernetegn stjerner",
+      vis: function (p) {
+        const i = NET_TEGN.findIndex(function (t) { return t[1].toLowerCase() === p.sti; });
+        if (i < 0) return "<div class='vn-pg vn-horo'><h2>🔮 Dagens horoskop</h2><p>Vælg dit stjernetegn:</p><div class='vn-tegngrid'>" + NET_TEGN.map(function (t) { return lnk("horoskop.vera/" + t[1].toLowerCase(), "<span>" + t[0] + "</span>" + t[1]); }).join("") + "</div></div>";
+        const r = rngFra(dagNoegle() + NET_TEGN[i][1]);
+        const a = ["I dag er en god dag til at", "Stjernerne siger, at du skal", "Det er tid til at", "Måske er det i dag, du skal"][Math.floor(r() * 4)];
+        const b = ["sige hej til en ny gæst", "bygge noget flot i dit værelse", "drikke en kakao i caféen", "sende en sød mail til en ven", "spille Stjernestribe", "danse i hallen", "skrive en note om dine drømme", "tage et billede med kameraet"][Math.floor(r() * 8)];
+        const c = ["En overraskelse venter måske i elevatoren.", "Nogen tænker på dig lige nu.", "Dine Glimt bliver brugt klogt.", "Et grin er på vej.", "Hold øje med Peep i aften."][Math.floor(r() * 5)];
+        const farver = ["rød", "blå", "grøn", "lilla", "gul", "lyserød", "orange", "guld"];
+        return "<div class='vn-pg vn-horo'>" + lnk("horoskop.vera", "‹ Alle tegn", "vn-brod") + "<div class='vn-horotop'><span>" + NET_TEGN[i][0] + "</span><b>" + NET_TEGN[i][1] + "</b><small>" + esc(dato()) + "</small></div>" +
+          "<p>" + a + " " + b + ". " + c + "</p><div class='vn-lykke'><span>🍀 Lykketal <b>" + (1 + Math.floor(r() * 99)) + "</b></span><span>🎨 Farve <b>" + farver[Math.floor(r() * farver.length)] + "</b></span><span>⭐ Humør <b>" + "★★★★★".slice(0, 3 + Math.floor(r() * 3)) + "</b></span></div></div>";
+      } },
+  };
+  let netPortioner = {}, netAfkrydset = {}, netVitsNr = froe(dagNoegle()) % NET_VITSER.length, netVitsSvar = false, netQuiz = null;
+  let netRegn = { vis: "0", a: null, op: null, ny: true };
+  let netStop = { koerer: false, start: 0, gemt: 0 }, netNed = { slut: 0 }, netPen = { farve: "#1c1c1e", str: 7 }, netTegning = null;
+  function stopTid() { return netStop.gemt + (netStop.koerer ? Date.now() - netStop.start : 0); }
+  function stopTekst(ms) { const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, h = Math.floor(ms / 10) % 100; return ("0" + m).slice(-2) + ":" + ("0" + s).slice(-2) + "," + ("0" + h).slice(-2); }
+  function nedTekst() { if (!netNed.slut) return "--:--"; const ms = Math.max(0, netNed.slut - Date.now()); return ("0" + Math.floor(ms / 60000)).slice(-2) + ":" + ("0" + Math.ceil(ms / 1000) % 60).slice(-2).replace("60", "00"); }
+  setInterval(function () {
+    if (netNed.slut && Date.now() >= netNed.slut) { netNed.slut = 0; ding(); setTimeout(ding, 450); lille("⏲ Nedtællingen er slut!"); }
+    if (appNu !== "net" || !appEl) return;
+    const k = appEl.querySelector("[data-vnklok]"), s = appEl.querySelector("[data-vnstopvis]"), n = appEl.querySelector("[data-vnnedvis]");
+    if (k) k.textContent = kl();
+    if (s) s.textContent = stopTekst(stopTid());
+    if (n) n.textContent = nedTekst();
+  }, 60);
+  function bindTegn(c) {
+    if (!c) return;
+    const g = c.getContext("2d");
+    if (netTegning) { const b = new Image(); b.onload = function () { g.drawImage(b, 0, 0); }; b.src = netTegning; }
+    else { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
+    let sidst = null;
+    function pkt(e) { const r = c.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * c.width, y: (e.clientY - r.top) / r.height * c.height }; }
+    c.addEventListener("pointerdown", function (e) { e.preventDefault(); e.stopPropagation(); try { c.setPointerCapture(e.pointerId); } catch (x) {} sidst = pkt(e); g.fillStyle = netPen.farve; g.beginPath(); g.arc(sidst.x, sidst.y, netPen.str, 0, Math.PI * 2); g.fill(); });
+    c.addEventListener("pointermove", function (e) {
+      if (!sidst) return; e.stopPropagation();
+      const p = pkt(e); g.strokeStyle = netPen.farve; g.lineWidth = netPen.str * 2; g.lineCap = "round"; g.beginPath(); g.moveTo(sidst.x, sidst.y); g.lineTo(p.x, p.y); g.stroke(); sidst = p;
+    });
+    const slut = function () { if (sidst) { sidst = null; try { netTegning = c.toDataURL(); } catch (x) {} } };
+    c.addEventListener("pointerup", slut); c.addEventListener("pointercancel", slut);
+  }
+  function regnTryk(t) {
+    const R = netRegn, tal = function () { return parseFloat(R.vis.replace(",", ".")) || 0; };
+    const regn = function (a, op, b) { return op === "+" ? a + b : op === "−" ? a - b : op === "×" ? a * b : op === "÷" ? (b === 0 ? NaN : a / b) : b; };
+    const vis = function (v) { if (!isFinite(v)) return "Fejl"; return String(+v.toPrecision(10)).replace(".", ","); };
+    if (/[0-9]/.test(t)) { R.vis = R.ny || R.vis === "0" ? t : (R.vis.length < 12 ? R.vis + t : R.vis); R.ny = false; }
+    else if (t === ",") { if (R.ny) { R.vis = "0,"; R.ny = false; } else if (R.vis.indexOf(",") < 0) R.vis += ","; }
+    else if (t === "C") { netRegn = { vis: "0", a: null, op: null, ny: true }; }
+    else if (t === "±") { R.vis = vis(-tal()); }
+    else if (t === "%") { R.vis = vis(tal() / 100); }
+    else if (t === "=") { if (R.op) { R.vis = vis(regn(R.a, R.op, tal())); R.a = null; R.op = null; R.ny = true; } }
+    else { if (R.op && !R.ny) R.vis = vis(regn(R.a, R.op, tal())); R.a = tal(); R.op = t; R.ny = true; }
+  }
+
+  // ----- forsiden man selv designer -----
+  let netDesigner = false;
+  function favIkon(u) { const s = netSide(u); return "<span class='vn-favik' style='background:" + s.farve + "'>" + s.ik + "</span>"; }
+  function netForsideHtml() {
+    const d = netData(), F = d.forside;
+    const h = new Date().getHours(), hilsen = h < 5 ? "God nat" : h < 10 ? "Godmorgen" : h < 18 ? "Goddag" : "Godaften";
+    const w = {
+      soeg: function () { return "<form class='vn-sf stor' data-vnsoegform><input name='q' placeholder='Søg eller skriv en adresse' autocomplete='off'><button>🔎</button></form>"; },
+      fav: function () {
+        return "<div class='vn-w'><div class='vn-wt'>⭐ Favoritter</div><div class='vn-favgrid " + F.form + "'>" + d.fav.map(function (f, i) {
+          return "<span class='vn-fav'>" + lnk(f.url, favIkon(f.url) + "<small>" + esc(f.titel) + "</small>") + (netDesigner ? "<button class='vn-favx' data-vnfavslet='" + i + "'>✕</button>" : "") + "</span>";
+        }).join("") + (d.fav.length ? "" : "<div class='vn-lille'>Ingen favoritter endnu. Tryk ⋯ → Tilføj til favoritter på en side.</div>") + "</div></div>";
+      },
+      ur: function () { return "<div class='vn-w vn-wur'><b data-vnklok>" + kl() + "</b><span>" + esc(dato()) + "</span></div>"; },
+      vejr: function () { const v = vejrFor(new Date(), "hotel"); return "<div class='vn-w vn-wvejr' data-vnlink='vejr.vera'><span>" + v.ik + "</span><b>" + v.temp + "°</b><small>" + v.navn + "<br>på hotellet</small></div>"; },
+      nyt: function () { return "<div class='vn-w'><div class='vn-wt'>📰 Nyheder</div>" + nyhedListe().slice(0, 2).map(function (n) { return "<div class='vn-wnyt' data-vnlink='nyt.vera'>" + esc(n.titel) + "</div>"; }).join("") + "</div>"; },
+      vits: function () { const v = dagensVits(); return "<div class='vn-w vn-wvits' data-vnlink='vits.vera'><div class='vn-wt'>😂 Dagens vits</div><b>" + esc(v.q) + "</b><small>" + esc(v.a) + "</small></div>"; },
+      seneste: function () { return "<div class='vn-w'><div class='vn-wt'>🕘 Seneste besøg</div>" + (d.seneste.slice(0, 3).map(function (s) { return "<div class='vn-wnyt' data-vnlink='" + esc(s.url) + "'>" + esc(s.titel) + "</div>"; }).join("") || "<div class='vn-lille'>Ingen endnu</div>") + "</div>"; },
+      bogm: function () { return "<div class='vn-w'><div class='vn-wt'>🔖 Bogmærker</div>" + (d.bogm.slice(0, 4).map(function (s) { return "<div class='vn-wnyt' data-vnlink='" + esc(s.url) + "'>" + esc(s.titel) + "</div>"; }).join("") || "<div class='vn-lille'>Ingen endnu – tryk ☆ på en side</div>") + "</div>"; },
+    };
+    if (netNyheder === null) hentNetNyheder().then(function () { if (appNu === "net" && netUrl() === "vera.net" && !netDesigner) netTegnSide(); });
+    return "<div class='vn-forside" + (F.moerk ? " moerk" : "") + "' style='background:" + (NET_BG[F.bg] || NET_BG.himmel) + "'>" +
+      "<div class='vn-fhoved'><span class='vn-femoji'>" + esc(F.emoji) + "</span><b>" + esc(F.titel) + "</b><small>" + hilsen + ", " + esc(mig()) + "!</small></div>" +
+      F.widgets.filter(function (k) { return w[k]; }).map(function (k) { return w[k](); }).join("") +
+      (netDesigner ? netDesignHtml() : "<button class='vn-designknap' data-vndesign>✏️ Design din forside</button>") + "</div>";
+  }
+  function netDesignHtml() {
+    const F = netData().forside;
+    return "<div class='vn-design'><div class='vn-wt'>✏️ Design din forside</div>" +
+      "<label>Navn på forsiden<input data-vnftitel maxlength='24' value='" + esc(F.titel) + "'></label>" +
+      "<div class='vn-dt'>Ikon</div><div class='vn-emojier'>" + NET_EMOJI.map(function (e) { return "<button data-vnfemoji='" + e + "' class='" + (F.emoji === e ? "valgt" : "") + "'>" + e + "</button>"; }).join("") + "</div>" +
+      "<div class='vn-dt'>Baggrund</div><div class='vn-bgvalg'>" + Object.keys(NET_BG).map(function (k) { return "<button data-vnfbg='" + k + "' style='background:" + NET_BG[k] + "' class='" + (F.bg === k ? "valgt" : "") + "'></button>"; }).join("") + "</div>" +
+      "<div class='vn-dt'>Tekst og favoritter</div><div class='vn-knapper'><button data-vnfmoerk='0' class='" + (!F.moerk ? "valgt" : "") + "'>Hvid tekst</button><button data-vnfmoerk='1' class='" + (F.moerk ? "valgt" : "") + "'>Mørk tekst</button></div>" +
+      "<div class='vn-knapper'><button data-vnfform='rund' class='" + (F.form === "rund" ? "valgt" : "") + "'>● Runde</button><button data-vnfform='firkant' class='" + (F.form === "firkant" ? "valgt" : "") + "'>■ Firkantede</button></div>" +
+      "<div class='vn-dt'>Det skal være på forsiden <small>(↑↓ flytter)</small></div><ul class='vn-wvalg'>" +
+      F.widgets.concat(Object.keys(NET_WIDGETS).filter(function (k) { return F.widgets.indexOf(k) < 0; })).map(function (k) {
+        const til = F.widgets.indexOf(k) >= 0;
+        return "<li class='" + (til ? "til" : "") + "'><button class='vn-tjek' data-vnwtil='" + k + "'>" + (til ? "✓" : "") + "</button><span>" + NET_WIDGETS[k] + "</span>" +
+          (til ? "<button data-vnwop='" + k + "'>↑</button><button data-vnwned='" + k + "'>↓</button>" : "") + "</li>";
+      }).join("") + "</ul>" +
+      "<div class='vn-dt'>Tilføj en favorit</div><form class='vn-sf' data-vnfavform><input name='u' placeholder='fx vits.vera' autocomplete='off'><button>＋</button></form>" +
+      "<button class='vn-stor' data-vndesignfaerdig>✓ Færdig</button></div>";
+  }
+
+  // ----- browserens skal: adressefelt, faner, menuer -----
+  let netPanel = null, netPanelFane = "fav";
+  function tegnNet() {
+    netData();
+    netPanel = null; netDesigner = false;
+    appEl.classList.add("vn-app");
+    appEl.innerHTML = "<div class='vn-top'><button class='tlf-tb' data-tilbage='hjem' title='Hjem'>" + ik("tilbage", 18) + "</button>" +
+      "<form class='vn-adr' data-vnadrform><span class='vn-laas'>🔒</span><input data-vnadr autocomplete='off' spellcheck='false'></form>" +
+      "<button class='vn-ikon' data-vnreload title='Genindlæs'>↻</button></div><div class='vn-load'></div><div class='vn-forslag' hidden></div>" +
+      "<div class='vn-side'></div><div class='vn-panel' hidden></div>" +
+      "<div class='vn-bund'><button data-vntilb title='Tilbage'>‹</button><button data-vnfrem title='Frem'>›</button><button data-vnbogm title='Bogmærke'>☆</button>" +
+      "<button data-vnpanel title='Bogmærker, favoritter og seneste'>📚</button><button data-vnfaner title='Faner'><span class='vn-antalfaner'>1</span></button><button data-vnmenu title='Mere'>⋯</button></div>";
+    appEl.addEventListener("click", netKlik);
+    appEl.addEventListener("submit", netSubmit);
+    appEl.addEventListener("input", netInput);
+    appEl.addEventListener("focusin", function (e) { if (e.target.matches("[data-vnadr]")) { e.target.value = netUrl(); e.target.select(); visForslag(""); } });
+    appEl.addEventListener("focusout", function (e) { if (e.target.matches("[data-vnadr]")) setTimeout(function () { if (!appEl) return; const f = appEl.querySelector(".vn-forslag"); if (f) f.hidden = true; netOpdaterBar(); }, 180); });
+    netTegnSide();
+  }
+  function netOpdaterBar() {
+    if (!appEl || appNu !== "net") return;
+    const d = netData(), f = netFane(), u = netUrl(f), s = netSide(u);
+    const a = appEl.querySelector("[data-vnadr]");
+    if (a && document.activeElement !== a) a.value = u === "vera.net" ? "" : u;
+    if (a) a.placeholder = "Søg eller skriv en adresse";
+    appEl.querySelector("[data-vntilb]").disabled = f.pos <= 0;
+    appEl.querySelector("[data-vnfrem]").disabled = f.pos >= f.hist.length - 1;
+    const bm = d.bogm.some(function (b) { return b.url === u; });
+    const bk = appEl.querySelector("[data-vnbogm]"); bk.textContent = bm ? "★" : "☆"; bk.classList.toggle("til", bm);
+    appEl.querySelector(".vn-antalfaner").textContent = d.faner.length;
+    appEl.classList.toggle("vn-privat", !!f.privat);
+    appEl.querySelector(".vn-laas").textContent = f.privat ? "🕶" : s.ik;
+  }
+  function netTegnSide(stille) {
+    if (!appEl || appNu !== "net") return;
+    const el = appEl.querySelector(".vn-side");
+    if (!el) return;
+    const u = netUrl(), p = netDel(u), S = NET_SIDER[p.domaene];
+    el.innerHTML = S ? S.vis(p) : "<div class='vn-pg vn-404'><span>🤷</span><h2>Siden findes ikke</h2><p>Vera-Net kunne ikke finde <b>" + esc(u) + "</b>.</p>" +
+      "<button class='vn-stor' data-vnlink='soeg.vera?q=" + esc(encodeURIComponent(p.domaene.replace(/\..*$/, ""))) + "'>🔎 Søg efter den i stedet</button><p class='vn-lille'>Prøv " + lnk("hotel.vera", "hotel.vera") + " eller " + lnk("vera.net", "din forside") + ".</p></div>";
+    if (S && S.efter) S.efter(el, p);
+    if (!stille) {
+      el.scrollTop = 0;
+      const ld = appEl.querySelector(".vn-load"); ld.classList.remove("koer"); void ld.offsetWidth; ld.classList.add("koer");
+    }
+    netOpdaterBar();
+  }
+  function netGaaTil(u, nyFane) {
+    u = netRens(u);
+    const d = netData();
+    if (nyFane) { const f = { id: Date.now(), hist: [u], pos: 0 }; d.faner.push(f); d.aktiv = f.id; }
+    else {
+      const f = netFane();
+      if (f.hist[f.pos] !== u) { f.hist = f.hist.slice(0, f.pos + 1); f.hist.push(u); if (f.hist.length > 30) f.hist.shift(); f.pos = f.hist.length - 1; }
+    }
+    if (u.indexOf("soeg.vera") !== 0 || u.indexOf("?") > 0) netSenest(u);
+    netDesigner = false; lukNetPanel();
+    if (u === "vera.net") netVitsSvar = false;
+    gemNet();
+    netTegnSide();
+  }
+  function netSenest(u) {
+    if (netFane().privat || u === "vera.net") return;
+    const d = netData();
+    d.seneste = d.seneste.filter(function (s) { return s.url !== u; });
+    d.seneste.unshift({ url: u, titel: netSide(u).titel, tid: Date.now() });
+    d.seneste = d.seneste.slice(0, 60);
+  }
+  function netAdresse(t) {
+    t = String(t || "").trim();
+    if (!t) return "vera.net";
+    const r = netRens(t);
+    if (/^[a-zæøå0-9-]+\.[a-z]+(\/.*)?(\?.*)?$/.test(r) && r.indexOf(" ") < 0) return r;
+    return "soeg.vera?q=" + encodeURIComponent(t);
+  }
+  function visForslag(t) {
+    const f = appEl.querySelector(".vn-forslag"), d = netData();
+    t = t.trim().toLowerCase();
+    const set = {}, l = [];
+    function add(url, titel, ik2) { if (set[url] || l.length >= 6) return; set[url] = 1; l.push([url, titel, ik2]); }
+    if (t) {
+      d.bogm.forEach(function (b) { if ((b.url + b.titel).toLowerCase().indexOf(t) >= 0) add(b.url, b.titel, "🔖"); });
+      d.seneste.forEach(function (s) { if ((s.url + s.titel).toLowerCase().indexOf(t) >= 0) add(s.url, s.titel, "🕘"); });
+      Object.keys(NET_SIDER).forEach(function (k) { if (k !== "soeg.vera" && (k + NET_SIDER[k].titel).toLowerCase().indexOf(t) >= 0) add(k, NET_SIDER[k].titel, NET_SIDER[k].ik); });
+      netSoeg(t).slice(0, 4).forEach(function (x) { add(x.url, x.titel, netSide(x.url).ik); });
+    } else d.fav.slice(0, 6).forEach(function (x) { add(x.url, x.titel, "⭐"); });
+    f.innerHTML = (t ? "<button data-vnlink='" + esc("soeg.vera?q=" + encodeURIComponent(t)) + "'><span>🔎</span><b>Søg efter \"" + esc(t) + "\"</b></button>" : "") +
+      l.map(function (x) { return "<button data-vnlink='" + esc(x[0]) + "'><span>" + x[2] + "</span><b>" + esc(x[1]) + "</b><small>" + esc(x[0]) + "</small></button>"; }).join("");
+    f.hidden = !f.innerHTML;
+  }
+  function netInput(e) {
+    const t = e.target;
+    if (t.matches("[data-vnadr]")) { visForslag(t.value); return; }
+    if (t.matches("[data-vnftitel]")) { netData().forside.titel = t.value.slice(0, 24) || "Min forside"; gemNet(); const b = appEl.querySelector(".vn-fhoved b"); if (b) b.textContent = netData().forside.titel; }
+  }
+  function netSubmit(e) {
+    e.preventDefault();
+    const f = e.target;
+    if (f.matches("[data-vnadrform]")) { const a = f.querySelector("input"); a.blur(); netGaaTil(netAdresse(a.value)); return; }
+    if (f.matches("[data-vnsoegform]")) {
+      const q = f.querySelector("input").value.trim();
+      if (!q) return;
+      const ad = netAdresse(q);
+      netGaaTil(netUrl().indexOf("wiki.vera") === 0 && ad.indexOf("soeg.vera") === 0 ? "soeg.vera?q=" + encodeURIComponent(q + " wiki") : ad);
+      return;
+    }
+    if (f.matches("[data-vnfavform]")) {
+      const v = f.querySelector("input").value.trim(); if (!v) return;
+      const u = netAdresse(v), d = netData();
+      if (!d.fav.some(function (x) { return x.url === u; })) d.fav.push({ url: u, titel: netSide(u).titel });
+      gemNet(); netTegnSide(true); lille("⭐ Lagt på forsiden");
+    }
+  }
+  function lukNetPanel() { netPanel = null; if (appEl) { const p = appEl.querySelector(".vn-panel"); if (p) p.hidden = true; } }
+  function visNetPanel(slags) {
+    netPanel = slags;
+    const p = appEl.querySelector(".vn-panel"), d = netData(), u = netUrl();
+    p.hidden = false;
+    if (slags === "menu") {
+      const fav = d.fav.some(function (x) { return x.url === u; }), bm = d.bogm.some(function (x) { return x.url === u; });
+      p.innerHTML = "<div class='vn-ark'><div class='vn-arktop'><b>" + esc(netSide(u).titel) + "</b><small>" + esc(u) + "</small></div>" +
+        "<button data-vnm='fav'>" + (fav ? "⭐ Fjern fra favoritter" : "⭐ Tilføj til favoritter") + "</button>" +
+        "<button data-vnm='bogm'>" + (bm ? "🔖 Fjern bogmærke" : "🔖 Tilføj bogmærke") + "</button>" +
+        "<button data-vnm='nyfane'>➕ Ny fane</button><button data-vnm='privat'>🕶 Ny privat fane <small>(huskes ikke)</small></button>" +
+        "<button data-vnm='forside'>🏠 Gå til forsiden</button><button data-vnm='design'>✏️ Design din forside</button>" +
+        "<button class='luk' data-vnluk>Luk</button></div>";
+      return;
+    }
+    if (slags === "faner") {
+      p.innerHTML = "<div class='vn-fanevis'><div class='vn-arktop'><b>" + d.faner.length + " fane" + (d.faner.length === 1 ? "" : "r") + "</b></div><div class='vn-fanegrid'>" +
+        d.faner.map(function (f) {
+          const fu = netUrl(f), s = netSide(fu);
+          return "<div class='vn-fanekort" + (f.id === d.aktiv ? " aktiv" : "") + (f.privat ? " privat" : "") + "' data-vnfane='" + f.id + "'><div class='vn-fkop' style='background:" + s.farve + "'><span>" + (f.privat ? "🕶" : s.ik) + "</span>" + esc(s.titel) + "</div>" +
+            "<div class='vn-fkrop'><span>" + s.ik + "</span><small>" + esc(fu) + "</small></div><button class='vn-fx' data-vnfaneluk='" + f.id + "'>✕</button></div>";
+        }).join("") + "</div><div class='vn-fanebund'><button data-vnm='lukalle'>Luk alle</button><button class='plus' data-vnm='nyfane'>＋</button><button data-vnluk>Færdig</button></div></div>";
+      return;
+    }
+    // bogmærker / favoritter / seneste
+    const faner = [["fav", "⭐ Favoritter"], ["bogm", "🔖 Bogmærker"], ["seneste", "🕘 Seneste"]];
+    const liste = netPanelFane === "fav" ? d.fav : netPanelFane === "bogm" ? d.bogm : d.seneste;
+    p.innerHTML = "<div class='vn-ark hoej'><div class='ab-faner'>" + faner.map(function (f) { return "<button data-vnpf='" + f[0] + "' class='" + (netPanelFane === f[0] ? "valgt" : "") + "'>" + f[1] + "</button>"; }).join("") + "</div>" +
+      "<ul class='vn-plist'>" + (liste.length ? liste.map(function (x, i) {
+        return "<li><span class='vn-pl' data-vnlink='" + esc(x.url) + "'>" + favIkon(x.url) + "<span><b>" + esc(x.titel) + "</b><small>" + esc(x.url) + (x.tid ? " · " + esc(naarTekst(x.tid)) : "") + "</small></span></span>" +
+          (netPanelFane === "fav" ? "<button data-vnflyt='" + i + "' title='Flyt op'>↑</button>" : "") + "<button data-vnpslet='" + i + "' title='Slet'>✕</button></li>";
+      }).join("") : "<li class='vn-tomt'>" + (netPanelFane === "fav" ? "Ingen favoritter. Brug ⋯ → Tilføj til favoritter." : netPanelFane === "bogm" ? "Ingen bogmærker. Tryk ☆ nederst på en side." : "Du har ikke besøgt nogen sider endnu.") + "</li>") + "</ul>" +
+      (netPanelFane === "seneste" && liste.length ? "<button class='vn-rod' data-vnrydhist>🗑 Ryd seneste besøg</button>" : "") +
+      "<button class='luk' data-vnluk>Luk</button></div>";
+  }
+  function netToggle(liste, u) {
+    const d = netData(), l = d[liste], i = l.findIndex(function (x) { return x.url === u; });
+    if (i >= 0) { l.splice(i, 1); lille(liste === "fav" ? "Fjernet fra favoritter" : "Bogmærket er fjernet"); }
+    else { l.push({ url: u, titel: netSide(u).titel }); lille(liste === "fav" ? "⭐ Tilføjet til favoritter" : "🔖 Bogmærke gemt"); }
+    gemNet();
+  }
+  function netKlik(e) {
+    const t = e.target, d = netData();
+    const L = t.closest("[data-vnlink]");
+    if (L) { e.preventDefault(); netGaaTil(L.dataset.vnlink); return; }
+    const a = t.closest("[data-vnapp]");
+    if (a) { aabnApp(a.dataset.vnapp); return; }
+    if (t.closest("[data-vntilb]")) { const f = netFane(); if (f.pos > 0) { f.pos--; gemNet(); netTegnSide(); } return; }
+    if (t.closest("[data-vnfrem]")) { const f = netFane(); if (f.pos < f.hist.length - 1) { f.pos++; gemNet(); netTegnSide(); } return; }
+    if (t.closest("[data-vnreload]")) { netNyhedHentet = 0; if (netUrl() === "nyt.vera") netNyheder = null; netTegnSide(); return; }
+    if (t.closest("[data-vnbogm]")) { netToggle("bogm", netUrl()); netOpdaterBar(); if (netUrl() === "vera.net") netTegnSide(true); return; }
+    if (t.closest("[data-vnpanel]")) { if (netPanel && netPanel !== "menu" && netPanel !== "faner") lukNetPanel(); else visNetPanel("liste"); return; }
+    if (t.closest("[data-vnfaner]")) { if (netPanel === "faner") lukNetPanel(); else visNetPanel("faner"); return; }
+    if (t.closest("[data-vnmenu]")) { if (netPanel === "menu") lukNetPanel(); else visNetPanel("menu"); return; }
+    if (t.closest("[data-vnluk]") || t.classList.contains("vn-panel")) { lukNetPanel(); return; }
+    const pf = t.closest("[data-vnpf]");
+    if (pf) { netPanelFane = pf.dataset.vnpf; visNetPanel("liste"); return; }
+    const ps = t.closest("[data-vnpslet]");
+    if (ps) { const l = netPanelFane === "fav" ? d.fav : netPanelFane === "bogm" ? d.bogm : d.seneste; l.splice(+ps.dataset.vnpslet, 1); gemNet(); visNetPanel("liste"); netOpdaterBar(); if (netUrl() === "vera.net") netTegnSide(true); return; }
+    const fl = t.closest("[data-vnflyt]");
+    if (fl) { const i = +fl.dataset.vnflyt; if (i > 0) { const x = d.fav.splice(i, 1)[0]; d.fav.splice(i - 1, 0, x); gemNet(); visNetPanel("liste"); if (netUrl() === "vera.net") netTegnSide(true); } return; }
+    if (t.closest("[data-vnrydhist]")) { d.seneste = []; gemNet(); visNetPanel("liste"); lille("🗑 Seneste besøg er ryddet"); return; }
+    const m = t.closest("[data-vnm]");
+    if (m) {
+      const h = m.dataset.vnm;
+      if (h === "fav" || h === "bogm") { netToggle(h, netUrl()); lukNetPanel(); netOpdaterBar(); if (netUrl() === "vera.net") netTegnSide(true); }
+      if (h === "nyfane" || h === "privat") {
+        if (d.faner.length >= 10) { lille("Du kan højst have 10 faner"); return; }
+        const f = { id: Date.now(), hist: ["vera.net"], pos: 0 }; if (h === "privat") f.privat = true;
+        d.faner.push(f); d.aktiv = f.id; gemNet(); lukNetPanel(); netTegnSide();
+        if (h === "privat") lille("🕶 Privat fane – den husker ikke, hvor du har været");
+      }
+      if (h === "forside") netGaaTil("vera.net");
+      if (h === "design") { netGaaTil("vera.net"); netDesigner = true; netTegnSide(true); const ds = appEl.querySelector(".vn-design"); if (ds) ds.scrollIntoView({ block: "start" }); }
+      if (h === "lukalle") { d.faner = [{ id: Date.now(), hist: ["vera.net"], pos: 0 }]; d.aktiv = d.faner[0].id; gemNet(); lukNetPanel(); netTegnSide(); lille("Alle faner er lukket"); }
+      return;
+    }
+    const fx = t.closest("[data-vnfaneluk]");
+    if (fx) {
+      d.faner = d.faner.filter(function (f) { return f.id !== +fx.dataset.vnfaneluk; });
+      if (!d.faner.length) d.faner = [{ id: Date.now(), hist: ["vera.net"], pos: 0 }];
+      if (!d.faner.some(function (f) { return f.id === d.aktiv; })) d.aktiv = d.faner[d.faner.length - 1].id;
+      gemNet(); visNetPanel("faner"); netTegnSide(true); return;
+    }
+    const fk = t.closest("[data-vnfane]");
+    if (fk) { d.aktiv = +fk.dataset.vnfane; gemNet(); lukNetPanel(); netDesigner = false; netTegnSide(); return; }
+    // forsiden
+    if (t.closest("[data-vndesign]")) { netDesigner = true; netTegnSide(true); const ds = appEl.querySelector(".vn-design"); if (ds) ds.scrollIntoView({ block: "start" }); return; }
+    if (t.closest("[data-vndesignfaerdig]")) { netDesigner = false; gemNet(); netTegnSide(); lille("✨ Din forside er gemt"); return; }
+    const F = d.forside, rediger = function () { gemNet(); const s = appEl.querySelector(".vn-side"), y = s.scrollTop; netTegnSide(true); s.scrollTop = y; };
+    const fe = t.closest("[data-vnfemoji]"); if (fe) { F.emoji = fe.dataset.vnfemoji; rediger(); return; }
+    const fb = t.closest("[data-vnfbg]"); if (fb) { F.bg = fb.dataset.vnfbg; rediger(); return; }
+    const fm = t.closest("[data-vnfmoerk]"); if (fm) { F.moerk = fm.dataset.vnfmoerk === "1"; rediger(); return; }
+    const ff = t.closest("[data-vnfform]"); if (ff) { F.form = ff.dataset.vnfform; rediger(); return; }
+    const wt = t.closest("[data-vnwtil]");
+    if (wt) { const k = wt.dataset.vnwtil, i = F.widgets.indexOf(k); if (i >= 0) F.widgets.splice(i, 1); else F.widgets.push(k); rediger(); return; }
+    const wo = t.closest("[data-vnwop]"), wn = t.closest("[data-vnwned]");
+    if (wo || wn) { const k = (wo || wn).dataset[wo ? "vnwop" : "vnwned"], i = F.widgets.indexOf(k), j = i + (wo ? -1 : 1); if (j >= 0 && j < F.widgets.length) { F.widgets.splice(i, 1); F.widgets.splice(j, 0, k); } rediger(); return; }
+    const fs = t.closest("[data-vnfavslet]"); if (fs) { d.fav.splice(+fs.dataset.vnfavslet, 1); rediger(); return; }
+    // sidernes egne knapper
+    const pe = t.closest("[data-vnpers]");
+    if (pe) { const id = netDel(netUrl()).sti, o = NET_OPSKRIFTER[id]; netPortioner[id] = Math.max(1, Math.min(o.til * 4, (netPortioner[id] || o.til) + (+pe.dataset.vnpers))); netTegnSide(true); return; }
+    const ig = t.closest("[data-vningr]"); if (ig) { const k = netDel(netUrl()).sti + ig.dataset.vningr; netAfkrydset[k] = !netAfkrydset[k]; ig.classList.toggle("af", netAfkrydset[k]); return; }
+    if (t.closest("[data-vnvitssvar]")) { netVitsSvar = true; netTegnSide(true); return; }
+    if (t.closest("[data-vnvitsny]")) { let n; do { n = Math.floor(Math.random() * NET_VITSER.length); } while (n === netVitsNr && NET_VITSER.length > 1); netVitsNr = n; netVitsSvar = false; netTegnSide(true); return; }
+    if (t.closest("[data-vnvitslike]")) { d.vitsLike = d.vitsLike || {}; if (d.vitsLike[netVitsNr]) delete d.vitsLike[netVitsNr]; else d.vitsLike[netVitsNr] = 1; gemNet(); netTegnSide(true); return; }
+    if (t.closest("[data-vnquizstart]")) {
+      const nr = NET_QUIZ.map(function (x, i) { return i; }).sort(function () { return Math.random() - 0.5; }).slice(0, 8);
+      netQuiz = { sp: nr, nr: 0, rigtige: 0, valgt: null }; netTegnSide(true); return;
+    }
+    const sv = t.closest("[data-vnsvar]");
+    if (sv && netQuiz && netQuiz.valgt == null) {
+      netQuiz.valgt = +sv.dataset.vnsvar;
+      if (netQuiz.valgt === NET_QUIZ[netQuiz.sp[netQuiz.nr]][2]) netQuiz.rigtige++;
+      netTegnSide(true); return;
+    }
+    if (t.closest("[data-vnquiznaeste]") && netQuiz) {
+      netQuiz.nr++; netQuiz.valgt = null;
+      if (netQuiz.nr >= netQuiz.sp.length && netQuiz.rigtige > (d.quiz || 0)) { d.quiz = netQuiz.rigtige; gemNet(); lille("🏆 Ny rekord!"); }
+      netTegnSide(true); return;
+    }
+    const rg = t.closest("[data-vnregn]"); if (rg) { regnTryk(rg.dataset.vnregn); const dv = appEl.querySelector(".vn-display"); if (dv) dv.textContent = netRegn.vis; return; }
+    if (t.closest("[data-vnstop]")) { if (netStop.koerer) { netStop.gemt = stopTid(); netStop.koerer = false; } else { netStop.koerer = true; netStop.start = Date.now(); } netTegnSide(true); return; }
+    if (t.closest("[data-vnstopnul]")) { netStop = { koerer: false, start: 0, gemt: 0 }; netTegnSide(true); return; }
+    const nd = t.closest("[data-vnned]"); if (nd) { const m2 = +nd.dataset.vnned; netNed.slut = m2 ? Date.now() + m2 * 60000 : 0; if (m2) lille("⏲ Nedtælling: " + m2 + " min"); netTegnSide(true); return; }
+    const pf2 = t.closest("[data-vnfarve]"); if (pf2) { netPen.farve = pf2.dataset.vnfarve; appEl.querySelectorAll("[data-vnfarve]").forEach(function (b) { b.classList.toggle("valgt", b === pf2); }); return; }
+    const pn = t.closest("[data-vnpen]"); if (pn) { netPen.str = +pn.dataset.vnpen; appEl.querySelectorAll("[data-vnpen]").forEach(function (b) { b.classList.toggle("valgt", b === pn); }); return; }
+    if (t.closest("[data-vnryd]")) { netTegning = null; netTegnSide(true); return; }
+  }
+
+  nyStil("telefon-stil-net", [
+    ".tlf-app.vn-app { background: var(--t-hvid); }",
+    ".vn-top { flex: none; display: flex; align-items: center; gap: 4px; padding: 44px 8px 7px; background: var(--t-topbg); border-bottom: 1px solid var(--t-linje); }",
+    ".vn-app.vn-privat .vn-top, .vn-app.vn-privat .vn-bund { background: #2b2b33; color: #fff; } .vn-app.vn-privat .vn-adr { background: #444450; } .vn-app.vn-privat .vn-adr input { color: #fff; }",
+    ".vn-app.vn-privat .vn-bund button { color: #b9c4ff; }",
+    ".vn-adr { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; background: var(--t-felt); border-radius: 11px; padding: 0 9px; height: 32px; }",
+    ".vn-adr input { flex: 1; min-width: 0; border: 0; background: none; outline: 0; font: inherit; font-size: 13px; color: var(--t-tekst); text-align: center; user-select: text; -webkit-user-select: text; }",
+    ".vn-adr input:focus { text-align: left; }",
+    ".vn-laas { font-size: 12px; }",
+    ".vn-ikon { border: 0; background: none; font-size: 18px; color: var(--t-acc); cursor: pointer; width: 28px; padding: 0; }",
+    ".vn-load { flex: none; height: 2px; background: transparent; position: relative; overflow: hidden; }",
+    ".vn-load.koer::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; background: var(--t-acc); animation: vnLoad .45s ease-out forwards; }",
+    "@keyframes vnLoad { from { width: 0; opacity: 1 } 80% { width: 100%; opacity: 1 } to { width: 100%; opacity: 0 } }",
+    ".vn-forslag { position: absolute; z-index: 6; left: 8px; right: 8px; top: 86px; background: var(--t-hvid); border-radius: 12px; box-shadow: 0 8px 24px var(--t-skygge2); overflow: hidden; }",
+    ".vn-forslag button { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; background: none; padding: 8px 10px; text-align: left; font: inherit; color: var(--t-tekst); cursor: pointer; border-bottom: 1px solid var(--t-linje); }",
+    ".vn-forslag button:hover { background: var(--t-felt); } .vn-forslag b { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .vn-forslag small { color: var(--t-graa); font-size: 10.5px; max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".vn-side { flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; position: relative; }",
+    ".vn-side::-webkit-scrollbar { display: none; }",
+    ".vn-bund { flex: none; display: flex; justify-content: space-around; align-items: center; padding: 6px 4px 22px; background: var(--t-topbg); border-top: 1px solid var(--t-linje); }",
+    ".vn-bund button { border: 0; background: none; font-size: 22px; line-height: 1; color: var(--t-acc); cursor: pointer; width: 40px; height: 32px; padding: 0; font-family: inherit; }",
+    ".vn-bund button:disabled { opacity: .3; cursor: default; } .vn-bund button.til { color: #f5b821; }",
+    ".vn-bund [data-vnpanel] { font-size: 18px; }",
+    ".vn-antalfaner { display: inline-grid; place-items: center; min-width: 18px; height: 18px; border: 2px solid currentColor; border-radius: 5px; font-size: 11px; font-weight: 700; }",
+    ".vn-panel { position: absolute; z-index: 8; inset: 0; background: rgba(0,0,0,.28); display: flex; align-items: flex-end; }",
+    ".vn-panel[hidden] { display: none; }",
+    ".vn-ark { width: 100%; background: var(--t-lys); border-radius: 16px 16px 0 0; padding: 10px 10px 26px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; animation: vnOp .25s ease-out; max-height: 78%; }",
+    ".vn-ark.hoej { height: 72%; }",
+    "@keyframes vnOp { from { transform: translateY(40%); opacity: 0 } to { transform: none; opacity: 1 } }",
+    ".vn-arktop { text-align: center; padding: 2px 0 4px; } .vn-arktop b { display: block; font-size: 14px; } .vn-arktop small { color: var(--t-graa); font-size: 11px; }",
+    ".vn-ark > button { border: 0; background: var(--t-hvid); border-radius: 11px; padding: 10px 12px; text-align: left; font: inherit; font-size: 14px; color: var(--t-tekst); cursor: pointer; }",
+    ".vn-ark > button small { color: var(--t-graa); } .vn-ark > button:hover { background: var(--t-felt); }",
+    ".vn-ark > button.luk { text-align: center; font-weight: 600; color: var(--t-acc); margin-top: 4px; }",
+    ".vn-ark .ab-faner { margin: 0 0 4px; } .vn-ark .ab-faner button { font-size: 11px; white-space: nowrap; padding-left: 2px; padding-right: 2px; }",
+    ".vn-plist { list-style: none; margin: 0; padding: 0; flex: 1; overflow-y: auto; background: var(--t-hvid); border-radius: 12px; scrollbar-width: none; }",
+    ".vn-plist li { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--t-linje); }",
+    ".vn-plist .vn-pl { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; }",
+    ".vn-plist .vn-pl > span:last-child { min-width: 0; } .vn-plist b { display: block; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .vn-plist small { display: block; color: var(--t-graa); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".vn-plist li > button { border: 0; background: var(--t-felt); border-radius: 50%; width: 24px; height: 24px; flex: none; cursor: pointer; color: var(--t-graa); font-size: 11px; padding: 0; }",
+    ".vn-plist .vn-tomt { color: var(--t-graa); font-size: 13px; padding: 20px 14px; text-align: center; display: block; }",
+    ".vn-plist .vn-favik { width: 28px; height: 28px; font-size: 15px; }",
+    ".vn-rod { border: 0; background: none; color: var(--t-rod); font: inherit; font-weight: 600; cursor: pointer; padding: 6px; }",
+    ".vn-favik { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 23px; flex: none; box-shadow: 0 2px 5px rgba(0,0,0,.18); }",
+    ".vn-favgrid.firkant .vn-favik { border-radius: 12px; }",
+    // faneoversigt
+    ".vn-fanevis { width: 100%; height: 100%; background: #2b2b33; display: flex; flex-direction: column; padding: 46px 10px 22px; box-sizing: border-box; animation: vnOp .25s ease-out; }",
+    ".vn-fanevis .vn-arktop b { color: #fff; }",
+    ".vn-fanegrid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; padding: 4px 2px; scrollbar-width: none; }",
+    ".vn-fanekort { position: relative; background: #fff; border-radius: 12px; overflow: hidden; cursor: pointer; height: 150px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,.35); }",
+    ".vn-fanekort.aktiv { outline: 3px solid #6aa8ff; } .vn-fanekort.privat .vn-fkrop { background: #3a3a44; color: #fff; }",
+    ".vn-fkop { color: #fff; font-size: 10.5px; font-weight: 600; padding: 6px 24px 6px 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 4px; }",
+    ".vn-fkrop { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #555; } .vn-fkrop span { font-size: 34px; } .vn-fkrop small { font-size: 10px; }",
+    ".vn-fx { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; border: 0; background: rgba(0,0,0,.35); color: #fff; font-size: 10px; cursor: pointer; padding: 0; }",
+    ".vn-fanebund { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; }",
+    ".vn-fanebund button { border: 0; background: none; color: #b9c4ff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; } .vn-fanebund .plus { font-size: 26px; font-weight: 400; }",
+    // sider generelt
+    ".vn-pg { padding: 14px 14px 30px; font-size: 13.5px; line-height: 1.45; user-select: text; -webkit-user-select: text; }",
+    ".vn-pg h2 { font-size: 20px; margin: 4px 0 8px; } .vn-pg h3 { font-size: 16px; margin: 10px 0; } .vn-pg h4 { font-size: 14px; margin: 14px 0 6px; } .vn-pg p { margin: 0 0 9px; }",
+    ".vn-a { color: #1a5fd0; cursor: pointer; text-decoration: none; } .vn-a:hover { text-decoration: underline; }",
+    ".vn-brod { display: inline-block; font-size: 12px; margin-bottom: 4px; }",
+    ".vn-lille { font-size: 11.5px; color: var(--t-graa); margin-top: 10px; }",
+    ".vn-stor { display: block; width: 100%; border: 0; border-radius: 12px; padding: 11px; background: var(--t-acc); color: var(--t-hvid); font: inherit; font-weight: 600; cursor: pointer; margin: 10px 0 6px; }",
+    ".vn-knapper { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }",
+    ".vn-knapper button { flex: 1; border: 0; border-radius: 10px; padding: 8px 6px; background: var(--t-felt); color: var(--t-tekst); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }",
+    ".vn-knapper button.valgt { background: var(--t-acc); color: var(--t-hvid); }",
+    ".vn-sf { display: flex; gap: 6px; margin: 8px 0 12px; } .vn-sf input { flex: 1; min-width: 0; border: 1px solid var(--t-linje); border-radius: 20px; padding: 8px 13px; font: inherit; outline: 0; background: var(--t-hvid); color: var(--t-tekst); user-select: text; }",
+    ".vn-sf input:focus { border-color: var(--t-acc); } .vn-sf button { border: 0; border-radius: 50%; width: 34px; height: 34px; flex: none; background: var(--t-acc); color: #fff; cursor: pointer; font-size: 14px; padding: 0; }",
+    ".vn-sf.stor input { padding: 11px 15px; font-size: 14px; box-shadow: 0 3px 10px rgba(0,0,0,.15); border: 0; } .vn-sf.stor button { width: 40px; height: 40px; }",
+    // søgning
+    ".vn-logo { text-align: center; font-size: 30px; font-weight: 800; letter-spacing: -1px; margin: 10px 0 4px; } .vn-logo span { color: var(--t-graa); font-weight: 400; font-size: 20px; letter-spacing: 0; }",
+    ".vn-antal { color: var(--t-graa); font-size: 11.5px; margin-bottom: 6px; }",
+    ".vn-res { padding: 8px 0 10px; border-bottom: 1px solid var(--t-linje); } .vn-res .vn-a { display: block; } .vn-res small { display: block; color: #1f8f5a; font-size: 11px; } .vn-res b { font-size: 15px; font-weight: 500; } .vn-res p { margin: 3px 0 0; font-size: 12.5px; color: #4a4a50; }",
+    ".vn-intet, .vn-tips { text-align: center; color: var(--t-graa); padding: 18px 6px; font-size: 13px; }",
+    // hotel.vera
+    ".vn-hero { border-radius: 16px; color: #fff; text-align: center; padding: 18px 10px; margin-bottom: 12px; text-shadow: 0 1px 3px rgba(0,0,0,.3); } .vn-hero span { font-size: 40px; display: block; } .vn-hero b { font-size: 22px; display: block; letter-spacing: 1px; } .vn-hero small { font-size: 12px; }",
+    ".vn-knapgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; } .vn-a.vn-k { display: block; background: var(--t-felt); border-radius: 10px; padding: 9px 8px; color: var(--t-tekst); font-weight: 600; font-size: 12.5px; text-align: center; }",
+    // nyt
+    ".vn-avis { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 900; text-align: center; border-bottom: 3px double #222; padding-bottom: 4px; margin-bottom: 10px; letter-spacing: 1px; } .vn-avis small { display: block; font: 11px -apple-system, 'Segoe UI', sans-serif; color: var(--t-graa); letter-spacing: 0; }",
+    ".vn-artikel { padding: 8px 0 10px; border-bottom: 1px solid var(--t-linje); } .vn-artikel b { display: block; font-family: Georgia, serif; font-size: 15px; } .vn-artikel.stor b { font-size: 19px; } .vn-artikel p { margin: 3px 0 0; color: #444; font-size: 12.5px; white-space: pre-wrap; } .vn-artikel i { display: block; font-style: normal; font-size: 10.5px; color: #d6453a; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }",
+    // vejr
+    ".vn-vejr { background: linear-gradient(#6cbcff, #3a7fd6 70%); min-height: 100%; color: #fff; box-sizing: border-box; } .vn-vejr .vn-lille { color: #e6f1ff; }",
+    ".vn-steder { display: flex; gap: 5px; justify-content: center; } .vn-steder .vn-a { color: #fff; background: rgba(255,255,255,.18); padding: 4px 10px; border-radius: 14px; font-size: 12px; } .vn-steder .vn-a.valgt { background: #fff; color: #2a6fd6; font-weight: 700; }",
+    ".vn-nu { text-align: center; margin: 14px 0; } .vn-nu span { font-size: 60px; display: block; line-height: 1.1; } .vn-nu b { font-size: 50px; font-weight: 300; display: block; } .vn-nu small { font-size: 12.5px; }",
+    ".vn-5 { display: grid; grid-template-columns: repeat(5, 1fr); background: rgba(255,255,255,.18); border-radius: 14px; padding: 8px 2px; text-align: center; font-size: 11.5px; }",
+    ".vn-5 div { display: flex; flex-direction: column; gap: 3px; } .vn-5 b { font-size: 22px; font-weight: 400; } .vn-5 i { opacity: .7; font-style: normal; }",
+    // wiki
+    ".vn-wiki h2 { font-family: Georgia, serif; font-weight: 400; border-bottom: 1px solid var(--t-linje); padding-bottom: 4px; }",
+    ".vn-liste { padding-left: 18px; margin: 0; } .vn-liste li { margin: 5px 0; }",
+    // opskrift
+    ".vn-ops-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }",
+    ".vn-a.vn-ops-kort { display: flex; flex-direction: column; align-items: center; background: #fff4e3; border-radius: 14px; padding: 12px 6px; color: var(--t-tekst); text-align: center; } .vn-ops-kort span { font-size: 34px; } .vn-ops-kort b { font-size: 13px; } .vn-ops-kort small { color: var(--t-graa); font-size: 11px; }",
+    ".vn-ops-top { text-align: center; background: #fff4e3; border-radius: 16px; padding: 12px; } .vn-ops-top span { font-size: 44px; display: block; } .vn-ops-top b { font-size: 19px; display: block; } .vn-ops-top small { color: var(--t-graa); }",
+    ".vn-pers { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0 0; } .vn-pers button { width: 30px; height: 30px; border-radius: 50%; border: 0; background: #e08a1e; color: #fff; font-size: 18px; cursor: pointer; padding: 0; } .vn-pers span { font-weight: 700; min-width: 70px; text-align: center; }",
+    ".vn-ingr { list-style: none; padding: 0; margin: 0; } .vn-ingr li { padding: 6px 8px 6px 30px; border-bottom: 1px dashed var(--t-linje); cursor: pointer; position: relative; }",
+    ".vn-ingr li::before { content: ''; position: absolute; left: 6px; top: 7px; width: 14px; height: 14px; border-radius: 4px; border: 2px solid #e08a1e; } .vn-ingr li.af { text-decoration: line-through; color: var(--t-graa); } .vn-ingr li.af::before { background: #e08a1e; }",
+    ".vn-ops ol { padding-left: 20px; margin: 0; } .vn-ops ol li { margin-bottom: 6px; } .vn-ops h4 small { color: var(--t-graa); font-weight: 400; font-size: 11px; }",
+    // vits
+    ".vn-vits { background: linear-gradient(#fff6c8, #ffe27a); min-height: 100%; box-sizing: border-box; text-align: center; }",
+    ".vn-vitskort { background: #fff; border-radius: 18px; padding: 18px 14px; box-shadow: 0 4px 14px rgba(160,120,0,.25); margin: 10px 0; } .vn-vitskort b { font-size: 16px; display: block; } .vn-vitskort p { margin: 12px 0 0; font-size: 17px; color: #e0445a; font-weight: 700; animation: vnOp .3s; }",
+    ".vn-vitskort button, .vn-vitsknap button { border: 0; border-radius: 20px; padding: 9px 16px; background: #f5b821; color: #3a2a00; font: inherit; font-weight: 700; cursor: pointer; margin-top: 12px; }",
+    ".vn-vitsknap { display: flex; gap: 8px; justify-content: center; } .vn-vitsknap button { background: #fff; margin-top: 0; } .vn-vitsknap button.liker { background: #ffd6dd; }",
+    // quiz
+    ".vn-quiz { text-align: center; } .vn-quiztop { display: flex; justify-content: space-between; color: var(--t-graa); font-size: 12px; }",
+    ".vn-svar { display: flex; flex-direction: column; gap: 7px; } .vn-svar button { border: 2px solid var(--t-linje); background: var(--t-hvid); border-radius: 12px; padding: 10px; font: inherit; font-weight: 600; cursor: pointer; color: var(--t-tekst); }",
+    ".vn-svar button.rigtig { background: #d8f7df; border-color: #34c759; } .vn-svar button.forkert { background: #ffdcd9; border-color: #ff3b30; }",
+    ".vn-quizres { font-size: 46px; font-weight: 800; color: #8152e0; margin: 10px 0; }",
+    // lommeregner
+    ".vn-regn { background: #1c1c1e; min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; }",
+    ".vn-display { color: #fff; font-size: 44px; font-weight: 300; text-align: right; padding: 10px 6px; overflow: hidden; white-space: nowrap; }",
+    ".vn-taster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }",
+    ".vn-taster button { aspect-ratio: 1; border-radius: 50%; border: 0; background: #333336; color: #fff; font: inherit; font-size: 22px; cursor: pointer; padding: 0; }",
+    ".vn-taster button.op { background: #ff9f0a; } .vn-taster button.fn { background: #a5a5a5; color: #000; } .vn-taster button.nul { grid-column: span 2; aspect-ratio: auto; border-radius: 30px; text-align: left; padding-left: 22px; }",
+    ".vn-taster button:active { filter: brightness(1.3); }",
+    // ur
+    ".vn-klok { font-size: 54px; font-weight: 200; text-align: center; letter-spacing: 1px; } .vn-stop { font-size: 30px; font-variant-numeric: tabular-nums; text-align: center; font-weight: 300; }",
+    // tegn
+    ".vn-tegn canvas { width: 100%; aspect-ratio: 1; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--t-linje), 0 2px 8px rgba(0,0,0,.1); touch-action: none; cursor: crosshair; background: #fff; display: block; }",
+    ".vn-farver { display: flex; gap: 6px; justify-content: center; margin: 10px 0 4px; } .vn-farver button { width: 24px; height: 24px; border-radius: 50%; border: 0; cursor: pointer; padding: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); } .vn-farver button.valgt { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--t-acc); }",
+    // horoskop
+    ".vn-horo { background: linear-gradient(#2a1f5a, #6a3fd0); min-height: 100%; box-sizing: border-box; color: #fff; } .vn-horo .vn-a { color: #e2d4ff; }",
+    ".vn-tegngrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; } .vn-tegngrid .vn-a { display: flex; flex-direction: column; align-items: center; background: rgba(255,255,255,.12); border-radius: 12px; padding: 8px 2px; font-size: 11px; color: #fff; } .vn-tegngrid span { font-size: 24px; }",
+    ".vn-horotop { text-align: center; margin: 6px 0 12px; } .vn-horotop span { font-size: 52px; display: block; } .vn-horotop b { font-size: 20px; display: block; } .vn-horotop small { opacity: .75; }",
+    ".vn-lykke { display: flex; flex-direction: column; gap: 6px; } .vn-lykke span { background: rgba(255,255,255,.14); border-radius: 10px; padding: 7px 10px; display: flex; justify-content: space-between; }",
+    // 404
+    ".vn-404 { text-align: center; padding-top: 40px; } .vn-404 > span { font-size: 60px; }",
+    // forsiden
+    ".vn-forside { min-height: 100%; padding: 16px 12px 24px; box-sizing: border-box; color: #fff; display: flex; flex-direction: column; gap: 10px; }",
+    ".vn-forside.moerk { color: #1c1c1e; }",
+    ".vn-fhoved { text-align: center; text-shadow: 0 1px 4px rgba(0,0,0,.25); } .vn-forside.moerk .vn-fhoved { text-shadow: none; }",
+    ".vn-femoji { font-size: 40px; display: block; line-height: 1.1; } .vn-fhoved b { display: block; font-size: 21px; } .vn-fhoved small { font-size: 12px; opacity: .9; }",
+    ".vn-forside .vn-sf { margin: 0; }",
+    ".vn-w { background: rgba(255,255,255,.22); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 16px; padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }",
+    ".vn-forside.moerk .vn-w { background: rgba(255,255,255,.6); }",
+    ".vn-wt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; opacity: .85; margin-bottom: 6px; }",
+    ".vn-favgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 4px; }",
+    ".vn-fav { position: relative; } .vn-fav .vn-a { display: flex; flex-direction: column; align-items: center; gap: 4px; color: inherit; text-decoration: none; }",
+    ".vn-fav small { font-size: 10px; text-align: center; line-height: 1.15; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".vn-favx { position: absolute; top: -4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; border: 0; background: #ff3b30; color: #fff; font-size: 10px; cursor: pointer; padding: 0; animation: tlfVrik .3s infinite alternate; }",
+    ".vn-wur { display: flex; align-items: baseline; justify-content: space-between; } .vn-wur b { font-size: 30px; font-weight: 300; } .vn-wur span { font-size: 12px; }",
+    ".vn-wvejr { display: flex; align-items: center; gap: 10px; cursor: pointer; } .vn-wvejr span { font-size: 34px; } .vn-wvejr b { font-size: 28px; font-weight: 300; } .vn-wvejr small { font-size: 11.5px; line-height: 1.3; }",
+    ".vn-wnyt { font-size: 12.5px; font-weight: 600; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.3); cursor: pointer; } .vn-wnyt:first-of-type { border-top: 0; }",
+    ".vn-wvits { cursor: pointer; } .vn-wvits b { display: block; font-size: 13px; } .vn-wvits small { display: block; font-size: 12px; margin-top: 3px; opacity: .85; }",
+    ".vn-designknap { align-self: center; border: 0; border-radius: 18px; padding: 8px 16px; background: rgba(255,255,255,.3); color: inherit; font: inherit; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }",
+    ".vn-design { background: var(--t-hvid); color: var(--t-tekst); border-radius: 16px; padding: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.2); }",
+    ".vn-design label { display: block; font-size: 12px; font-weight: 600; } .vn-design label input { display: block; width: 100%; box-sizing: border-box; margin-top: 4px; border: 1px solid var(--t-linje); border-radius: 9px; padding: 7px 9px; font: inherit; outline: 0; user-select: text; }",
+    ".vn-dt { font-size: 12px; font-weight: 600; margin: 10px 0 5px; } .vn-dt small { color: var(--t-graa); font-weight: 400; }",
+    ".vn-emojier { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; } .vn-emojier button { border: 0; background: var(--t-felt); border-radius: 8px; font-size: 17px; padding: 3px 0; cursor: pointer; } .vn-emojier button.valgt { background: var(--t-acc); }",
+    ".vn-bgvalg { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; } .vn-bgvalg button { aspect-ratio: 1; border-radius: 10px; border: 0; cursor: pointer; padding: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); } .vn-bgvalg button.valgt { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--t-acc); }",
+    ".vn-wvalg { list-style: none; margin: 0; padding: 0; } .vn-wvalg li { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12.5px; color: var(--t-graa); } .vn-wvalg li.til { color: var(--t-tekst); } .vn-wvalg li span { flex: 1; }",
+    ".vn-wvalg button { border: 0; background: var(--t-felt); border-radius: 7px; width: 26px; height: 24px; cursor: pointer; padding: 0; font-size: 12px; color: var(--t-tekst); }",
+    ".vn-wvalg .vn-tjek { border-radius: 50%; width: 20px; height: 20px; border: 2px solid var(--t-linje); background: none; color: #fff; font-size: 11px; font-weight: 800; } .vn-wvalg li.til .vn-tjek { background: var(--t-acc); border-color: var(--t-acc); }",
+  ]);
+
+  // ===============================================================
+  //  ✉️ Vera-Mail — mails mellem gæsterne (database-41-vera-mail.sql)
+  //  Indbakke, Sendt, ⭐ Stjernet, emne, ulæste, svar og slet.
+  //  Uden databasen virker mails kun mellem profiler på denne computer.
+  // ===============================================================
+  const MAIL_LOKAL = "mit-hotel-vera-mail";
+  let mailServerRk = [], mailStatus = "ukendt", mailFejl = "", mailHentet = 0, mailSet = null;
+  let mailFane = "ind", mailAaben = null, mailSkriv = null, mailSoeg = "";
+  function mailMig() { return hentGemt("mit-hotel-telefon-mail-" + mig(), { stjerne: {} }); }
+  function gemMailMig(v) { gemGemt("mit-hotel-telefon-mail-" + mig(), v); }
+  function mailOnline() { return typeof serverKald === "function" && typeof SERVER !== "undefined" && SERVER.til && typeof mitToken === "function" && !!mitToken(); }
+  function mailLokalListe() { const l = hentGemt(MAIL_LOKAL, []); return Array.isArray(l) ? l : []; }
+  function gemMailLokal(l) { gemGemt(MAIL_LOKAL, l.slice(-400)); }
+  function mailVelkommen() {
+    const n = "mit-hotel-vera-mail-velkommen-" + mig();
+    try { if (localStorage.getItem(n)) return; localStorage.setItem(n, "1"); } catch (e) { return; }
+    const l = mailLokalListe();
+    l.push({ id: "v" + Date.now(), fra: "Vera 🏨", til: mig(), emne: "Velkommen til Vera-Mail!", tekst: "Hej " + mig() + "!\n\nNu har du din egen mail på hotellet. Tryk på ✏️ for at skrive til en ven – skriv deres navn ud for Til.\n\nDu kan svare på mails, give dem en ⭐ og slette dem, du ikke vil gemme.\n\nKærlig hilsen\nVera fra receptionen", laest: false, tid: Date.now() });
+    gemMailLokal(l);
+  }
+  function mailAlle() {
+    const jeg = mig().toLowerCase();
+    const lok = mailLokalListe().filter(function (m) {
+      return (m.til.toLowerCase() === jeg && !m.sletTil) || (m.fra.toLowerCase() === jeg && !m.sletFra);
+    }).map(function (m) { return { id: "l" + m.id, fra: m.fra, til: m.til, emne: m.emne, tekst: m.tekst, laest: m.laest, tid: m.tid, ind: m.til.toLowerCase() === jeg, lokal: true }; });
+    return mailServerRk.concat(lok).sort(function (a, b) { return b.tid - a.tid; });
+  }
+  function mailInd() { return mailAlle().filter(function (m) { return m.ind; }); }
+  function mailUlaeste() { if (!harSpil("mail")) return 0; return mailInd().filter(function (m) { return !m.laest; }).length; }
+  function hentMails(stille) {
+    if (!mailOnline() || mailStatus === "lokal") { mailStatus = mailOnline() ? "lokal" : "offline"; return Promise.resolve(); }
+    return serverKald("hv_mail_hent", { p_token: mitToken() }).then(function (d) {
+      mailStatus = "server"; mailFejl = ""; mailHentet = Date.now();
+      const r = [];
+      ((d && d.ind) || []).forEach(function (m) { r.push({ id: "s" + m.id, fra: m.fra, til: mig(), emne: m.emne, tekst: m.tekst, laest: m.laest, tid: +m.tid, ind: true }); });
+      ((d && d.sendt) || []).forEach(function (m) { r.push({ id: "s" + m.id, fra: mig(), til: m.til, emne: m.emne, tekst: m.tekst, laest: m.laest, tid: +m.tid, ind: false }); });
+      mailServerRk = r;
+    }).catch(function (e) {
+      if (/function|schema cache|does not exist|Could not find/i.test(e.message)) { mailStatus = "lokal"; mailFejl = "Mails til rigtige spillere virker, når database-41-vera-mail.sql er kørt i Supabase. Indtil da virker Vera-Mail kun på denne computer."; }
+      else mailFejl = e.message;
+    });
+  }
+  function tjekNyeMails() {
+    if (!harSpil("mail")) return;
+    hentMails().then(function () {
+      const ul = mailInd().filter(function (m) { return !m.laest; });
+      if (mailSet === null) { mailSet = {}; ul.forEach(function (m) { mailSet[m.id] = 1; }); opdaterMailTal(); return; }
+      const nye = ul.filter(function (m) { return !mailSet[m.id]; });
+      nye.forEach(function (m) { mailSet[m.id] = 1; });
+      if (nye.length) {
+        ding();
+        if (!tlf.hidden) {
+          bannerEl.innerHTML = notisHtml("mail", nye[0].fra, nye[0].emne || "(intet emne)", "nu");
+          bannerEl.classList.add("vis"); clearTimeout(visBanner.t); visBanner.t = setTimeout(skjulBanner, 4200);
+        } else lilleUde("✉️ Ny mail fra " + nye[0].fra);
+      }
+      opdaterMailTal();
+    });
+  }
+  function lilleUde(t) { try { if (typeof visToast === "function") visToast(t); } catch (e) {} }
+  function opdaterMailTal() {
+    if (appNu === "mail" && appEl && !mailAaben && !mailSkriv) tegnMailListe();
+    if (skaermNu === "hjem" && !tlf.hidden && !redigerer && mappeAaben === null) tegnHjem();
+  }
+  setTimeout(tjekNyeMails, 6000);
+  setInterval(tjekNyeMails, 20000);
+
+  function mailTid(t) { return naarTekst(t); }
+  function tegnMail() {
+    mailVelkommen();
+    mailAaben = null; mailSkriv = null; mailSoeg = ""; mailFane = "ind";
+    appEl.innerHTML = "<div class='vm-hoved'></div><div class='tlf-indhold vm-indhold'></div>";
+    appEl.addEventListener("click", mailKlik);
+    appEl.addEventListener("input", function (e) { if (e.target.matches("[data-vmsoeg]")) { mailSoeg = e.target.value; tegnMailListe(true); } });
+    tegnMailListe();
+    hentMails().then(function () { if (appNu === "mail" && !mailAaben && !mailSkriv) tegnMailListe(true); });
+  }
+  function mailTop(titel, venstre, hoejre) {
+    return "<div class='tlf-top'>" + (venstre || "<button class='tlf-tb' data-tilbage='hjem' title='Tilbage'>" + ik("tilbage", 20) + "</button>") + "<h3>" + titel + "</h3>" + (hoejre || "<span class='tlf-tb'></span>") + "</div>";
+  }
+  function tegnMailListe(kunListe) {
+    if (!appEl || appNu !== "mail") return;
+    const alle = mailAlle(), st = mailMig().stjerne || {};
+    const ul = alle.filter(function (m) { return m.ind && !m.laest; }).length;
+    let l = mailFane === "ind" ? alle.filter(function (m) { return m.ind; }) : mailFane === "sendt" ? alle.filter(function (m) { return !m.ind; }) : alle.filter(function (m) { return st[m.id]; });
+    const q = mailSoeg.trim().toLowerCase();
+    if (q) l = l.filter(function (m) { return (m.fra + " " + m.til + " " + m.emne + " " + m.tekst).toLowerCase().indexOf(q) >= 0; });
+    const listeHtml = l.length ? l.map(function (m) {
+      const hvem = m.ind ? m.fra : "Til: " + m.til;
+      return "<li class='vm-r" + (m.ind && !m.laest ? " ny" : "") + "' data-vmaabn='" + esc(m.id) + "'>" + (m.ind && !m.laest ? "<i class='vm-prik'></i>" : "") + avatarHtml(m.ind ? m.fra : m.til, true) +
+        "<span class='vm-t'><span class='vm-l1'><b>" + esc(hvem) + "</b><small>" + esc(mailTid(m.tid)) + "</small></span><span class='vm-emne'>" + esc(m.emne || "(intet emne)") + "</span>" +
+        "<span class='vm-uddrag'>" + esc(m.tekst.replace(/\s+/g, " ").slice(0, 70)) + "</span></span>" + (st[m.id] ? "<span class='vm-st'>⭐</span>" : "") + "</li>";
+    }).join("") : "<li class='tlf-tom' style='cursor:default'><span><span class='st'>" + (mailFane === "ind" ? "📭" : mailFane === "sendt" ? "📤" : "⭐") + "</span>" +
+      (q ? "Ingen mails passer." : mailFane === "ind" ? "Ingen mails endnu." : mailFane === "sendt" ? "Du har ikke sendt nogen mails endnu.<br>Tryk på ✏️ for at skrive en." : "Ingen stjernede mails.<br>Åbn en mail og tryk ⭐.") + "</span></li>";
+    if (!kunListe) {
+      appEl.querySelector(".vm-hoved").innerHTML = mailTop("Vera-Mail", null, "<button class='tlf-tb' data-vmskriv title='Ny mail'>" + ik("skriv", 20) + "</button>");
+      appEl.querySelector(".vm-indhold").innerHTML = "<div class='tlf-faner vm-faner'>" + [["ind", "Indbakke" + (ul ? "<i>" + ul + "</i>" : "")], ["sendt", "Sendt"], ["stjerne", "⭐ Stjernet"]].map(function (f) {
+        return "<button data-vmfane='" + f[0] + "' class='" + (mailFane === f[0] ? "valgt" : "") + "'>" + f[1] + "</button>";
+      }).join("") + "</div><div class='tlf-soeg'>" + ik("soeg", 16) + "<input data-vmsoeg placeholder='Søg i mails …' value='" + esc(mailSoeg) + "'></div>" +
+        (mailFejl ? "<div class='vm-fejl'>⚠️ " + esc(mailFejl) + "</div>" : "") + "<ul class='tlf-liste vm-liste'></ul>";
+    }
+    const u = appEl.querySelector(".vm-liste");
+    if (!u) return;
+    u.innerHTML = listeHtml;
+    tegnAvatarer(u);
+  }
+  function findMail(id) { return mailAlle().filter(function (m) { return m.id === id; })[0]; }
+  function markerLaest(m) {
+    if (!m || !m.ind || m.laest) return;
+    m.laest = true;
+    if (m.lokal) { const l = mailLokalListe(); l.forEach(function (x) { if ("l" + x.id === m.id) x.laest = true; }); gemMailLokal(l); }
+    else {
+      mailServerRk.forEach(function (x) { if (x.id === m.id) x.laest = true; });
+      serverKald("hv_mail_laest", { p_token: mitToken(), p_id: +m.id.slice(1) }).catch(function () {});
+    }
+  }
+  function tegnMailVis(id) {
+    const m = findMail(id);
+    if (!m) { mailAaben = null; tegnMailListe(); return; }
+    mailAaben = id;
+    markerLaest(m);
+    const st = (mailMig().stjerne || {})[id];
+    appEl.querySelector(".vm-hoved").innerHTML = mailTop("", "<button class='tlf-tb vm-tb' data-vmtilbage title='Tilbage'>" + ik("tilbage", 20) + "<span>" + (mailFane === "ind" ? "Indbakke" : mailFane === "sendt" ? "Sendt" : "Stjernet") + "</span></button>",
+      "<button class='tlf-tb' data-vmstjerne title='Stjerne'>" + (st ? "⭐" : "☆") + "</button>");
+    const d = new Date(m.tid);
+    appEl.querySelector(".vm-indhold").innerHTML = "<div class='vm-mail'><h2>" + esc(m.emne || "(intet emne)") + "</h2>" +
+      "<div class='vm-fra'>" + avatarHtml(m.ind ? m.fra : m.til) + "<span><b>" + esc(m.ind ? m.fra : mig()) + "</b><small>Til: " + esc(m.ind ? mig() : m.til) + "</small><small>" + esc(dato(d)) + " kl. " + kl(m.tid) + "</small></span></div>" +
+      "<div class='vm-tekst'>" + esc(m.tekst) + "</div>" +
+      "<div class='vm-handl'>" + (m.ind && !/^Vera /.test(m.fra) ? "<button data-vmsvar>↩️ Svar</button>" : "") + "<button data-vmvidere>➡️ Videresend</button><button class='vm-slet' data-vmslet>🗑 Slet</button></div></div>";
+    tegnAvatarer(appEl.querySelector(".vm-mail"));
+    if (skaermNu === "hjem") tegnHjem();
+  }
+  function mailNavne() {
+    const s = {}, l = [];
+    vennerListe().forEach(function (n) { if (!s[n]) { s[n] = 1; l.push(n); } });
+    if (typeof HAL_GAESTER !== "undefined") HAL_GAESTER.forEach(function (g) { if (g.navn && !s[g.navn]) { s[g.navn] = 1; l.push(g.navn); } });
+    return l;
+  }
+  function tegnMailSkriv(forud) {
+    mailSkriv = forud || {};
+    mailAaben = null;
+    appEl.querySelector(".vm-hoved").innerHTML = mailTop("Ny mail", "<button class='tlf-tb vm-tb' data-vmannuller><span>Annullér</span></button>", "<button class='tlf-tb vm-send' data-vmsend title='Send'>" + ik("send", 18) + "</button>");
+    appEl.querySelector(".vm-indhold").innerHTML = "<div class='vm-form'>" +
+      "<label><span>Til:</span><input data-vmtil list='vm-navne' autocomplete='off' value='" + esc(mailSkriv.til || "") + "' placeholder='Navnet på en gæst'></label>" +
+      "<datalist id='vm-navne'>" + mailNavne().map(function (n) { return "<option value='" + esc(n) + "'>"; }).join("") + (erEjer() ? "<option value='alle'>" : "") + "</datalist>" +
+      "<label><span>Emne:</span><input data-vmemne maxlength='80' autocomplete='off' value='" + esc(mailSkriv.emne || "") + "'></label>" +
+      "<textarea data-vmtekst maxlength='3000' placeholder='Skriv din mail her …'>" + esc(mailSkriv.tekst || "") + "</textarea>" +
+      (mailNavne().length ? "<div class='vm-hurtig'>" + mailNavne().slice(0, 8).map(function (n) { return "<button data-vmtilnavn='" + esc(n) + "'>" + esc(n) + "</button>"; }).join("") + "</div>" : "") +
+      (erEjer() ? "<div class='vm-ejer'>👑 Som ejer kan du skrive <b>alle</b> ud for Til og sende mailen til alle på hotellet.</div>" : "") +
+      "<div class='vm-status'></div></div>";
+    const f = appEl.querySelector(mailSkriv.til ? (mailSkriv.emne ? "[data-vmtekst]" : "[data-vmemne]") : "[data-vmtil]");
+    if (f) { f.focus(); if (f.matches("textarea")) f.setSelectionRange(0, 0); }
+  }
+  function sendMail() {
+    const til = appEl.querySelector("[data-vmtil]").value.trim(), emne = appEl.querySelector("[data-vmemne]").value.trim(), tekst = appEl.querySelector("[data-vmtekst]").value;
+    const st = appEl.querySelector(".vm-status"), knap = appEl.querySelector("[data-vmsend]");
+    const fejl = function (t) { st.textContent = "⚠️ " + t; st.className = "vm-status fejl"; };
+    if (!til) return fejl("Skriv hvem mailen skal til.");
+    if (til.toLowerCase() === mig().toLowerCase()) return fejl("Du kan ikke sende en mail til dig selv.");
+    if (!tekst.trim()) return fejl("Mailen er tom.");
+    knap.disabled = true; st.textContent = "Sender …"; st.className = "vm-status";
+    const faerdig = function (hvem) {
+      lille("✉️ Mailen er sendt til " + hvem);
+      mailFane = "sendt"; mailSkriv = null; tegnMailListe();
+    };
+    if (mailOnline() && mailStatus !== "lokal") {
+      serverKald("hv_mail_send", { p_token: mitToken(), p_til: til, p_emne: emne, p_tekst: tekst }).then(function () {
+        return hentMails();
+      }).then(function () { faerdig(til.toLowerCase() === "alle" ? "alle på hotellet" : til); }).catch(function (e) {
+        knap.disabled = false;
+        if (/function|schema cache|does not exist|Could not find/i.test(e.message)) { mailStatus = "lokal"; mailFejl = "Mails til rigtige spillere virker, når database-41-vera-mail.sql er kørt i Supabase."; sendLokal(til, emne, tekst); faerdig(til); }
+        else fejl(e.message);
+      });
+      return;
+    }
+    if (til.toLowerCase() === "alle") { knap.disabled = false; return fejl("Mail til alle virker kun, når du er på hotellets server."); }
+    sendLokal(til, emne, tekst);
+    faerdig(til);
+  }
+  function sendLokal(til, emne, tekst) {
+    const l = mailLokalListe(), id = Date.now();
+    l.push({ id: id, fra: mig(), til: til, emne: emne, tekst: tekst, laest: false, tid: Date.now() });
+    gemMailLokal(l);
+    // computer-gæsterne i hallen svarer selv
+    if (typeof HAL_GAESTER !== "undefined" && HAL_GAESTER.some(function (g) { return g.navn && g.navn.toLowerCase() === til.toLowerCase(); })) {
+      const svar = ["Tak for din mail! 😊 Vi ses i hallen.", "Hej! Hvor er det sødt, at du skriver. Kom forbi caféen senere ☕", "Haha, den var god! Skriv snart igen 💌", "Tak! Jeg har lige læst den. Hav en dejlig dag på hotellet 🌟"];
+      setTimeout(function () {
+        const l2 = mailLokalListe();
+        l2.push({ id: Date.now(), fra: til, til: mig(), emne: "Sv: " + (emne || "(intet emne)"), tekst: svar[Math.floor(Math.random() * svar.length)] + "\n\nHilsen " + til, laest: false, tid: Date.now() });
+        gemMailLokal(l2);
+        tjekNyeMails();
+      }, 6000 + Math.random() * 6000);
+    }
+  }
+  function sletMail(m) {
+    if (m.lokal) {
+      const l = mailLokalListe().map(function (x) {
+        if ("l" + x.id !== m.id) return x;
+        if (m.ind) x.sletTil = true; else x.sletFra = true;
+        return x;
+      }).filter(function (x) { return !(x.sletTil && x.sletFra) && !(x.sletTil && /^Vera /.test(x.fra)); });
+      gemMailLokal(l);
+    } else {
+      mailServerRk = mailServerRk.filter(function (x) { return x.id !== m.id; });
+      serverKald("hv_mail_slet", { p_token: mitToken(), p_id: +m.id.slice(1) }).catch(function (e) { lille("⚠️ " + e.message); });
+    }
+    const s = mailMig(); if (s.stjerne) delete s.stjerne[m.id]; gemMailMig(s);
+  }
+  function mailKlik(e) {
+    const t = e.target;
+    const fa = t.closest("[data-vmfane]");
+    if (fa) { mailFane = fa.dataset.vmfane; tegnMailListe(); return; }
+    if (t.closest("[data-vmskriv]")) { tegnMailSkriv(); return; }
+    const a = t.closest("[data-vmaabn]");
+    if (a) { tegnMailVis(a.dataset.vmaabn); return; }
+    if (t.closest("[data-vmtilbage]") || t.closest("[data-vmannuller]")) { mailAaben = null; mailSkriv = null; tegnMailListe(); return; }
+    if (t.closest("[data-vmsend]")) { sendMail(); return; }
+    const tn = t.closest("[data-vmtilnavn]");
+    if (tn) { appEl.querySelector("[data-vmtil]").value = tn.dataset.vmtilnavn; appEl.querySelector("[data-vmemne]").focus(); return; }
+    const m = mailAaben && findMail(mailAaben);
+    if (!m) return;
+    if (t.closest("[data-vmstjerne]")) {
+      const s = mailMig(); s.stjerne = s.stjerne || {};
+      if (s.stjerne[m.id]) delete s.stjerne[m.id]; else s.stjerne[m.id] = 1;
+      gemMailMig(s); tegnMailVis(m.id); lille(s.stjerne[m.id] ? "⭐ Stjernemarkeret" : "Stjernen er fjernet"); return;
+    }
+    const citat = "\n\n— " + (m.ind ? m.fra : mig()) + " skrev " + naarTekst(m.tid) + ":\n" + m.tekst.split("\n").map(function (l) { return "> " + l; }).join("\n");
+    if (t.closest("[data-vmsvar]")) { tegnMailSkriv({ til: m.fra, emne: /^Sv:/i.test(m.emne) ? m.emne : "Sv: " + (m.emne || ""), tekst: citat }); return; }
+    if (t.closest("[data-vmvidere]")) { tegnMailSkriv({ til: "", emne: "Vs: " + (m.emne || ""), tekst: citat }); return; }
+    const sl = t.closest("[data-vmslet]");
+    if (sl) {
+      if (!sl.classList.contains("sikker")) { sl.classList.add("sikker"); sl.textContent = "Er du sikker?"; setTimeout(function () { if (sl.isConnected) { sl.classList.remove("sikker"); sl.textContent = "🗑 Slet"; } }, 3000); return; }
+      sletMail(m); mailAaben = null; lille("🗑 Mailen er slettet"); tegnMailListe();
+    }
+  }
+  nyStil("telefon-stil-mail", [
+    ".vm-hoved { flex: none; } .vm-indhold { display: flex; flex-direction: column; }",
+    ".vm-faner { margin: 8px 12px 0; } .vm-faner button { font-size: 12px; white-space: nowrap; }",
+    ".vm-fejl { margin: 6px 12px; padding: 7px 10px; border-radius: 10px; background: #fff3d6; color: #7a5200; font-size: 11.5px; line-height: 1.35; }",
+    ".vm-liste { flex: 1; } .vm-r { position: relative; align-items: flex-start !important; padding-left: 18px !important; }",
+    ".vm-prik { position: absolute; left: 6px; top: 22px; width: 8px; height: 8px; border-radius: 50%; background: var(--t-acc); }",
+    ".vm-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }",
+    ".vm-l1 { display: flex; justify-content: space-between; gap: 6px; } .vm-l1 b { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .vm-l1 small { color: var(--t-graa); font-size: 11px; flex: none; }",
+    ".vm-emne { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--t-tekst); } .vm-r.ny .vm-emne { font-weight: 700; }",
+    ".vm-uddrag { font-size: 12px; color: var(--t-graa); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }",
+    ".vm-st { font-size: 11px; flex: none; }",
+    ".vm-tb { width: auto !important; display: flex; align-items: center; gap: 0; color: var(--t-acc); font: inherit; font-size: 14px; } .vm-tb span { font-size: 14px; }",
+    ".vm-mail { padding: 12px 14px 30px; background: var(--t-hvid); min-height: 100%; box-sizing: border-box; user-select: text; -webkit-user-select: text; }",
+    ".vm-mail h2 { font-size: 19px; margin: 0 0 10px; line-height: 1.25; word-wrap: break-word; }",
+    ".vm-fra { display: flex; gap: 9px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--t-linje); } .vm-fra b { display: block; font-size: 14px; } .vm-fra small { display: block; color: var(--t-graa); font-size: 11.5px; }",
+    ".vm-tekst { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.5; padding: 12px 0; }",
+    ".vm-handl { display: flex; gap: 6px; flex-wrap: wrap; border-top: 1px solid var(--t-linje); padding-top: 10px; }",
+    ".vm-handl button { flex: 1; border: 0; border-radius: 10px; padding: 9px 4px; background: var(--t-felt); color: var(--t-acc); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }",
+    ".vm-handl .vm-slet { color: var(--t-rod); } .vm-handl .vm-slet.sikker { background: var(--t-rod); color: #fff; }",
+    ".vm-send { background: var(--t-acc) !important; border-radius: 50% !important; width: 30px !important; height: 30px !important; } .vm-send:disabled { opacity: .5; }",
+    ".vm-form { display: flex; flex-direction: column; background: var(--t-hvid); min-height: 100%; }",
+    ".vm-form label { display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-bottom: 1px solid var(--t-linje); } .vm-form label span { color: var(--t-graa); font-size: 13px; }",
+    ".vm-form input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: 14px; background: none; color: var(--t-tekst); user-select: text; }",
+    ".vm-form textarea { min-height: 200px; border: 0; outline: 0; resize: none; padding: 12px 14px; font: inherit; font-size: 14px; line-height: 1.45; background: none; color: var(--t-tekst); user-select: text; }",
+    ".vm-hurtig { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 14px; } .vm-hurtig button { border: 0; border-radius: 13px; padding: 4px 10px; background: var(--t-felt); color: var(--t-tekst); font: inherit; font-size: 11.5px; cursor: pointer; }",
+    ".vm-ejer { margin: 6px 14px; padding: 7px 10px; border-radius: 10px; background: #fff4d6; font-size: 11.5px; color: #6a4a00; }",
+    ".vm-status { padding: 6px 14px; font-size: 12px; color: var(--t-graa); } .vm-status.fejl { color: var(--t-rod); }",
+  ]);
+
+  // ===============================================================
+  //  🎵 Music Box — hotellets egen musik
+  //  Al musikken bliver lavet af telefonen selv (Web Audio), så der er
+  //  ingen ophavsret. Stemninger, album med covers, favoritter,
+  //  playlister, afspilningskø, gentag og bland.
+  //  Gemmes i mit-hotel-telefon-musik-<navn>
+  // ===============================================================
+  const MB_ST = {
+    glad:    { navn: "Glad", ik: "☀️", farver: ["#ffd36b", "#ff8a3d"], bpm: [112, 126], skala: "dur", trommer: "pop", bas: "to", mel: "square", pad: "triangle", arp: false, form: "sol" },
+    rolig:   { navn: "Rolig", ik: "🌙", farver: ["#7fb8ff", "#2c3a8f"], bpm: [66, 76], skala: "dur", trommer: null, bas: "en", mel: "sine", pad: "sine", arp: true, ekko: true, form: "maane" },
+    fest:    { navn: "Fest", ik: "🎉", farver: ["#ff5cc8", "#6a2cff"], bpm: [120, 128], skala: "moll", trommer: "disko", bas: "otte", mel: "sawtooth", pad: "triangle", arp: true, form: "prikker" },
+    hygge:   { navn: "Hygge", ik: "☕", farver: ["#f3cfa0", "#9c6a32"], bpm: [84, 94], skala: "dur", trommer: "blid", bas: "to", mel: "triangle", pad: "sine", arp: false, form: "boelger" },
+    eventyr: { navn: "Eventyr", ik: "🗺", farver: ["#9be08a", "#1f5f5a"], bpm: [100, 112], skala: "moll", trommer: "march", bas: "hop", mel: "square", pad: "triangle", arp: true, form: "bjerge" },
+    droem:   { navn: "Drømmende", ik: "✨", farver: ["#f0d4ff", "#6a7bff"], bpm: [68, 80], skala: "dur", trommer: null, bas: "en", mel: "sine", pad: "triangle", arp: true, ekko: true, form: "stjerner" },
+    fokus:   { navn: "Lektier", ik: "📚", farver: ["#c7f0d0", "#2f7a7a"], bpm: [80, 88], skala: "dorisk", trommer: "lofi", bas: "to", mel: "triangle", pad: "sine", arp: false, ekko: true, form: "striber" },
+    regn:    { navn: "Regnvejr", ik: "🌧", farver: ["#b4c0d4", "#3c4a60"], bpm: [66, 74], skala: "moll", trommer: "lofi", bas: "en", mel: "sine", pad: "sine", arp: true, ekko: true, regn: true, form: "regn" },
+    spil:    { navn: "Gaming", ik: "👾", farver: ["#5fd38d", "#1f2f8f"], bpm: [132, 146], skala: "moll", trommer: "pop", bas: "otte", mel: "square", pad: "square", arp: true, form: "pixel" },
+  };
+  const MB_ALBUM = [
+    { id: "glad", titel: "Solskin i Lobbyen", kunstner: "Vera Band", sange: ["Godmorgen, Hotel", "Elevator-boogie", "Kakao med skum", "Hop i poolen"] },
+    { id: "fest", titel: "Fest i Hallen", kunstner: "DJ Glimt", sange: ["Diskokuglen", "Dans på bordene", "Stella Party", "Sidste dans"] },
+    { id: "rolig", titel: "Månelys på Værelset", kunstner: "Natportieren", sange: ["Stille gang", "Dyner og drømme", "Måneskin", "Godnat, Vera"] },
+    { id: "hygge", titel: "Caféhygge", kunstner: "Kaffekoppen", sange: ["Kanelsnegl", "Varme sokker", "Bogreolen", "Stearinlys"] },
+    { id: "eventyr", titel: "Den Hemmelige Etage", kunstner: "Nøglebærerne", sange: ["Nøglen", "Mod tårnet", "Skattekortet", "Hjem igen"] },
+    { id: "droem", titel: "Skyer af Stella", kunstner: "Drømmefabrikken", sange: ["Lilla himmel", "Svævende", "Stjernestøv", "Ved vinduet"] },
+    { id: "fokus", titel: "Lektier & Lo-fi", kunstner: "Receptionen", sange: ["Blyant og papir", "Rolig hjerne", "Tusch", "Sidste opgave"] },
+    { id: "regn", titel: "Regnvejrsdag", kunstner: "Paraplyerne", sange: ["Gråvejr", "Pytter", "Tæppe og te", "Solen kommer"] },
+    { id: "spil", titel: "8-bit Hotel", kunstner: "Pixel Portier", sange: ["Level 1: Lobby", "Snake-jagt", "Boss i kælderen", "High score"] },
+  ];
+  const MB_SANGE = {};
+  MB_ALBUM.forEach(function (a) { a.sange.forEach(function (t, i) { MB_SANGE[a.id + i] = { id: a.id + i, titel: t, album: a.id, nr: i + 1 }; }); });
+  function mbAlbum(id) { return MB_ALBUM.filter(function (a) { return a.id === id; })[0]; }
+  function mbAlbumSange(id) { return mbAlbum(id).sange.map(function (t, i) { return id + i; }); }
+
+  // ----- musikken bliver komponeret her (altid den samme for hver sang) -----
+  const MB_SKALA = { dur: [0, 2, 4, 5, 7, 9, 11], moll: [0, 2, 3, 5, 7, 8, 10], dorisk: [0, 2, 3, 5, 7, 9, 10] };
+  const MB_PROG = { dur: [[0, 4, 5, 3], [0, 5, 3, 4], [0, 3, 4, 0], [5, 3, 0, 4], [0, 2, 3, 4], [3, 4, 0, 5]], moll: [[0, 5, 2, 6], [0, 3, 4, 0], [0, 6, 5, 6], [0, 5, 3, 4], [5, 6, 0, 0]], dorisk: [[0, 3, 0, 3], [0, 6, 3, 0], [0, 3, 6, 4]] };
+  const MB_RYTME = [
+    [[0, 4], [4, 4], [8, 4], [12, 4]], [[0, 2], [2, 2], [4, 4], [8, 6], [14, 2]], [[0, 6], [6, 2], [8, 8]], [[0, 3], [3, 3], [6, 2], [8, 4], [12, 4]],
+    [[0, 2], [2, 2], [4, 2], [6, 2], [8, 8]], [[2, 2], [4, 4], [8, 2], [10, 2], [12, 4]], [[0, 8], [8, 8]], [[0, 4], [6, 2], [8, 4], [12, 2], [14, 2]],
+  ];
+  const MB_TROMMER = {
+    pop: { kick: [0, 8], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14] },
+    disko: { kick: [0, 4, 8, 12], snare: [4, 12], hat: [0, 4, 8, 12], ohat: [2, 6, 10, 14] },
+    blid: { kick: [0, 10], snare: [4, 12], hat: [0, 4, 8, 12], blid: true },
+    march: { kick: [0, 8], snare: [4, 12, 14, 15], hat: [0, 2, 4, 6, 8, 10, 12, 14] },
+    lofi: { kick: [0, 7, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], blid: true },
+  };
+  const mbCache = {};
+  function mbByg(id) {
+    if (mbCache[id]) return mbCache[id];
+    const s = MB_SANGE[id], st = MB_ST[s.album], r = rngFra("musicbox-" + id);
+    const bpm = st.bpm[0] + Math.floor(r() * (st.bpm[1] - st.bpm[0] + 1)), stepDur = 60 / bpm / 4;
+    const skala = MB_SKALA[st.skala], rod = 52 + Math.floor(r() * 8);
+    const progA = MB_PROG[st.skala][Math.floor(r() * MB_PROG[st.skala].length)], progB = MB_PROG[st.skala][Math.floor(r() * MB_PROG[st.skala].length)];
+    const lang = bpm < 90 ? 2 : 1;
+    const tone = function (deg, okt) { const L = skala.length, o = Math.floor(deg / L); return rod + 12 * (okt + o) + skala[((deg % L) + L) % L]; };
+    const akkord = function (prog, bar) { return prog[Math.floor(bar / lang) % prog.length]; };
+    const rytmer = bpm < 90 ? [0, 2, 6, 3, 7] : [0, 1, 3, 4, 5, 7];
+    function melodi(prog, loeft) {
+      const takter = [];
+      let cur = 7 + loeft;
+      for (let b = 0; b < 4; b++) {
+        const rt = MB_RYTME[rytmer[Math.floor(r() * rytmer.length)]], c = akkord(prog, b), noder = [];
+        rt.forEach(function (n) {
+          if (n[0] === 0 || n[0] === 8) {
+            const kand = [c, c + 2, c + 4, c + 7, c + 9, c + 11].filter(function (d) { return d >= 2 + loeft && d <= 11 + loeft; });
+            kand.sort(function (a, b2) { return Math.abs(a - cur) - Math.abs(b2 - cur); });
+            cur = kand[Math.floor(r() * Math.min(2, kand.length))];
+          } else {
+            const t = r();
+            cur += t < 0.35 ? 1 : t < 0.7 ? -1 : t < 0.82 ? 2 : t < 0.94 ? -2 : 0;
+            cur = Math.max(1 + loeft, Math.min(11 + loeft, cur));
+          }
+          noder.push([n[0], n[1], cur]);
+        });
+        takter.push(noder);
+      }
+      // sidste takt i frasen ender på grundtonen
+      const slut = [[0, 4, takter[0][0][2]], [4, 4, 9 + loeft > 11 + loeft ? 7 : 4 + loeft], [8, 8, 7 + loeft]];
+      return takter.concat([takter[0], takter[1], takter[2], slut]);
+    }
+    const melA = melodi(progA, 0), melB = melodi(progB, 2);
+    const dele = bpm > 110 ? [["intro", 2], ["A", 8], ["A2", 8], ["B", 8], ["A", 8], ["outro", 2]] : [["intro", 2], ["A", 8], ["B", 8], ["A", 8], ["outro", 2]];
+    const steps = [];
+    const tr = st.trommer && MB_TROMMER[st.trommer];
+    dele.forEach(function (del) {
+      const navn = del[0], prog = navn === "B" ? progB : progA;
+      for (let b = 0; b < del[1]; b++) {
+        const takt = [];
+        for (let i = 0; i < 16; i++) takt.push([]);
+        const c = navn === "outro" ? 0 : akkord(prog, b);
+        // pad: akkorden
+        if (navn === "outro" ? b === 0 : b % lang === 0) [c, c + 2, c + 4].forEach(function (d) { takt[0].push({ i: "pad", f: tone(d, 0), d: navn === "outro" ? 32 : 16 * lang }); });
+        if (navn === "outro") { if (b === 0) { takt[0].push({ i: "bas", f: tone(0, -1), d: 24 }); takt[0].push({ i: "mel", f: tone(7, 1), d: 24 }); if (tr) takt[0].push({ i: "kick" }); } steps.push.apply(steps, takt); continue; }
+        // bas
+        const br = tone(c, -1), b5 = tone(c + 4, -1);
+        if (navn !== "intro") {
+          if (st.bas === "en") takt[0].push({ i: "bas", f: br, d: 16 });
+          if (st.bas === "to") { takt[0].push({ i: "bas", f: br, d: 7 }); takt[8].push({ i: "bas", f: r() < 0.5 ? br : b5, d: 7 }); }
+          if (st.bas === "otte") for (let k = 0; k < 16; k += 2) takt[k].push({ i: "bas", f: k % 4 === 2 ? br + 12 : br, d: 2 });
+          if (st.bas === "hop") { takt[0].push({ i: "bas", f: br, d: 5 }); takt[6].push({ i: "bas", f: br, d: 2 }); takt[8].push({ i: "bas", f: b5, d: 5 }); takt[14].push({ i: "bas", f: br, d: 2 }); }
+        }
+        // arpeggio
+        if (st.arp) {
+          const trin = bpm < 90 ? 4 : 2, toner = [c, c + 2, c + 4, c + 7];
+          for (let k = 0; k < 16; k += trin) takt[k].push({ i: "arp", f: tone(toner[(k / trin) % 4], 1), d: trin });
+        }
+        // melodi
+        if (navn === "A" || navn === "A2" || navn === "B") {
+          const mel = navn === "B" ? melB : melA;
+          mel[b % 8].forEach(function (n) {
+            let d = n[2];
+            if (navn === "A2" && n[0] >= 8 && r() < 0.3) d += r() < 0.5 ? 1 : -1;
+            takt[n[0]].push({ i: "mel", f: tone(d, 1), d: n[1] });
+          });
+        }
+        // trommer
+        if (tr && navn !== "intro") {
+          ["kick", "snare", "hat", "ohat"].forEach(function (k) { (tr[k] || []).forEach(function (p) { takt[p].push({ i: k, blid: tr.blid }); }); });
+          if (b === del[1] - 1 && st.trommer !== "blid") [12, 13, 14, 15].forEach(function (p) { takt[p].push({ i: "snare", blid: true }); });
+        }
+        if (st.regn && b % 2 === 0) takt[0].push({ i: "regn", d: 32 });
+        steps.push.apply(steps, takt);
+      }
+    });
+    return (mbCache[id] = { stepDur: stepDur, total: steps.length, steps: steps, bpm: bpm, st: st });
+  }
+
+  // ----- afspilleren -----
+  let mb = { ctx: null, master: null, an: null, ekko: null, stoej: null, sang: null, data: null, step: 0, startCtx: 0, startStep: 0, naesteTid: 0, spiller: false };
+  let mbKoe = { bruger: [], liste: [], kildeListe: [], kilde: "" }, mbHist = [];
+  function mbGemt() { return hentGemt("mit-hotel-telefon-musik-" + mig(), {}); }
+  let mbS = null;
+  function mbIndst() {
+    if (mbS && mbS.ejer === mig()) return mbS;
+    mbS = Object.assign({ fav: [], pl: [], vol: 0.8, gentag: "fra", bland: false, senest: [] }, mbGemt());
+    mbS.ejer = mig();
+    return mbS;
+  }
+  function gemMb() { const s = mbIndst(); gemGemt("mit-hotel-telefon-musik-" + mig(), { fav: s.fav, pl: s.pl, vol: s.vol, gentag: s.gentag, bland: s.bland, senest: s.senest.slice(0, 12) }); }
+  function midiHz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  function mbLydOk() {
+    try {
+      if (!mb.ctx) {
+        mb.ctx = lydKontekst || new (window.AudioContext || window.webkitAudioContext)();
+        lydKontekst = mb.ctx;
+        mb.an = mb.ctx.createAnalyser(); mb.an.fftSize = 64; mb.an.smoothingTimeConstant = 0.75;
+        mb.an.connect(mb.ctx.destination);
+        const n = mb.ctx.sampleRate, buf = mb.ctx.createBuffer(1, n, n), d = buf.getChannelData(0);
+        for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+        mb.stoej = buf;
+      }
+      if (mb.ctx.state === "suspended") mb.ctx.resume();
+      return true;
+    } catch (e) { return false; }
+  }
+  function mbNyMaster() {
+    const c = mb.ctx;
+    if (mb.master) { const gl = mb.master; try { gl.gain.cancelScheduledValues(c.currentTime); gl.gain.setTargetAtTime(0, c.currentTime, 0.03); } catch (e) {} setTimeout(function () { try { gl.disconnect(); } catch (e) {} }, 500); }
+    mb.master = c.createGain();
+    mb.master.gain.value = mbIndst().vol * 0.9;
+    mb.master.connect(mb.an);
+    mb.ekko = null;
+    if (mb.data && mb.data.st.ekko) {
+      const dl = c.createDelay(1), fb = c.createGain(), ud = c.createGain();
+      dl.delayTime.value = mb.data.stepDur * 3; fb.gain.value = 0.32; ud.gain.value = 0.35;
+      dl.connect(fb); fb.connect(dl); dl.connect(ud); ud.connect(mb.master);
+      mb.ekko = dl;
+    }
+  }
+  function mbTone(f, t, dur, type, gain, att, rel, ekko, filter) {
+    const c = mb.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t + att);
+    g.gain.setValueAtTime(gain, Math.max(t + att, t + dur - rel * 0.3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + rel);
+    let ud = g;
+    if (filter) { const fl = c.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.value = filter; g.connect(fl); ud = fl; }
+    o.connect(g); ud.connect(mb.master);
+    if (ekko && mb.ekko) ud.connect(mb.ekko);
+    o.start(t); o.stop(t + dur + rel + 0.05);
+  }
+  function mbStoej(t, dur, gain, hp, lp) {
+    const c = mb.ctx, s = c.createBufferSource(), g = c.createGain();
+    s.buffer = mb.stoej;
+    let sidst = s;
+    if (hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; sidst.connect(f); sidst = f; }
+    if (lp) { const f = c.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; sidst.connect(f); sidst = f; }
+    g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    sidst.connect(g); g.connect(mb.master);
+    s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05);
+  }
+  function mbSpilEvent(e, t) {
+    const D = mb.data, sd = D.stepDur, st = D.st;
+    if (e.i === "pad") mbTone(midiHz(e.f), t, e.d * sd, st.pad, st.pad === "square" ? 0.018 : 0.04, 0.25, 0.6, true, st.pad === "square" ? 1400 : 0);
+    else if (e.i === "bas") mbTone(midiHz(e.f), t, e.d * sd * 0.95, st.mel === "square" && st.bas === "otte" ? "square" : "triangle", st.bas === "otte" ? 0.12 : 0.16, 0.01, 0.08, false, 700);
+    else if (e.i === "mel") mbTone(midiHz(e.f), t, e.d * sd * 0.9, st.mel, st.mel === "sawtooth" ? 0.035 : st.mel === "square" ? 0.04 : 0.09, 0.012, 0.12, true, st.mel === "sawtooth" ? 2400 : st.mel === "square" ? 3200 : 0);
+    else if (e.i === "arp") mbTone(midiHz(e.f), t, e.d * sd * 0.8, st.mel === "square" ? "square" : "sine", st.mel === "square" ? 0.014 : 0.035, 0.005, 0.15, true, 0);
+    else if (e.i === "kick") {
+      const c = mb.ctx, o = c.createOscillator(), g = c.createGain();
+      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+      g.gain.setValueAtTime(e.blid ? 0.35 : 0.6, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+      o.connect(g); g.connect(mb.master); o.start(t); o.stop(t + 0.3);
+    }
+    else if (e.i === "snare") { mbStoej(t, e.blid ? 0.09 : 0.16, e.blid ? 0.07 : 0.18, 1400, 0); if (!e.blid) mbTone(190, t, 0.04, "triangle", 0.08, 0.002, 0.06, false, 0); }
+    else if (e.i === "hat") mbStoej(t, 0.035, e.blid ? 0.025 : 0.045, 7000, 0);
+    else if (e.i === "ohat") mbStoej(t, 0.14, 0.04, 6500, 0);
+    else if (e.i === "regn") mbStoej(t, e.d * sd, 0.022, 400, 2200);
+  }
+  function mbTick() {
+    if (!mb.spiller || !mb.ctx || !mb.data) return;
+    if (ind.bat <= 0) { mbPause(); lille("🎵 Musikken stoppede – telefonen er løbet tør"); return; }
+    const frem = document.hidden ? 2.5 : 0.35, c = mb.ctx;
+    while (mb.naesteTid < c.currentTime + frem && mb.step < mb.data.total) {
+      if (mb.naesteTid >= c.currentTime - 0.02) mb.data.steps[mb.step].forEach(function (e) { try { mbSpilEvent(e, mb.naesteTid); } catch (x) {} });
+      mb.step++; mb.naesteTid += mb.data.stepDur;
+    }
+    if (mb.step >= mb.data.total && c.currentTime > mb.naesteTid + 0.6) mbNaeste(true);
+  }
+  setInterval(mbTick, 40);
+  function mbPos() {
+    if (!mb.data) return 0;
+    if (!mb.spiller || !mb.ctx) return mb.step * mb.data.stepDur;
+    return Math.max(0, Math.min(mb.data.total, (mb.ctx.currentTime - mb.startCtx) / mb.data.stepDur + mb.startStep)) * mb.data.stepDur;
+  }
+  function mbLaengde(id) { const d = mbByg(id); return d.total * d.stepDur; }
+  function mbStart(fraStep) {
+    if (!mbLydOk()) { lille("Telefonen kan ikke spille lyd lige nu"); return; }
+    mb.step = fraStep || 0;
+    mbNyMaster();
+    mb.naesteTid = mb.ctx.currentTime + 0.06;
+    mb.startCtx = mb.naesteTid; mb.startStep = mb.step;
+    mb.spiller = true;
+    mbTick();
+  }
+  function mbSpil(id) {
+    mb.sang = id; mb.data = mbByg(id);
+    const s = mbIndst();
+    s.senest = [id].concat(s.senest.filter(function (x) { return x !== id; })).slice(0, 12); gemMb();
+    mbStart(0);
+    mbOpdater(true);
+  }
+  function mbPause() {
+    if (!mb.spiller) return;
+    mb.step = Math.floor(mbPos() / mb.data.stepDur);
+    mb.spiller = false;
+    if (mb.master) { try { mb.master.gain.setTargetAtTime(0, mb.ctx.currentTime, 0.04); } catch (e) {} }
+    mbOpdater();
+  }
+  function mbFortsaet() { if (!mb.sang) return; if (mb.step >= mb.data.total) mb.step = 0; mbStart(mb.step); mbOpdater(); }
+  function mbSpolTil(frac) {
+    if (!mb.data) return;
+    const st = Math.max(0, Math.min(mb.data.total - 1, Math.floor(frac * mb.data.total)));
+    if (mb.spiller) mbStart(st); else mb.step = st;
+    mbOpdater();
+  }
+  function mbStop() { mb.spiller = false; if (mb.master) try { mb.master.gain.setTargetAtTime(0, mb.ctx.currentTime, 0.03); } catch (e) {} mb.sang = null; mb.data = null; mbKoe = { bruger: [], liste: [], kildeListe: [], kilde: "" }; mbOpdater(); }
+  function mbBlandet(l) { l = l.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)), x = l[i]; l[i] = l[j]; l[j] = x; } return l; }
+  function mbAfspilListe(ids, start, kilde, bland) {
+    if (!ids.length) return;
+    const s = mbIndst();
+    if (bland != null) { s.bland = bland; gemMb(); }
+    let l = ids.slice();
+    if (s.bland) { l = mbBlandet(l); if (start) { l = l.filter(function (x) { return x !== start; }); l.unshift(start); } }
+    const i = start ? Math.max(0, l.indexOf(start)) : 0;
+    mbKoe.kildeListe = ids.slice(); mbKoe.kilde = kilde;
+    mbKoe.liste = l.slice(i + 1);
+    mbHist = [];
+    mbSpil(l[i]);
+  }
+  function mbNaeste(auto) {
+    const s = mbIndst();
+    if (auto && s.gentag === "en" && mb.sang) { mbSpil(mb.sang); return; }
+    let n = mbKoe.bruger.shift() || mbKoe.liste.shift();
+    if (!n && s.gentag === "alle" && mbKoe.kildeListe.length) { mbKoe.liste = s.bland ? mbBlandet(mbKoe.kildeListe) : mbKoe.kildeListe.slice(); n = mbKoe.liste.shift(); }
+    if (n) { if (mb.sang) mbHist.push(mb.sang); mbSpil(n); return; }
+    if (auto) { mb.spiller = false; mb.step = 0; mbOpdater(); }
+    else lille("Der er ikke flere sange i køen");
+  }
+  function mbForrige() {
+    if (mbPos() > 3 || !mbHist.length) { mbSpolTil(0); if (!mb.spiller) mbFortsaet(); return; }
+    mbKoe.liste.unshift(mb.sang);
+    mbSpil(mbHist.pop());
+  }
+  function mbSaetBland(til) {
+    const s = mbIndst(); s.bland = til; gemMb();
+    if (!mbKoe.kildeListe.length) return;
+    if (til) mbKoe.liste = mbBlandet(mbKoe.liste);
+    else { const i = mbKoe.kildeListe.indexOf(mb.sang); mbKoe.liste = i >= 0 ? mbKoe.kildeListe.slice(i + 1) : mbKoe.liste; }
+  }
+  function erFav(id) { return mbIndst().fav.indexOf(id) >= 0; }
+  function skiftFav(id) {
+    const s = mbIndst(), i = s.fav.indexOf(id);
+    if (i >= 0) s.fav.splice(i, 1); else s.fav.unshift(id);
+    gemMb(); lille(i >= 0 ? "Fjernet fra favoritter" : "❤️ Lagt i favoritter");
+  }
+  function mbTidTekst(sek) { sek = Math.max(0, Math.round(sek)); return Math.floor(sek / 60) + ":" + ("0" + sek % 60).slice(-2); }
+
+  // ----- covers (tegnet af koden ud fra stemningen) -----
+  function mbCover(albumId, kl2) {
+    const st = MB_ST[albumId], a = mbAlbum(albumId), r = rngFra("cover-" + albumId), id = "mbg" + albumId;
+    let fig = "";
+    if (st.form === "sol") fig = "<circle cx='70' cy='34' r='18' fill='#fff6' /><circle cx='70' cy='34' r='12' fill='#fff9'/>";
+    if (st.form === "maane") fig = "<circle cx='68' cy='30' r='14' fill='#fff8e0'/><circle cx='74' cy='26' r='12' fill='" + st.farver[1] + "'/>" + [1, 2, 3, 4, 5, 6].map(function () { return "<circle cx='" + Math.round(r() * 100) + "' cy='" + Math.round(r() * 55) + "' r='1' fill='#fff'/>"; }).join("");
+    if (st.form === "prikker") for (let i = 0; i < 14; i++) fig += "<circle cx='" + Math.round(r() * 100) + "' cy='" + Math.round(r() * 100) + "' r='" + (2 + Math.round(r() * 7)) + "' fill='#fff' opacity='" + (0.15 + r() * 0.4).toFixed(2) + "'/>";
+    if (st.form === "boelger") for (let i = 0; i < 4; i++) fig += "<path d='M0 " + (55 + i * 12) + " Q25 " + (45 + i * 12) + " 50 " + (55 + i * 12) + " T100 " + (55 + i * 12) + "' stroke='#fff' stroke-opacity='.35' stroke-width='4' fill='none'/>";
+    if (st.form === "bjerge") fig = "<path d='M0 80 L28 42 L46 64 L66 30 L100 80Z' fill='#0003'/><path d='M60 38 L66 30 L72 38Z' fill='#fff8'/><circle cx='22' cy='24' r='7' fill='#fff6'/>";
+    if (st.form === "stjerner") for (let i = 0; i < 12; i++) { const x = Math.round(r() * 100), y = Math.round(r() * 70), s = 1 + r() * 2.5; fig += "<path d='M" + x + " " + (y - s * 2) + " L" + (x + s / 2) + " " + (y - s / 2) + " L" + (x + s * 2) + " " + y + " L" + (x + s / 2) + " " + (y + s / 2) + " L" + x + " " + (y + s * 2) + " L" + (x - s / 2) + " " + (y + s / 2) + " L" + (x - s * 2) + " " + y + " L" + (x - s / 2) + " " + (y - s / 2) + "Z' fill='#fff' opacity='.8'/>"; }
+    if (st.form === "striber") for (let i = 0; i < 6; i++) fig += "<rect x='" + (i * 18 - 4) + "' y='0' width='8' height='100' fill='#fff' opacity='.12' transform='rotate(20 50 50)'/>";
+    if (st.form === "regn") for (let i = 0; i < 22; i++) { const x = Math.round(r() * 110), y = Math.round(r() * 100); fig += "<line x1='" + x + "' y1='" + y + "' x2='" + (x - 4) + "' y2='" + (y + 10) + "' stroke='#fff' stroke-opacity='.45' stroke-width='1.5'/>"; }
+    if (st.form === "pixel") for (let i = 0; i < 18; i++) fig += "<rect x='" + Math.floor(r() * 10) * 10 + "' y='" + Math.floor(r() * 10) * 10 + "' width='10' height='10' fill='#fff' opacity='" + (0.1 + r() * 0.3).toFixed(2) + "'/>";
+    return "<span class='mb-cover " + (kl2 || "") + "'><svg viewBox='0 0 100 100' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='" + id + "' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='" + st.farver[0] + "'/><stop offset='1' stop-color='" + st.farver[1] + "'/></linearGradient></defs>" +
+      "<rect width='100' height='100' fill='url(#" + id + ")'/>" + fig + "<text x='50' y='70' font-size='30' text-anchor='middle'>" + st.ik + "</text>" +
+      "<text x='50' y='92' font-size='8.5' font-weight='700' text-anchor='middle' fill='#fff' style='font-family:-apple-system,Segoe UI,sans-serif'>" + esc(a.titel.toUpperCase()).slice(0, 26) + "</text></svg></span>";
+  }
+  function mbPlCover(p) {
+    const alb = []; p.sange.forEach(function (id) { const a = MB_SANGE[id] && MB_SANGE[id].album; if (a && alb.indexOf(a) < 0) alb.push(a); });
+    if (alb.length < 2) return alb.length ? mbCover(alb[0]) : "<span class='mb-cover mb-tomcover'>📃</span>";
+    return "<span class='mb-cover mb-mosaik'>" + [0, 1, 2, 3].map(function (i) { return mbCover(alb[i % alb.length]); }).join("") + "</span>";
+  }
+
+  // ----- appen -----
+  let mbFane = "hjem", mbUnder = null, mbFuld = false, mbKoeVis = false, mbArk = null;
+  function tegnMusik() {
+    mbIndst();
+    mbUnder = null; mbFuld = false; mbArk = null; mbKoeVis = false;
+    appEl.classList.add("mb-app");
+    appEl.innerHTML = "<div class='mb-hoved'></div><div class='mb-side'></div><div class='mb-mini'></div>" +
+      "<div class='mb-faner'>" + [["hjem", "🏠", "Hjem"], ["album", "💿", "Album"], ["fav", "❤️", "Favoritter"], ["pl", "📃", "Playlister"]].map(function (f) {
+        return "<button data-mbfane='" + f[0] + "'><span>" + f[1] + "</span>" + f[2] + "</button>";
+      }).join("") + "</div><div class='mb-fuld' hidden></div><div class='mb-arkbg' hidden></div>";
+    appEl.addEventListener("click", mbKlik);
+    appEl.addEventListener("input", function (e) {
+      if (e.target.matches("[data-mbvol]")) { mbIndst().vol = +e.target.value / 100; gemMb(); if (mb.master && mb.spiller) mb.master.gain.setTargetAtTime(mbIndst().vol * 0.9, mb.ctx.currentTime, 0.02); }
+    });
+    appEl.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const f = e.target;
+      if (f.matches("[data-mbnypl]")) {
+        const navn = f.querySelector("input").value.trim(); if (!navn) return;
+        const s = mbIndst(), p = { id: "p" + Date.now(), navn: navn.slice(0, 30), sange: [] };
+        if (f.dataset.mbnypl) p.sange.push(f.dataset.mbnypl);
+        s.pl.push(p); gemMb();
+        lukMbArk();
+        lille(f.dataset.mbnypl ? "📃 Lagt i " + p.navn : "📃 Playlisten " + p.navn + " er lavet");
+        mbTegnSide();
+      }
+      if (f.matches("[data-mbomdoeb]")) {
+        const p = mbPl(f.dataset.mbomdoeb), navn = f.querySelector("input").value.trim();
+        if (p && navn) { p.navn = navn.slice(0, 30); gemMb(); }
+        lukMbArk(); mbTegnSide();
+      }
+    });
+    mbTegnSide();
+    mbOpdater(true);
+  }
+  function mbPl(id) { return mbIndst().pl.filter(function (p) { return p.id === id; })[0]; }
+  function mbRaekke(id, kilde, nr, iPl) {
+    const s = MB_SANGE[id], a = mbAlbum(s.album), spiller = mb.sang === id;
+    return "<li class='mb-r" + (spiller ? " nu" : "") + "' data-mbspil='" + id + "' data-mbkilde='" + kilde + "'>" + (nr ? "<span class='mb-nr'>" + (spiller ? mbBolger() : nr) + "</span>" : mbCover(s.album, "lille")) +
+      "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(a.kunstner) + " · " + mbTidTekst(mbLaengde(id)) + "</small></span>" +
+      "<button class='mb-hj" + (erFav(id) ? " til" : "") + "' data-mbfav='" + id + "'>" + (erFav(id) ? "❤️" : "🤍") + "</button><button class='mb-mere' data-mbmere='" + id + "'" + (iPl ? " data-mbipl='" + iPl + "'" : "") + ">⋯</button></li>";
+  }
+  function mbBolger() { return "<span class='mb-boelger" + (mb.spiller ? " koer" : "") + "'><i></i><i></i><i></i></span>"; }
+  function mbKildeIds(k) {
+    if (!k) return [];
+    if (k === "fav") return mbIndst().fav.slice();
+    if (k === "alle") return Object.keys(MB_SANGE);
+    if (k.indexOf("a:") === 0) return mbAlbumSange(k.slice(2));
+    if (k.indexOf("p:") === 0) { const p = mbPl(k.slice(2)); return p ? p.sange.slice() : []; }
+    if (k === "senest") return mbIndst().senest.slice();
+    return [];
+  }
+  function mbKildeNavn(k) {
+    if (k === "fav") return "Favoritter"; if (k === "alle") return "Alle sange"; if (k === "senest") return "Senest spillet";
+    if (k.indexOf("a:") === 0) return mbAlbum(k.slice(2)).titel;
+    if (k.indexOf("p:") === 0) { const p = mbPl(k.slice(2)); return p ? p.navn : "Playliste"; }
+    return "";
+  }
+  function mbTegnSide() {
+    if (!appEl || appNu !== "musik") return;
+    const side = appEl.querySelector(".mb-side"), hoved = appEl.querySelector(".mb-hoved"), s = mbIndst();
+    appEl.querySelectorAll("[data-mbfane]").forEach(function (b) { b.classList.toggle("valgt", b.dataset.mbfane === mbFane); });
+    const tilb = "<button class='tlf-tb' data-mbtilb title='Tilbage'>" + ik("tilbage", 20) + "</button>";
+    const hjem = "<button class='tlf-tb' data-tilbage='hjem' title='Tilbage'>" + ik("tilbage", 20) + "</button>";
+    let h = "";
+    if (mbUnder && mbUnder.indexOf("a:") === 0) {
+      const a = mbAlbum(mbUnder.slice(2)), st = MB_ST[a.id], ids = mbAlbumSange(a.id);
+      hoved.innerHTML = "<div class='tlf-top'>" + tilb + "<h3></h3><span class='tlf-tb'></span></div>";
+      h = "<div class='mb-albumtop'>" + mbCover(a.id, "stor") + "<b>" + esc(a.titel) + "</b><small>" + esc(a.kunstner) + " · " + st.ik + " " + st.navn + " · " + ids.length + " sange</small>" +
+        "<div class='mb-spilknap'><button data-mbspilalle='" + mbUnder + "'>▶ Afspil</button><button data-mbblandalle='" + mbUnder + "'>🔀 Bland</button></div></div>" +
+        "<ul class='mb-liste'>" + ids.map(function (id, i) { return mbRaekke(id, mbUnder, i + 1); }).join("") + "</ul>";
+    } else if (mbUnder && mbUnder.indexOf("p:") === 0) {
+      const p = mbPl(mbUnder.slice(2));
+      if (!p) { mbUnder = null; mbTegnSide(); return; }
+      hoved.innerHTML = "<div class='tlf-top'>" + tilb + "<h3></h3><button class='tlf-tb' data-mbplmenu='" + p.id + "' title='Mere'>⋯</button></div>";
+      const sek = p.sange.reduce(function (t, id) { return t + (MB_SANGE[id] ? mbLaengde(id) : 0); }, 0);
+      h = "<div class='mb-albumtop'>" + mbPlCover(p).replace("mb-cover", "mb-cover stor") + "<b>" + esc(p.navn) + "</b><small>Playliste · " + p.sange.length + (p.sange.length === 1 ? " sang" : " sange") + " · " + Math.round(sek / 60) + " min</small>" +
+        (p.sange.length ? "<div class='mb-spilknap'><button data-mbspilalle='" + mbUnder + "'>▶ Afspil</button><button data-mbblandalle='" + mbUnder + "'>🔀 Bland</button></div>" : "") + "</div>" +
+        (p.sange.length ? "<ul class='mb-liste'>" + p.sange.filter(function (id) { return MB_SANGE[id]; }).map(function (id) { return mbRaekke(id, mbUnder, 0, p.id); }).join("") + "</ul>"
+          : "<div class='mb-tom'>Playlisten er tom.<br>Tryk ⋯ ud for en sang og vælg <b>Tilføj til playliste</b>.</div>") +
+        "<div class='mb-overskrift'>Forslag</div><ul class='mb-liste'>" + Object.keys(MB_SANGE).filter(function (id) { return p.sange.indexOf(id) < 0; }).sort(function () { return 0; }).slice(0, 5).map(function (id) {
+          const x = MB_SANGE[id]; return "<li class='mb-r'>" + mbCover(x.album, "lille") + "<span class='mb-rt'><b>" + esc(x.titel) + "</b><small>" + esc(mbAlbum(x.album).kunstner) + "</small></span><button class='mb-plus' data-mbtilpl='" + p.id + "' data-mbsang='" + id + "'>＋</button></li>";
+        }).join("") + "</ul>";
+    } else if (mbFane === "hjem") {
+      hoved.innerHTML = "<div class='tlf-top'>" + hjem + "<h3>Music Box</h3><span class='tlf-tb'></span></div>";
+      const t = new Date().getHours(), forslag = t < 9 ? "glad" : t < 15 ? "fokus" : t < 19 ? "hygge" : t < 22 ? "fest" : "rolig";
+      h = "<div class='mb-velkommen'><b>" + (t < 10 ? "Godmorgen" : t < 18 ? "Hej" : "Godaften") + ", " + esc(mig()) + " 🎧</b><small>Al musikken er lavet af hotellet selv – helt uden ophavsret.</small></div>" +
+        "<div class='mb-overskrift'>Hvordan har du det?</div><div class='mb-stemninger'>" + Object.keys(MB_ST).map(function (k) {
+          const st = MB_ST[k];
+          return "<button data-mbstemning='" + k + "' style='background:linear-gradient(135deg," + st.farver[0] + "," + st.farver[1] + ")'><span>" + st.ik + "</span>" + st.navn + (k === forslag ? "<i>Forslag</i>" : "") + "</button>";
+        }).join("") + "</div>" +
+        "<div class='mb-overskrift'>Album</div><div class='mb-karrusel'>" + MB_ALBUM.map(function (a) { return "<button data-mbalbum='" + a.id + "'>" + mbCover(a.id) + "<b>" + esc(a.titel) + "</b><small>" + esc(a.kunstner) + "</small></button>"; }).join("") + "</div>" +
+        (s.senest.length ? "<div class='mb-overskrift'>Senest spillet</div><ul class='mb-liste'>" + s.senest.slice(0, 4).filter(function (id) { return MB_SANGE[id]; }).map(function (id) { return mbRaekke(id, "senest"); }).join("") + "</ul>" : "") +
+        "<button class='mb-allesange' data-mbspilalle='alle' data-mbbland='1'>🔀 Bland alle " + Object.keys(MB_SANGE).length + " sange</button>";
+    } else if (mbFane === "album") {
+      hoved.innerHTML = "<div class='tlf-top'>" + hjem + "<h3>Album</h3><span class='tlf-tb'></span></div>";
+      h = "<div class='mb-albumgrid'>" + MB_ALBUM.map(function (a) { return "<button data-mbalbum='" + a.id + "'>" + mbCover(a.id) + "<b>" + esc(a.titel) + "</b><small>" + MB_ST[a.id].ik + " " + MB_ST[a.id].navn + "</small></button>"; }).join("") + "</div>";
+    } else if (mbFane === "fav") {
+      hoved.innerHTML = "<div class='tlf-top'>" + hjem + "<h3>Favoritter</h3><span class='tlf-tb'></span></div>";
+      h = s.fav.length ? "<div class='mb-favtop'><span>❤️</span><b>" + s.fav.length + " favorit" + (s.fav.length === 1 ? "" : "ter") + "</b><div class='mb-spilknap'><button data-mbspilalle='fav'>▶ Afspil</button><button data-mbblandalle='fav'>🔀 Bland</button></div></div>" +
+        "<ul class='mb-liste'>" + s.fav.filter(function (id) { return MB_SANGE[id]; }).map(function (id) { return mbRaekke(id, "fav"); }).join("") + "</ul>"
+        : "<div class='mb-tom'><span>🤍</span>Ingen favoritter endnu.<br>Tryk på hjertet ud for en sang.</div>";
+    } else if (mbFane === "pl") {
+      hoved.innerHTML = "<div class='tlf-top'>" + hjem + "<h3>Playlister</h3><button class='tlf-tb' data-mbnyplknap title='Ny playliste'>＋</button></div>";
+      h = "<ul class='mb-pllist'><li data-mbnyplknap class='mb-nypl'><span class='mb-cover mb-tomcover'>＋</span><b>Ny playliste …</b></li>" + s.pl.map(function (p) {
+        return "<li data-mbpl='" + p.id + "'>" + mbPlCover(p) + "<span><b>" + esc(p.navn) + "</b><small>" + p.sange.length + (p.sange.length === 1 ? " sang" : " sange") + "</small></span></li>";
+      }).join("") + "</ul>" + (s.pl.length ? "" : "<div class='mb-tom'>Lav din første playliste med ＋.</div>");
+    }
+    side.innerHTML = h;
+  }
+  function mbOpdater(helt) {
+    if (!appEl || appNu !== "musik") return;
+    const mini = appEl.querySelector(".mb-mini");
+    if (mini) {
+      if (!mb.sang) mini.innerHTML = "<div class='mb-minitom'>🎵 Vælg en sang eller en stemning</div>";
+      else {
+        const s = MB_SANGE[mb.sang];
+        if (helt || !mini.querySelector("[data-mbminiinfo='" + mb.sang + "']")) mini.innerHTML = "<div class='mb-miniind' data-mbaabnfuld data-mbminiinfo='" + mb.sang + "'>" + mbCover(s.album, "lille") + "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(mbAlbum(s.album).kunstner) + "</small></span>" +
+          "<button data-mbpp class='mb-pp'></button><button data-mbnaeste class='mb-nx'>⏭</button></div><div class='mb-minibar'><i></i></div>";
+        mini.querySelector("[data-mbpp]").textContent = mb.spiller ? "⏸" : "▶";
+        mini.querySelector(".mb-minibar i").style.width = (mbPos() / mbLaengde(mb.sang) * 100) + "%";
+      }
+    }
+    if (helt) { appEl.querySelectorAll(".mb-r").forEach(function (li) { li.classList.toggle("nu", li.dataset.mbspil === mb.sang); const n = li.querySelector(".mb-nr"); if (n) n.innerHTML = li.dataset.mbspil === mb.sang ? mbBolger() : (Array.prototype.indexOf.call(li.parentNode.children, li) + 1); }); }
+    appEl.querySelectorAll(".mb-boelger").forEach(function (b) { b.classList.toggle("koer", mb.spiller); });
+    if (mbFuld) mbTegnFuld(helt);
+  }
+  setInterval(function () { if (appNu === "musik" && appEl && mb.sang) mbOpdater(); }, 250);
+  function mbTegnFuld(helt) {
+    const f = appEl.querySelector(".mb-fuld"), s = mbIndst();
+    if (!mb.sang) { mbFuld = false; f.hidden = true; return; }
+    f.hidden = false;
+    const x = MB_SANGE[mb.sang], a = mbAlbum(x.album), st = MB_ST[x.album], L = mbLaengde(mb.sang), p = mbPos();
+    if (helt || !f.querySelector("[data-mbfuldsang='" + mb.sang + "']") || f.dataset.koe !== String(mbKoeVis)) {
+      f.dataset.koe = String(mbKoeVis);
+      f.style.background = "linear-gradient(170deg," + st.farver[0] + "," + st.farver[1] + " 70%)";
+      f.innerHTML = "<div class='mb-fuldtop' data-mbfuldsang='" + mb.sang + "'><button data-mbluk>⌄</button><span>" + (mbKoe.kilde ? "Spiller fra<b>" + esc(mbKildeNavn(mbKoe.kilde)) + "</b>" : "Spiller nu") + "</span><button data-mbkoe class='" + (mbKoeVis ? "til" : "") + "'>☰</button></div>" +
+        (mbKoeVis ? mbKoeHtml() : "<div class='mb-fuldcover" + (mb.spiller ? " spiller" : "") + "'>" + mbCover(x.album, "kaempe") + "</div><canvas class='mb-viz' width='240' height='40'></canvas>") +
+        "<div class='mb-fuldinfo'><span><b>" + esc(x.titel) + "</b><small>" + esc(a.kunstner) + " · " + esc(a.titel) + "</small></span><button data-mbfav='" + mb.sang + "' class='mb-hj'>" + (erFav(mb.sang) ? "❤️" : "🤍") + "</button></div>" +
+        "<div class='mb-spol' data-mbspol><i></i><b></b></div><div class='mb-tider'><span class='t1'></span><span class='t2'></span></div>" +
+        "<div class='mb-kontrol'><button data-mbbland class='" + (s.bland ? "til" : "") + "' title='Bland'>🔀</button><button data-mbforrige>⏮</button><button data-mbpp class='stor'></button><button data-mbnaeste>⏭</button>" +
+        "<button data-mbgentag class='" + (s.gentag !== "fra" ? "til" : "") + "' title='Gentag'>" + (s.gentag === "en" ? "🔂" : "🔁") + "</button></div>" +
+        "<div class='mb-vol'><span>🔈</span><input type='range' min='0' max='100' data-mbvol value='" + Math.round(s.vol * 100) + "'><span>🔊</span></div>";
+    }
+    f.querySelector(".mb-spol i").style.width = (p / L * 100) + "%";
+    f.querySelector(".mb-spol b").style.left = (p / L * 100) + "%";
+    f.querySelector(".t1").textContent = mbTidTekst(p);
+    f.querySelector(".t2").textContent = "-" + mbTidTekst(L - p);
+    f.querySelector(".mb-kontrol [data-mbpp]").textContent = mb.spiller ? "⏸" : "▶";
+    const c = f.querySelector(".mb-fuldcover"); if (c) c.classList.toggle("spiller", mb.spiller);
+  }
+  // lille lyd-visualisering
+  (function viz() {
+    requestAnimationFrame(viz);
+    if (!mbFuld || !appEl || appNu !== "musik" || !mb.an) return;
+    const c = appEl.querySelector(".mb-viz");
+    if (!c) return;
+    const g = c.getContext("2d"), d = new Uint8Array(mb.an.frequencyBinCount);
+    mb.an.getByteFrequencyData(d);
+    g.clearRect(0, 0, c.width, c.height);
+    g.fillStyle = "rgba(255,255,255,.75)";
+    const n = 24, w = c.width / n;
+    for (let i = 0; i < n; i++) { const v = mb.spiller ? d[i + 1] / 255 : 0, h = Math.max(2, v * c.height); g.fillRect(i * w + 2, (c.height - h) / 2, w - 4, h); }
+  })();
+  function mbKoeHtml() {
+    const x = MB_SANGE[mb.sang], r = function (id, i, slags) {
+      const s = MB_SANGE[id]; if (!s) return "";
+      return "<li>" + mbCover(s.album, "lille") + "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(mbAlbum(s.album).kunstner) + "</small></span><button data-mbkoeslet='" + slags + ":" + i + "'>✕</button></li>";
+    };
+    return "<div class='mb-koe'><div class='mb-kt'>Spiller nu</div><ul><li class='nu'>" + mbCover(x.album, "lille") + "<span class='mb-rt'><b>" + esc(x.titel) + "</b><small>" + esc(mbAlbum(x.album).kunstner) + "</small></span>" + mbBolger() + "</li></ul>" +
+      (mbKoe.bruger.length ? "<div class='mb-kt'>Næste i køen <button data-mbrydkoe>Ryd</button></div><ul>" + mbKoe.bruger.map(function (id, i) { return r(id, i, "b"); }).join("") + "</ul>" : "") +
+      "<div class='mb-kt'>" + (mbKoe.kilde ? "Næste fra " + esc(mbKildeNavn(mbKoe.kilde)) : "Næste") + (mbIndst().gentag === "alle" ? " · 🔁" : "") + "</div>" +
+      (mbKoe.liste.length ? "<ul>" + mbKoe.liste.slice(0, 30).map(function (id, i) { return r(id, i, "l"); }).join("") + "</ul>" : "<div class='mb-ktom'>Ikke flere sange. Tryk ⋯ ud for en sang → Tilføj til kø.</div>") + "</div>";
+  }
+  function visMbArk(html) {
+    const b = appEl.querySelector(".mb-arkbg");
+    b.innerHTML = "<div class='mb-ark'>" + html + "<button class='luk' data-mbarkluk>Annullér</button></div>";
+    b.hidden = false;
+    mbArk = true;
+  }
+  function lukMbArk() { const b = appEl && appEl.querySelector(".mb-arkbg"); if (b) b.hidden = true; mbArk = null; }
+  function mbSangMenu(id, iPl) {
+    const s = MB_SANGE[id], pl = mbIndst().pl;
+    visMbArk("<div class='mb-arktop'>" + mbCover(s.album, "lille") + "<span><b>" + esc(s.titel) + "</b><small>" + esc(mbAlbum(s.album).kunstner) + "</small></span></div>" +
+      "<button data-mbak='spil' data-id='" + id + "'>▶ Spil nu</button><button data-mbak='naeste' data-id='" + id + "'>⏭ Spil som det næste</button>" +
+      "<button data-mbak='koe' data-id='" + id + "'>➕ Tilføj til køen</button><button data-mbak='fav' data-id='" + id + "'>" + (erFav(id) ? "💔 Fjern fra favoritter" : "❤️ Læg i favoritter") + "</button>" +
+      "<div class='mb-arkt'>Tilføj til playliste</div>" + pl.map(function (p) { return "<button data-mbak='pl' data-id='" + id + "' data-pl='" + p.id + "'>📃 " + esc(p.navn) + (p.sange.indexOf(id) >= 0 ? " ✓" : "") + "</button>"; }).join("") +
+      "<form class='mb-nyform' data-mbnypl='" + id + "'><input placeholder='＋ Ny playliste …' maxlength='30'><button>Lav</button></form>" +
+      (iPl ? "<button class='rod' data-mbak='fjernpl' data-id='" + id + "' data-pl='" + iPl + "'>➖ Fjern fra denne playliste</button>" : "") +
+      "<button data-mbak='album' data-id='" + id + "'>💿 Gå til albummet</button>");
+  }
+  function mbKlik(e) {
+    const t = e.target, s = mbIndst();
+    const fn = t.closest("[data-mbfane]");
+    if (fn) { mbFane = fn.dataset.mbfane; mbUnder = null; mbTegnSide(); appEl.querySelector(".mb-side").scrollTop = 0; return; }
+    if (t.closest("[data-mbtilb]")) { mbUnder = null; mbTegnSide(); return; }
+    if (t.closest("[data-mbarkluk]") || t.classList.contains("mb-arkbg")) { lukMbArk(); return; }
+    const ak = t.closest("[data-mbak]");
+    if (ak) {
+      const h = ak.dataset.mbak, id = ak.dataset.id;
+      if (h === "spil") { mbAfspilListe([id], id, mbKoe.kilde || "", null); }
+      if (h === "naeste") { if (!mb.sang) mbAfspilListe([id], id, "", null); else { mbKoe.bruger.unshift(id); lille("⏭ Spilles som det næste"); } }
+      if (h === "koe") { if (!mb.sang) mbAfspilListe([id], id, "", null); else { mbKoe.bruger.push(id); lille("➕ Lagt i køen"); } }
+      if (h === "fav") skiftFav(id);
+      if (h === "pl") { const p = mbPl(ak.dataset.pl); if (p) { if (p.sange.indexOf(id) < 0) { p.sange.push(id); lille("📃 Lagt i " + p.navn); } else lille("Den er allerede i " + p.navn); gemMb(); } }
+      if (h === "fjernpl") { const p = mbPl(ak.dataset.pl); if (p) { p.sange = p.sange.filter(function (x) { return x !== id; }); gemMb(); lille("➖ Fjernet fra " + p.navn); } }
+      if (h === "album") { mbUnder = "a:" + MB_SANGE[id].album; mbFuld = false; appEl.querySelector(".mb-fuld").hidden = true; }
+      if (h === "omdoeb") {
+        const p = mbPl(ak.dataset.pl);
+        visMbArk("<div class='mb-arkt'>Omdøb playlisten</div><form class='mb-nyform' data-mbomdoeb='" + p.id + "'><input value='" + esc(p.navn) + "' maxlength='30'><button>Gem</button></form>");
+        appEl.querySelector("[data-mbomdoeb] input").select(); return;
+      }
+      if (h === "spilpl") { const ids = mbKildeIds("p:" + ak.dataset.pl); mbAfspilListe(ids, null, "p:" + ak.dataset.pl, false); }
+      if (h === "sletpl") {
+        if (!ak.classList.contains("sikker")) { ak.classList.add("sikker"); ak.textContent = "Er du sikker? Tryk igen"; return; }
+        s.pl = s.pl.filter(function (p) { return p.id !== ak.dataset.pl; }); gemMb(); mbUnder = null; lille("🗑 Playlisten er slettet");
+      }
+      lukMbArk(); mbTegnSide(); mbOpdater(true); return;
+    }
+    const pm = t.closest("[data-mbplmenu]");
+    if (pm) {
+      const p = mbPl(pm.dataset.mbplmenu);
+      visMbArk("<div class='mb-arkt'>" + esc(p.navn) + "</div><button data-mbak='spilpl' data-pl='" + p.id + "'>▶ Afspil playlisten</button><button data-mbak='omdoeb' data-pl='" + p.id + "'>✏️ Omdøb</button><button class='rod' data-mbak='sletpl' data-pl='" + p.id + "'>🗑 Slet playlisten</button>");
+      return;
+    }
+    const fv = t.closest("[data-mbfav]");
+    if (fv) { skiftFav(fv.dataset.mbfav); if (mbFane === "fav" && !mbUnder) mbTegnSide(); else { const ny = erFav(fv.dataset.mbfav); appEl.querySelectorAll("[data-mbfav='" + fv.dataset.mbfav + "']").forEach(function (b) { b.textContent = ny ? "❤️" : "🤍"; b.classList.toggle("til", ny); }); } return; }
+    const me = t.closest("[data-mbmere]");
+    if (me) { mbSangMenu(me.dataset.mbmere, me.dataset.mbipl); return; }
+    const tp = t.closest("[data-mbtilpl]");
+    if (tp) { const p = mbPl(tp.dataset.mbtilpl); if (p) { p.sange.push(tp.dataset.mbsang); gemMb(); lille("📃 Lagt i " + p.navn); mbTegnSide(); } return; }
+    if (t.closest("[data-mbnyplknap]")) { visMbArk("<div class='mb-arkt'>Ny playliste</div><form class='mb-nyform' data-mbnypl=''><input placeholder='Navn, fx Mine yndlings' maxlength='30'><button>Lav</button></form>"); appEl.querySelector("[data-mbnypl] input").focus(); return; }
+    const pl = t.closest("[data-mbpl]");
+    if (pl) { mbUnder = "p:" + pl.dataset.mbpl; mbTegnSide(); appEl.querySelector(".mb-side").scrollTop = 0; return; }
+    const al = t.closest("[data-mbalbum]");
+    if (al) { mbUnder = "a:" + al.dataset.mbalbum; mbTegnSide(); appEl.querySelector(".mb-side").scrollTop = 0; return; }
+    const sm = t.closest("[data-mbstemning]");
+    if (sm) { const k = sm.dataset.mbstemning; mbAfspilListe(mbAlbumSange(k), null, "a:" + k, true); lille(MB_ST[k].ik + " Spiller " + MB_ST[k].navn.toLowerCase() + " musik"); mbTegnSide(); return; }
+    const sa = t.closest("[data-mbspilalle]"), ba = t.closest("[data-mbblandalle]");
+    if (sa || ba) { const k = (sa || ba).dataset[sa ? "mbspilalle" : "mbblandalle"]; mbAfspilListe(mbKildeIds(k), null, k, !!ba || (sa && sa.dataset.mbbland === "1")); mbTegnSide(); return; }
+    const r = t.closest("[data-mbspil]");
+    if (r) { if (mb.sang === r.dataset.mbspil) { mbFuld = true; mbTegnFuld(true); return; } mbAfspilListe(mbKildeIds(r.dataset.mbkilde), r.dataset.mbspil, r.dataset.mbkilde, null); return; }
+    if (t.closest("[data-mbpp]")) { if (mb.spiller) mbPause(); else mbFortsaet(); return; }
+    if (t.closest("[data-mbnaeste]")) { mbNaeste(false); return; }
+    if (t.closest("[data-mbforrige]")) { mbForrige(); return; }
+    if (t.closest("[data-mbaabnfuld]")) { mbFuld = true; mbKoeVis = false; mbTegnFuld(true); return; }
+    if (t.closest("[data-mbluk]")) { mbFuld = false; mbKoeVis = false; appEl.querySelector(".mb-fuld").hidden = true; mbTegnSide(); return; }
+    if (t.closest("[data-mbkoe]")) { mbKoeVis = !mbKoeVis; mbTegnFuld(true); return; }
+    if (t.closest("[data-mbbland]")) { mbSaetBland(!s.bland); lille(s.bland ? "🔀 Bland er slået til" : "Bland er slået fra"); mbTegnFuld(true); return; }
+    if (t.closest("[data-mbgentag]")) { s.gentag = s.gentag === "fra" ? "alle" : s.gentag === "alle" ? "en" : "fra"; gemMb(); lille(s.gentag === "alle" ? "🔁 Gentag alle" : s.gentag === "en" ? "🔂 Gentag denne sang" : "Gentag er slået fra"); mbTegnFuld(true); return; }
+    const ks = t.closest("[data-mbkoeslet]");
+    if (ks) { const p = ks.dataset.mbkoeslet.split(":"); (p[0] === "b" ? mbKoe.bruger : mbKoe.liste).splice(+p[1], 1); mbTegnFuld(true); return; }
+    if (t.closest("[data-mbrydkoe]")) { mbKoe.bruger = []; mbTegnFuld(true); return; }
+    const sp = t.closest("[data-mbspol]");
+    if (sp) { const rc = sp.getBoundingClientRect(); mbSpolTil((e.clientX - rc.left) / rc.width); return; }
+  }
+  nyStil("telefon-stil-musik", [
+    ".tlf-app.mb-app { background: var(--t-hvid); }",
+    ".mb-hoved { flex: none; } .mb-side { flex: 1; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; padding-bottom: 10px; } .mb-side::-webkit-scrollbar { display: none; }",
+    ".mb-velkommen { margin: 10px 12px 4px; padding: 12px; border-radius: 16px; background: linear-gradient(135deg, #ff7ad9, #7a3cff); color: #fff; } .mb-velkommen b { display: block; font-size: 16px; } .mb-velkommen small { font-size: 11.5px; opacity: .9; }",
+    ".mb-overskrift { font-size: 17px; font-weight: 800; margin: 14px 12px 7px; }",
+    ".mb-stemninger { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 0 12px; }",
+    ".mb-stemninger button { position: relative; border: 0; border-radius: 13px; height: 62px; color: #fff; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-shadow: 0 1px 2px rgba(0,0,0,.3); box-shadow: 0 2px 6px rgba(0,0,0,.15); }",
+    ".mb-stemninger button span { font-size: 22px; } .mb-stemninger button i { position: absolute; top: 4px; right: 5px; font-style: normal; font-size: 8.5px; background: rgba(255,255,255,.9); color: #7a3cff; border-radius: 6px; padding: 1px 4px; text-shadow: none; }",
+    ".mb-stemninger button:active { transform: scale(.96); }",
+    ".mb-karrusel { display: flex; gap: 10px; overflow-x: auto; padding: 0 12px 4px; scrollbar-width: none; } .mb-karrusel::-webkit-scrollbar { display: none; }",
+    ".mb-karrusel button, .mb-albumgrid button { border: 0; background: none; padding: 0; text-align: left; cursor: pointer; font: inherit; color: var(--t-tekst); flex: none; width: 110px; }",
+    ".mb-karrusel b, .mb-albumgrid b { display: block; font-size: 12px; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mb-karrusel small, .mb-albumgrid small { display: block; font-size: 11px; color: var(--t-graa); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".mb-albumgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; padding: 12px; } .mb-albumgrid button { width: auto; min-width: 0; }",
+    ".mb-cover { display: block; width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,.2); flex: none; } .mb-cover svg { display: block; width: 100%; height: 100%; }",
+    ".mb-cover.lille { width: 42px; height: 42px; border-radius: 7px; box-shadow: 0 1px 4px rgba(0,0,0,.18); }",
+    ".mb-cover.stor { width: 170px; margin: 0 auto; border-radius: 14px; box-shadow: 0 10px 26px rgba(0,0,0,.28); }",
+    ".mb-cover.kaempe { width: 100%; border-radius: 16px; box-shadow: 0 16px 36px rgba(0,0,0,.35); }",
+    ".mb-mosaik { display: grid; grid-template-columns: 1fr 1fr; } .mb-mosaik .mb-cover { border-radius: 0; box-shadow: none; width: 100%; height: 100%; }",
+    ".mb-tomcover { display: grid; place-items: center; background: var(--t-felt); font-size: 22px; color: var(--t-graa); box-shadow: none; }",
+    ".mb-liste { list-style: none; margin: 0; padding: 0 0 0 12px; }",
+    ".mb-r, .mb-koe li { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--t-linje); cursor: pointer; }",
+    ".mb-r:hover { background: var(--t-hover); } .mb-r.nu .mb-rt b { color: #c0399c; }",
+    ".mb-rt { flex: 1; min-width: 0; } .mb-rt b { display: block; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mb-rt small { display: block; font-size: 11.5px; color: var(--t-graa); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".mb-nr { width: 22px; text-align: center; color: var(--t-graa); font-size: 13px; flex: none; }",
+    ".mb-hj, .mb-mere, .mb-plus { border: 0; background: none; cursor: pointer; font-size: 15px; padding: 4px; flex: none; color: var(--t-graa); font-family: inherit; } .mb-mere { font-size: 18px; font-weight: 700; } .mb-plus { font-size: 20px; color: #c0399c; }",
+    ".mb-boelger { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; } .mb-boelger i { width: 3px; height: 4px; background: #c0399c; border-radius: 1px; }",
+    ".mb-boelger.koer i { animation: mbBoelge .8s ease-in-out infinite alternate; } .mb-boelger.koer i:nth-child(2) { animation-delay: .25s } .mb-boelger.koer i:nth-child(3) { animation-delay: .5s }",
+    "@keyframes mbBoelge { from { height: 3px } to { height: 14px } }",
+    ".mb-allesange { display: block; margin: 16px auto 8px; border: 0; border-radius: 20px; padding: 10px 18px; background: var(--t-felt); color: #c0399c; font: inherit; font-weight: 700; cursor: pointer; }",
+    ".mb-albumtop { text-align: center; padding: 6px 12px 10px; } .mb-albumtop b { display: block; font-size: 18px; margin-top: 10px; } .mb-albumtop small { color: var(--t-graa); font-size: 12px; }",
+    ".mb-spilknap { display: flex; gap: 8px; margin-top: 10px; } .mb-spilknap button { flex: 1; border: 0; border-radius: 11px; padding: 9px; background: var(--t-felt); color: #c0399c; font: inherit; font-weight: 700; cursor: pointer; }",
+    ".mb-favtop { text-align: center; padding: 14px 12px 6px; } .mb-favtop > span { font-size: 40px; display: block; } .mb-favtop b { font-size: 17px; }",
+    ".mb-tom { text-align: center; color: var(--t-graa); padding: 40px 20px; font-size: 13px; line-height: 1.5; } .mb-tom span { display: block; font-size: 40px; }",
+    ".mb-pllist { list-style: none; margin: 0; padding: 8px 12px; } .mb-pllist li { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--t-linje); cursor: pointer; }",
+    ".mb-pllist .mb-cover { width: 56px; height: 56px; } .mb-pllist b { display: block; font-size: 14px; } .mb-pllist small { color: var(--t-graa); font-size: 12px; } .mb-nypl b { color: #c0399c; }",
+    // mini-afspiller og faner
+    ".mb-mini { flex: none; background: var(--t-topbg); border-top: 1px solid var(--t-linje); }",
+    ".mb-minitom { padding: 10px; text-align: center; font-size: 12px; color: var(--t-graa); }",
+    ".mb-miniind { display: flex; align-items: center; gap: 9px; padding: 6px 10px; cursor: pointer; } .mb-miniind .mb-cover.lille { width: 38px; height: 38px; }",
+    ".mb-pp, .mb-nx { border: 0; background: none; font-size: 22px; cursor: pointer; width: 34px; height: 34px; padding: 0; color: var(--t-tekst); flex: none; }",
+    ".mb-minibar { height: 2px; background: var(--t-linje); } .mb-minibar i { display: block; height: 100%; background: #c0399c; }",
+    ".mb-faner { flex: none; display: flex; padding: 4px 4px 20px; background: var(--t-topbg); }",
+    ".mb-faner button { flex: 1; border: 0; background: none; font: inherit; font-size: 10px; color: var(--t-graa); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; filter: grayscale(1); opacity: .75; }",
+    ".mb-faner button span { font-size: 18px; } .mb-faner button.valgt { color: #c0399c; filter: none; opacity: 1; font-weight: 700; }",
+    // fuld afspiller
+    ".mb-fuld { position: absolute; inset: 0; z-index: 9; display: flex; flex-direction: column; padding: 42px 22px 26px; color: #fff; animation: vnOp .3s ease-out; }",
+    ".mb-fuld[hidden] { display: none; }",
+    ".mb-fuldtop { display: flex; align-items: center; justify-content: space-between; } .mb-fuldtop span { text-align: center; font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; opacity: .85; } .mb-fuldtop span b { display: block; font-size: 12.5px; text-transform: none; letter-spacing: 0; }",
+    ".mb-fuldtop button { border: 0; background: rgba(255,255,255,.2); color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 17px; cursor: pointer; padding: 0; line-height: 1; } .mb-fuldtop button.til { background: #fff; color: #333; }",
+    ".mb-fuldcover { margin: 18px 8px 8px; transition: transform .4s; transform: scale(.86); } .mb-fuldcover.spiller { transform: scale(1); }",
+    ".mb-viz { width: 100%; height: 30px; display: block; margin: 2px 0 4px; }",
+    ".mb-fuldinfo { display: flex; align-items: center; gap: 8px; margin-top: auto; } .mb-fuldinfo span { flex: 1; min-width: 0; } .mb-fuldinfo b { display: block; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mb-fuldinfo small { display: block; font-size: 12px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".mb-fuldinfo .mb-hj { font-size: 22px; }",
+    ".mb-spol { position: relative; height: 5px; border-radius: 3px; background: rgba(255,255,255,.3); margin: 12px 0 4px; cursor: pointer; } .mb-spol::before { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }",
+    ".mb-spol i { display: block; height: 100%; border-radius: 3px; background: #fff; } .mb-spol b { position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }",
+    ".mb-tider { display: flex; justify-content: space-between; font-size: 10.5px; opacity: .85; font-variant-numeric: tabular-nums; }",
+    ".mb-kontrol { display: flex; align-items: center; justify-content: space-between; margin: 10px 0; }",
+    ".mb-kontrol button { border: 0; background: none; color: #fff; font-size: 24px; cursor: pointer; width: 42px; height: 42px; padding: 0; border-radius: 50%; opacity: .95; } .mb-kontrol button.stor { width: 60px; height: 60px; font-size: 30px; background: rgba(255,255,255,.25); }",
+    ".mb-kontrol [data-mbbland], .mb-kontrol [data-mbgentag] { font-size: 17px; opacity: .5; } .mb-kontrol button.til { opacity: 1; background: rgba(255,255,255,.28); }",
+    ".mb-vol { display: flex; align-items: center; gap: 8px; font-size: 13px; } .mb-vol input { flex: 1; accent-color: #fff; }",
+    ".mb-koe { flex: 1; overflow-y: auto; margin: 10px -8px 6px; background: rgba(0,0,0,.18); border-radius: 14px; padding: 4px 10px 10px; scrollbar-width: none; }",
+    ".mb-koe ul { list-style: none; margin: 0; padding: 0; } .mb-koe li { border-bottom-color: rgba(255,255,255,.15); cursor: default; } .mb-koe .mb-rt small { color: rgba(255,255,255,.75); }",
+    ".mb-koe li button { border: 0; background: rgba(255,255,255,.2); color: #fff; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 10px; padding: 0; flex: none; }",
+    ".mb-koe .mb-boelger i { background: #fff; }",
+    ".mb-kt { font-size: 12px; font-weight: 800; margin: 10px 0 2px; display: flex; justify-content: space-between; } .mb-kt button { border: 0; background: none; color: #fff; text-decoration: underline; cursor: pointer; font: inherit; font-size: 11px; }",
+    ".mb-ktom { font-size: 11.5px; opacity: .8; padding: 8px 0; }",
+    // ark med valg
+    ".mb-arkbg { position: absolute; inset: 0; z-index: 12; background: rgba(0,0,0,.3); display: flex; align-items: flex-end; } .mb-arkbg[hidden] { display: none; }",
+    ".mb-ark { width: 100%; max-height: 82%; overflow-y: auto; background: var(--t-lys); border-radius: 16px 16px 0 0; padding: 10px 10px 26px; box-sizing: border-box; display: flex; flex-direction: column; gap: 5px; animation: vnOp .25s ease-out; scrollbar-width: none; }",
+    ".mb-arktop { display: flex; align-items: center; gap: 10px; padding: 2px 4px 6px; } .mb-arktop b { display: block; font-size: 14px; } .mb-arktop small { color: var(--t-graa); font-size: 12px; }",
+    ".mb-ark > button { border: 0; background: var(--t-hvid); border-radius: 11px; padding: 10px 12px; text-align: left; font: inherit; font-size: 14px; color: var(--t-tekst); cursor: pointer; flex: none; }",
+    ".mb-ark > button.rod { color: var(--t-rod); } .mb-ark > button.sikker { background: var(--t-rod); color: #fff; } .mb-ark > button.luk { text-align: center; font-weight: 700; color: #c0399c; margin-top: 4px; }",
+    ".mb-arkt { font-size: 11.5px; font-weight: 700; color: var(--t-graa); text-transform: uppercase; margin: 6px 4px 0; }",
+    ".mb-nyform { display: flex; gap: 6px; flex: none; } .mb-nyform input { flex: 1; min-width: 0; border: 1px solid var(--t-linje); border-radius: 11px; padding: 9px 11px; font: inherit; outline: 0; background: var(--t-hvid); color: var(--t-tekst); user-select: text; }",
+    ".mb-nyform button { border: 0; border-radius: 11px; padding: 0 14px; background: #c0399c; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }",
+  ]);
 
   setInterval(function () { if (!tlf.hidden) opdaterUr(); }, 10000);
   setInterval(function () { if (!tlf.hidden && skaermNu === "hjem" && !wTraek && !galleriAabent) tegnWidgets(); }, 5000);
