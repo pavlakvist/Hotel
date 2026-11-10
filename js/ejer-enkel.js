@@ -43,7 +43,7 @@
     { id: "moderation", ikon: "🛡️", navn: "Moderation", faner: ["rapporter", "adminlog"] },
     { id: "events",     ikon: "📅", navn: "Events",     faner: ["events", "eventnoter", "vindere", "biograf", "loppe"] },
     { id: "rum",        ikon: "🛋️", navn: "Rum",        faner: ["rum"] },
-    { id: "oekonomi",   ikon: "🪙", navn: "Økonomi",    faner: ["valuta", "rares"] },
+    { id: "oekonomi",   ikon: "🪙", navn: "Økonomi",    faner: ["valuta", "veksel", "rares"] },
     { id: "personale",  ikon: "🪪", navn: "Personale",  faner: ["ansaettelse", "staffchat", "vagtskema", "ansoegninger"] },
     { id: "system",     ikon: "⚙️", navn: "System",     faner: ["system"] },
   ];

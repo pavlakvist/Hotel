@@ -5062,7 +5062,46 @@
     { id: "spil", titel: "8-bit Hotel", kunstner: "Pixel Portier", sange: ["Level 1: Lobby", "Snake-jagt", "Boss i kælderen", "High score"] },
   ];
   const MB_SANGE = {};
-  MB_ALBUM.forEach(function (a) { a.sange.forEach(function (t, i) { MB_SANGE[a.id + i] = { id: a.id + i, titel: t, album: a.id, nr: i + 1 }; }); });
+  MB_ALBUM.forEach(function (a) { a.sange.forEach(function (t, i) { MB_SANGE[a.id + i] = { id: a.id + i, titel: t, album: a.id, nr: i + 1, kunstner: a.kunstner }; }); });
+  // ----- 🎤 Rigtige sange: lydfiler i mappen musik/ (listen står i musik/sange.js) -----
+  // Kun musik der er lovlig at bruge: Public Domain eller CC0. Licens og kilde står ved hver sang.
+  MB_ST.rigtige = { navn: "Rigtige sange", ik: "🎤", farver: ["#ffd36b", "#e0447e"], form: "prikker", skala: "dur", bpm: [100, 100], mel: "sine", pad: "sine" };
+  const mbVarighed = {};
+  let mbRigtigeHentet = false;
+  function mbHentRigtige() {
+    if (mbRigtigeHentet) return;
+    mbRigtigeHentet = true;
+    const sc = document.createElement("script");
+    sc.src = "musik/sange.js?v=" + Math.floor(Date.now() / 60000);
+    sc.onload = function () {
+      const l = Array.isArray(window.MUSIK_SANGE) ? window.MUSIK_SANGE.filter(function (x) { return x && x.fil && x.titel; }) : [];
+      if (!l.length) return;
+      const a = { id: "rigtige", titel: "Rigtige sange", kunstner: "Fri musik", sange: [] };
+      l.forEach(function (x, i) {
+        a.sange.push(x.titel);
+        MB_SANGE["rigtige" + i] = { id: "rigtige" + i, titel: String(x.titel), album: "rigtige", nr: i + 1, kunstner: String(x.kunstner || "Ukendt"), fil: "musik/" + String(x.fil).replace(/^musik\//, ""), licens: x.licens || "", kilde: x.kilde || "" };
+        const au = new Audio(); au.preload = "metadata";
+        au.onloadedmetadata = function () { mbVarighed["rigtige" + i] = au.duration; };
+        au.src = MB_SANGE["rigtige" + i].fil;
+      });
+      MB_ALBUM.unshift(a);
+      if (appNu === "musik" && appEl) mbTegnSide();
+    };
+    sc.onerror = function () {};
+    document.head.appendChild(sc);
+  }
+  setTimeout(mbHentRigtige, 3000);
+  function mbSpilEkte(id) {
+    const x = MB_SANGE[id], a = new Audio(x.fil);
+    a.volume = mbIndst().vol;
+    a.onloadedmetadata = function () { mbVarighed[id] = a.duration; };
+    a.onended = function () { if (mb.ekte === a) mbNaeste(true); };
+    a.onerror = function () { if (mb.ekte === a) { lille("⚠️ Sangen " + x.titel + " kunne ikke findes"); mb.spiller = false; mbOpdater(); } };
+    if (mb.master && mb.ctx) try { mb.master.gain.setTargetAtTime(0, mb.ctx.currentTime, 0.03); } catch (e) {}
+    mb.data = null; mb.sang = id; mb.ekte = a; mb.spiller = true;
+    a.play().catch(function () { if (mb.ekte === a) { mb.spiller = false; mbOpdater(); } });
+  }
+  function mbStopEkte() { if (mb.ekte) { const a = mb.ekte; mb.ekte = null; try { a.pause(); a.src = ""; } catch (e) {} } }
   function mbAlbum(id) { return MB_ALBUM.filter(function (a) { return a.id === id; })[0]; }
   function mbAlbumSange(id) { return mbAlbum(id).sange.map(function (t, i) { return id + i; }); }
 
@@ -5244,6 +5283,7 @@
     else if (e.i === "regn") mbStoej(t, e.d * sd, 0.022, 400, 2200);
   }
   function mbTick() {
+    if (mb.ekte && mb.spiller && ind.bat <= 0) { mbPause(); lille("🎵 Musikken stoppede – telefonen er løbet tør"); return; }
     if (!mb.spiller || !mb.ctx || !mb.data) return;
     if (ind.bat <= 0) { mbPause(); lille("🎵 Musikken stoppede – telefonen er løbet tør"); return; }
     const frem = document.hidden ? 2.5 : 0.35, c = mb.ctx;
@@ -5255,11 +5295,12 @@
   }
   setInterval(mbTick, 40);
   function mbPos() {
+    if (mb.ekte) return mb.ekte.currentTime || 0;
     if (!mb.data) return 0;
     if (!mb.spiller || !mb.ctx) return mb.step * mb.data.stepDur;
     return Math.max(0, Math.min(mb.data.total, (mb.ctx.currentTime - mb.startCtx) / mb.data.stepDur + mb.startStep)) * mb.data.stepDur;
   }
-  function mbLaengde(id) { const d = mbByg(id); return d.total * d.stepDur; }
+  function mbLaengde(id) { if (MB_SANGE[id] && MB_SANGE[id].fil) return mbVarighed[id] || 0; const d = mbByg(id); return d.total * d.stepDur; }
   function mbStart(fraStep) {
     if (!mbLydOk()) { lille("Telefonen kan ikke spille lyd lige nu"); return; }
     mb.step = fraStep || 0;
@@ -5270,27 +5311,31 @@
     mbTick();
   }
   function mbSpil(id) {
-    mb.sang = id; mb.data = mbByg(id);
     const s = mbIndst();
     s.senest = [id].concat(s.senest.filter(function (x) { return x !== id; })).slice(0, 12); gemMb();
+    mbStopEkte();
+    if (MB_SANGE[id].fil) { mbSpilEkte(id); mbOpdater(true); return; }
+    mb.sang = id; mb.data = mbByg(id);
     mbStart(0);
     mbOpdater(true);
   }
   function mbPause() {
     if (!mb.spiller) return;
+    if (mb.ekte) { mb.ekte.pause(); mb.spiller = false; mbOpdater(); return; }
     mb.step = Math.floor(mbPos() / mb.data.stepDur);
     mb.spiller = false;
     if (mb.master) { try { mb.master.gain.setTargetAtTime(0, mb.ctx.currentTime, 0.04); } catch (e) {} }
     mbOpdater();
   }
-  function mbFortsaet() { if (!mb.sang) return; if (mb.step >= mb.data.total) mb.step = 0; mbStart(mb.step); mbOpdater(); }
+  function mbFortsaet() { if (!mb.sang) return; if (mb.ekte) { mb.ekte.play().catch(function () {}); mb.spiller = true; mbOpdater(); return; } if (mb.step >= mb.data.total) mb.step = 0; mbStart(mb.step); mbOpdater(); }
   function mbSpolTil(frac) {
+    if (mb.ekte) { if (mb.ekte.duration) mb.ekte.currentTime = Math.max(0, Math.min(0.999, frac)) * mb.ekte.duration; mbOpdater(); return; }
     if (!mb.data) return;
     const st = Math.max(0, Math.min(mb.data.total - 1, Math.floor(frac * mb.data.total)));
     if (mb.spiller) mbStart(st); else mb.step = st;
     mbOpdater();
   }
-  function mbStop() { mb.spiller = false; if (mb.master) try { mb.master.gain.setTargetAtTime(0, mb.ctx.currentTime, 0.03); } catch (e) {} mb.sang = null; mb.data = null; mbKoe = { bruger: [], liste: [], kildeListe: [], kilde: "" }; mbOpdater(); }
+  function mbStop() { mbStopEkte(); mb.spiller = false; if (mb.master) try { mb.master.gain.setTargetAtTime(0, mb.ctx.currentTime, 0.03); } catch (e) {} mb.sang = null; mb.data = null; mbKoe = { bruger: [], liste: [], kildeListe: [], kilde: "" }; mbOpdater(); }
   function mbBlandet(l) { l = l.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)), x = l[i]; l[i] = l[j]; l[j] = x; } return l; }
   function mbAfspilListe(ids, start, kilde, bland) {
     if (!ids.length) return;
@@ -5359,6 +5404,7 @@
   let mbFane = "hjem", mbUnder = null, mbFuld = false, mbKoeVis = false, mbArk = null;
   function tegnMusik() {
     mbIndst();
+    mbHentRigtige();
     mbUnder = null; mbFuld = false; mbArk = null; mbKoeVis = false;
     appEl.classList.add("mb-app");
     appEl.innerHTML = "<div class='mb-hoved'></div><div class='mb-side'></div><div class='mb-mini'></div>" +
@@ -5367,7 +5413,7 @@
       }).join("") + "</div><div class='mb-fuld' hidden></div><div class='mb-arkbg' hidden></div>";
     appEl.addEventListener("click", mbKlik);
     appEl.addEventListener("input", function (e) {
-      if (e.target.matches("[data-mbvol]")) { mbIndst().vol = +e.target.value / 100; gemMb(); if (mb.master && mb.spiller) mb.master.gain.setTargetAtTime(mbIndst().vol * 0.9, mb.ctx.currentTime, 0.02); }
+      if (e.target.matches("[data-mbvol]")) { mbIndst().vol = +e.target.value / 100; gemMb(); if (mb.master && mb.spiller && !mb.ekte) mb.master.gain.setTargetAtTime(mbIndst().vol * 0.9, mb.ctx.currentTime, 0.02); if (mb.ekte) mb.ekte.volume = mbIndst().vol; }
     });
     appEl.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -5394,7 +5440,7 @@
   function mbRaekke(id, kilde, nr, iPl) {
     const s = MB_SANGE[id], a = mbAlbum(s.album), spiller = mb.sang === id;
     return "<li class='mb-r" + (spiller ? " nu" : "") + "' data-mbspil='" + id + "' data-mbkilde='" + kilde + "'>" + (nr ? "<span class='mb-nr'>" + (spiller ? mbBolger() : nr) + "</span>" : mbCover(s.album, "lille")) +
-      "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(a.kunstner) + " · " + mbTidTekst(mbLaengde(id)) + "</small></span>" +
+      "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(s.kunstner) + " · " + (mbLaengde(id) ? mbTidTekst(mbLaengde(id)) : "🎤") + "</small></span>" +
       "<button class='mb-hj" + (erFav(id) ? " til" : "") + "' data-mbfav='" + id + "'>" + (erFav(id) ? "❤️" : "🤍") + "</button><button class='mb-mere' data-mbmere='" + id + "'" + (iPl ? " data-mbipl='" + iPl + "'" : "") + ">⋯</button></li>";
   }
   function mbBolger() { return "<span class='mb-boelger" + (mb.spiller ? " koer" : "") + "'><i></i><i></i><i></i></span>"; }
@@ -5423,7 +5469,7 @@
     if (mbUnder && mbUnder.indexOf("a:") === 0) {
       const a = mbAlbum(mbUnder.slice(2)), st = MB_ST[a.id], ids = mbAlbumSange(a.id);
       hoved.innerHTML = "<div class='tlf-top'>" + tilb + "<h3></h3><span class='tlf-tb'></span></div>";
-      h = "<div class='mb-albumtop'>" + mbCover(a.id, "stor") + "<b>" + esc(a.titel) + "</b><small>" + esc(a.kunstner) + " · " + st.ik + " " + st.navn + " · " + ids.length + " sange</small>" +
+      h = "<div class='mb-albumtop'>" + mbCover(a.id, "stor") + "<b>" + esc(a.titel) + "</b><small>" + esc(a.kunstner) + " · " + st.ik + " " + st.navn + " · " + ids.length + (ids.length === 1 ? " sang" : " sange") + "</small>" +
         "<div class='mb-spilknap'><button data-mbspilalle='" + mbUnder + "'>▶ Afspil</button><button data-mbblandalle='" + mbUnder + "'>🔀 Bland</button></div></div>" +
         "<ul class='mb-liste'>" + ids.map(function (id, i) { return mbRaekke(id, mbUnder, i + 1); }).join("") + "</ul>";
     } else if (mbUnder && mbUnder.indexOf("p:") === 0) {
@@ -5436,13 +5482,13 @@
         (p.sange.length ? "<ul class='mb-liste'>" + p.sange.filter(function (id) { return MB_SANGE[id]; }).map(function (id) { return mbRaekke(id, mbUnder, 0, p.id); }).join("") + "</ul>"
           : "<div class='mb-tom'>Playlisten er tom.<br>Tryk ⋯ ud for en sang og vælg <b>Tilføj til playliste</b>.</div>") +
         "<div class='mb-overskrift'>Forslag</div><ul class='mb-liste'>" + Object.keys(MB_SANGE).filter(function (id) { return p.sange.indexOf(id) < 0; }).sort(function () { return 0; }).slice(0, 5).map(function (id) {
-          const x = MB_SANGE[id]; return "<li class='mb-r'>" + mbCover(x.album, "lille") + "<span class='mb-rt'><b>" + esc(x.titel) + "</b><small>" + esc(mbAlbum(x.album).kunstner) + "</small></span><button class='mb-plus' data-mbtilpl='" + p.id + "' data-mbsang='" + id + "'>＋</button></li>";
+          const x = MB_SANGE[id]; return "<li class='mb-r'>" + mbCover(x.album, "lille") + "<span class='mb-rt'><b>" + esc(x.titel) + "</b><small>" + esc(x.kunstner) + "</small></span><button class='mb-plus' data-mbtilpl='" + p.id + "' data-mbsang='" + id + "'>＋</button></li>";
         }).join("") + "</ul>";
     } else if (mbFane === "hjem") {
       hoved.innerHTML = "<div class='tlf-top'>" + hjem + "<h3>Music Box</h3><span class='tlf-tb'></span></div>";
       const t = new Date().getHours(), forslag = t < 9 ? "glad" : t < 15 ? "fokus" : t < 19 ? "hygge" : t < 22 ? "fest" : "rolig";
       h = "<div class='mb-velkommen'><b>" + (t < 10 ? "Godmorgen" : t < 18 ? "Hej" : "Godaften") + ", " + esc(mig()) + " 🎧</b><small>Al musikken er lavet af hotellet selv – helt uden ophavsret.</small></div>" +
-        "<div class='mb-overskrift'>Hvordan har du det?</div><div class='mb-stemninger'>" + Object.keys(MB_ST).map(function (k) {
+        "<div class='mb-overskrift'>Hvordan har du det?</div><div class='mb-stemninger'>" + Object.keys(MB_ST).filter(function (k) { return k !== "rigtige"; }).map(function (k) {
           const st = MB_ST[k];
           return "<button data-mbstemning='" + k + "' style='background:linear-gradient(135deg," + st.farver[0] + "," + st.farver[1] + ")'><span>" + st.ik + "</span>" + st.navn + (k === forslag ? "<i>Forslag</i>" : "") + "</button>";
         }).join("") + "</div>" +
@@ -5472,7 +5518,7 @@
       if (!mb.sang) mini.innerHTML = "<div class='mb-minitom'>🎵 Vælg en sang eller en stemning</div>";
       else {
         const s = MB_SANGE[mb.sang];
-        if (helt || !mini.querySelector("[data-mbminiinfo='" + mb.sang + "']")) mini.innerHTML = "<div class='mb-miniind' data-mbaabnfuld data-mbminiinfo='" + mb.sang + "'>" + mbCover(s.album, "lille") + "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(mbAlbum(s.album).kunstner) + "</small></span>" +
+        if (helt || !mini.querySelector("[data-mbminiinfo='" + mb.sang + "']")) mini.innerHTML = "<div class='mb-miniind' data-mbaabnfuld data-mbminiinfo='" + mb.sang + "'>" + mbCover(s.album, "lille") + "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(s.kunstner) + "</small></span>" +
           "<button data-mbpp class='mb-pp'></button><button data-mbnaeste class='mb-nx'>⏭</button></div><div class='mb-minibar'><i></i></div>";
         mini.querySelector("[data-mbpp]").textContent = mb.spiller ? "⏸" : "▶";
         mini.querySelector(".mb-minibar i").style.width = (mbPos() / mbLaengde(mb.sang) * 100) + "%";
@@ -5493,7 +5539,7 @@
       f.style.background = "linear-gradient(170deg," + st.farver[0] + "," + st.farver[1] + " 70%)";
       f.innerHTML = "<div class='mb-fuldtop' data-mbfuldsang='" + mb.sang + "'><button data-mbluk>⌄</button><span>" + (mbKoe.kilde ? "Spiller fra<b>" + esc(mbKildeNavn(mbKoe.kilde)) + "</b>" : "Spiller nu") + "</span><button data-mbkoe class='" + (mbKoeVis ? "til" : "") + "'>☰</button></div>" +
         (mbKoeVis ? mbKoeHtml() : "<div class='mb-fuldcover" + (mb.spiller ? " spiller" : "") + "'>" + mbCover(x.album, "kaempe") + "</div><canvas class='mb-viz' width='240' height='40'></canvas>") +
-        "<div class='mb-fuldinfo'><span><b>" + esc(x.titel) + "</b><small>" + esc(a.kunstner) + " · " + esc(a.titel) + "</small></span><button data-mbfav='" + mb.sang + "' class='mb-hj'>" + (erFav(mb.sang) ? "❤️" : "🤍") + "</button></div>" +
+        "<div class='mb-fuldinfo'><span><b>" + esc(x.titel) + "</b><small>" + esc(x.kunstner) + " · " + esc(x.fil ? (x.licens || "Fri musik") : a.titel) + "</small></span><button data-mbfav='" + mb.sang + "' class='mb-hj'>" + (erFav(mb.sang) ? "❤️" : "🤍") + "</button></div>" +
         "<div class='mb-spol' data-mbspol><i></i><b></b></div><div class='mb-tider'><span class='t1'></span><span class='t2'></span></div>" +
         "<div class='mb-kontrol'><button data-mbbland class='" + (s.bland ? "til" : "") + "' title='Bland'>🔀</button><button data-mbforrige>⏮</button><button data-mbpp class='stor'></button><button data-mbnaeste>⏭</button>" +
         "<button data-mbgentag class='" + (s.gentag !== "fra" ? "til" : "") + "' title='Gentag'>" + (s.gentag === "en" ? "🔂" : "🔁") + "</button></div>" +
@@ -5509,9 +5555,16 @@
   // lille lyd-visualisering
   (function viz() {
     requestAnimationFrame(viz);
-    if (!mbFuld || !appEl || appNu !== "musik" || !mb.an) return;
+    if (!mbFuld || !appEl || appNu !== "musik") return;
     const c = appEl.querySelector(".mb-viz");
     if (!c) return;
+    if (mb.ekte) {   // rigtige sange: blødt hoppende søjler
+      const g2 = c.getContext("2d"), tt = performance.now() / 1000;
+      g2.clearRect(0, 0, c.width, c.height); g2.fillStyle = "rgba(255,255,255,.75)";
+      for (let i = 0; i < 24; i++) { const v = mb.spiller ? 0.25 + 0.6 * Math.abs(Math.sin(tt * (2 + (i % 5) * 0.7) + i * 1.3)) * (1 - Math.abs(i - 11.5) / 16) : 0, h = Math.max(2, v * c.height); g2.fillRect(i * 10 + 2, (c.height - h) / 2, 6, h); }
+      return;
+    }
+    if (!mb.an) return;
     const g = c.getContext("2d"), d = new Uint8Array(mb.an.frequencyBinCount);
     mb.an.getByteFrequencyData(d);
     g.clearRect(0, 0, c.width, c.height);
@@ -5522,9 +5575,9 @@
   function mbKoeHtml() {
     const x = MB_SANGE[mb.sang], r = function (id, i, slags) {
       const s = MB_SANGE[id]; if (!s) return "";
-      return "<li>" + mbCover(s.album, "lille") + "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(mbAlbum(s.album).kunstner) + "</small></span><button data-mbkoeslet='" + slags + ":" + i + "'>✕</button></li>";
+      return "<li>" + mbCover(s.album, "lille") + "<span class='mb-rt'><b>" + esc(s.titel) + "</b><small>" + esc(s.kunstner) + "</small></span><button data-mbkoeslet='" + slags + ":" + i + "'>✕</button></li>";
     };
-    return "<div class='mb-koe'><div class='mb-kt'>Spiller nu</div><ul><li class='nu'>" + mbCover(x.album, "lille") + "<span class='mb-rt'><b>" + esc(x.titel) + "</b><small>" + esc(mbAlbum(x.album).kunstner) + "</small></span>" + mbBolger() + "</li></ul>" +
+    return "<div class='mb-koe'><div class='mb-kt'>Spiller nu</div><ul><li class='nu'>" + mbCover(x.album, "lille") + "<span class='mb-rt'><b>" + esc(x.titel) + "</b><small>" + esc(x.kunstner) + "</small></span>" + mbBolger() + "</li></ul>" +
       (mbKoe.bruger.length ? "<div class='mb-kt'>Næste i køen <button data-mbrydkoe>Ryd</button></div><ul>" + mbKoe.bruger.map(function (id, i) { return r(id, i, "b"); }).join("") + "</ul>" : "") +
       "<div class='mb-kt'>" + (mbKoe.kilde ? "Næste fra " + esc(mbKildeNavn(mbKoe.kilde)) : "Næste") + (mbIndst().gentag === "alle" ? " · 🔁" : "") + "</div>" +
       (mbKoe.liste.length ? "<ul>" + mbKoe.liste.slice(0, 30).map(function (id, i) { return r(id, i, "l"); }).join("") + "</ul>" : "<div class='mb-ktom'>Ikke flere sange. Tryk ⋯ ud for en sang → Tilføj til kø.</div>") + "</div>";
@@ -5538,7 +5591,8 @@
   function lukMbArk() { const b = appEl && appEl.querySelector(".mb-arkbg"); if (b) b.hidden = true; mbArk = null; }
   function mbSangMenu(id, iPl) {
     const s = MB_SANGE[id], pl = mbIndst().pl;
-    visMbArk("<div class='mb-arktop'>" + mbCover(s.album, "lille") + "<span><b>" + esc(s.titel) + "</b><small>" + esc(mbAlbum(s.album).kunstner) + "</small></span></div>" +
+    visMbArk("<div class='mb-arktop'>" + mbCover(s.album, "lille") + "<span><b>" + esc(s.titel) + "</b><small>" + esc(s.kunstner) + "</small></span></div>" +
+      (s.fil ? "<div class='mb-licens'>ℹ️ Lovlig at bruge: <b>" + esc(s.licens || "Fri musik") + "</b>" + (s.kilde ? " · " + esc(s.kilde) : "") + "</div>" : "") +
       "<button data-mbak='spil' data-id='" + id + "'>▶ Spil nu</button><button data-mbak='naeste' data-id='" + id + "'>⏭ Spil som det næste</button>" +
       "<button data-mbak='koe' data-id='" + id + "'>➕ Tilføj til køen</button><button data-mbak='fav' data-id='" + id + "'>" + (erFav(id) ? "💔 Fjern fra favoritter" : "❤️ Læg i favoritter") + "</button>" +
       "<div class='mb-arkt'>Tilføj til playliste</div>" + pl.map(function (p) { return "<button data-mbak='pl' data-id='" + id + "' data-pl='" + p.id + "'>📃 " + esc(p.navn) + (p.sange.indexOf(id) >= 0 ? " ✓" : "") + "</button>"; }).join("") +
@@ -5683,6 +5737,7 @@
     ".mb-arktop { display: flex; align-items: center; gap: 10px; padding: 2px 4px 6px; } .mb-arktop b { display: block; font-size: 14px; } .mb-arktop small { color: var(--t-graa); font-size: 12px; }",
     ".mb-ark > button { border: 0; background: var(--t-hvid); border-radius: 11px; padding: 10px 12px; text-align: left; font: inherit; font-size: 14px; color: var(--t-tekst); cursor: pointer; flex: none; }",
     ".mb-ark > button.rod { color: var(--t-rod); } .mb-ark > button.sikker { background: var(--t-rod); color: #fff; } .mb-ark > button.luk { text-align: center; font-weight: 700; color: #c0399c; margin-top: 4px; }",
+    ".mb-licens { font-size: 11.5px; color: var(--t-graa); background: var(--t-hvid); border-radius: 10px; padding: 7px 10px; }",
     ".mb-arkt { font-size: 11.5px; font-weight: 700; color: var(--t-graa); text-transform: uppercase; margin: 6px 4px 0; }",
     ".mb-nyform { display: flex; gap: 6px; flex: none; } .mb-nyform input { flex: 1; min-width: 0; border: 1px solid var(--t-linje); border-radius: 11px; padding: 9px 11px; font: inherit; outline: 0; background: var(--t-hvid); color: var(--t-tekst); user-select: text; }",
     ".mb-nyform button { border: 0; border-radius: 11px; padding: 0 14px; background: #c0399c; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }",

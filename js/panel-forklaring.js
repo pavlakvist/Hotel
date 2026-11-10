@@ -436,3 +436,11 @@ document.head.appendChild(forklaringStil);
   s.src = "js/telefon.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 💱 Vekselbørsen (js/vekselboers.js): veksl Glimt og Stella (4 = 1) + Ejerpanel → 📈 Hotellets økonomi.
+(function () {
+  if (document.querySelector("script[src^='js/vekselboers.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vekselboers.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
