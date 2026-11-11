@@ -108,6 +108,7 @@
           const t = "Din billet er scannet ✅ Find plads " + b.saede + " – den lyser med en guldpil.";
           try { if (typeof besked !== "undefined") besked.textContent = "🎟 " + t; } catch (e) {}
           if (typeof window.tlfNotis === "function") window.tlfNotis("cinema", "📟 Vera-cinema", t);
+          try { window.dispatchEvent(new CustomEvent("vc-scannet", { detail: b })); } catch (e) {}
         }
       });
       if (svar && svar.nu) tidForskel = svar.nu - Date.now();
@@ -123,8 +124,10 @@
   setTimeout(hent, 2500);
   setInterval(function () {
     // ofte, når appen er åben; ellers sjældent (til biografens "Din plads" og påmindelser)
-    if (appAaben() || iBio() || Date.now() - (hent.sidst || 0) > 60000) { hent.sidst = Date.now(); hent(); }
-  }, 8000);
+    // i forhallen hvert 4. sekund (så døren åbner, lige når billetten er scannet)
+    const gaa = iForhal() || ((appAaben() || iBio()) && Date.now() - (hent.sidst || 0) > 7500) || Date.now() - (hent.sidst || 0) > 60000;
+    if (gaa) { hent.sidst = Date.now(); hent(); }
+  }, 4000);
 
   // Påmindelse 15 minutter før en film, man har billet til
   function paamind() {
@@ -545,7 +548,7 @@
     if (!sek) return;
     // rør ikke formularen, mens nogen skriver i den
     if (pRet && sek.querySelector(".vc-form") && sek.contains(document.activeElement)) return;
-    const under = [["program", "🗓 Program"], ["bookinger", "🎟 Bookinger"], ["scanner", "📟 Scanner"]];
+    const under = [["program", "🗓 Program"], ["bookinger", "🎟 Bookinger"], ["scanner", "📟 Scanner"], ["kiosk", "🍿 Kiosk"]];
     const kommende = pData ? pData.program.filter(function (v) { return v.start + v.varighed * 60000 > nu(); }) : [];
     const solgtNu = kommende.reduce(function (s, v) { return s + (v.optaget || []).length; }, 0);
     sek.innerHTML = "<div class='vc-p-top'><div class='vc-p-logo'><b>VERA</b><span>CINEMA</span></div>" +
@@ -563,8 +566,39 @@
     const krop = sek.querySelector(".vc-p-krop");
     if (!pData) { krop.innerHTML = pFejl ? "" : "<p>Henter …</p>"; return; }
     if (pUnder === "scanner") { krop.innerHTML = "<p>Scanneren åbner som en lille håndscanner, du kan flytte rundt. Har du en rigtig stregkodescanner (USB), virker den også: klik i feltet, og scan billetten på gæstens skærm.</p><button type='button' class='lv-knap' data-vc-aabn-scanner>📟 Åbn scanneren</button>"; krop.querySelector("[data-vc-aabn-scanner]").addEventListener("click", function () { aabnScanner(); }); return; }
+    if (pUnder === "kiosk") { tegnPKiosk(krop); return; }
     if (pUnder === "program") tegnPProgram(krop);
     else tegnPBookinger(krop);
+  }
+
+  // 🍿 Kiosken i Biografens forhal (js/biograf-forhal.js, database-48)
+  let kData = null, kFejl = "", kHentet = 0;
+  function tegnPKiosk(krop) {
+    const vis = function () {
+      if (kFejl) { krop.innerHTML = "<p class='vc-p-fejl'>" + esc(kFejl) + "</p>"; return; }
+      if (!kData) { krop.innerHTML = "<p>Henter …</p>"; return; }
+      const idag = kData.idag || {};
+      const tegn = { popcorn: "🍿", sodavand: "🥤", slik: "🍬" };
+      krop.innerHTML = "<p>Kiosken står i <b>Biografens forhal</b>. Gæsterne klikker på kiosken, slikvæggen eller sodavandsskabet og betaler 1 Glimt.</p>" +
+        "<div class='vc-p-tal'>" + ["popcorn", "sodavand", "slik"].map(function (v) {
+          return "<div><b>" + tegn[v] + " " + (idag[v] || 0) + "</b><small>" + v + " i dag</small></div>";
+        }).join("") + "<div><b>" + (kData.glimt_ialt || 0) + " ⭐</b><small>tjent i alt</small></div></div>" +
+        "<h4 style='margin:12px 0 6px'>Seneste salg</h4>" +
+        ((kData.seneste || []).length ? "<table><tr><th>Hvem</th><th>Hvad</th><th>Hvornår</th></tr>" + kData.seneste.map(function (r) {
+          const d = new Date(r.tid);
+          return "<tr><td>" + esc(r.navn || "") + "</td><td>" + (tegn[r.vare] || "") + " " + esc(r.vare) + "</td><td>" + d.getDate() + "/" + (d.getMonth() + 1) + " kl. " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + "</td></tr>";
+        }).join("") + "</table>" : "<p>Der er ikke solgt noget endnu.</p>");
+    };
+    vis();
+    if (Date.now() - kHentet < 5000 || !online()) return;
+    kHentet = Date.now();
+    serverKald("hv_cinema_kiosk_status", { p_token: token() }).then(function (svar) {
+      kData = svar; kFejl = "";
+      if (pUnder === "kiosk" && krop.isConnected) vis();
+    }).catch(function (e) {
+      kFejl = /hv_cinema_kiosk/.test(fejlTekst(e)) ? "Kør database-48-biograf-forhal.sql i Supabase, så kiosken virker." : fejlTekst(e);
+      if (pUnder === "kiosk" && krop.isConnected) vis();
+    });
   }
 
   function tegnPProgram(krop) {
@@ -796,6 +830,20 @@
   //  🪑 Numre på sæderne i biografen + din egen plads lyser op
   // ---------------------------------------------------------------
   function iBio() { return typeof rumValg !== "undefined" && rumValg === "vaerelse" && typeof aktivtVaerelse !== "undefined" && aktivtVaerelse === "biograf"; }
+  // Biografens forhal (js/biograf-forhal.js)
+  function iForhal() { return typeof rumValg !== "undefined" && rumValg === "vaerelse" && typeof aktivtVaerelse !== "undefined" && aktivtVaerelse === "bioforhal"; }
+  // Må man gå gennem dørene ind i salen? (bruges af js/biograf-forhal.js)
+  window.vcDoerTjek = function () {
+    if (maaStyre()) return { ok: true, personale: true };
+    if (!online() || !data) return { ok: true };
+    const v = aktivVisning(data.program);
+    if (!v) return { ok: true };
+    const b = data.mine.find(function (x) { return x.visning_id === v.id; });
+    if (!b) return { ok: false, grund: "billet", tekst: "🎟 Du skal have en billet til " + v.titel + " for at komme ind i salen. Køb den i appen Vera-cinema på telefonen.", visning: v };
+    if (!b.scannet) return { ok: false, grund: "scan", tekst: "📟 Vis din billet ved billetpulten. En ansat scanner den, og så åbner dørene ind til salen.", visning: v, billet: b };
+    return { ok: true, billet: b, visning: v };
+  };
+  window.vcHent = function () { hent.sidst = Date.now(); return hent(); };
   // Den billet, der gælder nu: visningen er i dag (eller starter inden for 3 timer), eller kører lige nu
   function billetNu() {
     if (!data) return null;
@@ -1136,7 +1184,7 @@
   scanKnap.hidden = true;
   scanKnap.addEventListener("click", function () { if (scanner.hidden) aabnScanner(); else scanner.hidden = true; });
   document.body.appendChild(scanKnap);
-  setInterval(function () { const vis = iBio() && maaStyre(); if (scanKnap.hidden === vis) scanKnap.hidden = !vis; }, 1000);
+  setInterval(function () { const vis = (iBio() || iForhal()) && maaStyre(); if (scanKnap.hidden === vis) scanKnap.hidden = !vis; }, 1000);
 
   // 🪑 Man må først sætte sig, når billetten er scannet (når der er en visning i gang eller lige om lidt)
   function maaSidde(m) {

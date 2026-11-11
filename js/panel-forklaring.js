@@ -514,3 +514,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/toej-lag.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎬 Biografens forhal (js/biograf-forhal.js): kiosk med popcorn, sodavand og slik, billetpult
+// og dørene ind til salen, som først åbner, når billetten er scannet. Kræver database-48-biograf-forhal.sql.
+(function () {
+  if (document.querySelector("script[src^='js/biograf-forhal.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/biograf-forhal.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
