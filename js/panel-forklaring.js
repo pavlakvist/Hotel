@@ -505,3 +505,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vera-translate.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 👕 Tøjlag (js/toej-lag.js): rigtigt tøj oven på figuren (først den røde T-shirt), som alle spillere kan se.
+// Vælges i garderoben under Overdele og gemmes på profilen. Kræver database-47-toej.sql.
+(function () {
+  if (document.querySelector("script[src^='js/toej-lag.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/toej-lag.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
