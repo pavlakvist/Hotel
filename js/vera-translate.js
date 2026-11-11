@@ -297,11 +297,11 @@
   // ---------------------------------------------------------------
   //  Appen
   // ---------------------------------------------------------------
-  const IKON = "<rect x='3' y='3' width='18' height='18' rx='4' fill='#7a1f2e'/>" +
+  const IKON = "<rect x='3' y='3' width='18' height='18' rx='4' fill='#e8649a'/>" +
     "<path d='M5 6.5h8.5a1.5 1.5 0 0 1 1.5 1.5v4.5a1.5 1.5 0 0 1-1.5 1.5H9l-2.6 2.2V14H5z' fill='#fff'/>" +
-    "<path d='M19 10.5h-2.6v3a2.4 2.4 0 0 1-2.4 2.4h-2.2v.6a1.5 1.5 0 0 0 1.5 1.5h3.4l2.3 1.9V18H19a1 1 0 0 0 1-1v-5.5a1 1 0 0 0-1-1z' fill='#f2c14e'/>" +
-    "<text x='9.2' y='12.4' font-size='5.4' font-weight='700' text-anchor='middle' fill='#7a1f2e' font-family='Verdana'>A</text>" +
-    "<text x='16.4' y='16.6' font-size='4.6' font-weight='700' text-anchor='middle' fill='#7a1f2e' font-family='Verdana'>Ü</text>";
+    "<path d='M19 10.5h-2.6v3a2.4 2.4 0 0 1-2.4 2.4h-2.2v.6a1.5 1.5 0 0 0 1.5 1.5h3.4l2.3 1.9V18H19a1 1 0 0 0 1-1v-5.5a1 1 0 0 0-1-1z' fill='#ffd6e7'/>" +
+    "<text x='9.2' y='12.4' font-size='5.4' font-weight='700' text-anchor='middle' fill='#c2306f' font-family='Verdana'>A</text>" +
+    "<text x='16.4' y='16.6' font-size='4.6' font-weight='700' text-anchor='middle' fill='#c2306f' font-family='Verdana'>Ü</text>";
   let api = null, appEl = null;
   let fane = "oversaet";      // oversaet | chat | parloer | hist | gemt
   let input = "";
@@ -311,7 +311,7 @@
   let parloerGruppe = 0;
 
   const APP = {
-    navn: "Vera-translate", ikSvg: IKON, bg: "linear-gradient(#b0384c, #6e1626)", butik: true,
+    navn: "Vera-translate", ikSvg: IKON, bg: "linear-gradient(#ffa6cb, #e0558f)", butik: true,
     tekst: "Oversæt mellem 13 sprog 🌐 Forstå chatten, svar på andres sprog og brug parløren med færdige sætninger.",
     tegn: function (el, a) {
       api = a; appEl = el; hentGemt();
