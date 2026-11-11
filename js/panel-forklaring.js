@@ -496,3 +496,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vera-maps.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🌐 Vera-translate (js/vera-translate.js): oversætter-app, som man henter i App Butik på telefonen.
+// Oversæt mellem 13 sprog, oversæt chatten, svar på andres sprog og brug parløren.
+(function () {
+  if (document.querySelector("script[src^='js/vera-translate.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vera-translate.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
