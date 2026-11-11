@@ -8,6 +8,7 @@
 //    se hvem der har booket hvilke sæder, fjern en billet, aflys (alle får Glimt tilbage),
 //    og start filmen i biografen.
 //  - I biografen står der et nummer på hvert sæde (A1–D8), og din egen plads lyser op.
+//  - 📟 Billetscanner: ejeren og de ansatte scanner billetten ved indgangen; først derefter kan man sætte sig.
 //  - 📼 Kø af YouTube-film i biografen: sæt så mange i kø du vil; den næste starter, når en film slutter.
 //  Kræver database-46-cinema.sql. Hentes fra js/panel-forklaring.js, så hotel.html ikke skal ændres.
 // =============================================================
@@ -99,7 +100,16 @@
     henter = true;
     return serverKald("hv_cinema_hent", { p_token: token() }).then(function (svar) {
       henter = false;
+      const foer = data ? data.mine : [];
       data = { program: (svar && svar.program) || [], mine: (svar && svar.mine) || [] };
+      data.mine.forEach(function (b) {
+        const gl = foer.find(function (x) { return x.id === b.id; });
+        if (b.scannet && gl && !gl.scannet) {
+          const t = "Din billet er scannet ✅ Find plads " + b.saede + " – den lyser med en guldpil.";
+          try { if (typeof besked !== "undefined") besked.textContent = "🎟 " + t; } catch (e) {}
+          if (typeof window.tlfNotis === "function") window.tlfNotis("cinema", "📟 Vera-cinema", t);
+        }
+      });
       if (svar && svar.nu) tidForskel = svar.nu - Date.now();
       fejl = "";
       opdaterApp();
@@ -263,9 +273,22 @@
       "<div class='vc-billet-top'><span>" + esc(b.plakat || "🎬") + "</span><div><small>VERA CINEMA · " + (b.type === "event" ? "ARRANGEMENT" : "BILLET") + "</small><b>" + esc(b.titel) + "</b></div></div>" +
       "<div class='vc-billet-midt'><div><small>Dato</small><b>" + dagTekst(b.start) + "</b></div><div><small>Kl.</small><b>" + kl(b.start) + "</b></div>" +
       "<div><small>Række</small><b>" + esc(b.saede.charAt(0)) + "</b></div><div><small>Sæde</small><b>" + esc(b.saede.slice(1)) + "</b></div></div>" +
-      "<div class='vc-billet-bund'><span>👤 " + esc(b.navn) + "</span><span class='vc-stregkode'>" + stregkode(b.id) + "</span></div>" +
-      (forbi ? "<i class='vc-stempel'>BRUGT</i>" : "") +
+      "<div class='vc-billet-bund'><span>👤 " + esc(b.navn) + "</span>" + (b.kode ? "<span class='vc-kode-lille'>" + esc(b.kode) + "</span>" : "<span class='vc-stregkode'>" + stregkode(b.id) + "</span>") + "</div>" +
+      (b.scannet ? "<i class='vc-stempel ok'>SCANNET</i>" : forbi ? "<i class='vc-stempel'>BRUGT</i>" : "") +
       "</" + (klikbar ? "button" : "div") + ">";
+  }
+  // Rigtig stregkode (Code 39), så en rigtig håndscanner også kan læse den. Koden er 0-9 og A-F.
+  const CODE39 = { "0": "101000111011101", "1": "111010001010111", "2": "101110001010111", "3": "111011100010101", "4": "101000111010111",
+    "5": "111010001110101", "6": "101110001110101", "7": "101000101110111", "8": "111010001011101", "9": "101110001011101",
+    "A": "111010100010111", "B": "101110100010111", "C": "111011101000101", "D": "101011100010111", "E": "111010111000101", "F": "101110111000101" };
+  const CODE39_KANT = "100010111011101";   // stjernen * i start og slut
+  function stregkodeSvg(kode) {
+    const bits = [CODE39_KANT].concat(String(kode).toUpperCase().split("").map(function (c) { return CODE39[c] || ""; })).concat([CODE39_KANT]).join("0");
+    let rects = "", i = 0;
+    while (i < bits.length) {
+      if (bits[i] === "1") { let j = i; while (j < bits.length && bits[j] === "1") j++; rects += "<rect x='" + (i + 10) + "' y='0' width='" + (j - i) + "' height='40'/>"; i = j; } else i++;
+    }
+    return "<svg class='vc-stregkode-svg' viewBox='0 0 " + (bits.length + 20) + " 40' preserveAspectRatio='none'><rect width='100%' height='40' fill='#fff'/><g fill='#000'>" + rects + "</g></svg>";
   }
   function stregkode(n) {
     let s = "", x = (n || 1) * 7919;
@@ -404,6 +427,9 @@
       "<div class='tlf-indhold vc-app'>" +
       (nyBillet ? "<p class='vc-tak'>🎉 Tak for dit køb! Vi ses i biografen.</p>" : "") +
       billetHtml(b, false) +
+      (b.kode ? "<div class='vc-scan-boks" + (b.scannet ? " ok" : "") + "'>" + stregkodeSvg(b.kode) + "<b>" + esc(b.kode) + "</b>" +
+        "<small>" + (b.scannet ? "✅ Scannet kl. " + kl(b.scannet) + (b.scannet_af ? " af " + esc(b.scannet_af) : "") + " – du må sætte dig på plads " + esc(b.saede) + "."
+          : "📟 Vis billetten til en ansat ved indgangen. Når den er scannet, kan du sætte dig.") + "</small></div>" : "") +
       "<p class='vc-smaat'>Find nummeret <b>" + esc(b.saede) + "</b> på sædet i biografen. Din plads lyser op, når du er derinde.</p>" +
       "<button class='vc-stor-knap' data-vc-gaa>🚪 Gå til biografen</button>" +
       (kanAfbestille ? "<button class='vc-lille-knap' data-vc-afbestil>✕ Afbestil (du får din Glimt tilbage)</button>" : "") +
@@ -519,7 +545,7 @@
     if (!sek) return;
     // rør ikke formularen, mens nogen skriver i den
     if (pRet && sek.querySelector(".vc-form") && sek.contains(document.activeElement)) return;
-    const under = [["program", "🗓 Program"], ["bookinger", "🎟 Bookinger"]];
+    const under = [["program", "🗓 Program"], ["bookinger", "🎟 Bookinger"], ["scanner", "📟 Scanner"]];
     const kommende = pData ? pData.program.filter(function (v) { return v.start + v.varighed * 60000 > nu(); }) : [];
     const solgtNu = kommende.reduce(function (s, v) { return s + (v.optaget || []).length; }, 0);
     sek.innerHTML = "<div class='vc-p-top'><div class='vc-p-logo'><b>VERA</b><span>CINEMA</span></div>" +
@@ -536,6 +562,7 @@
     });
     const krop = sek.querySelector(".vc-p-krop");
     if (!pData) { krop.innerHTML = pFejl ? "" : "<p>Henter …</p>"; return; }
+    if (pUnder === "scanner") { krop.innerHTML = "<p>Scanneren åbner som en lille håndscanner, du kan flytte rundt. Har du en rigtig stregkodescanner (USB), virker den også: klik i feltet, og scan billetten på gæstens skærm.</p><button type='button' class='lv-knap' data-vc-aabn-scanner>📟 Åbn scanneren</button>"; krop.querySelector("[data-vc-aabn-scanner]").addEventListener("click", function () { aabnScanner(); }); return; }
     if (pUnder === "program") tegnPProgram(krop);
     else tegnPBookinger(krop);
   }
@@ -679,12 +706,17 @@
     }).join("") + "</select></label>" +
       "<div class='vc-p-bk'><div class='vc-p-sal'>" + salHtml(billetter.map(function (b) { return b.saede; }), "", navne, false) + "</div>" +
       "<div class='vc-p-bk-liste'><h4>" + billetter.length + " af " + ALLE_SAEDER + " pladser booket" + (billetter.length >= ALLE_SAEDER ? " · UDSOLGT" : "") + "</h4>" +
-      (billetter.length ? "<table><tr><th>Sæde</th><th>Navn på billet</th><th>Spiller</th><th>Købt</th><th></th></tr>" + billetter.map(function (b) {
+      (billetter.length ? "<table><tr><th>Sæde</th><th>Navn på billet</th><th>Spiller</th><th>Købt</th><th>Scannet</th><th></th></tr>" + billetter.map(function (b) {
         return "<tr" + (b.id > nyeFra ? " class='ny'" : "") + "><td><b>" + esc(b.saede) + "</b></td><td>" + esc(b.navn) + "</td><td>" + esc(b.spiller) + "</td>" +
-          "<td>" + dagTekst(b.tid) + " " + kl(b.tid) + "</td><td><button type='button' class='lv-knap vc-p-slet' data-vc-fjern='" + b.id + "' title='Fjern billetten (gæsten får sin Glimt tilbage)'>✕</button></td></tr>";
+          "<td>" + dagTekst(b.tid) + " " + kl(b.tid) + "</td>" +
+          "<td>" + (b.scannet ? "✅ " + kl(b.scannet) + " <button type='button' class='lv-knap' data-vc-fortryd='" + b.id + "' title='Fortryd scanningen'>↩</button>"
+            : "<button type='button' class='lv-knap' data-vc-scan='" + esc(b.kode || "") + "'>📟 Scan</button>") + "</td>" +
+          "<td><button type='button' class='lv-knap vc-p-slet' data-vc-fjern='" + b.id + "' title='Fjern billetten (gæsten får sin Glimt tilbage)'>✕</button></td></tr>";
       }).join("") + "</table>" : "<p class='vc-p-tom'>Ingen har booket endnu.</p>") + "</div></div>";
     try { const max = Math.max.apply(null, pData.billetter.map(function (b) { return b.id; }).concat([0])); localStorage.setItem(SET_NOEGLE + "-vist-" + mig(), String(max)); } catch (e) {}
     krop.querySelector("select").addEventListener("change", function (e) { pValgt = +e.target.value; tegnPanel(); });
+    krop.querySelectorAll("[data-vc-scan]").forEach(function (k) { k.addEventListener("click", function () { scan(k.dataset.vcScan); }); });
+    krop.querySelectorAll("[data-vc-fortryd]").forEach(function (k) { k.addEventListener("click", function () { fortrydScan(+k.dataset.vcFortryd); }); });
     krop.querySelectorAll("[data-vc-fjern]").forEach(function (k) {
       k.addEventListener("click", function () {
         toKlik(k, function () {
@@ -708,6 +740,55 @@
         "<b>▶ Start filmen</b> tager dig til biografen og sætter filmen på lærredet for alle.",
         "<b>✕ Aflys</b> fjerner visningen, og alle med billet får deres Glimt tilbage.",
         "I biografen står nummeret på hvert sæde, så gæsterne kan finde deres plads."] };
+  });
+
+
+  // ---------------------------------------------------------------
+  //  🍿 Det nye job: Biograf medhjælper
+  // ---------------------------------------------------------------
+  const BM_SKILT = "biografhjaelper";
+  const BM_JOB_KAN = ["🎟 Får 🛡-knappen med fanen 🎟 Vera-cinema (program, bookinger og scanner)",
+    "📟 Får billetscanneren og scanner gæsternes billetter, når de kommer ind i biografen",
+    "🪑 Hjælper gæsterne med at finde deres plads",
+    "🗓 Kan lægge film og arrangementer i programmet og starte filmen",
+    "💼 Får løn hver mandag som de andre ansatte"];
+  vent(function () { return typeof SKILTE !== "undefined" && typeof ANSAT_SKILTE !== "undefined"; }, function () {
+    if (!SKILTE.some(function (s) { return s.id === BM_SKILT; })) {
+      let efter = SKILTE.findIndex(function (s) { return s.id === "radiovaert"; });
+      if (efter < 0) efter = SKILTE.findIndex(function (s) { return s.id === "eventvaert"; });
+      SKILTE.splice(efter + 1, 0, { id: BM_SKILT, navn: "Biograf medhjælper", tekst: "Scanner billetter og hjælper gæsterne i biografen.",
+        fil: "billeder/skilte/biograf-medhjaelper.png" });
+    }
+    if (ANSAT_SKILTE.indexOf(BM_SKILT) < 0) ANSAT_SKILTE.push(BM_SKILT);
+    if (typeof JOB_KAN !== "undefined") JOB_KAN[BM_SKILT] = BM_JOB_KAN.concat(typeof PERSONALE_KAN !== "undefined" ? PERSONALE_KAN : []);
+  });
+  vent(function () { return typeof JOB_BESKRIVELSE !== "undefined" && typeof SKILTE !== "undefined"; }, function () {
+    JOB_BESKRIVELSE[BM_SKILT] = "Som biograf medhjælper står du ved døren til biografen og scanner gæsternes billetter med billetscanneren 📟. Gæsterne kan først sætte sig, når billetten er scannet. Du hjælper dem med at finde deres plads, holder øje med bookingerne i Vera-cinema og kan starte filmen.";
+    SKILTE.forEach(function (sk) { if (sk.id === BM_SKILT) sk.beskrivelse = JOB_BESKRIVELSE[BM_SKILT]; });
+  });
+  vent(function () { return typeof ROLLE_FANER !== "undefined" && typeof ROLLE_NAVN !== "undefined"; }, function () {
+    function giv() {
+      const fra = (ROLLE_FANER.staff || ["guide", "mitjob", "staffchat"]).filter(function (f) { return f !== "beskeder"; });
+      if (!ROLLE_FANER[BM_SKILT]) ROLLE_FANER[BM_SKILT] = [];
+      const l = ROLLE_FANER[BM_SKILT];
+      fra.concat(["cinema", "biograf"]).forEach(function (f) { if (l.indexOf(f) < 0) l.push(f); });
+      if (l.indexOf("guide") > 0) { l.splice(l.indexOf("guide"), 1); l.unshift("guide"); }
+      ROLLE_NAVN[BM_SKILT] = "🛡️ Biograf-panel";
+    }
+    giv();
+    setInterval(giv, 2000);
+  });
+  vent(function () { return typeof ROLLE_GUIDE !== "undefined"; }, function () {
+    ROLLE_GUIDE[BM_SKILT] = "Du er biograf medhjælper. Gå til biografen og tryk 📟 Billetscanner øverst til højre. Scan gæsternes billetter, når de kommer ind. I fanen 🎟 Vera-cinema ser du programmet og hvem der sidder hvor.";
+  });
+  vent(function () { return typeof STAFF_RANG !== "undefined"; }, function () {
+    if (STAFF_RANG.some(function (r) { return r[0] === BM_SKILT; })) return;
+    const i = STAFF_RANG.findIndex(function (r) { return r[0] === "andet"; });
+    STAFF_RANG.splice(i < 0 ? STAFF_RANG.length : i, 0, [BM_SKILT, "🍿 Biograf medhjælper"]);
+  });
+  vent(function () { return typeof VS_KATEGORIER !== "undefined"; }, function () {
+    if (!VS_KATEGORIER.some(function (k) { return k[0] === BM_SKILT; })) VS_KATEGORIER.push([BM_SKILT, "🍿", "Biograf medhjælper"]);
+    if (typeof JOB_KAN !== "undefined" && JOB_KAN[BM_SKILT] && JOB_KAN[BM_SKILT].indexOf("📅 Kan skrive sig på vagter i vagtskemaet") < 0) JOB_KAN[BM_SKILT].push("📅 Kan skrive sig på vagter i vagtskemaet");
   });
 
 
@@ -945,6 +1026,142 @@
   });
 
   // ---------------------------------------------------------------
+  //  📟 Billetscanneren (ejeren og de ansatte)
+  //  Gæsten viser billetten (stregkode + kode) i appen. Den ansatte scanner den her,
+  //  eller med en rigtig USB-stregkodescanner (den "skriver" koden og trykker Enter).
+  //  Først når billetten er scannet, kan gæsten sætte sig i biografen.
+  // ---------------------------------------------------------------
+  let lyd = null;
+  function bip(ok) {
+    try {
+      lyd = lyd || new (window.AudioContext || window.webkitAudioContext)();
+      const t = lyd.currentTime;
+      (ok ? [[1760, 0, 0.09], [2350, 0.1, 0.12]] : [[220, 0, 0.18], [180, 0.2, 0.25]]).forEach(function (n) {
+        const o = lyd.createOscillator(), g = lyd.createGain();
+        o.type = ok ? "square" : "sawtooth"; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, t + n[1]); g.gain.exponentialRampToValueAtTime(0.12, t + n[1] + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + n[1] + n[2]);
+        o.connect(g); g.connect(lyd.destination); o.start(t + n[1]); o.stop(t + n[1] + n[2] + 0.02);
+      });
+    } catch (e) {}
+  }
+  // Den visning, der er i gang nu (eller starter inden for en time)
+  function aktivVisning(liste) {
+    const t = nu();
+    return (liste || []).filter(function (v) { return v.start - 3600000 < t && t < v.start + v.varighed * 60000; })
+      .sort(function (a, b) { return a.start - b.start; })[0] || null;
+  }
+
+  const scanner = document.createElement("div");
+  scanner.id = "vc-scanner";
+  scanner.hidden = true;
+  scanner.innerHTML =
+    "<div class='vcs-top'><span class='vcs-led'></span><b>📟 Vera-scanner</b><button type='button' class='vcs-luk' title='Luk'>✕</button></div>" +
+    "<div class='vcs-skaerm'><div class='vcs-laser'></div><div class='vcs-svar'><b>Klar til at scanne</b><small>Scan stregkoden eller skriv koden fra billetten</small></div></div>" +
+    "<form class='vcs-form'><input type='text' maxlength='20' placeholder='Kode, fx 3F9A1C' autocomplete='off' spellcheck='false'><button type='submit'>Scan</button></form>" +
+    "<div class='vcs-liste'></div>";
+  document.body.appendChild(scanner);
+  if (typeof goerFlytbar === "function") try { goerFlytbar(scanner, scanner.querySelector(".vcs-top"), "mit-hotel-flyt-scanner"); } catch (e) {}
+  const scanInput = scanner.querySelector("input");
+  scanner.querySelector(".vcs-luk").addEventListener("click", function () { scanner.hidden = true; });
+  scanner.querySelector(".vcs-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const k = scanInput.value;
+    scanInput.value = "";
+    scan(k);
+  });
+  function aabnScanner() {
+    if (!maaStyre()) return;
+    scanner.hidden = false;
+    tegnScanListe();
+    setTimeout(function () { scanInput.focus(); }, 50);
+    hentPersonale().then(tegnScanListe);
+  }
+  window.vcAabnScanner = aabnScanner;
+  function visSvar(type, titel, tekst) {
+    const s = scanner.querySelector(".vcs-svar");
+    scanner.querySelector(".vcs-skaerm").className = "vcs-skaerm " + type;
+    s.innerHTML = "<b>" + titel + "</b><small>" + tekst + "</small>";
+    clearTimeout(visSvar.t);
+    visSvar.t = setTimeout(function () {
+      scanner.querySelector(".vcs-skaerm").className = "vcs-skaerm";
+      s.innerHTML = "<b>Klar til at scanne</b><small>Scan stregkoden eller skriv koden fra billetten</small>";
+    }, 6000);
+  }
+  function scan(kode) {
+    if (!maaStyre()) return;
+    if (scanner.hidden) { scanner.hidden = false; }
+    visSvar("", "Scanner …", esc(kode));
+    serverKald("hv_cinema_scan", { p_token: token(), p_kode: kode }).then(function (svar) {
+      const forkertVisning = (function () { const a = pData && aktivVisning(pData.program); return a && a.id !== svar.visning_id; })();
+      if (svar.status === "allerede") {
+        bip(false);
+        visSvar("gul", "⚠️ Allerede scannet", esc(svar.navn) + " · plads " + esc(svar.saede) + "<br>Scannet kl. " + kl(svar.scannet) + (svar.scannet_af ? " af " + esc(svar.scannet_af) : ""));
+      } else {
+        bip(!forkertVisning);
+        visSvar(forkertVisning ? "gul" : "groen", forkertVisning ? "⚠️ Godkendt – men til en anden visning" : "✅ Godkendt",
+          esc(svar.navn) + (svar.spiller && svar.spiller !== svar.navn ? " (" + esc(svar.spiller) + ")" : "") + " · <b>plads " + esc(svar.saede) + "</b><br>" +
+          esc(svar.titel) + " · " + dagTekst(svar.start) + " kl. " + kl(svar.start));
+      }
+      return hentPersonale();
+    }).then(function () { tegnScanListe(); if (panelAabent()) tegnPanel(); }).catch(function (e) {
+      bip(false);
+      visSvar("roed", "❌ Ikke godkendt", esc(fejlTekst(e)));
+    });
+  }
+  function fortrydScan(id) {
+    serverKald("hv_cinema_scan_fortryd", { p_token: token(), p_billet: id }).then(hentPersonale)
+      .then(function () { tegnScanListe(); if (panelAabent()) tegnPanel(); }).catch(function (e) { pFejl = fejlTekst(e); if (panelAabent()) tegnPanel(); });
+  }
+  function tegnScanListe() {
+    const holder = scanner.querySelector(".vcs-liste");
+    if (!pData) { holder.innerHTML = "<p>Henter billetter …</p>"; return; }
+    const v = aktivVisning(pData.program);
+    if (!v) { holder.innerHTML = "<p>Der er ingen visning i gang lige nu (eller inden for en time). Du kan stadig scanne billetter til senere visninger.</p>"; return; }
+    const bl = pData.billetter.filter(function (b) { return b.visning_id === v.id; }).sort(function (a, b) { return a.saede < b.saede ? -1 : 1; });
+    const scannet = bl.filter(function (b) { return b.scannet; }).length;
+    holder.innerHTML = "<h4>" + esc((v.plakat || "") + " " + v.titel) + " · kl. " + kl(v.start) + "</h4><p class='vcs-tal'>✅ " + scannet + " af " + bl.length + " billetter scannet</p>" +
+      (bl.length ? "<ul>" + bl.map(function (b) {
+        return "<li class='" + (b.scannet ? "ok" : "") + "'><b>" + esc(b.saede) + "</b><span>" + esc(b.navn) + "</span>" +
+          (b.scannet ? "<em>✅ " + kl(b.scannet) + "</em>" : "<button type='button' data-vcs-scan='" + esc(b.kode || "") + "' title='Scan " + esc(b.navn) + "s billet'>📟</button>") + "</li>";
+      }).join("") + "</ul>" : "<p>Ingen har billet til denne visning endnu.</p>");
+    holder.querySelectorAll("[data-vcs-scan]").forEach(function (k) { k.addEventListener("click", function () { scan(k.dataset.vcsScan); }); });
+  }
+  setInterval(function () { if (!scanner.hidden) { if (!maaStyre()) { scanner.hidden = true; return; } hentPersonale().then(tegnScanListe); } }, 6000);
+
+  // 📟-knap i biografen for ejeren og de ansatte
+  const scanKnap = document.createElement("button");
+  scanKnap.id = "vc-scan-knap";
+  scanKnap.type = "button";
+  scanKnap.innerHTML = "📟 Billetscanner";
+  scanKnap.hidden = true;
+  scanKnap.addEventListener("click", function () { if (scanner.hidden) aabnScanner(); else scanner.hidden = true; });
+  document.body.appendChild(scanKnap);
+  setInterval(function () { const vis = iBio() && maaStyre(); if (scanKnap.hidden === vis) scanKnap.hidden = !vis; }, 1000);
+
+  // 🪑 Man må først sætte sig, når billetten er scannet (når der er en visning i gang eller lige om lidt)
+  function maaSidde(m) {
+    if (!m || m.type !== "bio-saede" || !iBio() || maaStyre() || !data) return true;
+    const v = aktivVisning(data.program);
+    if (!v) return true;                         // ingen film i gang: frit valg
+    const b = data.mine.find(function (x) { return x.visning_id === v.id; });
+    const sig = function (t) { try { besked.textContent = t; } catch (e) {} };
+    if (!b) { sig("🎟 Du skal have en billet til " + v.titel + " for at sætte dig. Køb den i appen Vera-cinema på telefonen."); return false; }
+    if (!b.scannet) { sig("📟 Din billet er ikke scannet endnu. Vis den til en ansat ved indgangen, så kan du sætte dig."); return false; }
+    const nr = saedeNumre()[m.x + "," + m.y];
+    if (nr && nr !== b.saede) { sig("🪑 Det er ikke din plads. Din plads er " + saedeNavn(b.saede) + " – den lyser med en guldpil."); return false; }
+    return true;
+  }
+  function pakSaetDigInd() {
+    if (typeof saetDig !== "function" || saetDig.vcScan) return;
+    const foer = saetDig;
+    const ny = function (m) { if (!maaSidde(m)) return; return foer.apply(this, arguments); };
+    ny.vcScan = true;
+    saetDig = ny;
+  }
+  pakSaetDigInd();
+  setInterval(pakSaetDigInd, 500);
+
+  // ---------------------------------------------------------------
   //  Udseende
   // ---------------------------------------------------------------
   const T = "#telefon ";
@@ -1111,6 +1328,45 @@
     ".vc-koe p { margin: 4px 0 0; }",
     ".vc-koe .vc-koe-fejl { color: #b3202f; font-weight: bold; }",
     ".vc-koe .vc-sikker { background: #c0283c !important; color: #fff !important; }",
+    T + ".vc-stempel.ok { border-color: #1f8f4a; color: #1f8f4a; }",
+    T + ".vc-kode-lille { font: 700 12px/1 'Courier New', monospace; letter-spacing: 2px; color: #7a1b2b; }",
+    T + ".vc-scan-boks { margin: 0 0 10px; padding: 10px; border-radius: 14px; background: #fff; color: #3a1018; display: grid; justify-items: center; gap: 4px; border: 3px solid #d9a441; }",
+    T + ".vc-scan-boks.ok { border-color: #2fae5c; }",
+    T + ".vc-scan-boks b { font: 800 18px/1 'Courier New', monospace; letter-spacing: 5px; }",
+    T + ".vc-scan-boks small { font-size: 11px; text-align: center; color: #5a3a40; }",
+    T + ".vc-stregkode-svg { width: 100%; height: 58px; display: block; }",
+    "#vc-scan-knap { position: fixed; right: 16px; top: 120px; z-index: 40; padding: 8px 14px; border-radius: 12px; border: 2px solid #d9a441; background: linear-gradient(#3a3d44, #1c1d22); color: #ffe7b0; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.4); }",
+    "#vc-scan-knap[hidden], #vc-scanner[hidden] { display: none !important; }",
+    "#vc-scanner { position: fixed; right: 24px; top: 170px; z-index: 60; width: 300px; max-width: calc(100vw - 32px); background: linear-gradient(#4a4e57, #23252b); border-radius: 26px 26px 18px 18px; padding: 10px 12px 14px; box-shadow: 0 14px 34px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15); color: #f2f2f2; font-size: 12.5px; border: 2px solid #15161a; }",
+    "#vc-scanner .vcs-top { display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px; cursor: move; }",
+    "#vc-scanner .vcs-top b { flex: 1; color: #ffd98a; letter-spacing: .5px; }",
+    "#vc-scanner .vcs-led { width: 9px; height: 9px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 8px #ff3b3b; animation: vcs-blink 1.2s infinite; }",
+    "@keyframes vcs-blink { 50% { opacity: .35; } }",
+    "#vc-scanner .vcs-luk { width: 26px; height: 26px; border-radius: 8px; border: 1px solid #777; background: #33363d; color: #fff; cursor: pointer; padding: 0; }",
+    "#vc-scanner .vcs-skaerm { position: relative; height: 104px; border-radius: 12px; background: radial-gradient(120% 120% at 50% 0%, #20343a, #0b1416); border: 3px solid #111; overflow: hidden; display: grid; place-items: center; text-align: center; transition: background .2s; }",
+    "#vc-scanner .vcs-skaerm.groen { background: radial-gradient(120% 120% at 50% 0%, #2fae5c, #0d3b1e); }",
+    "#vc-scanner .vcs-skaerm.roed { background: radial-gradient(120% 120% at 50% 0%, #d23a4a, #3b0d14); }",
+    "#vc-scanner .vcs-skaerm.gul { background: radial-gradient(120% 120% at 50% 0%, #d9a441, #4a3410); }",
+    "#vc-scanner .vcs-laser { position: absolute; left: 8%; right: 8%; height: 2px; background: #ff2a2a; box-shadow: 0 0 10px 2px rgba(255,40,40,.8); top: 50%; animation: vcs-laser 1.6s ease-in-out infinite alternate; }",
+    "#vc-scanner .vcs-skaerm.groen .vcs-laser, #vc-scanner .vcs-skaerm.roed .vcs-laser, #vc-scanner .vcs-skaerm.gul .vcs-laser { display: none; }",
+    "@keyframes vcs-laser { from { top: 14%; } to { top: 86%; } }",
+    "#vc-scanner .vcs-svar { position: relative; display: grid; gap: 4px; padding: 0 10px; }",
+    "#vc-scanner .vcs-svar b { font-size: 15px; }",
+    "#vc-scanner .vcs-svar small { font-size: 11.5px; opacity: .92; line-height: 1.35; }",
+    "#vc-scanner .vcs-form { display: flex; gap: 6px; margin: 10px 0 8px; }",
+    "#vc-scanner .vcs-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 2px solid #111; background: #e9efe9; color: #111; font: 700 15px 'Courier New', monospace; letter-spacing: 3px; text-transform: uppercase; }",
+    "#vc-scanner .vcs-form button { padding: 0 14px; border-radius: 10px; border: 0; background: linear-gradient(#ff5a5a, #c0283c); color: #fff; font-weight: 800; cursor: pointer; box-shadow: 0 3px 0 #6d0f1c; }",
+    "#vc-scanner .vcs-liste { background: rgba(0,0,0,.25); border-radius: 12px; padding: 8px 10px; max-height: 230px; overflow-y: auto; }",
+    "#vc-scanner .vcs-liste h4 { margin: 0 0 4px; color: #ffd98a; font-size: 12.5px; }",
+    "#vc-scanner .vcs-liste p { margin: 2px 0 6px; }",
+    "#vc-scanner .vcs-tal { color: #9fe0a8; font-weight: 700; }",
+    "#vc-scanner .vcs-liste ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }",
+    "#vc-scanner .vcs-liste li { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; background: rgba(255,255,255,.06); }",
+    "#vc-scanner .vcs-liste li.ok { background: rgba(47,174,92,.18); }",
+    "#vc-scanner .vcs-liste li b { width: 26px; color: #ffd98a; }",
+    "#vc-scanner .vcs-liste li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    "#vc-scanner .vcs-liste li em { font-style: normal; font-size: 11px; color: #9fe0a8; }",
+    "#vc-scanner .vcs-liste li button { border: 1px solid #777; border-radius: 7px; background: #33363d; color: #fff; cursor: pointer; padding: 2px 8px; }",
     "#ejer-faner .vc-tal { background: #e0283c; color: #fff; border-radius: 8px; padding: 0 6px; margin-left: 4px; font-size: 11px; }",
   ];
   const stil = document.createElement("style");

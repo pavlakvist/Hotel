@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TEST T-shirt – HELLO VERA – Hotellet</title>
+  <link rel="stylesheet" href="css/stil.css?v=72">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="tilbage">&larr; Forside</a>
+    <h1>HELLO VERA</h1>
+    <button type="button" id="mention-knap" title="Dem der har skrevet @ til dig">@ Mentions<i id="mention-tal" hidden>0</i></button>
+  </header>
+
+  <!-- @-beskeder (js/mentions.js) -->
+  <div id="mention-vindue" hidden>
+    <div class="mention-hoved"><span>📣 Mentions</span><button id="mention-ryd" title="Ryd listen">🗑</button><button id="mention-luk" title="Luk">✕</button></div>
+    <ul id="mention-liste"></ul>
+  </div>
+
+  <main>
+    <!-- Selve spillet bliver tegnet på dette "lærred" -->
+    <canvas id="spil" width="900" height="600"></canvas>
+
+    <!-- Hotellets penge: Glimt og Stella (js/glimt.js) -->
+    <div id="glimt">
+      <span class="penge" title="Glimt er hotellets penge. Dem kan du bruge i shoppen.">
+        <img src="billeder/glimt.png" alt="">
+        <b id="glimt-tal">0</b>
+        <span id="glimt-navn">Glimt</span>
+      </span>
+      <span class="penge krystal" title="Stella er sjældne. Dem kan du bruge til de fineste ting i shoppen.">
+        <img src="billeder/krystal.png" alt="">
+        <b id="krystal-tal">0</b>
+        <span>Stella</span>
+      </span>
+    </div>
+
+    <aside id="panel" class="lukket">
+      <button id="panel-knap" class="panel-knap" title="Skjul eller vis panelet">☰ Panel</button>
+      <div class="rum-boks">
+        <span class="lille">Du er i</span>
+        <h2 id="rum-navn">Velkomsthallen</h2>
+      </div>
+
+      <div id="hal-sektion">
+        <p class="lille">Her mødes alle gæster, når de tjekker ind. Gå gennem døren under skiltet for at komme til dit eget værelse.</p>
+        <button id="knap-til-vaerelse" class="stor-knap">Gå til mit værelse &rarr;</button>
+      </div>
+
+      <div id="moebel-sektion" hidden>
+      <button id="knap-til-hal" class="stor-knap">&larr; Til velkomsthallen</button>
+      <h2>Møbler</h2>
+      <p class="lille">Klik på et møbel og derefter på gulvet for at stille det.</p>
+      <div id="moebel-faner"></div>
+      <div id="moebel-knapper"></div>
+
+      <div id="valgt-boks" hidden>
+        <h3 id="valgt-navn"></h3>
+        <button id="knap-drej">Drej (R)</button>
+        <button id="knap-saml">Saml op</button>
+      </div>
+
+      <button id="knap-ryd" class="diskret">Ryd hele rummet</button>
+      </div>
+
+      <h2>Garderobe</h2>
+      <div id="garderobe">
+        <canvas id="figur-forhaandsvisning" width="132" height="130"></canvas>
+      </div>
+      <button id="knap-garderobe">Skift udseende</button>
+    </aside>
+  </main>
+
+  <!-- "Skift udseende": vælg figur, tøj og farver. Åbnes med knappen i panelet -->
+  <div id="garderobe-vindue" hidden>
+    <div class="su-boks" role="dialog" aria-labelledby="su-titel">
+      <div class="su-top">
+        <h2 id="su-titel">Skift udseende</h2>
+        <button id="gv-luk" class="su-luk" title="Luk uden at gemme">✕</button>
+      </div>
+      <div id="su-faner" class="su-faner"></div>
+      <div class="su-indhold">
+        <div class="su-venstre">
+          <div id="su-under" class="su-under"></div>
+          <div id="su-ting" class="su-ting"></div>
+        </div>
+        <div class="su-hoejre">
+          <div class="su-scene">
+            <canvas id="su-figur" width="220" height="340"></canvas>
+            <button id="su-drej-venstre" class="su-pil venstre" title="Drej">⟲</button>
+            <button id="su-drej-hoejre" class="su-pil hoejre" title="Drej">⟳</button>
+          </div>
+          <div class="su-knapper">
+            <button id="su-fortryd" title="Fortryd">↶</button>
+            <button id="su-fjern" title="Fjern farven her">🗑</button>
+            <button id="gv-tilfaeldig" title="Tilfældigt udseende">🎲</button>
+          </div>
+          <button id="su-gem" class="su-gem">Gem ændringer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menuen, når man klikker på sig selv (js/min-menu.js) -->
+  <div id="min-menu" hidden>
+    <div id="min-menu-knapper"></div>
+  </div>
+
+  <!-- Min profil -->
+  <div id="profil-vindue" class="lille-vindue" hidden>
+    <div class="lv-boks">
+      <div class="lv-top"><h2>Min profil</h2><button id="profil-luk" class="su-luk" title="Luk">✕</button></div>
+      <div class="profil-indhold">
+        <canvas id="profil-figur" width="130" height="190"></canvas>
+        <div class="profil-tekst">
+          <h3 id="profil-navn"></h3>
+          <label for="profil-motto">Motto</label>
+          <input id="profil-motto" type="text" maxlength="40" placeholder="Skriv dit motto …">
+          <p><b>Medlem siden:</b> <span id="profil-medlem"></span></p>
+          <p><b>Er lige nu i:</b> <span id="profil-rum"></span></p>
+          <p><b>Mit værelse:</b> <span id="profil-moebler"></span></p>
+          <p><b>Venner:</b> <span id="profil-venner">0</span></p>
+          <button id="profil-outfit" class="lv-knap">Skift outfit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rapportere -->
+  <div id="rapport-vindue" class="lille-vindue" hidden>
+    <div class="lv-boks">
+      <div class="lv-top"><h2>Rapportere</h2><button id="rapport-luk" class="su-luk" title="Luk">✕</button></div>
+      <form id="rapport-form" class="rapport-indhold">
+        <p>Hvad vil du fortælle os om?</p>
+        <label><input type="radio" name="rapport-grund" value="Mobning" checked> Nogen er grim eller mobber</label>
+        <label><input type="radio" name="rapport-grund" value="Grimme ord"> Grimme ord i chatten</label>
+        <label><input type="radio" name="rapport-grund" value="Fejl"> Der er en fejl i spillet</label>
+        <label><input type="radio" name="rapport-grund" value="Andet"> Andet</label>
+        <p>Hvem handler det om?</p>
+        <select id="rapport-hvem"></select>
+        <textarea id="rapport-tekst" maxlength="300" rows="3" placeholder="Fortæl lidt mere (hvis du vil) …"></textarea>
+        <button type="submit" class="lv-knap">Send rapport</button>
+      </form>
+      <div id="rapport-tak" class="rapport-indhold" hidden>
+        <p><b>Tak!</b> Din rapport er gemt. Hotellets personale kigger på den.</p>
+        <button id="rapport-ok" class="lv-knap">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hotellets navigatør (js/navigator.js) -->
+  <div id="nav-vindue" hidden>
+    <div class="nav-top">
+      <h2><span class="nav-gnist">✦</span> Hotellets navigatør <span class="nav-gnist sen">✧</span></h2>
+      <button id="nav-luk" class="su-luk" title="Luk">✕</button>
+    </div>
+    <div class="nav-krop">
+      <nav id="nav-etager"></nav>
+      <div id="nav-midte"></div>
+    </div>
+  </div>
+
+  <!-- Venneliste (js/venner.js) -->
+  <div id="venner-vindue" hidden>
+    <div class="venner-top"><span>👫 Venner</span><button id="venner-luk" title="Luk">✕</button></div>
+    <p id="venner-antal"></p>
+    <ul id="venner-liste"></ul>
+  </div>
+
+  <!-- Private beskeder til venner (js/beskeder.js) -->
+  <div id="besked-vindue" hidden>
+    <div class="besked-top"><span id="besked-hvem">💬 Besked</span><button id="besked-luk" title="Luk">✕</button></div>
+    <ul id="besked-liste"></ul>
+    <p id="besked-skriver" hidden></p>
+    <form id="besked-form" autocomplete="off">
+      <input id="besked-tekst" maxlength="200" placeholder="Send en besked …">
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- Shop (js/shop.js) -->
+  <div id="shop-vindue" class="butik" hidden>
+    <div class="butik-top"><span>🛒 Shop</span><b class="butik-penge"><img src="billeder/glimt.png" alt=""><i id="shop-glimt">0</i><img src="billeder/krystal.png" alt=""><i id="shop-stella">0</i></b><button id="shop-luk" title="Luk">✕</button></div>
+    <nav id="shop-faner" class="butik-faner">
+      <button data-fane="moebler" class="aktiv">Møbler</button>
+      <button data-fane="toej">Tøj</button>
+      <button data-fane="dyr">Kæledyr</button>
+      <button data-fane="items">Items</button>
+    </nav>
+    <div class="butik-krop">
+      <aside id="shop-kat" class="butik-kat"></aside>
+      <div id="shop-gitter" class="butik-gitter"></div>
+    </div>
+    <div id="shop-valgt" class="butik-valgt" hidden>
+      <canvas id="shop-valgt-billede" width="72" height="72"></canvas>
+      <div><b id="shop-valgt-navn"></b><span id="shop-valgt-pris"></span></div>
+      <button id="shop-koeb">Køb</button>
+    </div>
+  </div>
+
+  <!-- Mine ting / Lager (js/shop.js) -->
+  <div id="lager-vindue" class="butik" hidden>
+    <div class="butik-top"><span>📦 Mine ting / Lager</span><button id="lager-luk" title="Luk">✕</button></div>
+    <div class="butik-krop">
+      <aside id="lager-kat" class="butik-kat"></aside>
+      <div class="lager-midte">
+        <div class="lager-soeg">
+          <input id="lager-soeg" placeholder="🔍 Søg i dine ting …">
+          <select id="lager-sorter">
+            <option value="nyeste">Nyeste først</option>
+            <option value="aeldste">Ældste først</option>
+            <option value="navn">Navn A–Å</option>
+          </select>
+        </div>
+        <div id="lager-gitter" class="butik-gitter"></div>
+      </div>
+    </div>
+    <div id="lager-valgt" class="butik-valgt" hidden>
+      <canvas id="lager-valgt-billede" width="72" height="72"></canvas>
+      <div><b id="lager-valgt-navn"></b><span id="lager-valgt-antal"></span></div>
+      <button id="lager-saet">Sæt i mit værelse</button>
+    </div>
+  </div>
+
+  <!-- Chatlog for alle (js/chatlog.js) -->
+  <div id="chatlog">
+    <div class="chatlog-top"><span>💬 Chatlog</span><button id="chatlog-luk" title="Skjul chatloggen">–</button></div>
+    <ul id="chatlog-liste"></ul>
+  </div>
+
+  <!-- Byt med en anden gæst (js/gaest-menu.js) -->
+  <div id="byt-vindue" class="lille-vindue" hidden>
+    <div class="lv-boks">
+      <div class="lv-top"><h2 id="byt-titel">Byt</h2><button id="byt-luk" class="su-luk" title="Luk">✕</button></div>
+      <div class="byt-indhold">
+        <div class="byt-side">
+          <h3>Du giver</h3>
+          <label><img src="billeder/glimt.png" alt=""> <span class="valuta-navn">Glimt</span> <input id="byt-glimt" type="number" min="0" step="50" value="0"></label>
+          <label><img src="billeder/krystal.png" alt=""> Stella <input id="byt-krystal" type="number" min="0" value="0"></label>
+        </div>
+        <div class="byt-pil">⇄</div>
+        <div class="byt-side">
+          <h3 id="byt-hende">Gæsten giver</h3>
+          <p id="byt-faar"></p>
+        </div>
+      </div>
+      <p class="byt-kurs">50 <span class="valuta-navn">Glimt</span> = 1 Stella</p>
+      <p id="byt-svar" class="byt-svar"></p>
+      <div class="byt-knapper">
+        <button id="byt-ok" class="lv-knap">🤝 Byt</button>
+        <button id="byt-annuller" class="lv-knap graa">Annuller</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ejerpanel / mod tools (js/ejer.js) -->
+  <div id="ejer-vindue" hidden>
+    <div class="ejer-boks">
+      <div class="ejer-top">
+        <h2>🛡️ Ejerpanel</h2>
+        <button id="ejer-luk" class="su-luk" title="Luk">✕</button>
+      </div>
+      <nav id="ejer-faner">
+        <button data-fane="oversigt">📊 Oversigt</button>
+        <button data-fane="spillere">👥 Spillere og konti</button>
+        <button data-fane="chat">💬 Chatlogs</button>
+        <button data-fane="beskeder">✉️ Private beskeder</button>
+        <button data-fane="rapporter">🚩 Rapporter og moderation <span id="ejer-rapport-tal"></span></button>
+        <button data-fane="ip">🔐 IP og loginhistorik</button>
+        <button data-fane="rum">🛋️ Rum og møbler</button>
+        <button data-fane="valuta">🪙 Valuta og økonomi</button>
+        <button data-fane="events">📰 Events og nyheder</button>
+        <button data-fane="adminlog">📜 Administratorlog</button>
+        <button data-fane="system">⚙️ Systemindstillinger</button>
+      </nav>
+      <div id="ejer-indhold"></div>
+    </div>
+  </div>
+
+  <footer id="besked">Klik på gulvet for at gå.</footer>
+
+  <!-- Chatten: skriv noget, så kommer det i en taleboble over din figur -->
+  <form id="chat" autocomplete="off">
+    <button type="button" id="chat-smiley-knap" class="chat-lille" title="Smileyer">😊</button>
+    <button type="button" id="chat-farve-knap" class="chat-lille" title="Farve på din taleboble"></button>
+    <button type="button" id="chat-nav-knap" class="chat-lille" title="Hotellets navigatør"><img class="knap-ikon" src="billeder/ikon-navigator.png" alt="Navigatør"></button>
+    <button type="button" id="chat-venner-knap" class="chat-lille" title="Venneliste"><img class="knap-ikon" src="billeder/ikon-venner.png" alt="Venner"><span id="venner-ulaest" hidden></span></button>
+    <button type="button" id="chat-shop-knap" class="chat-lille" title="Shop"><img class="knap-ikon" src="billeder/ikon-shop.png" alt="Shop"></button>
+    <button type="button" id="chat-lager-knap" class="chat-lille" title="Mine ting"><img class="knap-ikon" src="billeder/ikon-lager.png" alt="Mine ting"></button>
+    <button type="button" id="chat-log-knap" class="chat-lille" title="Vis eller skjul chatloggen">📜</button>
+    <button type="button" id="chat-ejer-knap" class="chat-lille" title="Ejerpanel (mod tools)">🛡️</button>
+    <input id="chat-tekst" type="text" maxlength="100" placeholder="Skriv noget og tryk Enter …">
+    <button type="submit">Send</button>
+    <div id="mention-forslag" hidden></div>
+    <div id="chat-smileyer" class="chat-valg" hidden></div>
+    <div id="chat-farver" class="chat-valg boble-vindue" hidden>
+      <h3>Din taleboble</h3>
+      <canvas id="boble-forhaand"></canvas>
+      <h4>Boblens farve</h4>
+      <div id="boble-farver" class="farve-gitter"></div>
+      <h4>Navnets farve</h4>
+      <div id="navne-farver" class="farve-gitter"></div>
+      <h4>Pynt</h4>
+      <div id="boble-pynt" class="pynt-gitter"></div>
+    </div>
+  </form>
+
+  <!-- Rækkefølgen er vigtig: indstillingerne skal hentes før spillet -->
+  <script src="js/indstillinger.js?v=32"></script>
+  <script src="js/konto.js?v=37"></script>
+  <script src="js/server.js?v=1"></script>
+  <script>if (!aktivKonto()) location.replace("index.html?login");</script>
+  <script src="js/moebel-katalog.js?v=33"></script>
+  <script src="js/figur.js?v=32"></script>
+  <script src="js/fjern-gamle-figurer.js?v=1"></script>
+  <script src="js/toej.js?v=24"></script>
+  <script src="js/toej-farver.js?v=24"></script>
+  <script src="js/frisurer.js?v=24"></script>
+  <script src="js/bukser.js?v=24"></script>
+  <script src="js/spil.js?v=75"></script>
+  <script src="js/velkomsthal.js?v=69"></script>
+  <script src="js/chat.js?v=25"></script>
+  <script src="js/garderobe.js?v=32"></script>
+  <script src="js/min-menu.js?v=27"></script>
+  <script src="js/udtryk.js?v=27"></script>
+  <script src="js/ejer.js?v=65"></script>
+  <script src="js/banner.js?v=38"></script>
+  <script src="js/glimt.js?v=24"></script>
+  <script src="js/kommandoer.js?v=31"></script>
+  <script src="js/gaest-menu.js?v=24"></script>
+  <script src="js/chatlog.js?v=24"></script>
+  <script src="js/venner.js?v=24"></script>
+  <script src="js/beskeder.js?v=43"></script>
+  <script src="js/advarsel-popup.js?v=43"></script>
+  <script src="js/online.js?v=44"></script>
+  <script src="js/moebel-info.js?v=50"></script>
+  <script src="js/mentions.js?v=63"></script>
+  <script src="js/shop.js?v=26"></script>
+  <script src="js/toej-butik.js?v=31"></script>
+  <script src="js/navigator.js?v=62"></script>
+  <script src="js/flyt-vindue.js?v=25"></script>
+  <script src="js/gulvplan.js?v=54"></script>
+  <script src="js/kamera.js?v=54"></script>
+  <script src="js/ansaettelse.js?v=60"></script>
+  <script src="js/youtube.js?v=58"></script>
+  <script src="js/elevator.js?v=67"></script>
+  <script src="js/eventrum.js?v=61"></script>
+  <script src="js/hjaelp.js?v=62"></script>
+  <script src="js/avatar-billede.js?v=64"></script>
+  <script src="js/rigtige-spillere.js?v=5"></script>
+  <script src="js/rigtige-venner.js?v=3"></script>
+  <script src="js/rigtige-ejer.js?v=2"></script>
+  <script src="js/notifikationer.js?v=1"></script>
+  <script src="js/rigtige-likes.js?v=1"></script>
+  <script src="js/rigtige-personale.js?v=3"></script>
+  <script src="js/mod-panel.js?v=5"></script>
+  <script src="js/rigtige-penge.js?v=1"></script>
+  <script src="js/bygmester.js?v=5"></script>
+  <script src="js/foedselsdage.js?v=1"></script>
+  <script src="js/spillerkort.js?v=4"></script>
+  <script src="js/ejer-stoerrelse.js?v=1"></script>
+  <script src="js/mit-job.js?v=1"></script>
+  <script src="js/paamindelser.js?v=2"></script>
+  <script src="js/banner-stil.js?v=2"></script>
+  <script src="js/staff-chat.js?v=4"></script>
+  <script src="js/panel-tema.js?v=3"></script>
+  <script src="js/giv-alle.js?v=1"></script>
+  <script src="js/ansoegninger.js?v=1"></script>
+  <script src="js/lejligheder.js?v=2"></script>
+  <script src="js/log-ud.js?v=1"></script>
+  <script src="js/doerklokke.js?v=1"></script>
+  <script src="js/slet-bruger.js?v=1"></script>
+  <script src="js/shop-rares.js?v=1"></script>
+  <script src="js/job-ikon.js?v=1"></script>
+  <script src="js/foto-album.js?v=2"></script>
+  <script src="js/panel-forklaring.js?v=10"></script>
+  <!-- 👕 T-shirt-test (kun på denne testside, ikke i hotel.html) -->
+  <script src="js/toej-test.js?v=1"></script>
+</body>
+</html>

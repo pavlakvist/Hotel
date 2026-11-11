@@ -1,0 +1,10 @@
+T-SHIRT-PROTOTYPE (11/11)
+=========================
+Kun en prøve. Spillet (hotel.html, js/, billeder/) er IKKE ændret og bruger ikke disse filer.
+
+test-tshirt.html  -> dobbeltklik for at se pigen før/efter i 8 retninger (står, går, sidder, udtryk, vink)
+lag/              -> 33 gennemsigtige T-shirt-lag. Hvert lag har samme navn og størrelse som pigens billede
+                     i billeder/figurer/ og lægges oven på det samme punkt.
+scripts/          -> lav.py (laver lagene) og cfg.json (de håndvalgte ærme- og armfelter pr. billede)
+
+Vil du af med prototypen: slet hele mappen prototype-toej. Intet andet påvirkes.

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T-shirt prototype</title>
+<style>
+  :root { --vin:#5c1424; --vin2:#7d1d33; --guld:#c9a24a; --creme:#f6eedd; --papir:#fffaf0; --tekst:#2b1a12; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--creme); color:var(--tekst); font-family: Georgia, "Times New Roman", serif; }
+  header { background:var(--vin); color:var(--creme); padding:16px 20px; border-bottom:4px solid var(--guld); }
+  header h1 { margin:0 0 4px; font-size:24px; }
+  header p { margin:0; opacity:.9; font-size:14px; }
+  .bjaelke { display:flex; flex-wrap:wrap; gap:12px 22px; align-items:center; padding:12px 20px; background:var(--papir); border-bottom:1px solid #e3d5b8; font-size:14px; position:sticky; top:0; z-index:2; }
+  .bjaelke label { display:flex; align-items:center; gap:6px; cursor:pointer; }
+  main { padding:12px 16px 40px; max-width:1400px; margin:0 auto; }
+  h2 { color:var(--vin); border-bottom:2px solid var(--guld); padding-bottom:4px; margin:26px 0 12px; font-size:20px; }
+  .gitter { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px; }
+  .kort { background:var(--papir); border:1px solid #e3d5b8; border-radius:10px; padding:8px; text-align:center; }
+  .kort h3 { margin:2px 0 6px; font-size:14px; color:var(--vin2); }
+  .par { display:flex; justify-content:center; gap:6px; }
+  .par div { flex:1 1 0; min-width:0; font-size:11px; color:#6b5444; }
+  canvas { background: repeating-conic-gradient(#efe6d3 0% 25%, #f8f2e6 0% 50%) 50% / 16px 16px; border-radius:6px; image-rendering: pixelated; display:block; width:100%; height:auto; margin-top:2px; }
+  .note { background:#fff3d6; border-left:4px solid var(--guld); padding:10px 12px; font-size:14px; border-radius:4px; }
+  .mangler { color:#8a2b2b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>👕 T-shirt-prototype til pigen</h1>
+  <p>Før (venstre) og med rød T-shirt (højre) i alle 8 retninger. Kun en prøve: spillet bruger ikke disse filer.</p>
+</header>
+<div class="bjaelke">
+  <label>Størrelse <input type="range" id="zoom" min="2" max="5" value="3"></label>
+  <label>Fart <input type="range" id="fart" min="2" max="16" value="8"></label>
+  <label><input type="checkbox" id="kunLag"> Vis kun T-shirt-laget</label>
+  <label><input type="checkbox" id="blink"> Blink mellem før og efter (kontrol af forskydning)</label>
+  <label><input type="checkbox" id="pause"> Pause</label>
+</div>
+<main>
+  <div class="note">Gå-animationen er den samme som i spillet: forfra og bagfra bruges pigens egne gå-billeder, i de 6 andre retninger bruges stå-billedet, og underbenene svinger (som i <code>js/skelet-gang.js</code>). T-shirten er et separat gennemsigtigt lag, der lægges oven på hvert billede på præcis samme punkt.</div>
+  <h2>Står</h2><div class="gitter" id="staar"></div>
+  <h2>Går</h2><div class="gitter" id="gaar"></div>
+  <h2>Sidder</h2><div class="gitter" id="sidder"></div>
+  <h2>Ansigtsudtryk og vink</h2><div class="gitter" id="udtryk"></div>
+  <p class="mangler">Ikke med i prototypen: de 4 biograf-billeder bagfra (<code>pige-sid-*</code>, de har intet farvelag) og de gamle gå-billeder fra siden (<code>pige-gaa-hoejre-*</code>/<code>-venstre-*</code>), som spillet ikke bruger længere.</p>
+</main>
+<script>
+const FIG = "../billeder/figurer/", LAG = "lag/";
+const RET = ["ned","ned-hoejre","hoejre","op-hoejre","op","op-venstre","venstre","ned-venstre"];
+const STAA = { "ned":[25.5,157], "ned-hoejre":[25.5,157], "hoejre":[27,154], "op-hoejre":[25,154], "op":[24,155], "op-venstre":[23,154], "venstre":[23,154], "ned-venstre":[24,157] };
+const GAA = { ned:[["pige-gaa-ned-1",28.8,157],["pige-gaa-ned-2",28.7,157],["pige-gaa-ned-3",29.9,157],["pige-gaa-ned-4",29.4,157],["pige-gaa-ned-5",28.3,157]],
+              op:[["pige-gaa-op-1",26.2,157],["pige-gaa-op-2",26.1,157],["pige-gaa-op-3",28.1,157],["pige-gaa-op-4",27.8,157]] };
+const SID = [["ned","pige-sidder-ned",[42,101]],["ned-hoejre","pige-sidder-ned-hoejre",[41.5,104]],["hoejre","pige-sidder-hoejre",[41.5,102]],["venstre","pige-sidder-venstre",[26.5,102]],["ned-venstre","pige-sidder-ned-venstre",[27.5,104]]];
+const UDT = ["neutral","smil","glad","grin","vred","ked","overrasket","blink","flirt","traet"];
+const SKELET = { knae:46, skridt:7, loeft:3 }, TAKT = 0.75, FJERNT = 0.72;
+const SIDE = { hoejre:1, venstre:-1 }, SKRAA = { "ned-hoejre":1, "op-hoejre":1, "ned-venstre":-1, "op-venstre":-1 };
+
+const billeder = {};
+function hent(sti) { if (!billeder[sti]) { const i = new Image(); i.src = sti; billeder[sti] = i; } return billeder[sti]; }
+function par(navn) { return { org: hent(FIG + navn + ".png"), lag: hent(LAG + navn + ".png") }; }
+function klar(i) { return i.complete && i.naturalWidth > 0; }
+
+const $ = id => document.getElementById(id);
+function ind() { return { zoom:+$("zoom").value, fart:+$("fart").value, kunLag:$("kunLag").checked, blink:$("blink").checked, pause:$("pause").checked }; }
+
+// tegn ét billede (original + evt. lag) med fødderne/numsen i (fx, fy)
+function tegnDel(c, p, anker, fx, fy, medLag, kunLag) {
+  if (!klar(p.org)) return;
+  const x = Math.round(fx - anker[0]), y = Math.round(fy - anker[1]);
+  if (!kunLag) c.drawImage(p.org, x, y);
+  if (medLag && klar(p.lag)) c.drawImage(p.lag, x, y);
+}
+
+// lille arbejdslærred i figurens egne pixels
+const BW = 120, BH = 200, FX = 60, FY = 185;
+const arb = document.createElement("canvas"); arb.width = BW; arb.height = BH;
+const ac = arb.getContext("2d");
+const moerk = document.createElement("canvas"); moerk.width = BW; moerk.height = BH;
+const mc = moerk.getContext("2d");
+
+// gang med "skelet" (samme regler som js/skelet-gang.js, i billedets egne pixels)
+function tegnSkelet(c, retning, trin, medLag, kunLag) {
+  ac.clearRect(0, 0, BW, BH);
+  tegnDel(ac, par("pige-staa-" + retning), STAA[retning], FX, FY, medLag, kunLag);
+  const knaeY = FY - SKELET.knae;
+  const fase = trin * TAKT * Math.PI / 2, pos = Math.sin(fase), fart = Math.cos(fase);
+  const bob = Math.abs(pos) < 0.5 ? -1 : 0;
+  const side = SIDE[retning], skraa = SKRAA[retning], vend = side || skraa || 0;
+  function ben(x0, x1, frem, paaVejFrem, kilde) {
+    const top = knaeY - 2, raekker = FY + 2 - top;
+    const svingX = vend * SKELET.skridt * frem * (side ? 1 : 0.3);
+    const loeft = SKELET.loeft * Math.max(0, paaVejFrem);
+    for (let r = 0; r < raekker; r++) {
+      const yy = top + r, del = Math.max(0, Math.min(1, (yy - knaeY) / (FY - knaeY)));
+      const dx = Math.round(svingX * del), dy = Math.round(loeft * del * del);
+      c.drawImage(kilde, x0, yy, x1 - x0, 1, x0 + dx, yy - dy, x1 - x0, 1.5);
+    }
+  }
+  if (side) {
+    mc.clearRect(0, 0, BW, BH); mc.filter = "brightness(" + FJERNT + ")"; mc.drawImage(arb, 0, 0); mc.filter = "none";
+    ben(0, BW, -pos, -fart, moerk); ben(0, BW, pos, fart, arb);
+  } else {
+    const midt = FX - 1, v = [0, midt + 2], h = [midt, BW];
+    if (vend >= 0) { ben(v[0], v[1], pos, fart, arb); ben(h[0], h[1], -pos, -fart, arb); }
+    else { ben(h[0], h[1], -pos, -fart, arb); ben(v[0], v[1], pos, fart, arb); }
+  }
+  c.drawImage(arb, 0, 0, BW, knaeY, 0, bob, BW, knaeY);
+}
+
+const tegninger = [];   // { canvas, tegn(c, tid, medLag, kunLag) }
+function kort(beholder, titel, tegn) {
+  const k = document.createElement("div"); k.className = "kort";
+  k.innerHTML = "<h3>" + titel + "</h3><div class='par'><div>Før<br></div><div>Med T-shirt<br></div></div>";
+  const [a, b] = k.querySelectorAll(".par div");
+  const ca = document.createElement("canvas"), cb = document.createElement("canvas");
+  a.appendChild(ca); b.appendChild(cb); beholder.appendChild(k);
+  tegninger.push({ cv: ca, tegn: tegn, efter: false }, { cv: cb, tegn: tegn, efter: true });
+}
+
+RET.forEach(r => kort($("staar"), r, (c, t, lag, kun) => tegnDel(c, par("pige-staa-" + r), STAA[r], FX, FY, lag, kun)));
+RET.forEach(r => kort($("gaar"), r, (c, t, lag, kun, s) => {
+  if (GAA[r]) { const L = GAA[r], n = L[Math.floor(t * s) % L.length]; tegnDel(c, par(n[0]), [n[1], n[2]], FX, FY, lag, kun); }
+  else tegnSkelet(c, r, t * s, lag, kun);
+}));
+SID.forEach(([r, n, a]) => kort($("sidder"), r, (c, t, lag, kun) => tegnDel(c, par(n), a, FX, FY - 50, lag, kun)));
+UDT.forEach(u => kort($("udtryk"), u, (c, t, lag, kun) => tegnDel(c, par("pige-udtryk-" + u), [26, 158], FX, FY, lag, kun)));
+kort($("udtryk"), "vink", (c, t, lag, kun) => tegnDel(c, par("pige-vink"), [35, 163], FX, FY, lag, kun));
+
+let tid = 0, sidst = performance.now();
+function loop(nu) {
+  const v = ind();
+  if (!v.pause) tid += Math.max(0, nu - sidst) / 1000;
+  sidst = nu;
+  const blinkEfter = Math.floor(nu / 600) % 2 === 1;
+  tegninger.forEach(d => {
+    const W = 84, H = 165, z = v.zoom;
+    if (d.cv.width !== W * z) { d.cv.width = W * z; d.cv.height = H * z; }
+    const c = d.cv.getContext("2d");
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, d.cv.width, d.cv.height);
+    c.imageSmoothingEnabled = false;
+    c.setTransform(z, 0, 0, z, (W / 2 - FX) * z, (H - 8 - FY) * z);
+    let medLag = d.efter, kun = d.efter && v.kunLag;
+    if (v.blink && d.efter) medLag = blinkEfter;
+    d.tegn(c, tid, medLag, kun, v.fart);
+  });
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
