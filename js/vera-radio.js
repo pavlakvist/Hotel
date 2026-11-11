@@ -1302,7 +1302,8 @@
       "<div class='rv-ctrl'><button data-rv-styr='pause' class='rv-pause'>⏸ Pause</button><button data-rv-styr='naeste'>⏭ Næste</button>" +
       "<button data-rv-styr='stop'>⏹ Stop</button><button data-rv-styr='gentag' class='rv-gentag'>🔁 Gentag playliste</button>" +
       "<button data-rv-lyt class='rv-lyt'>🎧 Lyt med</button></div>" +
-      "<div class='rv-yt-hurtig'><input class='rv-yt-link' maxlength='300' placeholder='▶️ Indsæt et YouTube-link'><button class='rv-yt-nu'>▶ Spil nu</button><button class='rv-yt-koe'>➕ Kø</button></div>" +
+      "<div class='rv-yt-hurtig'><input class='rv-yt-link' maxlength='4000' placeholder='▶️ Indsæt YouTube-links (gerne flere)'><button class='rv-yt-nu'>▶ Spil nu</button><button class='rv-yt-koe'>➕ Kø</button></div>" +
+      "<p class='rv-lille-tekst rv-yt-vent' hidden></p>" +
       "<h4>⏭ Kø <small class='rv-koe-antal'></small> <button class='rv-lille' data-rv-styr='koe_ryd'>🗑 Ryd køen</button></h4><ol class='rv-koe'></ol></section>" +
       "<section class='rv-boks rv-snak'><h4>🎙 Snak i radioen</h4>" +
       "<div class='rv-snak-faner'><button data-rv-snak='mik' class='valgt'>🔴 Mikrofon live</button><button data-rv-snak='optag'>🎙 Optag klip</button><button data-rv-snak='oplaes'>🗣 Oplæs tekst</button><button data-rv-snak='link'>📡 Live-link</button></div>" +
@@ -1326,22 +1327,37 @@
       });
     });
     tegnSnak(div.querySelector(".rv-snak-krop"), "mik");
-    const ytFelt = div.querySelector(".rv-yt-link");
+    // YouTube: indsæt så mange links man vil (et ad gangen eller flere på én gang); de lægges i kø i rækkefølge
     const ytKnap = function (b, hvordan) {
       b.addEventListener("click", function () {
-        const link = ytFelt.value.trim();
-        if (!link) { visFejl("Indsæt et link fra YouTube først."); return; }
-        const f = b.textContent;
-        b.disabled = true; b.textContent = "…";
-        ytSpor(link).then(function (sp) { return styr(hvordan, { spor: sp }).then(function () { return sp; }); })
-          .then(function (sp) { ytFelt.value = ""; visFejl(""); toast(hvordan === "spil" ? "▶️ " + sp.titel + " spiller nu" : "➕ " + sp.titel + " er sat i kø"); })
-          .catch(function (e) { visFejl(fejlTekst(e)); })
-          .then(function () { b.disabled = false; b.textContent = f; });
+        const felt = document.querySelector("#rv-panel .rv-yt-link");
+        const links = String(felt ? felt.value : "").split(/[\s,]+/).filter(function (x) { return x; });
+        if (!links.length) { visFejl("Indsæt et link fra YouTube først."); return; }
+        felt.value = "";
+        visFejl("");
+        (hvordan === "spil" ? links.slice(0, 1) : links).forEach(function (link, i) {
+          ytKoeVent++;
+          visYtVent();
+          ytKoeKaede = ytKoeKaede.then(function () {
+            return ytSpor(link).then(function (sp) {
+              return styr(hvordan === "spil" && i === 0 ? "spil" : "koe", { spor: sp }).then(function () {
+                toast(hvordan === "spil" ? "▶️ " + sp.titel + " spiller nu" : "➕ " + sp.titel + " er sat i kø");
+              });
+            }).catch(function (e) { visFejl(link.slice(0, 60) + ": " + fejlTekst(e)); });
+          }).then(function () { ytKoeVent--; visYtVent(); });
+        });
       });
     };
     ytKnap(div.querySelector(".rv-yt-nu"), "spil");
     ytKnap(div.querySelector(".rv-yt-koe"), "koe");
+    div.querySelector(".rv-yt-link").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); div.querySelector(".rv-yt-koe").click(); } });
+    visYtVent();
     tegnLiveBoks();
+  }
+  let ytKoeKaede = Promise.resolve(), ytKoeVent = 0;
+  function visYtVent() {
+    const el = document.querySelector("#rv-panel .rv-yt-vent");
+    if (el) { el.hidden = !ytKoeVent; el.textContent = "⏳ Henter " + ytKoeVent + " YouTube-" + (ytKoeVent === 1 ? "video" : "videoer") + " … du kan godt sætte flere ind imens."; }
   }
   let liveSidst = null;
   function tegnLiveBoks() {
