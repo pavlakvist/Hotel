@@ -8,6 +8,7 @@
 //    se hvem der har booket hvilke sæder, fjern en billet, aflys (alle får Glimt tilbage),
 //    og start filmen i biografen.
 //  - I biografen står der et nummer på hvert sæde (A1–D8), og din egen plads lyser op.
+//  - 📼 Kø af YouTube-film i biografen: sæt så mange i kø du vil; den næste starter, når en film slutter.
 //  Kræver database-46-cinema.sql. Hentes fra js/panel-forklaring.js, så hotel.html ikke skal ændres.
 // =============================================================
 (function () {
@@ -757,37 +758,53 @@
     c.fillText(tekst, cx + 0.5, cy + 1);
     c.restore();
   }
-  vent(function () { return typeof tegnMoebel === "function" && typeof moebelSted === "function" && typeof ctx !== "undefined"; }, function () {
-    const tegnMoebelFoerCinema = tegnMoebel;
-    tegnMoebel = function (c, type, cx, cy, spejlet, retning) {
-      tegnMoebelFoerCinema.apply(this, arguments);
-      if (!type || type.id !== "bio-saede" || c !== ctx || !iBio()) return;
-      try {
-        const nr = saedeNumre();
-        const m = moeblerIRummet.find(function (x) {
-          if (x.type !== "bio-saede") return false;
-          const p = moebelSted(type, x.x, x.y, typeof drejetTvaers === "function" ? drejetTvaers(x) : false);
-          return Math.abs(p.x - cx) < 0.5 && Math.abs(p.y - cy) < 0.5;
-        });
-        const navn = m && nr[m.x + "," + m.y];
-        if (!navn) return;
-        const b = billetNu();
-        const min = !!b && b.saede === navn;
-        tegnSkilt(c, cx - 13, cy - 32, navn, min);
-        if (min) {
-          // en lille guldpil over din plads
-          const t = (Date.now() / 300) % (Math.PI * 2);
-          const y = cy - 92 + Math.sin(t) * 3;
-          c.save();
-          c.fillStyle = "#ffd76a"; c.strokeStyle = "#7a1b2b"; c.lineWidth = 1.5;
-          const ax = cx - 13;
-          c.beginPath(); c.moveTo(ax, y + 9); c.lineTo(ax - 7, y); c.lineTo(ax - 3, y); c.lineTo(ax - 3, y - 7); c.lineTo(ax + 3, y - 7); c.lineTo(ax + 3, y); c.lineTo(ax + 7, y); c.closePath();
-          c.fill(); c.stroke();
-          c.restore();
-        }
-      } catch (e) {}
+  function tegnNummer(c, type, cx, cy) {
+    if (!type || type.id !== "bio-saede" || c !== ctx || !iBio()) return;
+    try {
+      const nr = saedeNumre();
+      const m = moeblerIRummet.find(function (x) {
+        if (x.type !== "bio-saede") return false;
+        const p = moebelSted(type, x.x, x.y, typeof drejetTvaers === "function" ? drejetTvaers(x) : false);
+        return Math.abs(p.x - cx) < 1 && Math.abs(p.y - cy) < 1;
+      });
+      const navn = m && nr[m.x + "," + m.y];
+      if (!navn) return;
+      const b = billetNu();
+      const min = !!b && b.saede === navn;
+      tegnSkilt(c, cx - 13, cy - 32, navn, min);
+      if (min) {
+        // en lille guldpil over din plads
+        const t = (Date.now() / 300) % (Math.PI * 2);
+        const y = cy - 92 + Math.sin(t) * 3;
+        c.save();
+        c.fillStyle = "#ffd76a"; c.strokeStyle = "#7a1b2b"; c.lineWidth = 1.5;
+        const ax = cx - 13;
+        c.beginPath(); c.moveTo(ax, y + 9); c.lineTo(ax - 7, y); c.lineTo(ax - 3, y); c.lineTo(ax - 3, y - 7); c.lineTo(ax + 3, y - 7); c.lineTo(ax + 3, y); c.lineTo(ax + 7, y); c.closePath();
+        c.fill(); c.stroke();
+        c.restore();
+      }
+    } catch (e) {}
+  }
+  // Nummeret tegnes lige efter sædet. Andre filer (fx js/realistisk.js) pakker også tegnMoebel ind og
+  // tegner sæderne selv, så vi sørger for altid at ligge yderst (tjekkes hvert halve sekund).
+  let iNummer = false;
+  function pakInd() {
+    if (typeof tegnMoebel !== "function" || typeof moebelSted !== "function" || typeof ctx === "undefined") return;
+    if (tegnMoebel.vcNummer) return;
+    const foer = tegnMoebel;
+    const ny = function (c, type, cx, cy) {
+      if (iNummer) return foer.apply(this, arguments);      // vi er allerede i gang længere ude
+      iNummer = true;
+      let svar;
+      try { svar = foer.apply(this, arguments); } finally { iNummer = false; }
+      tegnNummer(c, type, cx, cy);
+      return svar;
     };
-  });
+    ny.vcNummer = true;
+    tegnMoebel = ny;
+  }
+  pakInd();
+  setInterval(pakInd, 500);
   // Når man går ind i biografen med en billet: sig hvor man skal sidde
   let sidstIBio = false;
   setInterval(function () {
@@ -801,6 +818,131 @@
     sidstIBio = her;
   }, 1000);
 
+
+  // ---------------------------------------------------------------
+  //  📼 Kø af YouTube-film i biografen (ejeren og de ansatte)
+  //  Sæt så mange links i kø, som du vil. Når en film slutter, starter den næste af sig selv.
+  //  Køen ligger på den computer, der styrer filmen (den, der satte filmene i kø).
+  // ---------------------------------------------------------------
+  const KOE_NOEGLE = "mit-hotel-bio-koe";
+  let bioKoe = [];
+  try { bioKoe = JSON.parse(localStorage.getItem(KOE_NOEGLE) || "[]") || []; } catch (e) { bioKoe = []; }
+  function gemKoe() { try { localStorage.setItem(KOE_NOEGLE, JSON.stringify(bioKoe)); } catch (e) {} tegnAlleKoeer(); }
+  function maaKoe() { try { return typeof maaStyreBio === "function" ? maaStyreBio() : maaStyre(); } catch (e) { return false; } }
+  function filmKoerer() { return typeof bioFilm !== "undefined" && !!bioFilm.v; }
+  function hentTitel(punkt) {
+    // filmens titel fra YouTube (via noembed.com); virker det ikke, står der bare "YouTube-video"
+    fetch("https://noembed.com/embed?url=" + encodeURIComponent("https://www.youtube.com/watch?v=" + punkt.v)).then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.title) { punkt.titel = j.title; gemKoe(); } }).catch(function () {});
+  }
+  function koeTilfoej(link) {
+    const id = typeof youtubeId === "function" ? youtubeId(link) : null;
+    if (!id) return "Det ligner ikke et YouTube-link. Prøv at kopiere linket igen.";
+    const punkt = { v: id, titel: "", id: Date.now() + Math.random() };
+    bioKoe.push(punkt);
+    gemKoe();
+    hentTitel(punkt);
+    // kører der ingen film, og er man i biografen, starter den med det samme
+    if (!filmKoerer() && typeof iBiografen === "function" && iBiografen()) afspilNaeste();
+    return "";
+  }
+  function afspilNaeste() {
+    if (!maaKoe() || typeof visFilm !== "function") return;
+    const n = bioKoe.shift();
+    gemKoe();
+    if (!n) return;
+    const start = function () { visFilm("https://www.youtube.com/watch?v=" + n.v); tegnAlleKoeer(); };
+    if (typeof iBiografen === "function" && !iBiografen() && typeof gaaTilVaerelse === "function") { gaaTilVaerelse("biograf"); setTimeout(start, 500); }
+    else start();
+  }
+  // Lyt efter, hvornår YouTube-filmen er slut
+  let sidstSlut = -1;
+  window.addEventListener("message", function (e) {
+    if (!/youtube/.test(e.origin || "")) return;
+    let d = null;
+    try { d = typeof e.data === "string" ? JSON.parse(e.data) : e.data; } catch (x) { return; }
+    if (!d) return;
+    const slut = (d.event === "onStateChange" && d.info === 0) || (d.event === "infoDelivery" && d.info && d.info.playerState === 0);
+    if (!slut || typeof bioFilm === "undefined" || !bioFilm.v) return;
+    if (bioFilm.n === sidstSlut) return;          // kun én gang pr. film
+    if (bioFilm.af !== mig() || !bioKoe.length) return;   // den, der satte filmen på, starter den næste
+    sidstSlut = bioFilm.n;
+    afspilNaeste();
+  });
+  // Bed YouTube om at fortælle, når filmen skifter tilstand (den sender kun, når man har spurgt)
+  vent(function () { return typeof bioSkaerm !== "undefined"; }, function () {
+    function lyt() { try { if (bioSkaerm.src) bioSkaerm.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*"); } catch (e) {} }
+    bioSkaerm.addEventListener("load", function () { lyt(); setTimeout(lyt, 1500); });
+    setInterval(function () { if (filmKoerer() && bioKoe.length) lyt(); }, 4000);
+  });
+
+  function koeHtml(med) {
+    return "<div class='vc-koe'><b>📼 Film i kø" + (bioKoe.length ? " (" + bioKoe.length + ")" : "") + "</b>" +
+      (med ? "<form class='vc-koe-form'><input type='text' placeholder='YouTube-link til køen …'><button type='submit' class='bio-k lys lv-knap'>➕ Sæt i kø</button></form>" : "") +
+      (bioKoe.length ? "<ol>" + bioKoe.map(function (k, i) {
+        return "<li><div><span>" + esc(k.titel || "YouTube-video (" + k.v + ")") + "</span>" +
+          (i > 0 ? "<button type='button' data-koe-op='" + i + "' title='Flyt op'>▲</button>" : "") +
+          "<button type='button' data-koe-fjern='" + i + "' title='Fjern'>✕</button></div></li>";
+      }).join("") + "</ol><div class='vc-koe-knapper'><button type='button' class='bio-k lv-knap' data-koe-naeste>⏭ Næste film nu</button>" +
+        "<button type='button' class='bio-k lys lv-knap' data-koe-toem>🗑 Tøm køen</button></div>"
+        : "<p>Køen er tom. Sæt så mange film i kø, du vil. Når en film slutter, starter den næste af sig selv.</p>") +
+      "<p class='vc-koe-fejl' hidden></p></div>";
+  }
+  function kobKoe(el) {
+    const f = el.querySelector(".vc-koe-form");
+    if (f) f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const inp = f.querySelector("input");
+      const link = inp.value;
+      inp.value = "";
+      const fejl = koeTilfoej(link);
+      const p = el.querySelector(".vc-koe-fejl");
+      if (fejl) { inp.value = link; if (p) { p.textContent = fejl; p.hidden = false; } }
+    });
+    el.querySelectorAll("[data-koe-fjern]").forEach(function (k) { k.addEventListener("click", function () { bioKoe.splice(+k.dataset.koeFjern, 1); gemKoe(); }); });
+    el.querySelectorAll("[data-koe-op]").forEach(function (k) {
+      k.addEventListener("click", function () { const i = +k.dataset.koeOp; const x = bioKoe.splice(i, 1)[0]; bioKoe.splice(i - 1, 0, x); gemKoe(); });
+    });
+    const n = el.querySelector("[data-koe-naeste]");
+    if (n) n.addEventListener("click", afspilNaeste);
+    const t = el.querySelector("[data-koe-toem]");
+    if (t) t.addEventListener("click", function () { toKlik(t, function () { bioKoe = []; gemKoe(); }); });
+  }
+  // Køen i biograf-vinduet (klik på lærredet) og i Ejerpanel → 🎬 Biograf
+  function tegnKoeI(holder, med) {
+    if (!holder) return;
+    if (!maaKoe()) { holder.innerHTML = ""; return; }
+    const aktiv = holder.contains(document.activeElement) && document.activeElement.tagName === "INPUT";
+    const gammel = aktiv ? document.activeElement.value : "";
+    holder.innerHTML = koeHtml(med);
+    kobKoe(holder);
+    if (aktiv) { const i = holder.querySelector("input"); if (i) { i.value = gammel; i.focus(); } }
+  }
+  function tegnAlleKoeer() {
+    tegnKoeI(document.getElementById("vc-koe-vindue"), true);
+    tegnKoeI(document.getElementById("vc-koe-panel"), true);
+  }
+  vent(function () { return document.getElementById("bio-vindue") && document.getElementById("bio-form"); }, function () {
+    const holder = document.createElement("div");
+    holder.id = "vc-koe-vindue";
+    const tekst = document.getElementById("bio-tekst");
+    if (tekst) tekst.after(holder); else document.querySelector("#bio-vindue .bio-krop").appendChild(holder);
+    tegnKoeI(holder, true);
+    // "Vis film" mens en film kører: spørg ikke, bare vis. Køen har sin egen knap.
+  });
+  vent(function () { return typeof visFane === "function" && typeof visBioVindue === "function" && typeof ejerIndhold !== "undefined"; }, function () {
+    const visFaneFoerKoe = visFane;
+    visFane = function () {
+      visFaneFoerKoe();
+      if (ejerVindue.hidden || ejerFane !== "biograf" || !maaKoe()) return;
+      if (document.getElementById("vc-koe-panel")) return;
+      const holder = document.createElement("div");
+      holder.id = "vc-koe-panel";
+      holder.style.marginTop = "14px";
+      ejerIndhold.appendChild(holder);
+      tegnKoeI(holder, true);
+    };
+  });
 
   // ---------------------------------------------------------------
   //  Udseende
@@ -956,6 +1098,19 @@
     "#vc-panel td { padding: 5px 4px; border-bottom: 1px solid #f1e2c6; }",
     "#vc-panel tr.ny td { background: #fff1c4; }",
     "#vc-panel td .lv-knap { padding: 2px 8px; }",
+    ".vc-koe { margin-top: 10px; padding: 9px 10px; border: 2px solid #d9a441; border-radius: 10px; background: #fff8ea; color: #4a1a22; font-size: 12.5px; }",
+    ".vc-koe > b { display: block; margin-bottom: 6px; color: #7a1b2b; }",
+    ".vc-koe-form { display: flex; gap: 6px; margin-bottom: 6px; }",
+    ".vc-koe-form input { flex: 1; min-width: 0; padding: 6px 8px; border: 2px solid #d9a441; border-radius: 8px; background: #fff; color: #4a1a22; }",
+    ".vc-koe ol { margin: 4px 0 6px; padding-left: 20px; max-height: 160px; overflow-y: auto; }",
+    ".vc-koe li { margin: 3px 0; }",
+    ".vc-koe li > div { display: flex; align-items: center; gap: 4px; }",
+    ".vc-koe li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".vc-koe li button { flex: none; margin: 0 !important; min-width: 0 !important; width: 22px; height: 22px; padding: 0; border: 1px solid #d9a441; border-radius: 6px; background: #fff; color: #7a1b2b; cursor: pointer; vertical-align: middle; }",
+    ".vc-koe-knapper { display: flex; gap: 6px; flex-wrap: wrap; }",
+    ".vc-koe p { margin: 4px 0 0; }",
+    ".vc-koe .vc-koe-fejl { color: #b3202f; font-weight: bold; }",
+    ".vc-koe .vc-sikker { background: #c0283c !important; color: #fff !important; }",
     "#ejer-faner .vc-tal { background: #e0283c; color: #fff; border-radius: 8px; padding: 0 6px; margin-left: 4px; font-size: 11px; }",
   ];
   const stil = document.createElement("style");
