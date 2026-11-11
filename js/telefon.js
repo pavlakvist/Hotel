@@ -233,6 +233,8 @@
       if (e.ikSvg) IK["x-" + id] = e.ikSvg;
       APPS[id] = { navn: e.navn, ik: e.ikSvg ? "x-" + id : "gear", bg: e.bg, kun: e.kun, ekstra: e };
       if (e.fast && GITTER.indexOf(id) < 0) GITTER.push(id);
+      // butik: true = appen hentes i App Butik (fx 🗺 Vera-maps fra js/vera-maps.js)
+      if (e.butik) { APPS[id].spil = true; APPS[id].app = true; APPS[id].tekst = e.tekst || ""; if (ALLE_APPS.indexOf(id) < 0) ALLE_APPS.push(id); }
     });
   }
   tagEkstraApps();
@@ -1844,7 +1846,8 @@
   //  afinstalleres; apps der fulgte med telefonen kan ikke slettes.
   //  Hentede spil gemmes i ind.spil
   // ---------------------------------------------------------------
-  function mineSpil() { if (!Array.isArray(ind.spil)) ind.spil = []; ind.spil = ind.spil.filter(function (s) { return ALLE_SPIL.indexOf(s) >= 0 || ALLE_APPS.indexOf(s) >= 0; }); return ind.spil; }
+  // (apps fra andre filer, der ikke er hentet ind endnu, bliver husket, men vises først når filen er klar)
+  function mineSpil() { if (!Array.isArray(ind.spil)) ind.spil = []; ind.spil = ind.spil.filter(function (s) { return ALLE_SPIL.indexOf(s) >= 0 || ALLE_APPS.indexOf(s) >= 0 || !APPS[s]; }); return ind.spil.filter(function (s) { return !!APPS[s]; }); }
   function harSpil(id) { return mineSpil().indexOf(id) >= 0; }
   let henter = {};
   function hentSpil(id) {
@@ -1853,7 +1856,7 @@
     if (appNu === "butik") tegnButikListe();
     setTimeout(function () {
       delete henter[id];
-      if (!harSpil(id)) { mineSpil().push(id); gemInd(); }
+      if (!harSpil(id)) { mineSpil(); ind.spil.push(id); gemInd(); }
       if (APPS[id].multi) stribeInstalleret(true);
       lille("⬇️ " + APPS[id].navn + " er hentet");
       if (!APPS[id].multi && stribeOnline()) serverKald("hv_spil_installeret", { p_token: mitToken(), p_spil: id, p_har: true }).then(function () { if (butikFane === "top") return hentSpilTop(); }).then(function () { if (appNu === "butik") tegnButikListe(); }).catch(function () {});
@@ -1871,7 +1874,7 @@
   }, 150);
   function afinstaller(id) {
     if (!APPS[id] || !APPS[id].spil) { lille("Apps der fulgte med telefonen kan ikke slettes"); return; }
-    ind.spil = mineSpil().filter(function (s) { return s !== id; });
+    mineSpil(); ind.spil = ind.spil.filter(function (s) { return s !== id; });
     if (id === "musik" && typeof mbStop === "function") mbStop();
     if (APPS[id].multi) stribeInstalleret(false);
     else if (stribeOnline()) serverKald("hv_spil_installeret", { p_token: mitToken(), p_spil: id, p_har: false }).catch(function () {});

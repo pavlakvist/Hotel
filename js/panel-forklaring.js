@@ -478,3 +478,21 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vera-radio.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎬 Vera-cinema (js/vera-cinema.js): appen Vera-cinema på telefonen (program, arrangementer, billetter),
+// Ejerpanel → 🎟 Vera-cinema og numre på sæderne i biografen. Kræver database-46-cinema.sql.
+(function () {
+  if (document.querySelector("script[src^='js/vera-cinema.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vera-cinema.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 🗺 Vera-maps (js/vera-maps.js): hotellets eget kort, som man henter i App Butik på telefonen.
+// Etager, værelser, lejligheder, butikker, offentlige rum, medarbejdere, søg og rute.
+(function () {
+  if (document.querySelector("script[src^='js/vera-maps.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vera-maps.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();

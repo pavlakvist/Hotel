@@ -75,6 +75,8 @@ create table if not exists public.hv_radio (
   opdateret timestamptz not null default now()
 );
 insert into public.hv_radio (id) values (1) on conflict (id) do nothing;
+-- 🎙 Mikrofonen live i browseren: hvem snakker lige nu ({navn, navn_lille, id, start, sidst})
+alter table public.hv_radio add column if not exists mik jsonb;
 
 create table if not exists public.hv_radio_musik (
   id bigint generated always as identity primary key,
@@ -100,6 +102,8 @@ create table if not exists public.hv_radio_klip (
   af text,
   tid timestamptz not null default now()
 );
+-- live_snak = optaget fra mikrofonen under en live-udsendelse (bruges når udsendelsen høres igen)
+alter table public.hv_radio_klip add column if not exists live_snak boolean not null default false;
 create table if not exists public.hv_radio_programmer (
   id bigint generated always as identity primary key,
   titel text not null,
@@ -219,7 +223,8 @@ returns jsonb language plpgsql immutable as $$
 declare t text := coalesce(p->>'type', 'sang');
 begin
   if p is null or jsonb_typeof(p) <> 'object' then return null; end if;
-  if t not in ('sang', 'klip', 'tale', 'link') then t := 'sang'; end if;
+  if t not in ('sang', 'klip', 'tale', 'link', 'youtube') then t := 'sang'; end if;
+  if t = 'youtube' and coalesce(p->>'yt', '') !~ '^[A-Za-z0-9_-]{11}$' then return null; end if;
   return jsonb_strip_nulls(jsonb_build_object(
     'type', t,
     'id', p->'id',
@@ -227,6 +232,7 @@ begin
     'kunstner', left(p->>'kunstner', 120),
     'url', case when t in ('sang', 'link') and coalesce(p->>'url', '') !~* '^\s*(javascript|data):' then left(p->>'url', 600) end,
     'tekst', case when t = 'tale' then left(p->>'tekst', 600) end,
+    'yt', case when t = 'youtube' then p->>'yt' end,
     'sek', greatest(0, least(coalesce((p->>'sek')::double precision, 0), 4 * 3600)),
     'k', p->>'k'));
 end $$;
@@ -266,6 +272,7 @@ begin
     'spor', r.spor, 'pos', pos, 'pauset', r.pauset, 'gentag', r.gentag, 'playliste', r.playliste,
     'koe', (select coalesce(jsonb_agg(k), '[]'::jsonb) from (select k from jsonb_array_elements(r.koe) with ordinality a(k, n) where n <= 40) x),
     'koe_antal', jsonb_array_length(r.koe),
+    'mik', case when r.live and r.mik is not null and (r.mik->>'sidst')::timestamptz > now() - interval '30 seconds' then r.mik - 'sidst' end,
     'lyttere', antal,
     'vaert', vaert,
     'lytter_navne', case when vaert then (select coalesce(json_agg(navn order by navn), '[]'::json) from hv_radio_lyttere where sidst > now() - interval '45 seconds') end,
@@ -313,7 +320,7 @@ begin
       -- en tom udsendelse (der aldrig blev spillet noget i) gemmes ikke
       delete from hv_radio_udsendelser where id = r.udsendelse and jsonb_array_length(log) = 0;
     end if;
-    update hv_radio set live = false, udsendelse = null, program = null, opdateret = now() where id = 1;
+    update hv_radio set live = false, udsendelse = null, program = null, mik = null, opdateret = now() where id = 1;
     if coalesce((d->>'stop')::boolean, false) then
       update hv_radio set spor = null, spor_start = null, pauset = false, koe = '[]'::jsonb where id = 1;
     end if;
@@ -502,7 +509,7 @@ declare s hv_spillere;
 begin
   s := hv_radio_vaert(p_token);
   return (select coalesce(json_agg(k order by k.id desc), '[]'::json) from (
-    select id, titel, sek, af, (extract(epoch from tid) * 1000)::bigint as tid from hv_radio_klip order by id desc limit 100) k);
+    select id, titel, sek, af, (extract(epoch from tid) * 1000)::bigint as tid from hv_radio_klip where not live_snak order by id desc limit 100) k);
 end $$;
 create or replace function public.hv_radio_klip_slet(p_token uuid, p_id bigint)
 returns void language plpgsql security definer set search_path = public as $$
@@ -576,6 +583,10 @@ returns void language plpgsql security definer set search_path = public as $$
 declare s hv_spillere;
 begin
   s := hv_radio_vaert(p_token);
+  -- mikrofon-snakken fra udsendelsen slettes også
+  delete from hv_radio_klip where live_snak and id in (
+    select (e->>'mik')::bigint from hv_radio_udsendelser u, jsonb_array_elements(u.log) e
+    where u.id = p_id and u.slut is not null and e ? 'mik');
   delete from hv_radio_udsendelser where id = p_id and slut is not null;
 end $$;
 
@@ -610,6 +621,93 @@ begin
     where fra = s.navn and tid > now() - interval '1 day' order by id desc limit 30) b);
 end $$;
 
+-- =============================================================
+--  🎙 Snak live med mikrofonen direkte i Radio-panelet
+--  Lyden sendes direkte fra værtens browser til hver lytter (WebRTC).
+--  Serveren bruges kun til at "præsentere" dem for hinanden (signaler).
+-- =============================================================
+create table if not exists public.hv_radio_signal (
+  id bigint generated always as identity primary key,
+  til text not null,                    -- navn_lille på den, der skal have signalet
+  fra text not null,
+  fra_navn text,
+  slags text not null,                  -- vil (lytter vil høre med) | tilbud | svar | farvel
+  data text,
+  tid timestamptz not null default now()
+);
+create index if not exists hv_radio_signal_til on public.hv_radio_signal (til, id);
+alter table public.hv_radio_signal enable row level security;
+
+-- Tænd/sluk mikrofonen (værten kalder den hvert 10. sek, mens den er tændt)
+create or replace function public.hv_radio_mik(p_token uuid, p_til boolean)
+returns void language plpgsql security definer set search_path = public as $$
+declare s hv_spillere; r hv_radio; frisk boolean;
+begin
+  s := hv_radio_vaert(p_token);
+  select * into r from hv_radio where id = 1 for update;
+  frisk := r.mik is not null and (r.mik->>'sidst')::timestamptz > now() - interval '30 seconds';
+  if p_til then
+    if not r.live then raise exception 'Gå live først, så kan du tænde mikrofonen.'; end if;
+    if frisk and r.mik->>'navn_lille' <> s.navn_lille then
+      raise exception '% snakker i mikrofonen lige nu. Vent, til mikrofonen er slukket.', r.mik->>'navn';
+    end if;
+    if frisk then
+      update hv_radio set mik = jsonb_set(mik, '{sidst}', to_jsonb(now())) where id = 1;
+    else
+      update hv_radio set mik = jsonb_build_object('navn', s.navn, 'navn_lille', s.navn_lille, 'id', floor(random() * 1000000000)::bigint,
+        'start', (extract(epoch from now()) * 1000)::bigint, 'sidst', now()), opdateret = now() where id = 1;
+    end if;
+  else
+    update hv_radio set mik = null, opdateret = now() where id = 1;
+  end if;
+end $$;
+
+-- Gem et stykke af mikrofon-snakken i udsendelsen, så den kan høres igen bagefter
+create or replace function public.hv_radio_mik_gem(p_token uuid, p_udsendelse bigint, p_data text, p_sek double precision, p_start bigint)
+returns bigint language plpgsql security definer set search_path = public as $$
+declare s hv_spillere; u hv_radio_udsendelser; ny bigint;
+begin
+  s := hv_radio_vaert(p_token);
+  select * into u from hv_radio_udsendelser where id = p_udsendelse;
+  if u.id is null then return null; end if;
+  if p_data is null or p_data !~ '^data:audio/' then raise exception 'Optagelsen mangler.'; end if;
+  if length(p_data) > 3000000 then raise exception 'Optagelsen er for lang.'; end if;
+  if jsonb_array_length(u.log) >= 2000 then return null; end if;
+  insert into hv_radio_klip (titel, data, sek, af, live_snak)
+    values ('🎙 Live-snak', p_data, greatest(0, coalesce(p_sek, 0)), s.navn, true) returning id into ny;
+  update hv_radio_udsendelser set log = log || jsonb_build_array(jsonb_build_object(
+      't', round(greatest(0, p_start / 1000.0 - extract(epoch from u.start))::numeric, 1),
+      'mik', ny, 'sek', round(greatest(0, coalesce(p_sek, 0))::numeric, 1), 'af', s.navn))
+    where id = u.id;
+  return ny;
+end $$;
+
+-- Signaler mellem værten og lytterne
+create or replace function public.hv_radio_signal_send(p_token uuid, p_til text, p_slags text, p_data text)
+returns void language plpgsql security definer set search_path = public as $$
+declare s hv_spillere;
+begin
+  select * into s from hv_spillere where token = p_token;
+  if s.id is null then raise exception 'Du er ikke logget ind.'; end if;
+  if p_slags not in ('vil', 'tilbud', 'svar', 'farvel') then raise exception 'Ukendt signal.'; end if;
+  if length(coalesce(p_data, '')) > 20000 then raise exception 'Signalet er for stort.'; end if;
+  if (select count(*) from hv_radio_signal where fra = s.navn_lille and tid > now() - interval '10 seconds') > 60 then
+    raise exception 'For mange signaler. Vent lidt.';
+  end if;
+  insert into hv_radio_signal (til, fra, fra_navn, slags, data) values (lower(coalesce(p_til, '')), s.navn_lille, s.navn, p_slags, p_data);
+  delete from hv_radio_signal where tid < now() - interval '2 minutes';
+end $$;
+create or replace function public.hv_radio_signal_hent(p_token uuid, p_efter bigint default 0)
+returns json language plpgsql security definer set search_path = public as $$
+declare s hv_spillere;
+begin
+  select * into s from hv_spillere where token = p_token;
+  if s.id is null then return '[]'::json; end if;
+  return (select coalesce(json_agg(x order by x.id), '[]'::json) from (
+    select id, fra, fra_navn, slags, data from hv_radio_signal
+    where til = s.navn_lille and id > coalesce(p_efter, 0) and tid > now() - interval '1 minute' order by id limit 60) x);
+end $$;
+
 grant execute on function
   public.hv_radio_status(uuid, boolean, bigint), public.hv_radio_styr(uuid, text, jsonb),
   public.hv_radio_musik_hent(), public.hv_radio_musik_gem(uuid, text, text, text, double precision), public.hv_radio_musik_slet(uuid, bigint),
@@ -617,5 +715,7 @@ grant execute on function
   public.hv_radio_klip_gem(uuid, text, text, double precision), public.hv_radio_klip_hent(bigint), public.hv_radio_klip_liste(uuid), public.hv_radio_klip_slet(uuid, bigint),
   public.hv_radio_program_gem(uuid, bigint, text, text, timestamptz, timestamptz, text, text), public.hv_radio_program_slet(uuid, bigint), public.hv_radio_programmer_hent(uuid),
   public.hv_radio_udsendelser_hent(), public.hv_radio_udsendelse_hent(bigint), public.hv_radio_udsendelse_slet(uuid, bigint),
-  public.hv_radio_besked_send(uuid, text), public.hv_radio_mine_beskeder(uuid)
+  public.hv_radio_besked_send(uuid, text), public.hv_radio_mine_beskeder(uuid),
+  public.hv_radio_mik(uuid, boolean), public.hv_radio_mik_gem(uuid, bigint, text, double precision, bigint),
+  public.hv_radio_signal_send(uuid, text, text, text), public.hv_radio_signal_hent(uuid, bigint)
 to anon, authenticated;

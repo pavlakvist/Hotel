@@ -70,6 +70,7 @@
     if (s.type === "tale") return "🗣 " + (s.titel || "Værten taler");
     if (s.type === "klip") return "🎙 " + (s.titel || "Snak");
     if (s.type === "link") return "📡 " + (s.titel || "Live-link");
+    if (s.type === "youtube") return "▶️ " + (s.titel || "YouTube") + (s.kunstner ? " – " + s.kunstner : "");
     return "🎵 " + (s.titel || "Sang") + (s.kunstner ? " – " + s.kunstner : "");
   }
   // To klik: første gang står der "Er du sikker?"
@@ -124,7 +125,7 @@
     setInterval(giv, 2000);
   });
   vent(function () { return typeof ROLLE_GUIDE !== "undefined"; }, function () {
-    ROLLE_GUIDE[RV_SKILT] = "Du er radiovært på Vera-radio. I fanen 📻 Radio starter du live-udsendelser, spiller musik, snakker og planlægger programmer. Lytterne kan skrive til dig, mens I er live.";
+    ROLLE_GUIDE[RV_SKILT] = "Du er radiovært på Vera-radio. I fanen 📻 Radio går du live, snakker i mikrofonen, spiller musik (også YouTube-links) og planlægger programmer. Lytterne kan skrive til dig, mens I er live. Se 📻 Radio → 📖 Guide.";
   });
   vent(function () { return typeof STAFF_RANG !== "undefined"; }, function () {
     if (STAFF_RANG.some(function (r) { return r[0] === RV_SKILT; })) return;
@@ -365,6 +366,7 @@
     try { lyd.pause(); } catch (e) {}
     lydNoegle = null;
     stopTale();
+    ytStop();
   }
   function stopTale() {
     taleNoegle = null;
@@ -395,7 +397,7 @@
     lydFejl = "";
     lydNoegle = noegle;
     lyd.src = url;
-    lyd.volume = rvVol;
+    lyd.volume = rvVol * duk();
     const start = function () {
       if (lydNoegle !== noegle) return;
       try { if (fra > 0 && isFinite(lyd.duration)) lyd.currentTime = Math.min(fra, Math.max(0, lyd.duration - 0.3)); } catch (e) {}
@@ -406,10 +408,154 @@
   }
   lyd.addEventListener("error", function () { if (lydNoegle) { lydFejl = "Lydfilen kunne ikke afspilles"; opdaterAlt(); } });
 
+  // ---------------------------------------------------------------
+  //  ▶️ YouTube som musik (ligesom i biografen). Afspilleren er skjult.
+  // ---------------------------------------------------------------
+  function ytIdFra(link) {
+    const t = String(link || "").trim();
+    if (!t) return null;
+    if (typeof youtubeId === "function") { try { const id = youtubeId(t); if (id && /^[A-Za-z0-9_-]{11}$/.test(id)) return id; } catch (e) {} }
+    const m = t.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+  function ytFejlTekst(kode) {
+    if (location.protocol === "file:") return "YouTube virker kun, når hotellet er åbnet på nettet (github.io)";
+    if (kode === 101 || kode === 150) return "Den YouTube-video må ikke afspilles uden for YouTube. Vælg en anden";
+    if (kode === 100) return "YouTube-videoen findes ikke";
+    return "YouTube-videoen kunne ikke afspilles";
+  }
+  let ytApiLoefte = null;
+  function ytApi() {
+    if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+    if (ytApiLoefte) return ytApiLoefte;
+    ytApiLoefte = new Promise(function (ok, nej) {
+      const foer = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function () { if (typeof foer === "function") { try { foer(); } catch (e) {} } ok(window.YT); };
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      s.onerror = function () { ytApiLoefte = null; nej(new Error("YouTube kunne ikke hentes. Er der internet?")); };
+      document.head.appendChild(s);
+      setTimeout(function () { if (!(window.YT && window.YT.Player)) { ytApiLoefte = null; nej(new Error("YouTube svarer ikke. Prøv igen.")); } }, 20000);
+    });
+    return ytApiLoefte;
+  }
+  function ytIndstillinger() {
+    const v = { controls: 0, playsinline: 1, rel: 0, disablekb: 1 };
+    if (location.origin && location.origin !== "null") v.origin = location.origin;
+    return v;
+  }
+  const ytBoks = document.createElement("div");
+  ytBoks.id = "rv-yt";
+  ytBoks.setAttribute("aria-hidden", "true");
+  ytBoks.innerHTML = "<div id='rv-yt-afspiller'></div>";
+  document.body.appendChild(ytBoks);
+  let ytP = null, ytLoefte = null, ytNoegle = null, ytSidstStart = 0;
+  function ytSpiller() {
+    if (ytLoefte) return ytLoefte;
+    ytLoefte = ytApi().then(function (YT) {
+      return new Promise(function (ok) {
+        const p = new YT.Player("rv-yt-afspiller", {
+          width: 200, height: 120, host: "https://www.youtube-nocookie.com", playerVars: ytIndstillinger(),
+          events: {
+            onReady: function () { ytP = p; ok(p); },
+            onError: function (e) { if (ytNoegle) { lydFejl = ytFejlTekst(e.data); opdaterAlt(); } }
+          }
+        });
+      });
+    });
+    ytLoefte.catch(function () { ytLoefte = null; });
+    return ytLoefte;
+  }
+  function ytStart(id, fra, noegle) {
+    ytNoegle = noegle;
+    lydFejl = location.protocol === "file:" ? ytFejlTekst() : "";
+    ytSidstStart = Date.now();
+    ytSpiller().then(function (p) {
+      if (ytNoegle !== noegle) return;
+      const f = typeof fra === "function" ? fra() : fra;
+      p.loadVideoById({ videoId: id, startSeconds: Math.max(0, f || 0) });
+      try { p.unMute(); p.setVolume(lydstyrke()); } catch (e) {}
+    }).catch(function (e) { if (ytNoegle === noegle) { lydFejl = (e && e.message) || ytFejlTekst(); opdaterAlt(); } });
+  }
+  function ytStop() {
+    if (ytNoegle === null) return;
+    ytNoegle = null;
+    try { if (ytP) ytP.stopVideo(); } catch (e) {}
+  }
+  function ytPause(til) { try { if (ytP) { if (til) ytP.pauseVideo(); else ytP.playVideo(); } } catch (e) {} }
+  // hold YouTube det samme sted som hos de andre lyttere
+  function ytHold(p) {
+    if (!ytP || !ytNoegle) return;
+    try {
+      const tilstand = ytP.getPlayerState();
+      if (tilstand === 1 && Math.abs(ytP.getCurrentTime() - p) > 4) ytP.seekTo(p, true);
+      else if ((tilstand === 2 || tilstand === 5 || tilstand === -1) && Date.now() - ytSidstStart > 2500) ytP.playVideo();
+      if (tilstand !== 1 && tilstand !== 3 && Date.now() - ytSidstStart > 8000 && !lydFejl) { lydFejl = "Tryk ▶ for at lytte"; opdaterAlt(); }
+      if (tilstand === 1 && lydFejl === "Tryk ▶ for at lytte") { lydFejl = ""; opdaterAlt(); }
+      ytP.setVolume(lydstyrke());
+    } catch (e) {}
+  }
+  // Hvor lang er videoen, og hvad hedder den? (en skjult afspiller kigger kort på den)
+  const ytMaalCache = {};
+  function maalYt(id) {
+    if (ytMaalCache[id]) return Promise.resolve(ytMaalCache[id]);
+    if (location.protocol === "file:") return Promise.reject(new Error("YouTube virker kun, når hotellet er åbnet på nettet (github.io)."));
+    return ytApi().then(function (YT) {
+      return new Promise(function (ok, nej) {
+        const holder = document.createElement("div"), div = document.createElement("div");
+        holder.className = "rv-yt-maal"; holder.appendChild(div); document.body.appendChild(holder);
+        let faerdig = false, p = null, forsoeg = 0;
+        const slut = function (fejl, svar) {
+          if (faerdig) return;
+          faerdig = true; clearTimeout(timer);
+          setTimeout(function () { try { if (p) p.destroy(); } catch (e) {} holder.remove(); }, 0);
+          if (fejl) nej(fejl); else { ytMaalCache[id] = svar; ok(svar); }
+        };
+        const timer = setTimeout(function () { slut(new Error("YouTube svarer ikke. Prøv igen.")); }, 15000);
+        p = new YT.Player(div, {
+          width: 200, height: 120, videoId: id, host: "https://www.youtube-nocookie.com", playerVars: ytIndstillinger(),
+          events: {
+            onReady: function () {
+              const tjek = function () {
+                if (faerdig) return;
+                let sek = 0, titel = "";
+                try { sek = p.getDuration() || 0; titel = (p.getVideoData() || {}).title || ""; } catch (e) {}
+                if (sek > 0) return slut(null, { sek: sek, titel: titel });
+                if (++forsoeg === 3) { try { p.mute(); p.playVideo(); } catch (e) {} }
+                if (forsoeg > 20) return slut(null, { sek: 0, titel: titel });
+                setTimeout(tjek, 400);
+              };
+              tjek();
+            },
+            onError: function (e) { slut(new Error(ytFejlTekst(e.data) + ".")); }
+          }
+        });
+      });
+    });
+  }
+  function ytSpor(link, titel, kunstner) {
+    const id = ytIdFra(link);
+    if (!id) return Promise.reject(new Error("Det ligner ikke et YouTube-link. Kopiér linket fra YouTube igen."));
+    return maalYt(id).then(function (m) {
+      const sp = { type: "youtube", yt: id, titel: String(titel || m.titel || "YouTube").slice(0, 120), sek: Math.round(m.sek * 10) / 10 };
+      if (kunstner) sp.kunstner = kunstner;
+      return sp;
+    });
+  }
+
   function spil() {
     if (rvGenbrug) return;                       // en gemt udsendelse spiller
     if (!rvLytter || !st || !st.spor || st.pauset) { stopLyd(); return; }
     const s = st.spor, noegle = noegleNu(), p = pos();
+    if (s.type === "youtube") {
+      try { lyd.pause(); } catch (e) {}
+      lydNoegle = null;
+      stopTale();
+      if (ytNoegle !== noegle) ytStart(s.yt, function () { return pos(); }, noegle);
+      else ytHold(pos());
+      return;
+    }
+    ytStop();
     if (s.type === "tale") {
       try { lyd.pause(); } catch (e) {}
       lydNoegle = null;
@@ -434,7 +580,14 @@
     }
     if (lyd.paused && lyd.readyState >= 2 && !lydFejl) { const pr = lyd.play(); if (pr && pr.catch) pr.catch(function () {}); }
   }
-  setInterval(function () { if (rvLytter && !rvGenbrug) spil(); opdaterTider(); }, 1000);
+  setInterval(function () {
+    if (rvLytter && !rvGenbrug) spil();
+    lytMikTjek();
+    const v = rvVol * duk();
+    if (Math.abs(lyd.volume - v) > 0.01) lyd.volume = v;
+    if (Math.abs(mikLyd.volume - rvVol) > 0.01) mikLyd.volume = rvVol;
+    opdaterTider();
+  }, 1000);
 
   function lyt(til) {
     if (til && rvGenbrug) stopGenbrug();
@@ -447,7 +600,9 @@
   }
   function saetVol(v) {
     rvVol = Math.max(0, Math.min(1, v));
-    lyd.volume = rvVol;
+    lyd.volume = rvVol * duk();
+    mikLyd.volume = rvVol;
+    try { if (ytP && ytNoegle) ytP.setVolume(lydstyrke()); } catch (e) {}
     try { localStorage.setItem(RV_VOL_NOEGLE, String(rvVol)); } catch (e) {}
   }
 
@@ -462,22 +617,43 @@
       .catch(function (e) { rvUdsendelser = []; rvFejl = fejlTekst(e); opdaterAlt(); return []; });
   }
   function bidder(u) {
-    const ud = [], log = Array.isArray(u.log) ? u.log : [];
+    const mus = [], log = (Array.isArray(u.log) ? u.log : []).slice().sort(function (a, b) { return (+a.t || 0) - (+b.t || 0); });
     let aaben = null;
     const total = u.slut && u.start ? (u.slut - u.start) / 1000 : null;
     function luk(t) {
       if (!aaben) return;
       let laengde = t - aaben.t;
       if (aaben.spor.sek > 0) laengde = Math.min(laengde, aaben.spor.sek - aaben.fra);
-      if (laengde > 0.5) ud.push({ spor: aaben.spor, fra: aaben.fra, laengde: laengde });
+      if (laengde > 0.5) mus.push({ spor: aaben.spor, fra: aaben.fra, a: aaben.t, laengde: laengde });
       aaben = null;
     }
     log.forEach(function (e) {
-      if (e.spor) { luk(e.t); aaben = { spor: e.spor, fra: +e.fra || 0, t: +e.t || 0 }; }
-      else if (e.pause) luk(e.t);
+      if (e.spor) { luk(+e.t || 0); aaben = { spor: e.spor, fra: +e.fra || 0, t: +e.t || 0 }; }
+      else if (e.pause) luk(+e.t || 0);
     });
     if (aaben) luk(total != null ? total : aaben.t + Math.max(1, (aaben.spor.sek || 30) - aaben.fra));
-    return ud.filter(function (b) { return b.spor.type !== "link"; });
+    // mikrofon-snakken: musikken, der spillede imens, springes over
+    const mik = log.filter(function (e) { return e.mik && +e.sek > 0.3; }).map(function (e) {
+      return { a: +e.t || 0, b: (+e.t || 0) + (+e.sek), fra: 0, laengde: +e.sek,
+        spor: { type: "klip", id: e.mik, titel: "Live-snak" + (e.af ? " med " + e.af : ""), sek: +e.sek } };
+    });
+    const ud = [];
+    mus.filter(function (b) { return b.spor.type !== "link"; }).forEach(function (b) {
+      let stykker = [{ a: b.a, b: b.a + b.laengde }];
+      mik.forEach(function (m) {
+        const nye = [];
+        stykker.forEach(function (s) {
+          if (m.b <= s.a || m.a >= s.b) { nye.push(s); return; }
+          if (m.a > s.a) nye.push({ a: s.a, b: m.a });
+          if (m.b < s.b) nye.push({ a: m.b, b: s.b });
+        });
+        stykker = nye;
+      });
+      stykker.forEach(function (s) { if (s.b - s.a > 0.5) ud.push({ spor: b.spor, fra: b.fra + (s.a - b.a), laengde: s.b - s.a, a: s.a }); });
+    });
+    mik.forEach(function (m) { ud.push(m); });
+    ud.sort(function (x, y) { return x.a - y.a; });
+    return ud;
   }
   function startGenbrug(id) {
     kald("hv_radio_udsendelse_hent", { p_id: id }).then(function (u) {
@@ -502,6 +678,8 @@
     const b = g.bidder[g.i];
     g.t0 = Date.now(); g.brugt = 0; g.pauset = false;
     const videre = function (ms) { bidTimer = setTimeout(function () { if (rvGenbrug === g && !g.pauset) { g.i++; spilBid(); } }, ms); };
+    if (b.spor.type === "youtube") { ytStart(b.spor.yt, b.fra, "genbrug@" + g.i + "@" + Date.now()); videre(b.laengde * 1000); opdaterAlt(); return; }
+    ytStop();
     if (b.spor.type === "tale") { siOp(b.spor.tekst || b.spor.titel); videre(b.laengde * 1000); opdaterAlt(); return; }
     const noegle = "genbrug@" + g.i + "@" + Date.now();
     kilde(b.spor).then(function (url) {
@@ -517,10 +695,13 @@
     if (!g.pauset) {
       g.pauset = true; g.brugt += (Date.now() - g.t0) / 1000; clearTimeout(bidTimer);
       try { lyd.pause(); } catch (e) {} try { if (window.speechSynthesis) speechSynthesis.pause(); } catch (e) {}
+      ytPause(true);
     } else {
       g.pauset = false; g.t0 = Date.now();
       const b = g.bidder[g.i], rest = Math.max(0.2, b.laengde - g.brugt);
-      if (b.spor.type === "tale") { try { speechSynthesis.resume(); } catch (e) {} } else { const p = lyd.play(); if (p && p.catch) p.catch(function () {}); }
+      if (b.spor.type === "tale") { try { speechSynthesis.resume(); } catch (e) {} }
+      else if (b.spor.type === "youtube") ytPause(false);
+      else { const p = lyd.play(); if (p && p.catch) p.catch(function () {}); }
       bidTimer = setTimeout(function () { if (rvGenbrug === g && !g.pauset) { g.i++; spilBid(); } }, rest * 1000);
     }
     opdaterAlt();
@@ -535,6 +716,259 @@
     rvGenbrug = null;
     stopLyd();
     opdaterAlt();
+  }
+
+
+  // ---------------------------------------------------------------
+  //  🎙 Snak live med mikrofonen direkte i Radio-panelet
+  //  Lyden går direkte fra værtens browser til hver lytter (WebRTC).
+  //  Serveren bruges kun til at præsentere dem for hinanden (signaler).
+  // ---------------------------------------------------------------
+  const RV_ICE = { iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }] };
+  let mikStroem = null;        // værtens mikrofon
+  let mikTil = false;          // værten: er min mikrofon tændt?
+  let mikTaender = false;
+  let mikFejl = "";
+  let mikDempet = false;       // værten: lyden slået fra et øjeblik
+  const mikPeers = {};         // værten: én forbindelse pr. lytter
+  let peerN = 0;
+  let mikSignalEfter = 0;
+  let mikOptager = null;       // optagelsen til den gemte udsendelse
+  let mikAnalyse = null;
+  // lytteren
+  const mikLyd = new Audio();
+  mikLyd.autoplay = true;
+  let lytPc = null, lytMikId = null, lytVilSendt = 0, lytForsoeg = 0, lytStatus = "";   // "" | forbinder | hoerer | fejl
+  function mikHoeres() { return lytStatus === "hoerer" && !!lytPc; }
+  function duk() { return mikHoeres() ? 0.3 : 1; }          // musikken skrues ned, mens værten snakker
+  function lydstyrke() { return Math.round(rvVol * duk() * 100); }
+  function kanWebRTC() { return typeof RTCPeerConnection !== "undefined"; }
+
+  function signal(til, slags, data) {
+    return kald("hv_radio_signal_send", { p_token: token(), p_til: til, p_slags: slags, p_data: data ? JSON.stringify(data) : "" });
+  }
+  function hentSignaler() {
+    return kald("hv_radio_signal_hent", { p_token: token(), p_efter: mikSignalEfter }).then(function (l) {
+      (Array.isArray(l) ? l : []).forEach(function (s) {
+        mikSignalEfter = Math.max(mikSignalEfter, s.id);
+        let d = null;
+        try { d = s.data ? JSON.parse(s.data) : null; } catch (e) {}
+        if (mikTil) vaertSignal(s, d); else lytSignal(s, d);
+      });
+    }).catch(function () {});
+  }
+  function samlIce(pc) {       // vent, til forbindelsen har fundet sine veje (højst 3 sek)
+    return new Promise(function (ok) {
+      if (pc.iceGatheringState === "complete") return ok();
+      const timer = setTimeout(ok, 3000);
+      pc.addEventListener("icegatheringstatechange", function () { if (pc.iceGatheringState === "complete") { clearTimeout(timer); ok(); } });
+    });
+  }
+  (function signalLoop() {
+    const m = st && st.live ? st.mik : null;
+    const aktiv = online() && token() && (mikTil || (rvLytter && !rvGenbrug && m && m.navn !== mig() && lytStatus !== "hoerer" && kanWebRTC()));
+    (aktiv ? hentSignaler() : Promise.resolve()).then(function () { setTimeout(signalLoop, mikTil ? 1200 : 1500); });
+  })();
+
+  // ----- værten -----
+  function vaertSignal(s, d) {
+    if (s.slags === "vil") vaertTilbud(s.fra, s.fra_navn);
+    else if (s.slags === "svar") {
+      const p = mikPeers[s.fra];
+      if (p && d && d.sdp && d.n === p.n) p.pc.setRemoteDescription(d.sdp).catch(function () { lukPeer(s.fra); });
+    } else if (s.slags === "farvel") lukPeer(s.fra);
+  }
+  function vaertTilbud(hvem, navn) {
+    if (!mikStroem || !mikTil) return;
+    lukPeer(hvem);
+    const pc = new RTCPeerConnection(RV_ICE), n = ++peerN;
+    mikPeers[hvem] = { pc: pc, n: n, navn: navn || hvem };
+    mikStroem.getAudioTracks().forEach(function (tr) { pc.addTrack(tr, mikStroem); });
+    pc.addEventListener("connectionstatechange", function () {
+      if ((pc.connectionState === "failed" || pc.connectionState === "closed") && mikPeers[hvem] && mikPeers[hvem].pc === pc) delete mikPeers[hvem];
+      opdaterAlt();
+    });
+    pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { return samlIce(pc); })
+      .then(function () { if (mikPeers[hvem] && mikPeers[hvem].pc === pc) return signal(hvem, "tilbud", { sdp: pc.localDescription, n: n }); })
+      .catch(function () { lukPeer(hvem); });
+  }
+  function lukPeer(hvem) {
+    const p = mikPeers[hvem];
+    if (!p) return;
+    delete mikPeers[hvem];
+    try { p.pc.close(); } catch (e) {}
+  }
+  function forbundne() { return Object.keys(mikPeers).filter(function (k) { return mikPeers[k].pc.connectionState === "connected"; }); }
+
+  function mikTaend() {
+    if (mikTil || mikTaender) return;
+    mikFejl = "";
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !kanWebRTC()) {
+      mikFejl = "Din browser kan ikke sende mikrofonen. Brug Chrome, Edge eller Firefox, og åbn hotellet på nettet (github.io).";
+      opdaterAlt(); return;
+    }
+    mikTaender = true;
+    opdaterAlt();
+    const gaaLive = erLive() ? Promise.resolve() : styr("start_live", { titel: "Vera-radio live", vaerter: mig() });
+    gaaLive.then(function () {
+      return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    }).then(function (s) {
+      mikStroem = s;
+      return kald("hv_radio_mik", { p_token: token(), p_til: true });
+    }).then(function () {
+      mikTil = true; mikTaender = false; mikDempet = false;
+      startMikOptag();
+      startNiveau();
+      toast("🎙 Mikrofonen er tændt. Alle der lytter, kan høre dig nu!");
+      return hent();
+    }).catch(function (e) {
+      mikTaender = false;
+      if (mikStroem) { mikStroem.getTracks().forEach(function (tr) { tr.stop(); }); mikStroem = null; }
+      mikFejl = e && e.name === "NotAllowedError" ? "Du skal give lov til at bruge mikrofonen. Tryk Tillad i browseren (eller på 🔒 ved adressen)." :
+        e && e.name === "NotFoundError" ? "Der er ingen mikrofon på computeren." : fejlTekst(e);
+      opdaterAlt();
+    });
+  }
+  function mikSluk(stille) {
+    if (!mikTil && !mikStroem) return Promise.resolve();
+    mikTil = false;
+    Object.keys(mikPeers).forEach(lukPeer);
+    stopNiveau();
+    const gemt = stopMikOptag();
+    if (mikStroem) { mikStroem.getTracks().forEach(function (tr) { tr.stop(); }); mikStroem = null; }
+    opdaterAlt();
+    return Promise.all([gemt, kald("hv_radio_mik", { p_token: token(), p_til: false }).catch(function () {})])
+      .then(function () { if (!stille) toast("🎙 Mikrofonen er slukket"); return hent(); });
+  }
+  function mikDaemp(til) {
+    mikDempet = !!til;
+    if (mikStroem) mikStroem.getAudioTracks().forEach(function (tr) { tr.enabled = !mikDempet; });
+    opdaterAlt();
+  }
+  // hvert 10. sek: "jeg snakker stadig" (ellers slukker serveren selv mikrofonen efter 30 sek)
+  setInterval(function () {
+    if (!mikTil) return;
+    if (st && !st.live) { mikSluk(true); return; }
+    kald("hv_radio_mik", { p_token: token(), p_til: true }).catch(function (e) { mikFejl = fejlTekst(e); mikSluk(true); });
+  }, 10000);
+
+  // optag snakken i bidder af 1 minut, så udsendelsen kan høres igen bagefter
+  function startMikOptag() {
+    const udsendelse = st && st.udsendelse;
+    if (!mikStroem || typeof MediaRecorder === "undefined" || !udsendelse) return;
+    const typer = ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/webm", "audio/mp4"];
+    const type = typer.find(function (x) { try { return MediaRecorder.isTypeSupported(x); } catch (e) { return false; } }) || "";
+    let rec;
+    try { rec = new MediaRecorder(mikStroem, type ? { mimeType: type, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 }); } catch (e) { return; }
+    const bidder = [], start = Date.now();
+    rec.ondataavailable = function (e) { if (e.data && e.data.size) bidder.push(e.data); };
+    const faerdig = new Promise(function (ok) {
+      rec.onstop = function () {
+        const sek = (Date.now() - start) / 1000;
+        if (sek < 1 || !bidder.length) return ok();
+        const fr = new FileReader();
+        fr.onload = function () {
+          const data = String(fr.result).replace(/^data:([^;,]+)(;codecs=[^;,]+)?/, "data:$1");
+          kald("hv_radio_mik_gem", { p_token: token(), p_udsendelse: udsendelse, p_data: data, p_sek: Math.round(sek * 10) / 10, p_start: start })
+            .then(function (id) { if (id) klipCache[id] = data; }).catch(function () {}).then(ok);
+        };
+        fr.onerror = function () { ok(); };
+        fr.readAsDataURL(new Blob(bidder, { type: rec.mimeType || type || "audio/webm" }));
+      };
+    });
+    mikOptager = { rec: rec, faerdig: faerdig, start: start };
+    rec.start(1000);
+  }
+  function stopMikOptag() {
+    const o = mikOptager;
+    mikOptager = null;
+    if (!o) return Promise.resolve();
+    try { if (o.rec.state !== "inactive") o.rec.stop(); } catch (e) {}
+    return o.faerdig;
+  }
+  setInterval(function () { if (mikTil && mikOptager && Date.now() - mikOptager.start > 60000) { stopMikOptag(); startMikOptag(); } }, 2000);
+
+  // lydmåler, så værten kan se, at mikrofonen virker
+  function startNiveau() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC || !mikStroem) return;
+      const ctx = new AC(), an = ctx.createAnalyser();
+      an.fftSize = 512;
+      ctx.createMediaStreamSource(mikStroem).connect(an);
+      const buf = new Uint8Array(an.fftSize);
+      mikAnalyse = { ctx: ctx, timer: setInterval(function () {
+        an.getByteTimeDomainData(buf);
+        let m = 0;
+        for (let i = 0; i < buf.length; i++) m = Math.max(m, Math.abs(buf[i] - 128));
+        const niveau = mikDempet ? 0 : Math.min(1, m / 60);
+        const b = document.querySelector("#rv-panel .rv-mik-niveau i");
+        if (b) b.style.width = Math.round(niveau * 100) + "%";
+      }, 120) };
+    } catch (e) {}
+  }
+  function stopNiveau() {
+    if (!mikAnalyse) return;
+    clearInterval(mikAnalyse.timer);
+    try { mikAnalyse.ctx.close(); } catch (e) {}
+    mikAnalyse = null;
+  }
+
+  // ----- lytteren -----
+  function lytMikTjek() {
+    const m = st && st.live ? st.mik : null;
+    const skal = rvLytter && !rvGenbrug && m && m.navn !== mig() && online() && token() && kanWebRTC();
+    if (!skal) { if (lytPc || lytStatus) lytMikStop(true); return; }
+    if (lytMikId !== m.id) { lytMikStop(false); lytMikId = m.id; lytForsoeg = 0; }
+    if (lytStatus === "hoerer" || lytStatus === "fejl") return;
+    if (Date.now() - lytVilSendt > (lytPc ? 12000 : 6000)) {      // spørg værten (igen)
+      if (lytForsoeg >= 4) { lytStatus = "fejl"; opdaterAlt(); return; }
+      lytForsoeg++;
+      lytVilSendt = Date.now();
+      lytStatus = "forbinder";
+      if (lytPc) { try { lytPc.close(); } catch (e) {} lytPc = null; }
+      signal(m.navn_lille, "vil", { mik: m.id }).catch(function () {});
+      opdaterAlt();
+    }
+  }
+  function lytSignal(s, d) {
+    if (s.slags !== "tilbud" || !d || !d.sdp) return;
+    const m = st && st.mik;
+    if (!m || s.fra !== m.navn_lille || !rvLytter) return;
+    if (lytPc) { try { lytPc.close(); } catch (e) {} }
+    const pc = new RTCPeerConnection(RV_ICE);
+    lytPc = pc;
+    pc.addEventListener("track", function (e) {
+      mikLyd.srcObject = e.streams && e.streams[0] ? e.streams[0] : new MediaStream([e.track]);
+      mikLyd.volume = rvVol;
+      const pr = mikLyd.play();
+      if (pr && pr.catch) pr.catch(function () { lydFejl = "Tryk ▶ for at høre værten"; opdaterAlt(); });
+    });
+    pc.addEventListener("connectionstatechange", function () {
+      if (lytPc !== pc) return;
+      if (pc.connectionState === "connected") { lytStatus = "hoerer"; lytForsoeg = 0; if (lydFejl === "Tryk ▶ for at høre værten") lydFejl = ""; }
+      else if (pc.connectionState === "failed" || pc.connectionState === "closed") { lytStatus = "forbinder"; lytVilSendt = 0; }
+      else if (pc.connectionState === "disconnected" && lytStatus === "hoerer") { lytStatus = "forbinder"; lytVilSendt = Date.now(); }
+      opdaterAlt();
+    });
+    pc.setRemoteDescription(d.sdp).then(function () { return pc.createAnswer(); }).then(function (a) { return pc.setLocalDescription(a); })
+      .then(function () { return samlIce(pc); })
+      .then(function () { if (lytPc === pc) return signal(s.fra, "svar", { sdp: pc.localDescription, n: d.n }); })
+      .catch(function () {});
+  }
+  function lytMikStop(farvel) {
+    if (lytPc) {
+      try { lytPc.close(); } catch (e) {}
+      if (farvel && st && st.mik) signal(st.mik.navn_lille, "farvel").catch(function () {});
+    }
+    lytPc = null; lytStatus = ""; lytVilSendt = 0;
+    try { mikLyd.pause(); mikLyd.srcObject = null; } catch (e) {}
+  }
+  function mikTekst() {
+    const m = st && st.live ? st.mik : null;
+    if (!m) return "";
+    if (m.navn === mig()) return mikTil ? "🎙 Du snakker live" : "";
+    return "🎙 " + m.navn + " snakker live" + (!rvLytter ? "" : lytStatus === "hoerer" ? " · du hører med" : lytStatus === "fejl" ? " · kan ikke høres herfra" : " · kobler på …");
   }
 
 
@@ -589,6 +1023,7 @@
     else if (!st || !st.spor) nu = live ? "🔴 " + (st.titel || "Live") + " · stille lige nu" : "Der spilles ikke noget lige nu";
     else if (st.pauset) nu = "⏸ På pause · " + sporNavn(st.spor);
     else nu = (live ? "🔴 " + (st.titel || "Live") + " · " : "") + sporNavn(st.spor);
+    if (!rvGenbrug && mikTekst()) nu = mikTekst() + (st && st.spor && !st.pauset ? " · " + sporNavn(st.spor) : "");
     if (rvLytter && lydFejl) nu = "⚠️ " + lydFejl;
     const nuEl = knap.querySelector(".rk-nu");
     if (nuEl.textContent !== nu) nuEl.textContent = nu;
@@ -643,7 +1078,8 @@
     let h = "<div class='vr-skilt" + (live ? " live" : "") + "'><span class='vr-onair'>" + (live ? "● ON AIR" : "○ OFF AIR") + "</span>" +
       "<b>" + esc(live ? st.titel || "Vera-radio live" : "Vera-radio") + "</b>" +
       (live && st.emne ? "<small>Emne: " + esc(st.emne) + "</small>" : "") +
-      (live && st.vaerter ? "<small>🎙 " + esc(st.vaerter) + "</small>" : "") + "</div>";
+      (live && st.vaerter ? "<small>🎙 " + esc(st.vaerter) + "</small>" : "") +
+      (mikTekst() ? "<small class='vr-mik'>" + esc(mikTekst()) + "</small>" : "") + "</div>";
     if (rvGenbrug) {
       const g = rvGenbrug, b = g.bidder[g.i];
       h += "<div class='vr-nu'><small>📼 Gemt udsendelse</small><b>" + esc(g.u.titel || "Udsendelse") + "</b><span>" + esc(b ? sporNavn(b.spor) : "") +
@@ -731,11 +1167,13 @@
       "<button data-vr-s='naeste'>⏭</button></div>" +
       "<p class='vr-lyttere'>👂 " + (st ? st.lyttere || 0 : 0) + " lytter med" + (live ? "" : " · ikke live") + "</p>" +
       "<button class='vr-knap-bred' data-vr-panel>🎛 Åbn radiopanelet</button>" +
+      "<button class='vr-knap-bred' data-vr-guide>📖 Guide til radioværter</button>" +
       "<h4>✉️ Beskeder fra lytterne</h4><ul class='vr-chat vr-ind'>" + (rvBeskeder.length ? rvBeskeder.slice().reverse().map(function (b) {
         return "<li><b>" + esc(b.fra) + "</b><span>" + esc(b.tekst) + "</span><small>" + kl(b.tid) + "</small></li>";
       }).join("") : "<li class='vr-tom'>" + (live ? "Ingen beskeder endnu." : "Beskederne kommer her, når I er live.") + "</li>") + "</ul>";
     krop.querySelectorAll("[data-vr-s]").forEach(function (b) { b.addEventListener("click", function () { styr(b.dataset.vrS).catch(function () {}); }); });
     krop.querySelector("[data-vr-panel]").addEventListener("click", function () { if (typeof window.lukTelefon === "function") window.lukTelefon(); aabnPanel(); });
+    krop.querySelector("[data-vr-guide]").addEventListener("click", function () { if (typeof window.lukTelefon === "function") window.lukTelefon(); aabnPanel("guide"); });
     opdaterTider();
   }
   function tegnAppIgen() {
@@ -747,7 +1185,7 @@
   function opdaterApp() {
     if (!appApi || typeof window.tlfAppAaben !== "function" || !window.tlfAppAaben("radio")) return;
     const fp = [appFane, erLive(), st && sporId(st.spor), st && st.pauset, st && st.lyttere, rvLytter, !!rvGenbrug, rvGenbrug && rvGenbrug.i, rvGenbrug && rvGenbrug.pauset,
-      rvBeskeder.length, mineBeskeder.length, rvUdsendelser && rvUdsendelser.length, lydFejl, st && JSON.stringify(st.programmer), rvFejl].join("§");
+      rvBeskeder.length, mineBeskeder.length, rvUdsendelser && rvUdsendelser.length, lydFejl, st && JSON.stringify(st.programmer), rvFejl, mikTekst()].join("§");
     if (fp === appSidst) return;
     appSidst = fp;
     const krop = appKrop();
@@ -765,7 +1203,9 @@
   // ---------------------------------------------------------------
   //  🛡 Ejerpanel → 📻 Radio (kun radioværter og ejeren)
   // ---------------------------------------------------------------
-  let underFane = "studie";   // studie | musik | playlister | programmer | udsendelser | vagter
+  let underFane = "studie";   // studie | musik | playlister | programmer | udsendelser | vagter | guide
+  // Første gang en radiovært åbner panelet, vises guiden
+  try { if (!localStorage.getItem("mit-hotel-radio-guide-set")) underFane = "guide"; } catch (e) {}
   let musik = null;           // fra serveren
   let playlister = null;
   let klipListe = null;
@@ -830,7 +1270,7 @@
 
   function tegnPanel(sek) {
     const under = [["studie", "🎙 Studie"], ["musik", "🎵 Musik"], ["playlister", "📋 Playlister"], ["programmer", "🗓 Programmer"],
-      ["udsendelser", "💾 Udsendelser"], ["vagter", "📅 Vagtskema"]];
+      ["udsendelser", "💾 Udsendelser"], ["vagter", "📅 Vagtskema"], ["guide", "📖 Guide"]];
     sek.innerHTML = "<div class='rv-top'><div class='rv-titel'><span class='rv-logo'>📻</span><div><b>Vera-radio</b><small>Hotellets radio · ☎ " + RV_NUMMER + "</small></div></div>" +
       "<div class='rv-status'></div></div>" +
       "<div class='rv-under'>" + under.map(function (u) { return "<button data-rv-under='" + u[0] + "'" + (u[0] === underFane ? " class='valgt'" : "") + ">" + u[1] + "</button>"; }).join("") + "</div>" +
@@ -846,6 +1286,7 @@
     else if (underFane === "programmer") tegnProgrammer(krop);
     else if (underFane === "udsendelser") tegnUdsendelser(krop);
     else if (underFane === "vagter") tegnVagter(krop);
+    else if (underFane === "guide") tegnGuide(krop);
     opdaterPanel();
   }
   function panelKrop() { return document.querySelector("#rv-panel .rv-krop"); }
@@ -861,9 +1302,10 @@
       "<div class='rv-ctrl'><button data-rv-styr='pause' class='rv-pause'>⏸ Pause</button><button data-rv-styr='naeste'>⏭ Næste</button>" +
       "<button data-rv-styr='stop'>⏹ Stop</button><button data-rv-styr='gentag' class='rv-gentag'>🔁 Gentag playliste</button>" +
       "<button data-rv-lyt class='rv-lyt'>🎧 Lyt med</button></div>" +
+      "<div class='rv-yt-hurtig'><input class='rv-yt-link' maxlength='300' placeholder='▶️ Indsæt et YouTube-link'><button class='rv-yt-nu'>▶ Spil nu</button><button class='rv-yt-koe'>➕ Kø</button></div>" +
       "<h4>⏭ Kø <small class='rv-koe-antal'></small> <button class='rv-lille' data-rv-styr='koe_ryd'>🗑 Ryd køen</button></h4><ol class='rv-koe'></ol></section>" +
       "<section class='rv-boks rv-snak'><h4>🎙 Snak i radioen</h4>" +
-      "<div class='rv-snak-faner'><button data-rv-snak='optag' class='valgt'>🎙 Optag</button><button data-rv-snak='oplaes'>🗣 Oplæs tekst</button><button data-rv-snak='link'>📡 Live-link</button></div>" +
+      "<div class='rv-snak-faner'><button data-rv-snak='mik' class='valgt'>🔴 Mikrofon live</button><button data-rv-snak='optag'>🎙 Optag klip</button><button data-rv-snak='oplaes'>🗣 Oplæs tekst</button><button data-rv-snak='link'>📡 Live-link</button></div>" +
       "<div class='rv-snak-krop'></div></section>" +
       "<section class='rv-boks rv-lyttere-boks'><h4>👂 Lyttere</h4><div class='rv-lyttere'></div></section>" +
       "<section class='rv-boks rv-besked-boks'><h4>✉️ Beskeder fra lytterne</h4><ul class='rv-beskeder'></ul></section>";
@@ -883,7 +1325,22 @@
         tegnSnak(div.querySelector(".rv-snak-krop"), b.dataset.rvSnak);
       });
     });
-    tegnSnak(div.querySelector(".rv-snak-krop"), "optag");
+    tegnSnak(div.querySelector(".rv-snak-krop"), "mik");
+    const ytFelt = div.querySelector(".rv-yt-link");
+    const ytKnap = function (b, hvordan) {
+      b.addEventListener("click", function () {
+        const link = ytFelt.value.trim();
+        if (!link) { visFejl("Indsæt et link fra YouTube først."); return; }
+        const f = b.textContent;
+        b.disabled = true; b.textContent = "…";
+        ytSpor(link).then(function (sp) { return styr(hvordan, { spor: sp }).then(function () { return sp; }); })
+          .then(function (sp) { ytFelt.value = ""; visFejl(""); toast(hvordan === "spil" ? "▶️ " + sp.titel + " spiller nu" : "➕ " + sp.titel + " er sat i kø"); })
+          .catch(function (e) { visFejl(fejlTekst(e)); })
+          .then(function () { b.disabled = false; b.textContent = f; });
+      });
+    };
+    ytKnap(div.querySelector(".rv-yt-nu"), "spil");
+    ytKnap(div.querySelector(".rv-yt-koe"), "koe");
     tegnLiveBoks();
   }
   let liveSidst = null;
@@ -904,7 +1361,7 @@
         styr("emne", { emne: boks.querySelector(".rv-emne-felt").value }).then(function () { toast("📻 Emnet er skiftet"); }).catch(function () {});
       });
       boks.querySelector(".rv-slut").addEventListener("click", function (e) {
-        toKlik(e.currentTarget, function () { styr("slut_live", { stop: boks.querySelector(".rv-slut-stop").checked }).then(function () { toast("⏹ Udsendelsen er slut og gemt"); hentUdsendelser(); }).catch(function () {}); });
+        toKlik(e.currentTarget, function () { const stop = boks.querySelector(".rv-slut-stop").checked; mikSluk(true).then(function () { return styr("slut_live", { stop: stop }); }).then(function () { toast("⏹ Udsendelsen er slut og gemt"); hentUdsendelser(); }).catch(function () {}); });
       });
     } else {
       const progs = st && Array.isArray(st.programmer) ? st.programmer : [];
@@ -947,6 +1404,7 @@
     const div = document.querySelector("#rv-panel .rv-studie");
     if (!div) return;
     if (liveSidst !== erLive()) tegnLiveBoks();
+    tegnMik();
     const nu = div.querySelector(".rv-nu");
     const s = st && st.spor;
     const nuHtml = "<b>" + esc(s ? sporNavn(s) : "Der spilles ikke noget") + "</b>" + (st && st.pauset ? " <span class='rv-pauset'>⏸ på pause for alle</span>" : "") +
@@ -989,6 +1447,7 @@
   let optager = null, optagStart = 0, optagTimer = null, optagData = null, optagSek = 0;
   function tegnSnak(el, hvad) {
     if (!el) return;
+    if (hvad === "mik") { el.innerHTML = "<div class='rv-mik'></div>"; tegnMik(); return; }
     if (hvad === "optag") {
       el.innerHTML = "<p class='rv-lille-tekst'>Optag op til 2 minutter med din mikrofon. Når du sender det, hører alle lytterne det i radioen.</p>" +
         "<div class='rv-raekke'><button class='rv-optag'>🔴 Start optagelse</button><span class='rv-optag-tid'></span></div>" +
@@ -1026,7 +1485,7 @@
       el.querySelector(".rv-tale-koe").addEventListener("click", function () { const s = spor(); if (s) styr("koe", { spor: s }).then(function () { el.querySelector(".rv-tale").value = ""; toast("➕ Sat i kø"); }).catch(function () {}); });
       el.querySelector(".rv-tale-proev").addEventListener("click", function () { const s = spor(); if (s) siOp(s.tekst); });
     } else {
-      el.innerHTML = "<p class='rv-lille-tekst'>Vil I snakke helt live i en rigtig mikrofon? Brug en gratis live-radio-tjeneste (fx Zeno.fm eller Mixlr), og sæt <b>lyd-linket</b> (som ender på .mp3 eller /stream) ind her. Så hører alle lytterne jer direkte gennem Vera-radio.</p>" +
+      el.innerHTML = "<p class='rv-lille-tekst'>Det nemmeste er <b>🔴 Mikrofon live</b>. Har I allerede en live-radio hos en anden tjeneste (fx Zeno.fm eller Mixlr), og sæt <b>lyd-linket</b> (som ender på .mp3 eller /stream) ind her. Så hører alle lytterne jer direkte gennem Vera-radio.</p>" +
         "<label>Navn<input class='rv-link-navn' maxlength='120' placeholder='Fx Live fra studiet'></label>" +
         "<label>Lyd-link<input class='rv-link-url' maxlength='600' placeholder='https://…'></label>" +
         "<div class='rv-raekke'><button class='rv-link-nu'>📡 Send live nu</button><button class='rv-link-proev'>👂 Prøv linket</button></div>" +
@@ -1107,6 +1566,62 @@
     });
   }
 
+  // ----- 🔴 Mikrofon live -----
+  function mikHtml() {
+    const m = st && st.live ? st.mik : null;
+    if (mikTil) {
+      const f = forbundne().length, venter = Object.keys(mikPeers).length - f;
+      return "<div class='rv-mik-paa'><span class='rv-mik-prik'></span><b>Du er live i mikrofonen" + (mikDempet ? " · lyden er slået fra" : "") + "</b></div>" +
+        "<div class='rv-mik-niveau' title='Så højt hører lytterne dig'><i></i></div>" +
+        "<p class='rv-lille-tekst'>🎧 <b>" + f + "</b> " + (f === 1 ? "lytter hører" : "lyttere hører") + " din stemme direkte" + (venter > 0 ? " · " + venter + " er ved at koble på" : "") +
+        ". Musikken bliver skruet ned hos lytterne, mens mikrofonen er tændt.</p>" +
+        "<div class='rv-raekke'><button class='rv-mik-daemp'>" + (mikDempet ? "🔊 Slå lyden til igen" : "🔇 Slå lyden fra et øjeblik") + "</button>" +
+        "<button class='rv-mik-sluk rv-roed'>⏹ Sluk mikrofonen</button></div>";
+    }
+    if (m && m.navn !== mig()) return "<p class='rv-lille-tekst'>🎙 <b>" + esc(m.navn) + "</b> snakker i mikrofonen lige nu. Når " + esc(m.navn) + " slukker, kan du tage over.</p>";
+    return "<p class='rv-lille-tekst'>Snak direkte til alle lytterne med din mikrofon, lige her i panelet. Brug gerne høretelefoner, så musikken ikke kommer med i mikrofonen.</p>" +
+      "<button class='rv-mik-taend'" + (mikTaender ? " disabled" : "") + ">" + (mikTaender ? "Tænder mikrofonen …" : "🎙 " + (erLive() ? "Tænd mikrofonen" : "Gå live og tænd mikrofonen")) + "</button>" +
+      (mikFejl ? "<p class='rv-advarsel'>" + esc(mikFejl) + "</p>" : "") +
+      "<p class='rv-lille-tekst'>Første gang spørger browseren, om den må bruge mikrofonen. Tryk <b>Tillad</b>.</p>";
+  }
+  function tegnMik() {
+    const el = document.querySelector("#rv-panel .rv-mik");
+    if (!el) return;
+    const h = mikHtml();
+    if (el.dataset.fp === h) return;
+    el.innerHTML = h;
+    el.dataset.fp = h;
+    const k = function (sel, f) { const b = el.querySelector(sel); if (b) b.addEventListener("click", f); };
+    k(".rv-mik-taend", function () { mikTaend(); });
+    k(".rv-mik-sluk", function () { mikSluk(); });
+    k(".rv-mik-daemp", function () { mikDaemp(!mikDempet); });
+  }
+
+  // ----- 📖 Guide til radioværterne -----
+  function tegnGuide(krop) {
+    try { localStorage.setItem("mit-hotel-radio-guide-set", "1"); } catch (e) {}
+    const trin = [
+      ["🎖", "Sådan bliver man radiovært", "På forsiden trykker man <b>🎖️ Ansøg om at være staff</b> og vælger <b>Radiovært</b>. Ejeren giver skiltet i Ejerpanelet → Personale → Ansættelse. Radioværter får løn hver mandag ligesom de andre ansatte."],
+      ["🛡", "Find Radio-panelet", "Tryk på <b>🛡-knappen</b> nederst i chatbaren og vælg <b>📻 Radio</b>. Du kan også tage elevatoren til <b>📻 Radiostudiet</b> og klikke på et af podcastbordene. Kun radioværter og ejeren kan komme ind i studiet."],
+      ["🔴", "Gå live", "Under <b>🎙 Studie</b> skriver du en titel og et emne (eller vælger et program) og trykker <b>🔴 Gå live</b>. Hele hotellet kan se, at radioen er live, og ON AIR lyser."],
+      ["🎙", "Snak i mikrofonen", "Under <b>Snak i radioen → 🔴 Mikrofon live</b> trykker du <b>Tænd mikrofonen</b> og så <b>Tillad</b>, når browseren spørger. Nu hører alle lytterne dig med det samme, og musikken bliver skruet ned hos dem. Den gule streg viser, at mikrofonen virker. Brug <b>🔇</b>, hvis du skal hoste, og <b>⏹ Sluk mikrofonen</b>, når du er færdig. Kun én kan snakke ad gangen, så den anden vært tager over, når du slukker. Brug gerne høretelefoner, og åbn hotellet på nettet (github.io) i Chrome, Edge eller Firefox."],
+      ["🗣", "Andre måder at snakke på", "<b>🎙 Optag klip</b>: optag op til 2 minutter og send det ud. <b>🗣 Oplæs tekst</b>: skriv noget, og computeren læser det højt. <b>📡 Live-link</b>: hvis I har jeres egen live-radio et andet sted."],
+      ["▶️", "Spil musik", "Indsæt et <b>YouTube-link</b> under <b>Nu spiller</b> og tryk <b>▶ Spil nu</b> eller <b>➕ Kø</b>. Under <b>🎵 Musik</b> kan du gemme sange (YouTube-links eller mp3-links) i radioens bibliotek, og under <b>📋 Playlister</b> kan du samle dem. ⏸ Pause, ⏭ Næste og ⏹ Stop gælder for alle, der lytter. Nogle YouTube-videoer må ikke afspilles uden for YouTube. Så kommer der en besked, og du vælger bare en anden."],
+      ["✉️", "Når lytterne skriver", "Mens I er live, kan lytterne skrive fra appen <b>Vera-radio</b> på telefonen eller til radioens nummer <b>☎ " + RV_NUMMER + "</b>. Beskederne kommer under <b>✉️ Beskeder fra lytterne</b>, og din telefon dinger. Læs gerne hilsener og ønsker op."],
+      ["🗓", "Planlæg programmer", "Under <b>🗓 Programmer</b> laver du et program med dato og tid og skriver <b>næste emne</b>, så I ved, hvad I skal snakke om. Alle kan se de kommende programmer i appen. Når tiden kommer, trykker du <b>🔴 Gå live med det</b>."],
+      ["⏹", "Slut udsendelsen", "Tryk <b>⏹ Slut udsendelsen</b> (to gange). Udsendelsen bliver gemt under <b>💾 Udsendelser</b> og i appen under <b>Gemte</b>, så alle kan høre den igen, også det du sagde i mikrofonen."],
+      ["📅", "Vagtskema", "Under <b>📅 Vagtskema</b> skriver du dig på radiovagterne, så I ved, hvem der laver radio hvornår."],
+      ["💡", "Gode råd", "Sig hej og fortæl, hvem du er, og hvad emnet er. Hold en god tone, for hotellets regler gælder også i radioen. Sluk mikrofonen, når du ikke snakker, og slut altid udsendelsen, når I er færdige."]
+    ];
+    const div = document.createElement("div");
+    div.className = "rv-guide";
+    div.innerHTML = "<section class='rv-boks'><h3>📖 Guide til radioværter</h3><p class='rv-lille-tekst'>Sådan laver du radio på Vera-radio, trin for trin.</p><ol>" +
+      trin.map(function (x) { return "<li><span class='rv-guide-ikon'>" + x[0] + "</span><div><b>" + x[1] + "</b><p>" + x[2] + "</p></div></li>"; }).join("") +
+      "</ol><button class='rv-guide-start'>🎙 Gå til studiet</button></section>";
+    krop.appendChild(div);
+    div.querySelector(".rv-guide-start").addEventListener("click", function () { underFane = "studie"; tegnPanelIgen(); });
+  }
+
   // ----- 🎵 Musik -----
   function hotelSange() {
     const l = Array.isArray(window.MUSIK_SANGE) ? window.MUSIK_SANGE : [];
@@ -1139,6 +1654,7 @@
     });
   }
   function sangSpor(s) {
+    if (ytIdFra(s.url)) return ytSpor(s.url, s.titel, s.kunstner);
     return maalSek(s.url).then(function (sek) { return { type: "sang", id: s.hotel ? null : s.id, titel: s.titel, kunstner: s.kunstner, url: s.url, sek: Math.round(sek * 10) / 10 }; });
   }
   function hentMusik() {
@@ -1154,7 +1670,7 @@
     const soeg = musikSoeg.toLowerCase();
     const passer = function (s) { return !soeg || (s.titel + " " + (s.kunstner || "")).toLowerCase().indexOf(soeg) >= 0; };
     const raekke = function (s) {
-      return "<li><span>🎵 <b>" + esc(s.titel) + "</b>" + (s.kunstner ? " <small>" + esc(s.kunstner) + "</small>" : "") + (s.sek ? " <small>" + mmss(s.sek) + "</small>" : "") + "</span>" +
+      return "<li><span>" + (ytIdFra(s.url) ? "▶️" : "🎵") + " <b>" + esc(s.titel) + "</b>" + (s.kunstner ? " <small>" + esc(s.kunstner) + "</small>" : "") + (s.sek ? " <small>" + mmss(s.sek) + "</small>" : "") + "</span>" +
         "<button class='rv-lille' data-m-nu='" + s.id + "'>▶ Spil nu</button><button class='rv-lille' data-m-koe='" + s.id + "'>➕ Kø</button>" +
         (maalPlayliste ? "<button class='rv-lille' data-m-pl='" + s.id + "'>📋 Læg i playliste</button>" : "") +
         (s.hotel ? "" : "<button class='rv-lille rv-roed' data-m-slet='" + s.id + "'>🗑</button>") + "</li>";
@@ -1162,10 +1678,10 @@
     const hs = hotelSange().filter(passer), ms = (musik || []).filter(passer);
     const div = document.createElement("div");
     div.innerHTML =
-      "<section class='rv-boks'><h4>➕ Tilføj en sang</h4><p class='rv-lille-tekst'>Indsæt et link direkte til en lydfil (.mp3), som I har lov til at bruge (fx fra Pixabay Music). " +
+      "<section class='rv-boks'><h4>➕ Tilføj en sang</h4><p class='rv-lille-tekst'>Indsæt et <b>YouTube-link</b> (så finder radioen selv navnet og længden) eller et link direkte til en lydfil (.mp3), som I har lov til at bruge. " +
       "Eller læg mp3-filen i hotellets mappe <b>musik/</b> og skriv den i <b>musik/sange.js</b>, så kommer den under 🏨 Hotellets sange.</p>" +
       "<div class='rv-gitter'><label>Sangens navn<input class='rv-m-titel' maxlength='120'></label><label>Kunstner<input class='rv-m-kunstner' maxlength='120'></label>" +
-      "<label class='rv-bred'>Link til lydfilen<input class='rv-m-url' maxlength='600' placeholder='https://… .mp3'></label></div>" +
+      "<label class='rv-bred'>YouTube-link eller link til lydfilen<input class='rv-m-url' maxlength='600' placeholder='https://www.youtube.com/watch?v=… eller https://… .mp3'></label></div>" +
       "<button class='rv-m-tilfoej'>➕ Tilføj til biblioteket</button></section>" +
       "<section class='rv-boks'><div class='rv-raekke'><input class='rv-m-soeg' placeholder='🔍 Søg efter sang eller kunstner' value='" + esc(musikSoeg) + "'>" +
       "<label>Læg i playliste: <select class='rv-m-maal'><option value=''>(vælg playliste)</option>" + (playlister || []).map(function (p) {
@@ -1178,10 +1694,12 @@
     div.querySelector(".rv-m-tilfoej").addEventListener("click", function (e) {
       const k = e.currentTarget;
       const titel = div.querySelector(".rv-m-titel").value.trim(), kunstner = div.querySelector(".rv-m-kunstner").value.trim(), url = div.querySelector(".rv-m-url").value.trim();
-      if (!titel || !url) { visFejl("Skriv sangens navn og linket."); return; }
-      k.disabled = true; k.textContent = "Tjekker lydfilen …";
-      maalSek(url).then(function (sek) {
-        return kald("hv_radio_musik_gem", { p_token: token(), p_titel: titel, p_kunstner: kunstner, p_url: url, p_sek: Math.round(sek * 10) / 10 });
+      const erYt = !!ytIdFra(url);
+      if (!url || (!titel && !erYt)) { visFejl(erYt || url ? "Skriv sangens navn." : "Indsæt et link."); return; }
+      k.disabled = true; k.textContent = erYt ? "Tjekker YouTube-videoen …" : "Tjekker lydfilen …";
+      (erYt ? ytSpor(url, titel).then(function (sp) { return { sek: sp.sek, titel: sp.titel }; }) : maalSek(url).then(function (sek) { return { sek: sek, titel: titel }; }))
+      .then(function (m) {
+        return kald("hv_radio_musik_gem", { p_token: token(), p_titel: m.titel, p_kunstner: kunstner, p_url: url, p_sek: Math.round(m.sek * 10) / 10 });
       }).then(function () { visFejl(""); toast("🎵 Sangen er tilføjet"); return hentMusik(); }).then(tegnPanelIgen)
         .catch(function (er) { visFejl(fejlTekst(er)); k.disabled = false; k.textContent = "➕ Tilføj til biblioteket"; });
     });
@@ -1553,6 +2071,24 @@
     P + " .rv-prog-hoved b { color: #5e1622 !important; }",
     P + " details summary { cursor: pointer; margin: 8px 0 4px; font-weight: 600; color: #5e1622; }",
     "#ejer-faner .rv-tal { background: #e0283c; color: #fff; border-radius: 8px; padding: 0 6px; margin-left: 4px; font-size: 11px; }",
+    // ▶️ skjult YouTube-afspiller
+    "#rv-yt, .rv-yt-maal { position: fixed; left: -10000px; top: 0; width: 200px; height: 120px; overflow: hidden; pointer-events: none; opacity: 0; }",
+    "#telefon .vr-skilt small.vr-mik { color: #ffd27a; font-weight: 700; opacity: 1; }",
+    // 🔴 mikrofon live
+    P + " .rv-yt-hurtig { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }",
+    P + " .rv-yt-hurtig input { flex: 1 1 100%; min-width: 0; padding: 6px 9px !important; border: 1.5px solid #d9b98a !important; border-radius: 9px !important; background: #fff !important; color: #3a1018 !important; font: inherit; }",
+    P + " .rv-mik-paa { display: flex; align-items: center; gap: 8px; color: #b3142a !important; font-size: 14px; margin-bottom: 6px; }",
+    P + " .rv-mik-prik { width: 12px; height: 12px; border-radius: 50%; background: #e0283c; box-shadow: 0 0 10px #e0283c; animation: rk-blink 1.2s infinite; }",
+    P + " .rv-mik-niveau { height: 10px; border-radius: 6px; background: #ead9b8; overflow: hidden; margin: 4px 0 8px; }",
+    P + " .rv-mik-niveau i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #d9a441, #e0283c); transition: width .1s; }",
+    P + " button.rv-mik-taend { font-size: 15px !important; padding: 10px 16px !important; background: #e0283c !important; color: #fff !important; width: 100%; margin: 4px 0; }",
+    // 📖 guide
+    P + " .rv-guide ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }",
+    P + " .rv-guide li { display: flex; gap: 10px; align-items: flex-start; background: #fff !important; border: 1px solid #ecd6a8; border-radius: 12px; padding: 8px 12px; }",
+    P + " .rv-guide-ikon { font-size: 22px; line-height: 1; padding-top: 2px; }",
+    P + " .rv-guide li b { color: #7a1f2e !important; font-size: 14px; }",
+    P + " .rv-guide li p { margin: 3px 0 0; line-height: 1.45; }",
+    P + " .rv-guide-start { margin-top: 10px; }",
   ];
   const stil = document.createElement("style");
   stil.id = "vera-radio-stil";
