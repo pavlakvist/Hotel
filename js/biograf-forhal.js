@@ -138,6 +138,17 @@
       }
       gaaFoerFh(id);
     };
+    // Står en gæst i salen uden en scannet billet (mens der er en film), sendes de ud i forhallen igen
+    setInterval(function () {
+      try {
+        if (rumValg !== "vaerelse" || aktivtVaerelse !== "biograf" || personale() || gennemDoeren) return;
+        if (typeof window.vcDoerTjek !== "function") return;
+        const t = window.vcDoerTjek();
+        if (t.ok) return;
+        gaaFoerFh(RUM_ID);
+        setTimeout(function () { sig(t.tekst); }, 80);
+      } catch (e) {}
+    }, 1500);
     window.fhGaaIndISalen = function () {
       gennemDoeren = true;
       try { gaaFoerFh("biograf"); } finally { gennemDoeren = false; }
@@ -148,6 +159,10 @@
     // Velkomst
     const skiftRumFoerFh = skiftRum;
     skiftRum = function (navn) {
+      // Ingen genvej ind i biografen: gæster (uanset om de kommer med elevatoren, navigatøren eller andet) går først gennem forhallen
+      try {
+        if (navn === "vaerelse" && typeof naesteVaerelse !== "undefined" && naesteVaerelse === "biograf" && !gennemDoeren && !personale()) naesteVaerelse = RUM_ID;
+      } catch (e) {}
       skiftRumFoerFh(navn);
       if (iForhal()) {
         try { if (erIRummet(6, 8)) { figur.x = 6; figur.y = 8; } } catch (e) {}

@@ -902,6 +902,16 @@
       const min = !!b && b.saede === navn;
       tegnSkilt(c, cx - 13, cy - 32, navn, min);
       if (min) {
+        // din plads lyser: pulserende guldskær om sædet
+        const p = 0.5 + 0.5 * Math.sin(Date.now() / 260);
+        c.save();
+        c.globalCompositeOperation = "lighter";
+        const g = c.createRadialGradient(cx, cy - 16, 2, cx, cy - 16, 44);
+        g.addColorStop(0, "rgba(255,215,106," + (0.45 + 0.25 * p) + ")");
+        g.addColorStop(1, "rgba(255,215,106,0)");
+        c.fillStyle = g;
+        c.beginPath(); c.ellipse(cx, cy - 16, 46, 36, 0, 0, Math.PI * 2); c.fill();
+        c.restore();
         // en lille guldpil over din plads
         const t = (Date.now() / 300) % (Math.PI * 2);
         const y = cy - 92 + Math.sin(t) * 3;
@@ -934,6 +944,48 @@
   }
   pakInd();
   setInterval(pakInd, 500);
+
+  // Når man kommer ind i salen med en billet, flyttes udsnittet, så ens plads kan ses (ellers ligger de bageste rækker uden for skærmen)
+  let varIBio = false;
+  function panTilPlads() {
+    try {
+      const b = billetNu();
+      if (!b) return;
+      const nr = saedeNumre();
+      const noegle = Object.keys(nr).find(function (k) { return nr[k] === b.saede; });
+      if (!noegle) return;
+      const xy = noegle.split(",").map(Number);
+      const p = punkt(xy[0] + 0.5, xy[1] + 0.5);
+      const maalY = HOEJDE * 0.55;
+      KAMERA.y += (maalY - p.y) * ZOOM;
+      KAMERA.x += (BREDDE * 0.4 - p.x) * ZOOM;
+    } catch (e) {}
+  }
+  setInterval(function () {
+    const nu_ = iBio();
+    if (nu_ && !varIBio && data && !maaStyre()) setTimeout(panTilPlads, 600);
+    if (nu_ !== varIBio && (nu_ || !iBio())) varIBio = nu_;
+  }, 400);
+
+  // Lille skilt øverst på skærmen: "Din plads: D7", så man altid kan se, hvor man skal sidde
+  const pladsSkilt = document.createElement("div");
+  pladsSkilt.id = "vc-plads";
+  pladsSkilt.hidden = true;
+  document.body.appendChild(pladsSkilt);
+  setInterval(function () {
+    let vis = false;
+    try {
+      if ((iBio() || iForhal()) && !maaStyre()) {
+        const b = billetNu();
+        if (b) {
+          vis = true;
+          const tekst = "🎟 Din plads: <b>" + esc(saedeNavn(b.saede)) + "</b>" + (b.scannet ? " <span class='ok'>✓ scannet</span>" : " <span class='ikke'>📟 skal scannes</span>");
+          if (pladsSkilt.dataset.t !== tekst) { pladsSkilt.dataset.t = tekst; pladsSkilt.innerHTML = tekst; }
+        }
+      }
+    } catch (e) {}
+    if (pladsSkilt.hidden === vis) pladsSkilt.hidden = !vis;
+  }, 700);
   // Når man går ind i biografen med en billet: sig hvor man skal sidde
   let sidstIBio = false;
   setInterval(function () {
@@ -1385,6 +1437,10 @@
     T + ".vc-stregkode-svg { width: 100%; height: 58px; display: block; }",
     "#vc-scan-knap { position: fixed; right: 16px; top: 120px; z-index: 40; padding: 8px 14px; border-radius: 12px; border: 2px solid #d9a441; background: linear-gradient(#3a3d44, #1c1d22); color: #ffe7b0; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.4); }",
     "#vc-scan-knap[hidden], #vc-scanner[hidden] { display: none !important; }",
+    "#vc-plads { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); z-index: 55; background: linear-gradient(#4a1220, #2e0912); border: 2px solid #d4aa5a; color: #f6e7d0; border-radius: 999px; padding: 7px 18px; font: 14px system-ui, sans-serif; box-shadow: 0 6px 18px rgba(0,0,0,.45); white-space: nowrap; }",
+    "#vc-plads[hidden] { display: none !important; }",
+    "#vc-plads b { color: #ffd76a; font-size: 17px; }",
+    "#vc-plads .ok { color: #8fe3a0; } #vc-plads .ikke { color: #ffb38a; }",
     "#vc-scanner { position: fixed; right: 24px; top: 170px; z-index: 60; width: 300px; max-width: calc(100vw - 32px); background: linear-gradient(#4a4e57, #23252b); border-radius: 26px 26px 18px 18px; padding: 10px 12px 14px; box-shadow: 0 14px 34px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15); color: #f2f2f2; font-size: 12.5px; border: 2px solid #15161a; }",
     "#vc-scanner .vcs-top { display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px; cursor: move; }",
     "#vc-scanner .vcs-top b { flex: 1; color: #ffd98a; letter-spacing: .5px; }",
