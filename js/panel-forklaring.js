@@ -523,3 +523,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/biograf-forhal.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🧍‍♀️ Vera, den nye 3D-figur (js/avatar-vera.js): vælges under "Krop" i garderoben,
+// med 3 frisurer under "Hår" (knold, langt løst hår, hestehale). Billeder i billeder/figurer/vera/.
+(function () {
+  if (document.querySelector("script[src^='js/avatar-vera.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/avatar-vera.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
