@@ -229,9 +229,9 @@
     spKort.removeAttribute("data-vk-ramme");
     spKort.removeAttribute("data-vk-figurramme");
     spKort.style.cssText = spKort.style.cssText.replace(/--vk-[^;]+;?/g, "");
-    ["background", "width", "fontFamily"].forEach(function (p) { spKort.style[p] = ""; });
+    ["background", "width", "font-family"].forEach(function (p) { spKort.style.removeProperty(p); });
     const fig = spKort.querySelector(".sk-figur");
-    if (fig) fig.style.background = "";
+    if (fig) fig.style.removeProperty("background");
     spKort.querySelectorAll(".vk-ny, .vk-titel").forEach(function (e) { e.remove(); });
     lag.innerHTML = ""; lagNoegle = "";
   }
@@ -253,8 +253,8 @@
     spKort.classList.toggle("vk-redig", redigerer && navn === FIGUR.navn);
     spKort.setAttribute("data-vk-ramme", d.ramme);
     spKort.setAttribute("data-vk-figurramme", d.figurRamme);
-    spKort.style.background = baggrundCss(d);
-    spKort.style.width = find(STOERRELSER, d.stoerrelse).px + "px";
+    spKort.style.setProperty("background", baggrundCss(d), "important");
+    spKort.style.setProperty("width", find(STOERRELSER, d.stoerrelse).px + "px", "important");
     const taet = Math.round(d.boksTaet / 100 * 255).toString(16).padStart(2, "0");
     spKort.style.setProperty("--vk-boks", d.boks + taet);
     spKort.style.setProperty("--vk-boks-tekst", d.boksTekst);
@@ -264,7 +264,7 @@
     spKort.style.setProperty("--vk-top", find(BAGGRUNDE, d.bg).id === "egen" ? d.bg1 : find(BAGGRUNDE, d.bg).b);
     spKort.style.setProperty("--vk-status", d.statusFarve);
     const fig = spKort.querySelector(".sk-figur");
-    if (fig) fig.style.background = figurBgCss(d.figurBg);
+    if (fig) { if (figurBgCss(d.figurBg)) fig.style.setProperty("background", figurBgCss(d.figurBg), "important"); else fig.style.removeProperty("background"); }
 
     // titel under navnet
     spKort.querySelectorAll(".vk-titel").forEach(function (e) { e.remove(); });
@@ -604,14 +604,14 @@
   // -----------------------------------------------------------
   const stil = document.createElement("style");
   stil.textContent = [
-    "#spillerkort.vk-design { color: var(--vk-boks-tekst); font-family: var(--vk-skrift); font-size: var(--vk-str); overflow: visible; position: fixed; }",
-    "#spillerkort.vk-design .sk-top { background: rgba(0,0,0,.35); color: #fff4d6; border-radius: 8px 8px 0 0; font-family: var(--vk-skrift); }",
+    "#spillerkort.vk-design { color: var(--vk-boks-tekst) !important; font-family: var(--vk-skrift) !important; font-size: var(--vk-str); overflow: visible; position: fixed; }",
+    "#spillerkort.vk-design .sk-top { background: rgba(0,0,0,.35) !important; color: #fff4d6 !important; border-radius: 8px 8px 0 0; font-family: var(--vk-skrift) !important; }",
     "#spillerkort.vk-design .sk-luk { color: #fff4d6; }",
-    "#spillerkort.vk-design .sk-raekker > p, #spillerkort.vk-design .sk-forhold, #spillerkort.vk-design .vk-ny {",
+    "#spillerkort.vk-design .sk-raekker > p, #spillerkort.vk-design .sk-forhold, #spillerkort.vk-design .vk-ny, #spillerkort.vk-design .sk-raekker > .sk-motto {",
     "  background: var(--vk-boks) !important; color: var(--vk-boks-tekst) !important; border: 1px solid rgba(255,255,255,.35) !important;",
-    "  border-radius: var(--vk-radius) !important; font-family: var(--vk-skrift); }",
-    "#spillerkort.vk-design .sk-forhold b, #spillerkort.vk-design .sk-person span, #spillerkort.vk-design .sk-tom { color: var(--vk-boks-tekst) !important; font-family: var(--vk-skrift); }",
-    "#spillerkort.vk-design .sk-job, #spillerkort.vk-design .sk-job b { color: #fff4d6; text-shadow: 0 1px 2px rgba(0,0,0,.6); }",
+    "  border-radius: var(--vk-radius) !important; font-family: var(--vk-skrift) !important; box-shadow: none !important; }",
+    "#spillerkort.vk-design .sk-raekker > p small, #spillerkort.vk-design .sk-forhold b, #spillerkort.vk-design .sk-person span, #spillerkort.vk-design .sk-tom { color: var(--vk-boks-tekst) !important; font-family: var(--vk-skrift); }",
+    "#spillerkort.vk-design .sk-job, #spillerkort.vk-design .sk-job b { color: #fff4d6 !important; text-shadow: 0 1px 2px rgba(0,0,0,.6); }",
     "#spillerkort.vk-design .vk-statustekst { color: var(--vk-status); font-weight: bold; }",
     "#spillerkort .vk-titel { margin: 6px 8px 0; padding: 3px 8px; text-align: center; font-weight: bold; color: #fff4d6; background: rgba(0,0,0,.25);",
     "  border-radius: 999px; text-shadow: 0 1px 2px rgba(0,0,0,.6); word-wrap: break-word; }",
@@ -635,15 +635,15 @@
     "#spillerkort[data-vk-ramme='ingen'] { border-color: transparent !important; }",
     "@keyframes vk-neon { from { box-shadow: 0 0 4px #ff4fd8, 0 0 10px #ff4fd8; } to { box-shadow: 0 0 10px #ff4fd8, 0 0 24px #b04fff; } }",
     // rammer om figuren
-    "#spillerkort[data-vk-figurramme] .sk-figur { border-radius: 10px; }",
-    "#spillerkort[data-vk-figurramme='guld'] .sk-figur { border: 3px solid #d9a441; box-shadow: 0 0 0 1px #7a1f2e; }",
-    "#spillerkort[data-vk-figurramme='soelv'] .sk-figur { border: 3px solid #d8d8d8; box-shadow: 0 0 0 1px #8a8a8a; }",
-    "#spillerkort[data-vk-figurramme='rose'] .sk-figur { border: 3px solid #f2a7c0; }",
-    "#spillerkort[data-vk-figurramme='perler'] .sk-figur { border: 4px dotted #fffaf0; }",
-    "#spillerkort[data-vk-figurramme='ranke'] .sk-figur { border: 3px double #4f9a46; }",
-    "#spillerkort[data-vk-figurramme='neon'] .sk-figur { border: 2px solid #ff4fd8; box-shadow: 0 0 10px #ff4fd8; }",
-    "#spillerkort[data-vk-figurramme='dobbelt'] .sk-figur { border: 5px double #d9a441; }",
-    "#spillerkort[data-vk-figurramme='ingen'] .sk-figur { border-color: transparent; }",
+    "#spillerkort[data-vk-figurramme] .sk-figur { border-radius: 10px !important; }",
+    "#spillerkort[data-vk-figurramme='guld'] .sk-figur { border: 3px solid #d9a441 !important; box-shadow: 0 0 0 1px #7a1f2e !important; }",
+    "#spillerkort[data-vk-figurramme='soelv'] .sk-figur { border: 3px solid #d8d8d8 !important; box-shadow: 0 0 0 1px #8a8a8a !important; }",
+    "#spillerkort[data-vk-figurramme='rose'] .sk-figur { border: 3px solid #f2a7c0 !important; }",
+    "#spillerkort[data-vk-figurramme='perler'] .sk-figur { border: 4px dotted #fffaf0 !important; }",
+    "#spillerkort[data-vk-figurramme='ranke'] .sk-figur { border: 3px double #4f9a46 !important; }",
+    "#spillerkort[data-vk-figurramme='neon'] .sk-figur { border: 2px solid #ff4fd8 !important; box-shadow: 0 0 10px #ff4fd8 !important; }",
+    "#spillerkort[data-vk-figurramme='dobbelt'] .sk-figur { border: 5px double #d9a441 !important; }",
+    "#spillerkort[data-vk-figurramme='ingen'] .sk-figur { border-color: transparent !important; }",
     // laget med klistermærker og effekter
     "#spillerkort .vk-lag { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; z-index: 2; }",
     "#spillerkort[data-vk-ramme='ranke'] .vk-lag { overflow: visible; }",
