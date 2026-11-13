@@ -532,3 +532,13 @@ document.head.appendChild(forklaringStil);
   s.src = "js/avatar-vera.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 👑 VIP-medlemskab (js/vip.js): bliv VIP for 1000 Glimt (for evigt), 👑-knap ved pengene,
+// flot VIP-navn, velkomstgave, ugens gave hver mandag, VIP-kommandoer (:hjerter …) og Ejerpanel → 👑 VIP.
+// Kræver database-52-vip.sql.
+(function () {
+  if (document.querySelector("script[src^='js/vip.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vip.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
