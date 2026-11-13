@@ -302,15 +302,23 @@
     visVindue();
     hentMig(function () { if (!vindue.hidden && !travl) visVindue(); });
   }
-  function luk() { if (travl) return; vindue.hidden = true; stopForhaand(); }
+  function luk() { if (travl) return; vindue.hidden = true; stopForhaand(); EKSTRA.forEach(function (x) { if (x.forlad) x.forlad(); }); }
   window.aabnVip = aabn;
+  // Andre filer (fx js/vip-kort.js) kan lægge flere sider i VIP-vinduet og bruge VIP-tjekket
+  const EKSTRA = [];
+  window.VIP = {
+    erVip: erVip, stilFor: stilFor, jegErVip: jegErVip, erEjer: erEjer, kanServer: kanServer, token: token,
+    serverFejl: serverFejl, r: r, tal: tal, aabn: aabn, vindue: vindue, tegnVipSkilt: tegnVipSkilt,
+    nySide: function (side) { EKSTRA.push(side); if (!vindue.hidden) visVindue(); },
+    erAaben: function (id) { return !vindue.hidden && side === id; },
+  };
 
   function visVindue() {
     const vip = jegErVip();
     if (!vip && side !== "bliv" && side !== "kommandoer") side = "bliv";
     if (vip && side === "bliv") side = "mit";
     const faner = vip
-      ? [["mit", "👑 Mit VIP"], ["navn", "✨ Mit navn"], ["kommandoer", "🎉 Kommandoer"]]
+      ? [["mit", "👑 Mit VIP"], ["navn", "✨ Mit navn"]].concat(EKSTRA.map(function (x) { return [x.id, x.navn]; }), [["kommandoer", "🎉 Kommandoer"]])
       : [["bliv", "👑 Bliv VIP"], ["kommandoer", "🎉 Kommandoer"]];
     vindue.querySelector(".vip-faner").innerHTML = faner.map(function (f) {
       return "<button type='button' data-vip-side='" + f[0] + "'" + (f[0] === side ? " class='valgt'" : "") + ">" + f[1] + "</button>";
@@ -319,7 +327,10 @@
       k.addEventListener("click", function () { if (travl) return; side = k.dataset.vipSide; fejl = ""; ok = ""; koebNoegle = null; visVindue(); });
     });
     stopForhaand();
-    if (side === "bliv") visBliv();
+    EKSTRA.forEach(function (x) { if (x.id !== side && x.forlad) x.forlad(); });
+    const ekstra = EKSTRA.find(function (x) { return x.id === side; });
+    if (ekstra && vip) { krop.innerHTML = beskeder(); ekstra.vis(krop); }
+    else if (side === "bliv") visBliv();
     else if (side === "mit") visMit();
     else if (side === "navn") visNavn();
     else visKommandoer();
