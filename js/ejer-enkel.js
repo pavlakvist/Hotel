@@ -40,7 +40,7 @@
   const GRUPPER = [
     { id: "oversigt",   ikon: "🏠", navn: "Oversigt",   faner: ["oversigt", "guide", "mitjob"] },
     { id: "spillere",   ikon: "👥", navn: "Spillere",   faner: ["spillere", "chat", "beskeder", "ip", "sletbruger"] },
-    { id: "moderation", ikon: "🛡️", navn: "Moderation", faner: ["rapporter", "adminlog"] },
+    { id: "moderation", ikon: "🛡️", navn: "Moderation", faner: ["rapporter", "strafrapporter", "adminlog"] },
     { id: "events",     ikon: "📅", navn: "Events",     faner: ["events", "eventnoter", "vindere", "biograf", "cinema", "loppe"] },
     { id: "rum",        ikon: "🛋️", navn: "Rum",        faner: ["rum"] },
     { id: "oekonomi",   ikon: "🪙", navn: "Økonomi",    faner: ["valuta", "veksel", "vip", "rares"] },

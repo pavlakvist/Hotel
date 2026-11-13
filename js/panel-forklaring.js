@@ -16,8 +16,9 @@ const PANEL_HJAELP = {
       "⛔ <b>Ban</b>: spilleren kan ikke logge ind. Kun ved grove ting.",
       "Skriv altid en <b>grund</b>, så andre kan se hvorfor.",
       "Under <b>Aktive straffe</b> kan du ophæve en straf igen."] },
-  chat: { titel: "💬 Chatlogs", tekst: "Alt hvad der er skrevet højt i rummene, så du kan se, hvad der skete.",
-    punkter: ["Brug det, når nogen rapporterer en anden, så du kan se om det passer.", "Søg efter et navn eller et ord."] },
+  chat: { titel: "💬 Chatlogs", tekst: "Alt hvad der er skrevet højt i rummene, så du kan se, hvad der skete. Det hele gemmes for altid i 📚 Chat-arkivet.",
+    punkter: ["Brug det, når nogen rapporterer en anden, så du kan se om det passer.", "Søg efter et navn, et rum, en dato eller et ord, også flere år tilbage.",
+      "Tryk ⬇️ Vis ældre beskeder nederst for at komme længere tilbage."] },
   beskeder: { titel: "✉️ Private beskeder", tekst: "Spillernes private beskeder til hinanden.",
     punkter: ["Fanen er låst for ansatte, indtil ejeren giver adgang. Tryk 🙋 Bed om adgang, hvis du skal bruge den.",
       "Læs kun beskeder, når der er en god grund, fx en rapport om mobning.", "Fortæl aldrig andre, hvad der står i dem."] },
@@ -540,5 +541,14 @@ document.head.appendChild(forklaringStil);
   if (document.querySelector("script[src^='js/vip.js']")) return;
   const s = document.createElement("script");
   s.src = "js/vip.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 📚 Chat-arkiv (js/chatlog-arkiv.js): alt der skrives højt i rummene gemmes for altid,
+// og ejeren kan søge i det hele i 💬 Chatlogs. Kræver database-49-chat-arkiv.sql.
+(function () {
+  if (document.querySelector("script[src^='js/chatlog-arkiv.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/chatlog-arkiv.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
