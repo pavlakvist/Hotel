@@ -13,7 +13,21 @@
 //  og valget huskes på computeren (mit-hotel-panel-farve-<navn>).
 //  Slå det nye panel fra: localStorage mit-hotel-enkelt-panel = "fra".
 //  (Hentes fra js/panel-forklaring.js, så hotel.html ikke skal ændres.)
+//
+//  14/11: Endnu enklere: 7 grupper i stedet for 9, ingen Hurtigmenu (den gjorde det
+//  samme som grupperne og ⭐ Favoritter), og en stor 🚩-boks i Oversigt, når der
+//  ligger rapporter, der skal vurderes. Henter js/rapport-vurdering.js
+//  (✅ Løst / 🚫 Misbrug af rapport-knap).
 // =============================================================
+
+// 🚩 Vurdér rapporter (js/rapport-vurdering.js) – hentes også, selvom det enkle panel er slået fra
+(function () {
+  if (document.querySelector("script[src^='js/rapport-vurdering.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/rapport-vurdering.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
 (function () {
   let fra = false;
   try { fra = localStorage.getItem("mit-hotel-enkelt-panel") === "fra"; } catch (e) {}
@@ -37,16 +51,16 @@
   // -----------------------------------------------------------
   //  Grupperne og hvilke faner der hører til hver
   // -----------------------------------------------------------
+  // 14/11: 7 grupper. Rapporter ligger lige under Oversigt, fordi det er det vigtigste.
+  // Ting man sjældent bruger (IP, slet bruger, administratorlog, rum) ligger under System.
   const GRUPPER = [
-    { id: "oversigt",   ikon: "🏠", navn: "Oversigt",   faner: ["oversigt", "guide", "mitjob"] },
-    { id: "spillere",   ikon: "👥", navn: "Spillere",   faner: ["spillere", "chat", "beskeder", "ip", "sletbruger"] },
-    { id: "moderation", ikon: "🛡️", navn: "Moderation", faner: ["rapporter", "strafrapporter", "adminlog"] },
-    { id: "events",     ikon: "📅", navn: "Events",     faner: ["events", "eventnoter", "vindere", "biograf", "cinema", "loppe"] },
-    { id: "rum",        ikon: "🛋️", navn: "Rum",        faner: ["rum"] },
-    { id: "oekonomi",   ikon: "🪙", navn: "Økonomi",    faner: ["valuta", "veksel", "vip", "rares"] },
-    { id: "personale",  ikon: "🪪", navn: "Personale",  faner: ["ansaettelse", "loen", "staffchat", "vagtskema", "ansoegninger"] },
-    { id: "radio",      ikon: "📻", navn: "Radio",      faner: ["radio"] },
-    { id: "system",     ikon: "⚙️", navn: "System",     faner: ["system"] },
+    { id: "oversigt",   ikon: "🏠", navn: "Oversigt",    faner: ["oversigt", "guide", "mitjob"] },
+    { id: "moderation", ikon: "🚩", navn: "Rapporter",   faner: ["rapporter", "strafrapporter"] },
+    { id: "spillere",   ikon: "👥", navn: "Spillere",    faner: ["spillere", "chat", "beskeder"] },
+    { id: "events",     ikon: "🎉", navn: "Events",      faner: ["events", "eventnoter", "vindere", "biograf", "cinema", "loppe", "radio"] },
+    { id: "oekonomi",   ikon: "🪙", navn: "Penge",       faner: ["valuta", "veksel", "vip", "rares"] },
+    { id: "personale",  ikon: "🪪", navn: "Ansatte",     faner: ["ansaettelse", "loen", "staffchat", "vagtskema", "ansoegninger"] },
+    { id: "system",     ikon: "⚙️", navn: "System",      faner: ["system", "rum", "adminlog", "ip", "sletbruger"] },
   ];
   function gruppeFor(fane) {
     for (let i = 0; i < GRUPPER.length; i++) if (GRUPPER[i].faner.indexOf(fane) >= 0) return GRUPPER[i];
@@ -149,14 +163,10 @@
   // -----------------------------------------------------------
   //  ⚡ Hurtigmenu (kun genveje til ting, panelet allerede kan)
   // -----------------------------------------------------------
-  const HURTIG = [
-    { fane: "events",      tekst: "Send nyhed" },
-    { fane: "spillere",    tekst: "Tjek spiller", soeg: true },
-    { fane: "rapporter",   tekst: "Se rapporter" },
-    { fane: "valuta",      tekst: "Giv Glimt / Stella" },
-    { fane: "ansaettelse", tekst: "Ansæt en ansat" },
-    { fane: "staffchat",   tekst: "Skriv i staff chat" },
-  ];
+  // 14/11: Hurtigmenuen er fjernet for at gøre panelet enklere (grupperne og ⭐ Favoritter
+  // gør det samme). Vil man have den igen, skrives genvejene bare ind her, fx
+  // { fane: "events", tekst: "Send nyhed" }.
+  const HURTIG = [];
   let hurtigLukket = hent("mit-hotel-panel-hurtig-lukket", false);
   function tegnHurtig() {
     hurtig.classList.toggle("lukket", !!hurtigLukket);
@@ -260,7 +270,15 @@
       indhold.prepend(boksEl);
     }
     const fav = mineFav().filter(function (f) { const k = fanensKnap(f); return k && synlig(k); });
-    let html = "<div class='ee-fav-top'><h3>⭐ Favoritter</h3><small>Dine mest brugte faner – klik for at åbne</small>" +
+    // 🚩 stor boks øverst, når der er rapporter, der skal vurderes
+    let nyeRap = 0;
+    try { nyeRap = rapporter().filter(function (r) { return !r.behandlet; }).length; } catch (e) {}
+    const rapKnap = fanensKnap("rapporter");
+    let html = nyeRap && rapKnap && synlig(rapKnap)
+      ? "<button type='button' class='ee-rap-boks' data-aabn='rapporter'><span>🚩</span><b>" + nyeRap +
+        (nyeRap === 1 ? " rapport venter" : " rapporter venter") + " på at blive vurderet</b><small>Klik her og vælg ✅ Løst eller 🚫 Misbrug</small></button>"
+      : "";
+    html += "<div class='ee-fav-top'><h3>⭐ Favoritter</h3><small>Dine mest brugte faner – klik for at åbne</small>" +
       "<button type='button' class='ee-fav-ret'>" + (favVaelger ? "✓ Færdig" : "✏️ Vælg") + "</button></div>";
     if (favVaelger) {
       html += "<div class='ee-fav-vaelg'>" + knapper().filter(function (k) { return synlig(k) && k.dataset.fane !== "oversigt"; }).map(function (k) {
@@ -470,6 +488,11 @@
     E + ":not(.moerkt) #ejer-indhold li { border-bottom-color: var(--ee-kant) !important; }" +
     // ⭐ Favoritter
     E + " #ee-fav { margin: 0 0 14px; padding: 12px; border-radius: 12px; background: var(--ee-kort); border: 1.5px solid var(--ee-kant); }" +
+    E + " #ejer-indhold .ee-rap-boks { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; width: 100%; margin: 0 0 12px;" +
+      " padding: 12px 14px !important; border-radius: 12px; border: 2px solid #e08a2e !important; background: #fff4e3 !important; color: #5a3410 !important;" +
+      " text-align: left; cursor: pointer; box-shadow: 0 2px 0 #f0c9a0 !important; text-shadow: none !important; font: 14px Verdana, sans-serif; }" +
+    E + " #ejer-indhold .ee-rap-boks:hover { background: #ffeccc !important; }" +
+    E + " .ee-rap-boks span { grid-row: 1 / 3; font-size: 28px; } " + E + " .ee-rap-boks b { font-size: 15px; } " + E + " .ee-rap-boks small { font-size: 12px; opacity: .8; }" +
     E + " .ee-fav-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }" +
     E + " .ee-fav-top h3 { margin: 0 !important; border: 0 !important; }" +
     E + " .ee-fav-top small { flex: 1; color: #8a7a7a; font-size: 12px; }" +
