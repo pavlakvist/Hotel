@@ -3,16 +3,20 @@
 --   ✅ Løst     = rapporten var rigtig. Den der rapporterede får en tak-besked.
 --   🚫 Misbrug  = rapporten var ikke en rigtig sag (fx for sjov eller for at drille).
 --                 Den der rapporterede får en venlig besked om, hvad knappen er til.
+--   3. gang misbrug: spilleren får automatisk en advarsel: "gør du det igen, bliver du mutet i 60 min".
+--   4. gang (og flere): spilleren bliver automatisk mutet i 60 minutter (det almindelige mute-system).
 -- Kør database-5-mod.sql og database-25-rapport-beskeder.sql FØRST.
 -- Kopiér ALT herfra → Supabase → SQL Editor → + New query → Run. Må gerne køres flere gange.
 
 alter table public.hv_rapporter add column if not exists udfald text;       -- 'loest' eller 'misbrug'
 alter table public.hv_rapporter add column if not exists udfald_af text;    -- hvem der vurderede den
+alter table public.hv_rapporter add column if not exists misbrug_talt boolean not null default false;  -- talt med i 3/4-reglen
 
 -- p_udfald = 'loest', 'misbrug' eller '' (= åbn rapporten igen)
 create or replace function public.hv_rapport_udfald(p_token uuid, p_id bigint, p_udfald text)
 returns json language plpgsql security definer set search_path = public as $$
 declare s hv_spillere; r hv_rapporter; o hv_spillere; tekst text;
+  antal int := 0; advaret boolean := false; mutet boolean := false; d jsonb; til bigint;
 begin
   select * into s from hv_spillere where token = p_token;
   if s.id is null then raise exception 'Du er ikke logget ind.'; end if;
@@ -51,7 +55,38 @@ begin
       insert into hv_beskeder (fra, til, tekst) values (s.navn, o.navn, left(tekst, 500));
     end if;
   end if;
-  return json_build_object('udfald', p_udfald, 'af', s.navn);
+
+  -- 🚫 Misbrug tælles: 3. gang = advarsel, 4. gang og derefter = mute i 60 minutter
+  if p_udfald = 'misbrug' and not r.misbrug_talt and coalesce(r.fra, '') <> '' and not hv_er_ejer(r.fra) then
+    update hv_rapporter set misbrug_talt = true where id = p_id;
+    select count(*) into antal from hv_rapporter where lower(fra) = lower(r.fra) and udfald = 'misbrug';
+    select * into o from hv_spillere where navn_lille = lower(r.fra);
+    if antal = 3 then
+      advaret := true;
+      if o.id is not null then
+        insert into hv_beskeder (fra, til, tekst) values (s.navn, o.navn, left('⚠️ Hej ' || r.fra
+          || '. Du har nu misbrugt rapport-knappen 3 gange. Hvis du gør det igen, bliver du automatisk mutet i 60 minutter.', 500));
+      end if;
+    elsif antal >= 4 then
+      mutet := true;
+      til := ((extract(epoch from now()) + 3600) * 1000)::bigint;
+      select data into d from hv_straffe where navn_lille = lower(r.fra);
+      d := coalesce(d, jsonb_build_object('bannet', false, 'timeoutTil', 0, 'historik', '[]'::jsonb, 'note', ''));
+      d := d || jsonb_build_object('timeoutTil', til, 'fra', s.navn, 'fraTid', (extract(epoch from now()) * 1000)::bigint)
+            || jsonb_build_object('historik', coalesce(d->'historik', '[]'::jsonb) || jsonb_build_array(jsonb_build_object(
+                 'handling', 'Mute (1 time)', 'grund', 'Misbrugt rapport-knappen ' || antal || ' gange (automatisk)',
+                 'tid', (extract(epoch from now()) * 1000)::bigint)));
+      insert into hv_straffe (navn_lille, navn, data) values (lower(r.fra), r.fra, d)
+      on conflict (navn_lille) do update set data = excluded.data, tid = now();
+      insert into hv_adminlog (hvem, hvad) values (s.navn, left('Automatisk mute (1 time) til ' || r.fra
+        || ': misbrugt rapport-knappen ' || antal || ' gange', 500));
+      if o.id is not null then
+        insert into hv_beskeder (fra, til, tekst) values (s.navn, o.navn, left('🔇 ' || r.fra
+          || ', du har misbrugt rapport-knappen ' || antal || ' gange og er nu mutet i 60 minutter.', 500));
+      end if;
+    end if;
+  end if;
+  return json_build_object('udfald', p_udfald, 'af', s.navn, 'antal', antal, 'advaret', advaret, 'mutet', mutet);
 end $$;
 
 -- Hvem kigger på hvilke rapporter, og hvordan de endte (vises i panelet hvert 5. sekund)

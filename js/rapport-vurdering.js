@@ -6,6 +6,7 @@
 //                                   besked, og man kan give dem en straf med det samme.
 //  Listen er delt i to: "Skal vurderes" og "Lukkede". De lukkede står som
 //  "Lukket som løst" (grøn) eller "Lukket som misbrug" (rød).
+//  3. gang misbrug = automatisk advarsel, 4. gang = automatisk mute i 60 min (det gør serveren).
 //  Kræver database-54-rapport-vurdering.sql. Hentes fra js/panel-forklaring.js,
 //  så hotel.html ikke skal ændres. Erstatter visRapporter() fra js/ejer.js.
 // =============================================================
@@ -47,7 +48,7 @@
     if (!x) return;
     const r = x.r;
     const mig = (typeof FIGUR !== "undefined" && FIGUR.navn) || "";
-    function lokalt() {
+    function lokalt(svar) {
       if (r.sid) {
         const s = typeof serverRapporter !== "undefined" && serverRapporter ? serverRapporter.find(function (y) { return y.id === r.sid; }) : null;
         if (s) { s.behandlet = !!udfald; s.behandletTid = udfald ? Date.now() : null; }
@@ -68,7 +69,9 @@
       }
       rvSpoerg = null;
       rvBesked = udfald === "loest" ? "✅ Rapporten er lukket som løst." + (r.fra ? " " + r.fra + " får en tak-besked." : "")
-        : udfald === "misbrug" ? "🚫 Rapporten er lukket som misbrug af rapport-knappen." + (r.fra ? " " + r.fra + " får en besked om, hvad knappen er til." : "")
+        : udfald === "misbrug" ? "🚫 Rapporten er lukket som misbrug af rapport-knappen." + (r.fra ? " " + r.fra + " får en besked om, hvad knappen er til." : "") +
+          (svar && svar.mutet ? " 🔇 Det er " + svar.antal + ". gang, så " + r.fra + " er automatisk mutet i 60 minutter."
+            : svar && svar.advaret ? " ⚠️ Det er 3. gang, så " + r.fra + " har fået en advarsel: næste gang bliver det mute i 60 minutter." : "")
         : "↩ Rapporten er åbnet igen.";
       if (saa) saa(); else visFane();
     }
@@ -112,7 +115,9 @@
         (r.hvem ? "<a href='#' data-spiller='" + rens(r.hvem) + "'>" + rens(r.hvem) + "</a>" : "<i>ingen bestemt spiller</i>") + "</div>" +
         "<blockquote>" + (tekst ? "“" + rens(tekst) + "”" : "<i>Ingen tekst skrevet</i>") + "</blockquote>";
       if (r.fra && misbrugt[r.fra]) {
-        html += "<p class='rv-advar'>⚠️ " + rens(r.fra) + " har misbrugt rapport-knappen " + misbrugt[r.fra] + (misbrugt[r.fra] === 1 ? " gang" : " gange") + " før.</p>";
+        html += "<p class='rv-advar'>⚠️ " + rens(r.fra) + " har misbrugt rapport-knappen " + misbrugt[r.fra] + (misbrugt[r.fra] === 1 ? " gang" : " gange") + " før." +
+          (misbrugt[r.fra] >= 3 ? " Lukker du denne som misbrug, bliver " + rens(r.fra) + " automatisk mutet i 60 min."
+            : misbrugt[r.fra] === 2 ? " Én gang mere giver en automatisk advarsel." : "") + "</p>";
       }
       html += "<div class='rv-hjaelpere'>" +
         (r.kigger ? "<span class='rv-kigger'>👀 " + rens(r.kigger) + " kigger på den</span>"
