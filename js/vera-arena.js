@@ -115,6 +115,8 @@
     if (m) return m[1];
     return /^[A-Za-z0-9_-]{11}$/.test(t) ? t : null;
   }
+  // ligner teksten et link? (links skal aldrig stå som tekst på skærmene)
+  function erLink(t) { return /https?:\/\/|www\.|youtu\.?be|\.com\b|\.dk\b/i.test(String(t || "")); }
   function find(id) { return ARENA_BANER.find(function (b) { return b.id === id; }) || null; }
   function lilleNavn(t) {
     return String(t || "").toLowerCase().replace(/æ/g, "ae").replace(/ø/g, "oe").replace(/å/g, "aa").replace(/[^a-z0-9]/g, "");
@@ -535,12 +537,13 @@
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#4a0f1f"); g.addColorStop(1, "#1a0509");
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.clip();   // intet tegnes uden for skærmen
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     const bane = find(ar.bane);
     if (d.v && ARENA_FRA_FIL) {
       ctx.fillStyle = "#e9c46a"; ctx.font = "bold 46px Georgia, serif"; ctx.fillText("📺 VERA ARENA", W / 2, H / 2 - 30);
       ctx.fillStyle = "#f3e6cc"; ctx.font = "24px Verdana, sans-serif"; ctx.fillText("Videoen kan kun vises på hotellet på nettet", W / 2, H / 2 + 30);
-    } else if (d.tekst) {
+    } else if (d.tekst && !erLink(d.tekst)) {
       ctx.fillStyle = "#ffe6a8"; ctx.shadowColor = "#ffb84a"; ctx.shadowBlur = 18;
       const ord = String(d.tekst).split(/\s+/), linjer = [];
       let st = d.tekst.length <= 10 ? 110 : d.tekst.length <= 24 ? 72 : 50;
@@ -548,7 +551,7 @@
       let l = "";
       ord.forEach(function (o) { const p = l ? l + " " + o : o; if (ctx.measureText(p).width > W - 60 && l) { linjer.push(l); l = o; } else l = p; });
       if (l) linjer.push(l);
-      linjer.slice(0, 4).forEach(function (t, i, a) { ctx.fillText(t, W / 2, H / 2 + (i - (a.length - 1) / 2) * st * 1.1); });
+      linjer.slice(0, 4).forEach(function (t, i, a) { ctx.fillText(t, W / 2, H / 2 + (i - (a.length - 1) / 2) * st * 1.1, W - 40); });
     } else {
       const nu = arNu();
       ctx.fillStyle = "#e9c46a"; ctx.shadowColor = "#ffb84a"; ctx.shadowBlur = 14 + 6 * Math.sin(nu / 500);
@@ -722,7 +725,7 @@
     html += "<h4 class='ea-dag'>📺 Skærmene</h4>" +
       "<ul class='ar-skaermliste'>" + AR_SKAERME.map(function (s) {
         const d = skaermData(s.id);
-        return "<li><span>" + esc(s.navn) + (d.v && s.id === lyd ? " 🔊" : "") + "</span><b>" + (d.v ? "▶ YouTube" : d.tekst ? "🔤 " + esc(d.tekst) : "Logo") + "</b>" +
+        return "<li><span>" + esc(s.navn) + (d.v && s.id === lyd ? " 🔊" : "") + "</span><b>" + (d.v ? "▶ YouTube" : d.tekst && !erLink(d.tekst) ? "🔤 " + esc(d.tekst) : "Logo") + "</b>" +
           (d.v || d.tekst ? "<button type='button' data-ar-logo='" + s.id + "' title='Vis logoet igen'>⏹</button>" : "") + "</li>";
       }).join("") + "</ul>" +
       "<div class='ar-skaermboks'><b>▶ YouTube-video</b><input type='text' data-ar-input='yt' placeholder='Sæt et YouTube-link ind …'>" +
@@ -769,6 +772,14 @@
           if (api && api.besked) api.besked("▶ Videoen vises nu på " + navn);
         } else {
           if (!v) { if (api && api.besked) api.besked("Skriv først en tekst i feltet."); return; }
+          if (erLink(v)) {
+            // et YouTube-link i tekstfeltet: så afspilles videoen i stedet (links vises aldrig som tekst)
+            const id = arYoutubeId(v);
+            if (!id) { if (api && api.besked) api.besked("Links kan ikke vises som tekst. Skriv en almindelig tekst, eller brug YouTube-feltet ovenover."); return; }
+            saetArena({ skaerm: { id: til === "alle" ? "midt" : til, v: id } }).then(igen);
+            if (api && api.besked) api.besked("▶ Det var et YouTube-link, så videoen afspilles nu på " + (til === "alle" ? "Storskærmen" : navn));
+            inp.value = ""; igen(); return;
+          }
           saetArena({ skaerm: { id: til, tekst: v } }).then(igen);
           if (api && api.besked) api.besked("🔤 Teksten vises nu på " + navn);
         }
