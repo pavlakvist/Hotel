@@ -108,6 +108,13 @@
     } catch (e) { return false; }
   }
   function arBesked(t) { try { if (typeof besked !== "undefined" && besked) besked.textContent = t; } catch (e) {} }
+  // YouTube-videoens id ud fra et link (youtube.com/watch?v=…, youtu.be/…, shorts/…, embed/…, live/…)
+  function arYoutubeId(link) {
+    const t = String(link || "").trim();
+    const m = t.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/|\/live\/)([A-Za-z0-9_-]{11})/);
+    if (m) return m[1];
+    return /^[A-Za-z0-9_-]{11}$/.test(t) ? t : null;
+  }
   function find(id) { return ARENA_BANER.find(function (b) { return b.id === id; }) || null; }
   function lilleNavn(t) {
     return String(t || "").toLowerCase().replace(/æ/g, "ae").replace(/ø/g, "oe").replace(/å/g, "aa").replace(/[^a-z0-9]/g, "");
@@ -574,8 +581,21 @@
     AR_SKAERME.forEach(function (s) { laerred.parentNode.insertBefore(arIframes[s.id].el, laerred); });   // før lærredet = bag ved det
     iframesSat = true;
   }
+  // Lyden kommer fra den skærm, der sidst fik et YouTube-link (de andre er lydløse, så det ikke larmer i munden på hinanden)
+  function lydSkaerm() {
+    let bedst = null;
+    AR_SKAERME.forEach(function (s) {
+      const d = skaermData(s.id);
+      if (d.v && (!bedst || (d.t || 0) > (skaermData(bedst.id).t || 0))) bedst = s;
+    });
+    return bedst ? bedst.id : null;
+  }
+  function ytKommando(f, func) {
+    try { f.el.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: [] }), "*"); } catch (e) {}
+  }
   function opdaterSkaerme(tving) {
     if (!iframesSat) return;
+    const lyd = lydSkaerm();
     AR_SKAERME.forEach(function (s) {
       const f = arIframes[s.id], d = skaermData(s.id);
       const vis = iArena() && viserVideo(s);
@@ -583,11 +603,15 @@
         if (f.v) { f.el.removeAttribute("src"); f.v = null; f.n = -1; }
         return;
       }
-      if (!tving && f.v === d.v && f.n === d.n) return;
-      f.v = d.v; f.n = d.n;
+      if (!tving && f.v === d.v && f.n === d.n) {
+        // samme video, men lyden er flyttet til en anden skærm
+        if (f.lyd !== (s.id === lyd)) { f.lyd = s.id === lyd; ytKommando(f, f.lyd ? "unMute" : "mute"); }
+        return;
+      }
+      f.v = d.v; f.n = d.n; f.lyd = s.id === lyd;
       const start = Math.max(0, Math.floor((arNu() - (d.t || arNu())) / 1000));
       f.el.src = "https://www.youtube-nocookie.com/embed/" + d.v + "?autoplay=1&controls=0&rel=0&playsinline=1&enablejsapi=1&start=" + start +
-        (s.lyd ? "" : "&mute=1") + "&origin=" + encodeURIComponent(location.origin);
+        (f.lyd ? "" : "&mute=1") + "&origin=" + encodeURIComponent(location.origin);
     });
   }
   // læg skærmene præcis over hullerne i væggen (følger med, når man trækker og zoomer)
@@ -606,9 +630,10 @@
         const D = { x: r.left + h[3].x * sx, y: r.top + h[3].y * sy };
         f.el.style.transform = "matrix(" + [(B.x - A.x) / 640, (B.y - A.y) / 640, (D.x - A.x) / 360, (D.y - A.y) / 360, A.x, A.y].join(",") + ")";
       });
-      // lyd-knappen til storskærmen
-      const midt = AR_SKAERME[0];
-      lydKnap.hidden = !(iArena() && viserVideo(midt));
+      // lyd-knappen (browseren vil ofte have et klik, før der må komme lyd)
+      const lyd = lydSkaerm();
+      const vis = iArena() && !!lyd && !ARENA_FRA_FIL && !lydTrykket[lyd + skaermData(lyd).n];
+      if (lydKnap.hidden === vis) lydKnap.hidden = !vis;
     }
     requestAnimationFrame(placerSkaerme);
   }
@@ -616,12 +641,13 @@
   lydKnap.id = "ar-lyd";
   lydKnap.type = "button";
   lydKnap.hidden = true;
-  lydKnap.textContent = "🔊 Lyd på storskærmen";
+  lydKnap.textContent = "🔊 Tænd for lyden";
+  const lydTrykket = {};
   lydKnap.addEventListener("click", function () {
-    const w = arIframes.midt.el.contentWindow;
-    ["unMute", "playVideo"].forEach(function (func) {
-      try { w.postMessage(JSON.stringify({ event: "command", func: func, args: [] }), "*"); } catch (e) {}
-    });
+    const lyd = lydSkaerm();
+    if (!lyd) return;
+    ytKommando(arIframes[lyd], "unMute"); ytKommando(arIframes[lyd], "playVideo");
+    lydTrykket[lyd + skaermData(lyd).n] = true;
     lydKnap.hidden = true;
   });
   document.body.appendChild(lydKnap);
@@ -662,7 +688,7 @@
   // =============================================================
   //  📱 Event-appen: fanen 🏟 Arena styrer det hele
   // =============================================================
-  let appKrop = null, appSidst = "", valgtSkaerm = "midt";
+  let appKrop = null, appSidst = "";
   function appAaben() { return !!(appKrop && appKrop.isConnected); }
   function tegnAppIgen() {
     if (!appAaben()) return;
@@ -691,19 +717,22 @@
       return "<button data-ar-scene='" + k + "'" + (k === (ar.scene || "varm") ? " class='lys-valgt ar-valgt'" : "") + ">" + AR_SCENELYS[k] + "</button>";
     }).join("") + "</div>";
     // skærme
-    html += "<h4 class='ea-dag'>📺 Skærmene</h4><div class='ea-hj-knapper ar-skaermvalg'>" +
-      AR_SKAERME.concat([{ id: "alle", navn: "Alle tre" }]).map(function (s) {
-        return "<button data-ar-skaerm='" + s.id + "'" + (s.id === valgtSkaerm ? " class='lys-valgt ar-valgt'" : "") + ">" + esc(s.navn) + "</button>";
-      }).join("") + "</div>" +
+    const lyd = lydSkaerm();
+    const kort = { midt: "🖥 Storskærm", venstre: "◀ Venstre", hoejre: "Højre ▶", alle: "Alle tre" };
+    html += "<h4 class='ea-dag'>📺 Skærmene</h4>" +
       "<ul class='ar-skaermliste'>" + AR_SKAERME.map(function (s) {
         const d = skaermData(s.id);
-        return "<li><span>" + esc(s.navn) + "</span><b>" + (d.v ? "▶ YouTube" : d.tekst ? "🔤 " + esc(d.tekst) : "VERA ARENA-logo") + "</b></li>";
+        return "<li><span>" + esc(s.navn) + (d.v && s.id === lyd ? " 🔊" : "") + "</span><b>" + (d.v ? "▶ YouTube" : d.tekst ? "🔤 " + esc(d.tekst) : "Logo") + "</b>" +
+          (d.v || d.tekst ? "<button type='button' data-ar-logo='" + s.id + "' title='Vis logoet igen'>⏹</button>" : "") + "</li>";
       }).join("") + "</ul>" +
-      "<form class='ar-form' data-ar-form='yt'><input type='text' name='l' placeholder='Sæt et YouTube-link ind …'><button type='submit'>▶ Vis</button></form>" +
-      "<form class='ar-form' data-ar-form='tekst'><input type='text' name='l' maxlength='60' placeholder='Tekst på skærmen, fx RUNDE 2'><button type='submit'>🔤 Vis</button></form>" +
-      "<div class='ea-hj-knapper'><button data-ar='logo'>⏹ Vis logoet igen</button></div>" +
+      "<div class='ar-skaermboks'><b>▶ YouTube-video</b><input type='text' data-ar-input='yt' placeholder='Sæt et YouTube-link ind …'>" +
+      "<small>Tryk på den skærm, videoen skal vises på:</small><div class='ar-skaermknapper'>" +
+      AR_SKAERME.map(function (s) { return "<button type='button' data-ar-vis='yt' data-ar-til='" + s.id + "'>" + kort[s.id] + "</button>"; }).join("") + "</div></div>" +
+      "<div class='ar-skaermboks'><b>🔤 Tekst på skærmen</b><input type='text' data-ar-input='tekst' maxlength='60' placeholder='Fx RUNDE 2 eller FINALEN'>" +
+      "<small>Tryk på den skærm, teksten skal vises på:</small><div class='ar-skaermknapper'>" +
+      AR_SKAERME.concat([{ id: "alle" }]).map(function (s) { return "<button type='button' data-ar-vis='tekst' data-ar-til='" + s.id + "'>" + kort[s.id] + "</button>"; }).join("") + "</div></div>" +
       (ARENA_FRA_FIL ? "<p class='ea-info'>YouTube virker kun, når hotellet er åbnet på nettet (pavlakvist.github.io/Hotel), ikke fra en fil på computeren.</p>" :
-        "<p class='ea-info'>Kun storskærmen har lyd. De to andre skærme er lydløse.</p>");
+        "<p class='ea-info'>🔊 Lyden kommer fra den skærm, der sidst fik en video. Gæsterne får en knap \"🔊 Tænd for lyden\" i arenaen, fordi browseren vil have et klik først.</p>");
     // skilt og nedtælling
     html += "<h4 class='ea-dag'>📢 Skilt og nedtælling</h4>" +
       "<form class='ar-form' data-ar-form='skilt'><input type='text' name='l' maxlength='80' placeholder='Skilt øverst hos alle i arenaen'><button type='submit'>📢 Vis</button></form>" +
@@ -727,8 +756,28 @@
     krop.querySelectorAll("[data-ar-scene]").forEach(function (k) {
       k.addEventListener("click", function () { saetArena({ scene: k.dataset.arScene }).then(igen); igen(); });
     });
-    krop.querySelectorAll("[data-ar-skaerm]").forEach(function (k) {
-      k.addEventListener("click", function () { valgtSkaerm = k.dataset.arSkaerm; igen(); });
+    krop.querySelectorAll("[data-ar-vis]").forEach(function (k) {
+      k.addEventListener("click", function () {
+        const hvad = k.dataset.arVis, til = k.dataset.arTil;
+        const inp = krop.querySelector("[data-ar-input='" + hvad + "']");
+        const v = inp ? inp.value.trim() : "";
+        const navn = (AR_SKAERME.find(function (s) { return s.id === til; }) || { navn: "alle tre skærme" }).navn;
+        if (hvad === "yt") {
+          const id = arYoutubeId(v);
+          if (!id) { if (api && api.besked) api.besked(v ? "Det ligner ikke et YouTube-link. Prøv at kopiere linket igen." : "Sæt først et YouTube-link ind i feltet."); return; }
+          saetArena({ skaerm: { id: til, v: id } }).then(igen);
+          if (api && api.besked) api.besked("▶ Videoen vises nu på " + navn);
+        } else {
+          if (!v) { if (api && api.besked) api.besked("Skriv først en tekst i feltet."); return; }
+          saetArena({ skaerm: { id: til, tekst: v } }).then(igen);
+          if (api && api.besked) api.besked("🔤 Teksten vises nu på " + navn);
+        }
+        inp.value = "";
+        igen();
+      });
+    });
+    krop.querySelectorAll("[data-ar-logo]").forEach(function (k) {
+      k.addEventListener("click", function () { saetArena({ skaerm: { id: k.dataset.arLogo } }).then(igen); igen(); });
     });
     krop.querySelectorAll("[data-ar-ned]").forEach(function (k) {
       k.addEventListener("click", function () { saetArena({ nedtael: Number(k.dataset.arNed) }).then(igen); igen(); });
@@ -738,14 +787,7 @@
         e.preventDefault();
         const v = f.querySelector("input").value.trim();
         const hvad = f.dataset.arForm;
-        if (hvad === "yt") {
-          const id = typeof youtubeId === "function" ? youtubeId(v) : null;
-          if (!id) { if (api && api.besked) api.besked("Det ligner ikke et YouTube-link. Prøv at kopiere linket igen."); return; }
-          saetArena({ skaerm: { id: valgtSkaerm, v: id } }).then(igen);
-        } else if (hvad === "tekst") {
-          if (!v) return;
-          saetArena({ skaerm: { id: valgtSkaerm, tekst: v } }).then(igen);
-        } else if (hvad === "skilt") {
+        if (hvad === "skilt") {
           if (!v) return;
           saetArena({ skilt: v }).then(igen);
         }
@@ -757,7 +799,6 @@
       k.addEventListener("click", function () {
         const hvad = k.dataset.ar;
         if (hvad === "gaa") { if (api && api.gaaTil) api.gaaTil(ARENA_ID); else gaaTilVaerelse(ARENA_ID); return; }
-        if (hvad === "logo") saetArena({ skaerm: { id: valgtSkaerm } }).then(igen);
         if (hvad === "skiltvaek") saetArena({ skilt: "" }).then(igen);
         if (hvad === "regler" && bane) sig("🏟 " + bane.navn + ": " + bane.regler.map(function (r, i) { return (i + 1) + ") " + r; }).join(" "));
         igen();
@@ -835,6 +876,14 @@
     ".ar-skaermliste b { color: #d9a441; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }" +
     ".ar-form { display: flex; gap: 6px; margin: 6px 0; } .ar-form input { flex: 1; min-width: 0; padding: 7px; border-radius: 8px; border: 2px solid #d9a441; }" +
     ".ar-form button { padding: 6px 10px; border-radius: 8px; cursor: pointer; }" +
+    ".ar-skaermliste li { align-items: center; } .ar-skaermliste li button { padding: 2px 8px; border-radius: 6px; cursor: pointer; }" +
+    ".ar-skaermboks { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; padding: 8px; border: 1px solid rgba(217,164,65,.45); border-radius: 10px; }" +
+    ".ar-skaermboks input { padding: 7px; border-radius: 8px; border: 2px solid #d9a441; min-width: 0; }" +
+    ".ar-skaermboks small { opacity: .85; font-size: 11px; }" +
+    ".ar-skaermknapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 6px; }" +
+    ".ar-skaermknapper button { padding: 9px 4px; border-radius: 8px; cursor: pointer; font-weight: bold; }" +
+    // Event-appens fane-bjælke bliver hængende øverst, når man ruller. Med fast baggrund kan man ikke se knapperne igennem den.
+    ".ea-faner { background: #2b0c15 !important; box-shadow: 0 6px 12px rgba(0,0,0,.55); }" +
     ".ar-regler { margin: 4px 0 8px; padding-left: 22px; font-size: 12px; }";
   document.head.appendChild(stil);
 
