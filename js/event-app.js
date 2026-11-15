@@ -895,6 +895,74 @@
   }
 
   // ---------------------------------------------------------------
+  //  ⏹ Når et event stoppes (i Event-appen eller i Ejerpanelet), sendes alle gæster,
+  //  der står i event-rummet, ned i lobbyen. Ansatte og ejeren bliver, hvor de er.
+  //  Det sker med en usynlig besked i rummets chat (⟦HV⟧eventslut|rum|navn), ligesom terningerne,
+  //  så det virker hos alle spillere i rummet. Uden rum (eller i lobbyen) sker der ingenting.
+  // ---------------------------------------------------------------
+  const EA_SKJULT = "⟦HV⟧";
+  function sendEventSlut(r) {
+    if (!r || !r.rum || r.rum === "hal" || !online()) return;
+    serverKald("hv_chat_send", { p_token: token(), p_rum: r.rum, p_tekst: EA_SKJULT + "eventslut|" + r.rum + "|" + String(r.event || "Eventet").replace(/\|/g, "/"),
+      p_boble: typeof minBoble !== "undefined" ? minBoble : null }).catch(function (e) { console.warn("Event-slut nåede ikke serveren: " + e.message); });
+  }
+  // Alle "Stop eventet"-knapper går gennem hv_reklame_stop, så den fanges her
+  function pakStopInd() {
+    if (typeof serverKald !== "function" || serverKald.eaStop) return;
+    const foer = serverKald;
+    const ny = function (fn, data) {
+      if (fn !== "hv_reklame_stop") return foer.apply(this, arguments);
+      const id = data && +data.p_id;
+      const args = arguments, self = this;
+      return foer("hv_reklamer_hent", {}).catch(function () { return []; }).then(function (liste) {
+        const r = (liste || []).find(function (x) { return +x.id === id; }) || igang.find(function (x) { return +x.id === id; });
+        return foer.apply(self, args).then(function (svar) { sendEventSlut(r); return svar; });
+      });
+    };
+    ny.eaStop = true;
+    serverKald = ny;
+  }
+  function visSlutBesked(tekst) {
+    let boks = document.getElementById("ea-slut-besked");
+    if (!boks) {
+      boks = document.createElement("div");
+      boks.id = "ea-slut-besked";
+      boks.style.cssText = "position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:9998;pointer-events:none;max-width:90vw;" +
+        "background:linear-gradient(#4a1320,#2e0a13);color:#f6e7c1;border:2px solid #d9b45a;border-radius:12px;" +
+        "padding:12px 24px;font:bold 18px Georgia,serif;box-shadow:0 8px 30px rgba(0,0,0,.45);text-align:center;";
+      document.body.appendChild(boks);
+    }
+    boks.textContent = tekst;
+    boks.hidden = false;
+    clearTimeout(visSlutBesked.t);
+    visSlutBesked.t = setTimeout(function () { boks.hidden = true; }, 5000);
+  }
+  function erPersonaleNavn(n) { return erEjerNavn(n) || (typeof erAnsat === "function" && erAnsat(n)); }
+  function pakSigInd() {
+    if (typeof sig !== "function" || typeof figur === "undefined" || sig.eaSlut) return;
+    const foer = sig;
+    const ny = function (hvem, navn, tekst) {
+      const t = String(tekst || "");
+      if (t.indexOf(EA_SKJULT + "eventslut|") !== 0) return foer.apply(this, arguments);
+      if (hvem === figur || navn === mig()) return;
+      const dele = t.slice((EA_SKJULT + "eventslut|").length).split("|");
+      const rum = dele[0], titel = dele.slice(1).join("|") || "Eventet";
+      let her = null;
+      try { her = typeof mitRumId === "function" ? mitRumId() : herNu(); } catch (e) {}
+      if (!rum || rum !== her || herNu() === "hal") return;
+      if (!erPersonaleNavn(navn)) return;              // kun ejeren og ansatte kan stoppe et event
+      if (erPersonaleNavn(mig())) { visSlutBesked("🎪 " + titel + " er slut. Gæsterne er sendt til lobbyen."); return; }
+      try { skiftRum("hal"); } catch (e) {}
+      visSlutBesked("🎪 " + titel + " er slut – du er sendt til lobbyen 👋");
+    };
+    ny.eaSlut = true;
+    sig = ny;
+  }
+  // tjek hele tiden, at vores indpakning ligger yderst (andre filer kan pakke sig() ind efter os)
+  pakStopInd(); pakSigInd();
+  setInterval(function () { pakStopInd(); pakSigInd(); }, 1000);
+
+  // ---------------------------------------------------------------
   //  🔌 Til andre filer (fx lys-rummet, buzzer-quizzen og Vera arena):
   //    window.eventApp.tilfoejFane({ id: "lys", navn: "💡 Lys", tegn: function (krop, api) { … }, kun: function () { return true; } })
   //      → en ny fane i appen. tegn() får fanens indhold (krop) og dette api.
@@ -992,7 +1060,11 @@
   // ---------------------------------------------------------------
   const T = "#telefon ";
   const css = [
-    T + ".ea-app { background: radial-gradient(120% 60% at 50% 0%, #5a1426, #1e060c 70%); color: #fbecd0; padding: 6px 12px 18px; min-height: 100%; box-sizing: border-box; font-size: 12px; }",
+    T + ".ea-app { background: radial-gradient(120% 60% at 50% 0%, #5a1426, #1e060c 70%); color: #fbecd0; padding: 6px 12px 80px; min-height: 0; box-sizing: border-box; font-size: 12px; }",
+    // kan altid rulles op og ned (også med musehjul, touchpad og finger), med en tynd guld rullebjælke i siden
+    T + ".tlf-indhold.ea-app { flex: 1 1 auto; overflow-y: auto !important; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; scrollbar-width: thin !important; scrollbar-color: #d9a441 transparent; }",
+    T + ".tlf-indhold.ea-app::-webkit-scrollbar { display: block !important; width: 5px; }",
+    T + ".tlf-indhold.ea-app::-webkit-scrollbar-thumb { background: #d9a441; border-radius: 4px; }",
     T + ".tlf-top.ea-top { background: #1e060c !important; color: #ffd98a; border-bottom: 1px solid rgba(217,164,65,.35); }",
     T + ".tlf-top.ea-top h3 { color: #ffd98a !important; letter-spacing: .5px; }",
     T + ".tlf-top.ea-top .tlf-tb { color: #ffd98a !important; }",
