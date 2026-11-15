@@ -23,11 +23,8 @@ function evMaaSkrive() { const r = minRolle(); return r === "ejer" || r === "eve
 // -------------------------------------------------------------
 //  🎪 Det nye skilt: Eventfolk
 // -------------------------------------------------------------
-if (!SKILTE.some(function (s) { return s.id === "eventfolk"; })) {
-  const efter = SKILTE.findIndex(function (s) { return s.id === "eventvaert"; });
-  SKILTE.splice(efter + 1, 0, { id: "eventfolk", navn: "Eventfolk", tekst: "Hjælper med events og skriver noter og vindere.",
-    fil: "billeder/skilte/eventfolk.png" });
-}
+// 15/11: Pavla har fjernet skiltet Eventfolk fra skilte-listen i Ansættelse,
+// så det bliver ikke lagt ind i SKILTE længere. Resten herunder er beholdt.
 ROLLE_FANER.eventfolk = ["guide", "eventnoter", "vindere", "mitjob", "staffchat"];
 ROLLE_NAVN.eventfolk = "🛡️ Eventfolk-panel";
 if (ANSAT_SKILTE.indexOf("eventfolk") < 0) ANSAT_SKILTE.push("eventfolk");

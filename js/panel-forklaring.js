@@ -153,7 +153,7 @@ document.head.appendChild(forklaringStil);
 // så hotel.html ikke skal ændres. Den kører, når alt det andet er klar.
 (function () {
   const s = document.createElement("script");
-  s.src = "js/event-vindere.js?v=3";
+  s.src = "js/event-vindere.js?v=4";
   document.body.appendChild(s);
 })();
 

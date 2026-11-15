@@ -1,6 +1,7 @@
 // =============================================================
 //  Ansættelse 🎖️  (fanen i Ejerpanelet)
-//  Ejeren giver spillerne et skilt (Staff, Hjælper, VIP …),
+//  Ejeren giver spillerne et skilt (Staff, Hjælper, Mod …),
+//  (15/11: Ny gæst, VIP, Veteran, Sæson vinder og Eventfolk er fjernet fra listen)
 //  som vises over hovedet på dem og i chatloggen.
 //  "Fyr" tager skiltet fra dem igen. Kun ejeren kan styre det.
 //  Skiltene er klippet ud af Pavlas ark (billeder/kilde/skilte-ark.png).
@@ -10,15 +11,11 @@ const SKILTE = [
   { id: "mod", navn: "Mod", tekst: "Moderator. Holder øje med chatten og hjælper med at holde ro." },
   { id: "staff", navn: "Staff", tekst: "Personalet. Holder hotellet sikkert og hyggeligt." },
   { id: "hjaelper", navn: "Hjælper", tekst: "Hjælper nye gæster og svarer på spørgsmål." },
-  { id: "vip", navn: "VIP", tekst: "Særlige fordele. Eksklusivt skilt." },
   { id: "gaest", navn: "Gæst", tekst: "Almindelig spiller. Velkommen på hotellet!" },
-  { id: "ny-gaest", navn: "Ny gæst", tekst: "Til spillere der lige er startet." },
   { id: "eventvaert", navn: "Eventvært", tekst: "Arrangerer events og konkurrencer." },
   { id: "bygmester", navn: "Bygmester", tekst: "Hjælper med at bygge og indrette rum." },
-  { id: "veteran", navn: "Veteran", tekst: "Har været medlem længe." },
   { id: "content-creator", navn: "Content creator", tekst: "Laver indhold om hotellet." },
   { id: "support", navn: "Support", tekst: "Hjælper med tekniske spørgsmål." },
-  { id: "saeson-vinder", navn: "Sæson vinder", tekst: "Midlertidigt skilt ved events og sæsoner." },
 ];
 SKILTE.forEach(function (s) { s.fil = "billeder/skilte/" + s.id + ".png"; });
 
@@ -40,11 +37,7 @@ const JOB_KAN = {
     "🏠 Gælder ikke i ens eget rum"].concat(PERSONALE_KAN),
   support: ["🛠 Hjælper når noget driller, fx log ind eller ting der ikke virker"].concat(PERSONALE_KAN),
   "content-creator": ["🎥 Laver videoer, billeder og opslag om hotellet"].concat(PERSONALE_KAN),
-  vip: ["✨ Et flot skilt over hovedet", "Ingen ekstra knapper"],
   gaest: ["Et skilt over hovedet", "Ingen ekstra knapper"],
-  "ny-gaest": ["🌱 Viser at man er ny, så andre kan hjælpe", "Ingen ekstra knapper"],
-  veteran: ["🏅 Viser at man har været her længe", "Ingen ekstra knapper"],
-  "saeson-vinder": ["🏆 Til vinderen af et event eller en sæson", "Ingen ekstra knapper"],
 };
 function jobKan(id) { return JOB_KAN[id] || []; }
 function jobHtml(s) {
