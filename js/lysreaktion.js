@@ -5,9 +5,10 @@
 //  - Lyset styres fra Event-appen på telefonen (🎲 Lege → 💡 Lysreaktion):
 //      ⏹ Sluk · 🎯 Ét felt ad gangen · 🪩 Disko · 🌈 Bølge · 🏃 Spillet Lysreaktion
 //      + tempo (1–5) og farve (alle farver eller én bestemt).
-//  - Spillet: ét felt lyser op ad gangen. Den første, der står på feltet, får et point.
-//    Serveren afgør, hvem der var hurtigst, og alle i rummet ser det store skilt "Pall var hurtigst!".
-//    Når ingen når det i tide, hopper lyset videre til et nyt felt.
+//  - Spillet (udskilning, ligesom stoledans): værten tilmelder spillerne i rummet (ansatte og ejeren er ikke med).
+//    Runde 1: 7 felter lyser i én farve (højst én færre end antal spillere). Man skal stille sig på et ledigt felt.
+//    Hvert felt kan kun have én spiller (serveren afgør, hvem der kom først). Den, der ikke når et felt, er ude
+//    og bliver flyttet ned til tilskuerne. Hver runde er der ét felt mindre (7, 6, 5 … 1). Den sidste tilbage vinder.
 //  - Alle i rummet ser præcis det samme lys (serveren holder styr på det, og alle bruger serverens ur).
 //  - Møblerne (realistiske 3D): lys-panel (hænger på væggen), lys-soejle, lys-pult. Billeder i billeder/moebler/lys-*/.
 //    Panelet og søjlen har en "maske" (lys-*-maske-N.png), som farves med den farve, lyset har lige nu.
@@ -31,7 +32,9 @@
     { navn: "Lilla", det: "lilla", hex: "#a64dff" }, { navn: "Pink", det: "pink", hex: "#ff4fc3" },
   ];
   const LYS_TEMPO = [1500, 1000, 700, 450, 280];        // ms pr. skift (tempo 1–5)
-  const LYS_SPIL_SEK = [12, 9, 7, 5, 3];                // spillet: sekunder til at nå feltet (samme som serveren)
+  const LYS_SPIL_SEK = [14, 11, 9, 7, 5];               // spillet: sekunder til at finde et felt (samme som serveren)
+  // tilskuerne (de udgåede spillere) står forrest i rummet: x 2–11, y 10–11
+  const LYS_TILSKUER = { x0: 2, y0: 10, b: 10, d: 2 };
   const LYS_TILSTANDE = {
     sluk: { ikon: "⏹", navn: "Slukket" },
     et: { ikon: "🎯", navn: "Ét felt ad gangen" },
@@ -60,7 +63,7 @@
   // =============================================================
   //  Lysets tilstand (fra serveren) og serverens ur
   // =============================================================
-  let lys = { tilstand: "sluk" };   // { tilstand, tempo, farve, seed, start, x0, y0, b, d, (spil:) runde, felt, farve, rstart, sek, point, sidst }
+  let lys = { tilstand: "sluk" };   // { tilstand, tempo, farve, seed, start, x0, y0, b, d, (spil:) fase, deltagere, med, ude, ude_nu, runde, antal, felter, optaget, farve, rstart, sek, vinder }
   let lysUrForskel = 0;             // serverens ur minus vores ur (ms)
   let lysFejl = "";
   function lysNu() { return Date.now() + lysUrForskel; }
@@ -83,30 +86,51 @@
       .catch(function (e) { lysFejl = lysMangler(e) ? LYS_MANGLER : (e.message || "Kunne ikke hente lyset."); })
       .finally(function () { henter = false; });
   }
-  // Event-appen sætter lyset. Uden server (eller uden SQL) virker det kun på din egen skærm.
+  // Event-appen sætter lyset. Disko o.l. virker også uden server (kun på din egen skærm); spillet kræver serveren.
   function saetLys(ny) {
-    const data = Object.assign({ tempo: lys.tempo || 3, farve: lys.farve && typeof lys.farve === "string" ? lys.farve : "alle" }, LYS_GULV, ny);
-    if (lys.tilstand !== "spil" && data.tilstand !== "spil") data.farve = data.farve || "alle";
-    // lokalt med det samme, så knapperne svarer hurtigt
-    const lokal = Object.assign({}, data, { seed: Math.floor(Math.random() * 1e6), start: lysNu() });
-    if (data.tilstand === "spil") {
-      lokal.sek = LYS_SPIL_SEK[(data.tempo || 3) - 1];
-      lokal.point = data.nulstil || lys.tilstand !== "spil" ? {} : (lys.point || {});
-      lokal.runde = (data.nulstil || lys.tilstand !== "spil" ? 0 : (lys.runde || 0)) + 1;
-      lokal.felt = [LYS_GULV.x0 + Math.floor(Math.random() * LYS_GULV.b), LYS_GULV.y0 + Math.floor(Math.random() * LYS_GULV.d)];
-      lokal.farve = Math.floor(Math.random() * 8);
-      lokal.rstart = lysNu() + 3000;
-    }
+    const data = Object.assign({ tempo: lys.tempo || 3, farve: typeof lys.farve === "string" ? lys.farve : "alle" }, LYS_GULV, ny);
     const var_ = lys;
-    lys = lokal;
-    if (!lysOnline() || !lysToken()) { lysFejl = "Du er ikke på serveren, så kun du kan se lyset."; return Promise.resolve(); }
+    // lokalt med det samme, så knapperne svarer hurtigt
+    if (data.tilstand !== "spil") lys = Object.assign({}, data, { seed: Math.floor(Math.random() * 1e6), start: lysNu() });
+    else if (lys.tilstand === "spil" && data.handling === "tempo") lys = Object.assign({}, lys, { tempo: data.tempo, sek: LYS_SPIL_SEK[data.tempo - 1] });
+    if (!lysOnline() || !lysToken()) {
+      lysFejl = data.tilstand === "spil" ? "Spillet kræver, at du er på serveren." : "Du er ikke på serveren, så kun du kan se lyset.";
+      return Promise.resolve();
+    }
     const sendt = Date.now();
     return serverKald("hv_lys_saet", { p_token: lysToken(), p_rum: LYS_RUM_ID, p_tilstand: data })
       .then(function (s) { brugSvar(s, sendt); })
       .catch(function (e) {
-        lysFejl = lysMangler(e) ? LYS_MANGLER : "Serveren svarede ikke, så lyset ses kun hos dig lige nu. (" + (e.message || "fejl") + ")";
-        if (/logget ind|Kun ejeren/i.test(e.message || "")) { lys = var_; lysFejl = e.message; }
+        lysFejl = lysMangler(e) ? LYS_MANGLER : (e.message || "Noget gik galt.");
+        if (data.tilstand === "spil" || /logget ind|Kun ejeren/i.test(e.message || "")) lys = var_;
+        else if (!lysMangler(e)) lysFejl = "Serveren svarede ikke, så lyset ses kun hos dig lige nu. (" + (e.message || "fejl") + ")";
       });
+  }
+  // Hvem kan være med i spillet? Spillerne i rummet, men ikke ejeren, ansatte og computer-gæster
+  function erHoldet(n) {
+    try {
+      if (typeof EJERE !== "undefined" && EJERE.indexOf(n) >= 0) return true;
+      if (typeof erAnsat === "function" && erAnsat(n)) return true;
+      const sk = typeof ansatte !== "undefined" ? ansatte[n] : null;
+      return !!sk && ["eventfolk", "eventvaert", "mod", "staff", "hjaelper", "bygmester", "support"].indexOf(sk) >= 0;
+    } catch (e) { return false; }
+  }
+  function spillereIRummet() {
+    const ud = [];
+    try {
+      Object.values(ANDRE_SPILLERE).forEach(function (g) {
+        if (g.rumId !== LYS_RUM_ID || erHoldet(g.navn)) return;
+        if (typeof erComputerGaest === "function" && erComputerGaest(g.navn)) return;
+        if (ud.indexOf(g.navn) < 0) ud.push(g.navn);
+      });
+      if (iLysRummet() && typeof FIGUR !== "undefined" && !erHoldet(FIGUR.navn) && ud.indexOf(FIGUR.navn) < 0) ud.push(FIGUR.navn);
+    } catch (e) {}
+    return ud.sort(function (a, b) { return a.localeCompare(b); });
+  }
+  function naesteAntal() {
+    const med = (lys.med || []).length;
+    if (lys.fase === "omgang") return lys.antal || 1;
+    return Math.max(1, Math.min(7, med - 1, lys.antal ? lys.antal - 1 : 7));
   }
   window.lysreaktion = { hent: function () { return lys; }, saet: saetLys, nu: lysNu };
 
@@ -146,19 +170,29 @@
     const t = lys.tilstand, g = gulvB();
     if (!t || t === "sluk") return ud;
     if (t === "spil") {
-      const nu = lysNu();
-      if (lys.sidst && lys.sidst.navn && lys.rstart && nu < lys.rstart) {
-        // lige vundet: det gamle felt blinker guld
+      const nu = lysNu(), fase = lys.fase, opt = lys.optaget || {};
+      if (fase === "vinder") {
+        // fest for vinderen: regnbuebølge over hele gulvet
+        const fase2 = nu / 260;
+        for (let x = 0; x < g.b; x++) for (let y = 0; y < g.d; y++) ud[(g.x0 + x) + "," + (g.y0 + y)] = [(((Math.floor((x + y) / 1.5 - fase2) % 8) + 8) % 8), 0.9];
         return ud;
       }
-      if (lys.felt && lys.rstart && nu >= lys.rstart) {
-        const puls = 0.8 + 0.2 * Math.sin(nu / 120);
-        ud[lys.felt[0] + "," + lys.felt[1]] = [lys.farve | 0, puls];
-      } else if (lys.rstart && nu < lys.rstart) {
+      if (fase === "runde" && lys.rstart && nu < lys.rstart) {
         // nedtælling: hele gulvet blinker svagt hvert sekund
-        const s = (lys.rstart - nu) / 1000;
-        const styrke = Math.max(0, 1 - (s % 1) * 2.5) * 0.35;
+        const sek = (lys.rstart - nu) / 1000;
+        const styrke = Math.max(0, 1 - (sek % 1) * 2.5) * 0.35;
         if (styrke > 0) for (let x = 0; x < g.b; x++) for (let y = 0; y < g.d; y++) ud[(g.x0 + x) + "," + (g.y0 + y)] = [-1, styrke];
+        return ud;
+      }
+      if (fase === "runde") {
+        (lys.felter || []).forEach(function (f) {
+          const k = f[0] + "," + f[1];
+          ud[k] = opt[k] ? [lys.farve | 0, 1, opt[k]] : [lys.farve | 0, 0.7 + 0.3 * Math.sin(nu / 110)];
+        });
+        return ud;
+      }
+      if (fase === "slut_runde" || fase === "omgang") {
+        Object.keys(opt).forEach(function (k) { ud[k] = [lys.farve | 0, 0.9, opt[k]]; });
       }
       return ud;
     }
@@ -196,8 +230,9 @@
     if (!t || t === "sluk") return null;
     if (t === "spil") {
       const nu = lysNu();
-      if (lys.rstart && nu >= lys.rstart) return [lys.farve | 0, 0.85 + 0.15 * Math.sin(nu / 120)];   // målfarven
-      return [-1, 0.5 + 0.4 * Math.sin(nu / 160)];                                                      // guld, mens vi venter
+      if (lys.fase === "vinder") return [Math.floor(nu / 300 + nr) % 8, 0.95];                                   // fest
+      if (lys.fase === "runde" && lys.rstart && nu >= lys.rstart) return [lys.farve | 0, 0.85 + 0.15 * Math.sin(nu / 120)];   // farven man skal finde
+      return [-1, 0.5 + 0.4 * Math.sin(nu / 160)];                                                                // guld, mens vi venter
     }
     const tr = trin(), ff = fastFarve();
     if (t === "et") return [etFelt(tr.k).f, 1 - tr.del * 0.3];
@@ -336,8 +371,6 @@
     { type: "ev-spotlight", x: 13, y: 8, retning: 3 },
     { type: "cafe-plante", x: 0, y: 11, retning: 0 },
     { type: "cafe-plante", x: 13, y: 11, retning: 0 },
-    { type: "ev-vip-sofa", x: 5, y: 11, retning: 2 },
-    { type: "ev-vip-sofa", x: 8, y: 11, retning: 2 },
   ];
   function lysSomData() {
     return LYS_MOEBLER.filter(function (m) { return MOEBEL_TYPER[m.type]; })
@@ -388,7 +421,7 @@
     tegnGulv = function () {
       tegnGulvFoerLys.apply(this, arguments);
       if (!iLysRummet()) return;
-      try { tegnDansegulv(); } catch (e) { console.warn(e); }
+      try { tegnTilskuere(); tegnDansegulv(); } catch (e) { console.warn(e); }
     };
 
     // ----- lyspaneler og lyssøjler lyser -----
@@ -451,13 +484,17 @@
       polygon(ctx, indeni(d, 0.45), "#ffffff");
       ctx.restore();
     });
-    // spillet: feltet der lige er vundet blinker guld
-    if (lys.tilstand === "spil" && lys.sidst && lys.sidst.navn && lys.sidst.felt && lys.rstart && nu < lys.rstart) {
-      const d = diamant(lys.sidst.felt[0], lys.sidst.felt[1]);
-      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(nu / 70);
-      ctx.shadowColor = "#ffd27a"; ctx.shadowBlur = 28;
-      polygon(ctx, indeni(d, 0.92), "#ffd27a");
-    }
+    // spillet: optagne felter får en guldkant
+    Object.keys(felter).forEach(function (k) {
+      const v = felter[k];
+      if (!v[2]) return;
+      const p = k.split(",").map(Number);
+      const d = indeni(diamant(p[0], p[1]), 0.92);
+      ctx.save();
+      ctx.strokeStyle = "#ffe7a3"; ctx.lineWidth = 3; ctx.shadowColor = "#ffd27a"; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.moveTo(d[0].x, d[0].y); d.slice(1).forEach(function (q) { ctx.lineTo(q.x, q.y); }); ctx.closePath(); ctx.stroke();
+      ctx.restore();
+    });
     // guldkanter mellem fliserne
     ctx.globalAlpha = 1; ctx.shadowBlur = 0;
     ctx.strokeStyle = "rgba(217,164,65,0.55)";
@@ -471,48 +508,92 @@
     ctx.beginPath(); ctx.moveTo(h[0].x, h[0].y); h.slice(1).forEach(function (q) { ctx.lineTo(q.x, q.y); }); ctx.closePath(); ctx.stroke();
     ctx.restore();
   }
+  // Tilskuerne: et vinrødt tæppe med guldkant forrest i rummet
+  function tegnTilskuere() {
+    const z = LYS_TILSKUER;
+    const h = [punkt(z.x0, z.y0), punkt(z.x0 + z.b, z.y0), punkt(z.x0 + z.b, z.y0 + z.d), punkt(z.x0, z.y0 + z.d)];
+    const m = { x: (h[0].x + h[2].x) / 2, y: (h[0].y + h[2].y) / 2 };
+    ctx.save();
+    polygon(ctx, h, "#5e1622");
+    polygon(ctx, h.map(function (q) { return { x: m.x + (q.x - m.x) * 0.95, y: m.y + (q.y - m.y) * 0.8 }; }), "#7a1f2e");
+    ctx.strokeStyle = "#d9a441"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(h[0].x, h[0].y); h.slice(1).forEach(function (q) { ctx.lineTo(q.x, q.y); }); ctx.closePath(); ctx.stroke();
+    // TILSKUERE skrevet skråt langs tæppet
+    ctx.translate(m.x, m.y);
+    ctx.transform(1, 0.5, 0, 1, 0, 0);
+    ctx.fillStyle = "rgba(232,207,143,0.8)";
+    ctx.font = "bold 20px Georgia, serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("T I L S K U E R E", 0, 0);
+    ctx.restore();
+  }
+  function iZone(z, x, y) { return x >= z.x0 && x < z.x0 + z.b && y >= z.y0 && y < z.y0 + z.d; }
   function indeni(d, f) {
     const cx = (d[0].x + d[2].x) / 2, cy = (d[0].y + d[2].y) / 2;
     return d.map(function (q) { return { x: cx + (q.x - cx) * f, y: cy + (q.y - cy) * f }; });
   }
 
   // =============================================================
-  //  Spillet: står jeg på det lysende felt? Så siger jeg det til serveren
+  //  Spillet: står jeg stille på et ledigt felt i farven? Så siger jeg det til serveren
   // =============================================================
-  let sendtRunde = 0, sidstVinder = "";
+  function mitNavn() { return typeof FIGUR !== "undefined" ? FIGUR.navn : ""; }
+  function spilIGang() { return lys.tilstand === "spil" && ["runde", "slut_runde", "omgang"].indexOf(lys.fase) >= 0; }
+  let sendtFelt = "", sidstUdeBesked = 0;
   setInterval(function () {
-    if (!iLysRummet() || lys.tilstand !== "spil" || !lys.felt || !lys.rstart) return;
-    if (lysNu() < lys.rstart || sendtRunde === lys.runde) return;
+    if (!iLysRummet() || lys.tilstand !== "spil") return;
+    const mig = mitNavn();
+    tjekTilskuer(mig);
+    const nu = lysNu();
+    if (lys.fase !== "runde" || !lys.rstart || nu < lys.rstart) return;
+    if ((lys.med || []).indexOf(mig) < 0) return;
+    const opt = lys.optaget || {};
+    if (Object.keys(opt).some(function (k) { return opt[k] === mig; })) return;
+    if (figur.rute && figur.rute.length) return;            // man skal stå stille på feltet
     let f;
     try { f = figurFelt(); } catch (e) { return; }
-    if (f.x !== lys.felt[0] || f.y !== lys.felt[1]) return;
-    sendtRunde = lys.runde;
-    const felt = lys.felt.slice();
-    if (!lysOnline() || !lysToken()) {
-      // uden server: kun på din egen skærm
-      const mig = typeof FIGUR !== "undefined" ? FIGUR.navn : "Dig";
-      lys.point = Object.assign({}, lys.point); lys.point[mig] = (lys.point[mig] || 0) + 1;
-      lys.sidst = { runde: lys.runde, navn: mig, ms: lysNu() - lys.rstart, felt: felt };
-      lys.runde++; lys.felt = [LYS_GULV.x0 + Math.floor(Math.random() * LYS_GULV.b), LYS_GULV.y0 + Math.floor(Math.random() * LYS_GULV.d)];
-      lys.farve = Math.floor(Math.random() * 8); lys.rstart = lysNu() + 2500;
-      return;
-    }
+    const k = f.x + "," + f.y;
+    if (opt[k] || !(lys.felter || []).some(function (q) { return q[0] === f.x && q[1] === f.y; })) return;
+    if (sendtFelt === lys.runde + "|" + k || !lysOnline() || !lysToken()) return;
+    sendtFelt = lys.runde + "|" + k;
     const sendt = Date.now();
-    serverKald("hv_lys_ramt", { p_token: lysToken(), p_rum: LYS_RUM_ID, p_runde: lys.runde, p_x: felt[0], p_y: felt[1] })
-      .then(function (s) { if (s && s.ok) brugSvar(s, sendt); else hentLys(); })
-      .catch(function () {});
+    serverKald("hv_lys_ramt", { p_token: lysToken(), p_rum: LYS_RUM_ID, p_runde: lys.runde, p_x: f.x, p_y: f.y })
+      .then(function (s) {
+        if (s && s.tilstand) brugSvar(s, sendt);
+        besked.textContent = s && s.ok ? "✅ Du fik et felt! Bliv stående." : "❌ Feltet var allerede taget. Find et andet!";
+        opdaterSkilt();
+      }).catch(function () { sendtFelt = ""; });
   }, 120);
+
+  // Er jeg ude af spillet og står på dansegulvet? Så bliver jeg flyttet ned til tilskuerne
+  function tjekTilskuer(mig) {
+    if (!spilIGang() || (lys.ude || []).indexOf(mig) < 0) return;
+    let f;
+    try { f = figurFelt(); } catch (e) { return; }
+    const g = gulvB();
+    const paaVej = figur.rute && figur.rute.length && iZone(g, figur.rute[figur.rute.length - 1].x, figur.rute[figur.rute.length - 1].y);
+    if (!iZone(g, f.x, f.y) && !paaVej) return;
+    const z = LYS_TILSKUER, ledige = [];
+    for (let y = z.y0; y < z.y0 + z.d; y++) for (let x = z.x0; x < z.x0 + z.b; x++) {
+      if (typeof moebelPaa === "function" && moebelPaa(x, y)) continue;
+      const optaget = Object.values(typeof ANDRE_SPILLERE !== "undefined" ? ANDRE_SPILLERE : {})
+        .some(function (a) { return a.rumId === LYS_RUM_ID && Math.round(a.x) === x && Math.round(a.y) === y; });
+      if (!optaget) ledige.push({ x: x, y: y });
+    }
+    const m = ledige.length ? ledige[Math.floor(Math.random() * ledige.length)] : { x: z.x0 + Math.floor(Math.random() * z.b), y: z.y0 };
+    if (figur.sidde) { figur.sidde = null; figur.skalSidde = null; }
+    figur.rute = [];
+    figur.x = m.x; figur.y = m.y;
+    if (Date.now() - sidstUdeBesked > 4000) { besked.textContent = "😢 Du er ude af Lysreaktion. Du er tilskuer nu 👀"; sidstUdeBesked = Date.now(); }
+  }
 
   // Hent lyset fra serveren: ofte i spillet, sjældnere ellers
   let sidstHent = 0;
   setInterval(function () {
-    const appAaben = lysAppAaben();
-    if (!iLysRummet() && !appAaben) return;
-    const hvorTit = lys.tilstand === "spil" ? 900 : 3000;
+    if (!iLysRummet() && !lysAppAaben()) return;
+    const hvorTit = lys.tilstand === "spil" ? (lys.fase === "runde" ? 600 : 1200) : 3000;
     if (Date.now() - sidstHent < hvorTit) return;
     sidstHent = Date.now();
     hentLys().then(opdaterSkilt);
-  }, 250);
+  }, 200);
 
   // =============================================================
   //  Skiltet øverst i rummet: "🏆 Pall var hurtigst!" og pointtavlen
@@ -521,31 +602,36 @@
   skilt.id = "lys-skilt";
   skilt.hidden = true;
   document.body.appendChild(skilt);
-  function topPoint(n) {
-    const p = lys.point || {};
-    return Object.keys(p).sort(function (a, b) { return p[b] - p[a] || a.localeCompare(b); }).slice(0, n || 5)
-      .map(function (k) { return [k, p[k]]; });
+  function navneListe(l, max) {
+    const mig = mitNavn();
+    l = l || [];
+    return l.slice(0, max || 12).map(function (n) { return n === mig ? "<b>" + esc(n) + "</b>" : esc(n); }).join(", ") + (l.length > (max || 12) ? " …" : "");
   }
   function opdaterSkilt() {
     if (!iLysRummet() || !lys.tilstand || lys.tilstand === "sluk") { skilt.hidden = true; return; }
     skilt.hidden = false;
-    const nu = lysNu();
+    const nu = lysNu(), mig = mitNavn();
     let html = "<div class='ls-top'>💡 LYSREAKTION <small>" + LYS_TILSTANDE[lys.tilstand].ikon + " " + LYS_TILSTANDE[lys.tilstand].navn + "</small></div>";
     if (lys.tilstand === "spil") {
-      if (lys.sidst && lys.sidst.navn && lys.rstart && nu < lys.rstart) {
-        html += "<div class='ls-stor'>🏆 " + esc(lys.sidst.navn) + " var hurtigst!" +
-          (lys.sidst.ms > 0 && lys.sidst.ms < 60000 ? " <small>(" + (lys.sidst.ms / 1000).toFixed(1).replace(".", ",") + " sek)</small>" : "") + "</div>";
-      } else if (lys.rstart && nu < lys.rstart) {
-        html += "<div class='ls-stor'>Gør jer klar … " + Math.ceil((lys.rstart - nu) / 1000) + "</div>";
-      } else if (lys.felt) {
-        const rest = Math.max(0, Math.ceil(((lys.rstart || 0) + (lys.sek || 7) * 1000 - nu) / 1000));
-        html += "<div class='ls-stor'>Runde " + (lys.runde || 1) + ": løb til det <span class='ls-prik' style='background:" + farveHex(lys.farve | 0) +
-          "'></span> " + LYS_FARVER[(lys.farve | 0) % 8].det + " felt! <small>⏱ " + rest + "</small></div>";
+      const med = lys.med || [], fase = lys.fase;
+      if (fase === "klar") {
+        html += "<div class='ls-stor'>👥 " + med.length + " spillere er med · Værten starter snart</div>";
+      } else if (fase === "runde" && lys.rstart && nu < lys.rstart) {
+        html += "<div class='ls-stor'>Runde " + lys.runde + ": " + (lys.antal || 0) + (lys.antal === 1 ? " felt" : " felter") + " · Gør jer klar … " + Math.ceil((lys.rstart - nu) / 1000) + "</div>";
+      } else if (fase === "runde") {
+        const rest = Math.max(0, Math.ceil((lys.rstart + (lys.sek || 9) * 1000 - nu) / 1000));
+        const taget = Object.keys(lys.optaget || {}).length;
+        html += "<div class='ls-stor'>Stil dig på et <span class='ls-prik' style='background:" + farveHex(lys.farve | 0) + "'></span> " +
+          LYS_FARVER[(lys.farve | 0) % 8].det + " felt! <small>" + taget + " af " + lys.antal + " taget · ⏱ " + rest + "</small></div>";
+      } else if (fase === "slut_runde") {
+        html += "<div class='ls-stor'>❌ Ude: " + navneListe(lys.ude_nu, 8) + "</div>";
+      } else if (fase === "omgang") {
+        html += "<div class='ls-stor'>Ingen nåede et felt. Runden tages om!</div>";
+      } else if (fase === "vinder") {
+        html += "<div class='ls-stor ls-vinder'>🏆 " + esc(lys.vinder || "") + " har vundet Lysreaktion! 🎉</div>";
       }
-      const top = topPoint(5);
-      if (top.length) html += "<div class='ls-point'>" + top.map(function (t, i) {
-        return "<span>" + ["🥇", "🥈", "🥉", "4.", "5."][i] + " " + esc(t[0]) + " <b>" + t[1] + "</b></span>";
-      }).join("") + "</div>";
+      if (fase !== "vinder" && med.length) html += "<div class='ls-point'><span>✅ Med (" + med.length + "): " + navneListe(med, 12) + "</span></div>";
+      if (spilIGang() && (lys.ude || []).indexOf(mig) >= 0) html += "<div class='ls-point'><span>👀 Du er ude og er tilskuer nu</span></div>";
     }
     if (skilt.innerHTML !== html) skilt.innerHTML = html;
   }
@@ -578,29 +664,47 @@
           return "<button data-lys-farve='" + f.hex + "' title='" + f.navn + "' class='lys-farve" + (ff === i ? " lys-valgt" : "") + "' style='background:" + f.hex + "'></button>";
         }).join("") + "</div>";
     } else {
-      const top = topPoint(10);
-      html += "<h4 class='ea-dag'>🏆 Point</h4>" + (top.length ? "<ol class='lys-pointliste'>" + top.map(function (x) {
-        return "<li><span>" + esc(x[0]) + "</span><b>" + x[1] + "</b></li>";
-      }).join("") + "</ol>" : "<p class='ea-info'>Ingen point endnu. Runde " + (lys.runde || 1) + " er i gang.</p>") +
-        "<div class='ea-hj-knapper'><button data-lys='stilling'>📢 Sig stillingen</button><button data-lys='vinder'>🏆 Sig vinderen</button>" +
-        "<button data-lys='nulstil'>🔄 Start forfra</button></div>" +
-        "<p class='ea-info'>Ét felt lyser ad gangen. Den første, der står på det, får et point, og rummet finder selv ud af, hvem der var hurtigst. " +
-        "Tempo bestemmer, hvor mange sekunder man har (" + LYS_SPIL_SEK.join(", ") + " sek).</p>";
+      const med = lys.med || [], ude = lys.ude || [], fase = lys.fase, iRum = spillereIRummet();
+      const faseTekst = { klar: "👥 Klar. Tryk ▶ for at starte runde 1.", runde: "⏱ Runde " + lys.runde + " er i gang (" + Object.keys(lys.optaget || {}).length + " af " + lys.antal + " felter taget)",
+        slut_runde: "Runde " + lys.runde + " er slut. " + med.length + " er stadig med.", omgang: "Ingen nåede et felt. Tag runden om.",
+        vinder: "🏆 " + (lys.vinder || "") + " har vundet!" }[fase] || "Tryk på 👥 Tilmeld for at starte.";
+      html += "<h4 class='ea-dag'>🏃 Spillet</h4><p class='ea-info'><b>" + esc(faseTekst) + "</b></p><div class='ea-hj-knapper'>" +
+        "<button data-lys='tilmeld'>👥 Tilmeld spillerne i rummet (" + iRum.length + ")</button>";
+      if (fase && fase !== "vinder" && fase !== "runde" && med.length >= 2)
+        html += "<button data-lys='runde' class='lys-valgt'>▶ " + (fase === "omgang" ? "Tag runden om" : "Start runde " + ((lys.runde || 0) + 1)) + " (" + naesteAntal() + (naesteAntal() === 1 ? " felt" : " felter") + ")</button>";
+      if (fase && fase !== "klar") html += "<button data-lys='forfra'>🔄 Start forfra</button>";
+      html += "<button data-lys='stilling'>📢 Sig hvem der er med</button>" + (fase === "vinder" ? "<button data-lys='vinder'>🏆 Sig vinderen</button>" : "") + "</div>";
+      if (med.length || ude.length) {
+        html += "<ul class='lys-spillere'>" + med.map(function (n) { return "<li class='med'>✅ " + esc(n) + "</li>"; }).join("") +
+          ude.slice().reverse().map(function (n) { return "<li class='ude'>❌ " + esc(n) + "</li>"; }).join("") + "</ul>";
+      }
+      html += "<p class='ea-info'>Felterne lyser i én farve. Hvert felt kan kun have én spiller. Den, der ikke når et ledigt felt, er ude og bliver flyttet ned til tilskuerne. " +
+        "Ét felt mindre hver runde, til der kun er én tilbage. Tempo = tid til at finde et felt (" + LYS_SPIL_SEK.join(", ") + " sek). Ansatte og ejeren er ikke med som spillere.</p>";
     }
     if (!maa) html = "<p class='ea-info'>Kun ejeren, Eventværter og Eventfolk kan styre lyset.</p>";
     boks.innerHTML = html;
     const igen = function () { if (boks.isConnected) tegnAppStyring(boks, api); };
     const sig = function (tekst) { if (api && api.sigIChat) api.sigIChat(tekst); };
+    function tilmeld() {
+      const sp = spillereIRummet();
+      if (sp.length < 2) { lysFejl = "Der skal være mindst 2 spillere i rummet 💡 Lysreaktion (ansatte og ejeren tæller ikke med). Lige nu er der " + sp.length + "."; igen(); return; }
+      saetLys({ tilstand: "spil", tempo: tempo, handling: "tilmeld", spillere: sp }).then(function () {
+        if (!lysFejl) sig("💡 LYSREAKTION! " + sp.length + " spillere er med. Når felterne lyser, så stil dig på et ledigt felt i farven. Den, der ikke når et felt, er ude! 🏃");
+        igen();
+      });
+    }
     boks.querySelectorAll("[data-lys-t]").forEach(function (k) {
       k.addEventListener("click", function () {
         const ny = k.dataset.lysT;
+        if (ny === "spil") { if (t !== "spil") tilmeld(); return; }
         saetLys({ tilstand: ny, tempo: tempo, farve: ff >= 0 ? LYS_FARVER[ff].hex : "alle" }).then(igen);
-        if (ny === "spil") sig("💡 LYSREAKTION! Et felt på gulvet lyser op. Løb derhen! Den første på feltet får et point 🏃");
         igen();
       });
     });
     boks.querySelectorAll("[data-lys-tempo]").forEach(function (k) {
-      k.addEventListener("click", function () { saetLys({ tilstand: t, tempo: Number(k.dataset.lysTempo), farve: ff >= 0 ? LYS_FARVER[ff].hex : "alle" }).then(igen); igen(); });
+      k.addEventListener("click", function () {
+        saetLys({ tilstand: t, tempo: Number(k.dataset.lysTempo), farve: ff >= 0 ? LYS_FARVER[ff].hex : "alle", handling: t === "spil" ? "tempo" : undefined }).then(igen); igen();
+      });
     });
     boks.querySelectorAll("[data-lys-farve]").forEach(function (k) {
       k.addEventListener("click", function () {
@@ -611,10 +715,18 @@
       k.addEventListener("click", function () {
         const hvad = k.dataset.lys;
         if (hvad === "gaa") { if (api && api.gaaTil) api.gaaTil(LYS_RUM_ID); else gaaTilVaerelse(LYS_RUM_ID); return; }
-        if (hvad === "nulstil") { saetLys({ tilstand: "spil", tempo: tempo, nulstil: true }).then(igen); sig("🔄 Ny runde Lysreaktion! Alle point er nulstillet."); igen(); return; }
-        const top = topPoint(5);
-        if (hvad === "stilling") sig(top.length ? "🏆 Stillingen: " + top.map(function (x) { return x[0] + " " + x[1]; }).join(", ") : "🏆 Ingen har fået point endnu!");
-        if (hvad === "vinder") sig(top.length ? "🎉 Vinderen af Lysreaktion er " + top[0][0] + " med " + top[0][1] + " point!" : "Ingen har vundet endnu.");
+        if (hvad === "tilmeld") { tilmeld(); return; }
+        if (hvad === "runde") {
+          const n = naesteAntal(), r = lys.fase === "omgang" ? lys.runde : (lys.runde || 0) + 1;
+          saetLys({ tilstand: "spil", tempo: tempo, handling: "runde" }).then(function () {
+            if (!lysFejl) sig("💡 Runde " + r + ": " + n + (n === 1 ? " felt" : " felter") + " lyser om lidt. Stil dig på et ledigt felt i farven!");
+            igen();
+          });
+          return;
+        }
+        if (hvad === "forfra") { saetLys({ tilstand: "spil", tempo: tempo, handling: "forfra" }).then(igen); sig("🔄 Lysreaktion starter forfra! Alle er med igen."); return; }
+        if (hvad === "stilling") sig((lys.med || []).length ? "✅ Stadig med (" + lys.med.length + "): " + lys.med.join(", ") : "Ingen er med endnu.");
+        if (hvad === "vinder") sig(lys.vinder ? "🏆🎉 " + lys.vinder + " har vundet Lysreaktion! Tillykke!" : "Der er ingen vinder endnu.");
       });
     });
     tegnMini(boks.querySelector(".lys-mini"));
@@ -650,17 +762,20 @@
   let sidstSet = "";
   setInterval(function () {
     if (!lysAppAaben()) return;
-    const n = [lys.tilstand, lys.tempo, lys.farve, lys.runde, JSON.stringify(lys.point || {}), lysFejl].join("|");
+    const n = [lys.tilstand, lys.tempo, lys.farve, lys.runde, lys.fase, (lys.med || []).length, Object.keys(lys.optaget || {}).length, spillereIRummet().length, lysFejl].join("|");
     if (n !== sidstSet) { sidstSet = n; tegnAppStyring(lysAppBoks, window.eventApp); }
   }, 700);
 
   function iAppen() {
     if (!window.eventApp || !window.eventApp.tilfoejLeg) return;
     window.eventApp.tilfoejLeg({
-      id: "lysreaktion", navn: "Lysreaktion", ikon: "💡", tid: "10–20 min", folk: "2+", rum: LYS_RUM_ID,
-      kort: "Gulvet i Lysreaktion-rummet lyser op ét felt ad gangen. Den første, der står på det lysende felt, får et point.",
-      regler: ["Alle mødes i rummet 💡 Lysreaktion på 1. sal.", "Værten starter spillet her i appen.", "Når et felt lyser, så løb derhen. Lyspanelerne på væggen viser farven.",
-        "Den første på feltet får 1 point (rummet finder selv ud af, hvem det var).", "Flest point vinder."],
+      id: "lysreaktion", navn: "Lysreaktion", ikon: "💡", tid: "10–20 min", folk: "3+ (helst 8+)", rum: LYS_RUM_ID,
+      kort: "Felter på gulvet lyser i én farve. Stil dig på et ledigt felt! Den, der ikke når et, er ude. Ét felt mindre hver runde.",
+      regler: ["Alle mødes i rummet 💡 Lysreaktion på 1. sal. Værten tilmelder spillerne her i appen.",
+        "Runde 1: op til 7 felter lyser i én farve (lyspanelerne på væggen viser farven).",
+        "Stil dig på et ledigt felt. Hvert felt kan kun have én spiller, og rummet finder selv ud af, hvem der kom først.",
+        "Den, der ikke når et felt, er ude og bliver flyttet ned til tilskuerne.",
+        "Hver runde er der ét felt mindre. I sidste runde er der 2 spillere og 1 felt. Den sidste tilbage vinder!"],
       tegn: function (boks, api) { tegnAppStyring(boks, api); },
     });
   }
@@ -689,6 +804,10 @@
     ".lys-farver .lys-farve { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #f6e7c1; cursor: pointer; box-shadow: 0 0 8px rgba(255,255,255,.25); }" +
     ".lys-farver .lys-farve.lys-valgt { outline: 3px solid #ffd27a; box-shadow: 0 0 14px #ffd27a; }" +
     ".lys-farver .lys-alle { padding: 6px 10px; border-radius: 16px; cursor: pointer; }" +
+    ".lys-spillere { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }" +
+    ".lys-spillere li { padding: 3px 9px; border-radius: 12px; background: rgba(217,164,65,.18); font-size: 13px; }" +
+    ".lys-spillere li.ude { opacity: .55; text-decoration: line-through; background: rgba(0,0,0,.2); }" +
+    "#lys-skilt .ls-vinder { font-size: 24px; color: #ffd27a; text-shadow: 0 0 12px rgba(255,210,122,.6); }" +
     ".lys-pointliste { margin: 4px 0 8px; padding-left: 22px; } .lys-pointliste li span { display: inline-block; min-width: 60%; } .lys-pointliste b { color: #d9a441; }";
   document.head.appendChild(stil);
 
