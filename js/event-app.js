@@ -14,6 +14,8 @@
 //  - Sætter også skiltet 🎪 Eventfolk tilbage i Ansættelse (Pavla valgte det 15/11).
 //  Kræver database-55-event-app.sql (og database-21 + database-35, som allerede er kørt).
 //  Hentes fra slutningen af js/panel-forklaring.js, så hotel.html ikke skal ændres.
+//  Quizspørgsmålene ligger i js/quiz-spoergsmaal.js (50 stk., tilfældig rækkefølge uden gentagelser).
+//  Andre filer kan lægge egne faner og lege i appen via window.eventApp (se "🔌 Til andre filer" nederst).
 //  Alt her hedder "ea…", så det ikke støder ind i andre filer.
 // =============================================================
 (function () {
@@ -31,7 +33,7 @@
     { id: "quiz", navn: "Quiz", ikon: "❓", tid: "15–30 min", folk: "3+",
       kort: "Værten stiller spørgsmål i chatten. Den første, der skriver det rigtige svar, får et point.",
       regler: ["Sig spørgsmålene ét ad gangen i chatten.", "Den første med det rigtige svar får 1 point.", "Skriv pointene ned. Flest point vinder."],
-      hjaelper: "spoergsmaal", liste: [
+      hjaelper: "spoergsmaal", fil: "VERA_QUIZ", liste: [
         ["Hvad hedder hotellet?", "HELLO VERA"], ["Hvad hedder hotellets ene valuta med en stjerne?", "Glimt"],
         ["Hvor mange ben har en edderkop?", "8"], ["Hvad er hovedstaden i Danmark?", "København"],
         ["Hvilken farve får man, når man blander blå og gul?", "Grøn"], ["Hvor mange dage er der i et skudår?", "366"],
@@ -81,6 +83,32 @@
       hjaelper: "gaa", rum: "spillehjoernet" },
   ];
   window.EA_LEGE = EA_LEGE;
+
+  // ❓ De 50 quizspørgsmål ligger i deres egen fil (js/quiz-spoergsmaal.js), så de er nemme at udvide
+  (function () {
+    if (window.VERA_QUIZ || document.querySelector("script[src^='js/quiz-spoergsmaal.js']")) return;
+    const s = document.createElement("script");
+    s.src = "js/quiz-spoergsmaal.js?t=" + Date.now();
+    document.body.appendChild(s);
+  })();
+  function legListe(l) {
+    const ekstra = l.fil && window[l.fil];
+    return Array.isArray(ekstra) && ekstra.length ? ekstra : (l.liste || []);
+  }
+  // Tilfældig rækkefølge uden gentagelser: en "pose" med de spørgsmål, der ikke er brugt endnu.
+  // Når posen er tom, blandes alle forfra. Posen huskes, så man ikke starter forfra ved genindlæsning.
+  function naesteFraPose(l) {
+    const liste = legListe(l), noegle = "mit-hotel-quiz-pose-" + l.id;
+    let pose = hent(noegle, []);
+    if (!Array.isArray(pose) || pose.some(function (i) { return !(i >= 0 && i < liste.length); })) pose = [];
+    if (!pose.length) {
+      pose = liste.map(function (_, i) { return i; });
+      for (let i = pose.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = pose[i]; pose[i] = pose[j]; pose[j] = t; }
+    }
+    const nr = pose.pop();
+    gem(noegle, pose);
+    return { nr: nr, rest: pose.length, ialt: liste.length };
+  }
 
   // ---------------------------------------------------------------
   //  Små hjælpere
@@ -297,7 +325,8 @@
 
   function tegnListe(el) {
     const ul = ulaeste();
-    const faner = [["events", "📅 Events"], ["lege", "🎲 Lege"], ["resultater", "🏆 Vindere"], ["team", "👥 Team"]];
+    const faner = [["events", "📅 Events"], ["lege", "🎲 Lege"], ["resultater", "🏆 Vindere"], ["team", "👥 Team"]]
+      .concat(ekstraFaner().map(function (f) { return [f.id, f.navn]; }));
     el.innerHTML = topHtml("Event-app") +
       "<div class='tlf-indhold ea-app'>" +
       "<div class='ea-logo'><b>EVENT</b><span>✦ HELLO VERA ✦</span><small>" + esc(skiltTekst(mig())) + " · " + esc(mig()) + "</small></div>" +
@@ -318,7 +347,12 @@
     if (fane === "events") tegnEvents(krop);
     else if (fane === "lege") tegnLege(krop);
     else if (fane === "resultater") tegnResultater(krop);
-    else tegnTeam(krop);
+    else if (fane === "team") tegnTeam(krop);
+    else {
+      const f = ekstraFaner().find(function (x) { return x.id === fane; });
+      if (!f) { fane = "events"; tegnEvents(krop); return; }
+      try { f.tegn(krop, window.eventApp); } catch (e) { console.error(e); krop.innerHTML = "<p class='ea-advarsel'>Fanen kunne ikke vises: " + esc(e.message) + "</p>"; }
+    }
   }
   function skiltTekst(n) {
     if (erEjerNavn(n)) return "👑 Ejer";
@@ -605,14 +639,20 @@
   // De små hjælpere i hver leg (alt, der siges, kommer i chatten i det rum, man står i)
   function tegnHjaelper(boks, l) {
     const h = hjaelp[l.id] = hjaelp[l.id] || {};
+    if (typeof l.tegn === "function") {   // en leg fra en anden fil med sin egen hjælper
+      try { l.tegn(boks, window.eventApp, h); } catch (e) { console.error(e); }
+      return;
+    }
     let html = "";
     if (l.hjaelper === "spoergsmaal") {
-      if (h.i == null) { h.raekke = l.liste.map(function (_, i) { return i; }).sort(function () { return Math.random() - .5; }); h.i = 0; }
-      const q = l.liste[h.raekke[h.i % h.raekke.length]];
-      html = "<div class='ea-hj-boks'><small>Spørgsmål " + (h.i + 1) + " af " + l.liste.length + "</small><b>" + esc(q[0]) + "</b><em>Svar: " + esc(q[1]) + "</em></div>" +
-        "<div class='ea-hj-knapper'><button data-hj='sig'>📢 Sig spørgsmålet</button><button data-hj='svar'>✅ Sig svaret</button><button data-hj='naeste'>⏭ Næste</button></div>";
+      if (!h.nu || !legListe(l)[h.nu.nr]) { h.nu = naesteFraPose(l); h.antal = (h.antal || 0) + 1; h.sagt = false; }
+      const q = legListe(l)[h.nu.nr];
+      html = "<div class='ea-hj-boks'><small>Spørgsmål " + h.antal + " · " + h.nu.rest + " af " + h.nu.ialt + " tilbage før de blandes igen</small>" +
+        "<b>" + esc(q[0]) + "</b><em>Svar: " + esc(q[1]) + "</em>" + (h.sagt ? "<small>✔ Sagt i chatten</small>" : "") + "</div>" +
+        "<div class='ea-hj-knapper ea-tre'><button data-hj='sig'>📢 Sig spørgsmålet</button><button data-hj='svar'>✅ Sig svaret</button><button data-hj='naeste'>🎲 Nyt spørgsmål</button></div>" +
+        "<small class='ea-info'>Når du siger svaret, kommer der selv et nyt tilfældigt spørgsmål.</small>";
     } else if (l.hjaelper === "tema" || l.hjaelper === "ord") {
-      if (!h.nu) h.nu = tilf(l.liste);
+      if (!h.nu) h.nu = tilf(legListe(l));
       html = "<div class='ea-hj-boks'><small>" + (l.hjaelper === "ord" ? "Ordet" : "Temaet") + "</small><b>" + esc(h.nu) + "</b></div>" +
         "<div class='ea-hj-knapper'><button data-hj='sig'>📢 Sig det i chatten</button><button data-hj='ny'>🎲 Et andet</button></div>";
     } else if (l.hjaelper === "bingo") {
@@ -645,13 +685,13 @@
   function hjaelperKlik(l, h, hvad, boks) {
     const igen = function () { if (boks.isConnected) tegnHjaelper(boks, l); };
     if (l.hjaelper === "spoergsmaal") {
-      const q = l.liste[h.raekke[h.i % h.raekke.length]];
-      if (hvad === "sig") sigIChat("❓ Spørgsmål " + (h.i + 1) + ": " + q[0]);
-      if (hvad === "svar") sigIChat("✅ Svaret er: " + q[1]);
-      if (hvad === "naeste") h.i++;
+      const q = legListe(l)[h.nu.nr];
+      if (hvad === "sig") { sigIChat("❓ Spørgsmål " + h.antal + ": " + q[0]); h.sagt = true; }
+      if (hvad === "svar") { sigIChat("✅ Svaret er: " + q[1]); h.nu = null; }
+      if (hvad === "naeste") h.nu = null;
     } else if (l.hjaelper === "tema" || l.hjaelper === "ord") {
       if (hvad === "sig") sigIChat(l.hjaelper === "ord" ? "⌨️ Første der skriver: " + h.nu.toUpperCase() : l.ikon + " Temaet er: " + h.nu);
-      if (hvad === "ny") { let n = h.nu; while (n === h.nu && l.liste.length > 1) n = tilf(l.liste); h.nu = n; }
+      if (hvad === "ny") { const ll = legListe(l); let n = h.nu; while (n === h.nu && ll.length > 1) n = tilf(ll); h.nu = n; }
     } else if (l.hjaelper === "bingo") {
       if (hvad === "traek") {
         const rest = Array.from({ length: 75 }, function (_, i) { return i + 1; }).filter(function (n) { return h.trukket.indexOf(n) < 0; });
@@ -855,6 +895,40 @@
   }
 
   // ---------------------------------------------------------------
+  //  🔌 Til andre filer (fx lys-rummet, buzzer-quizzen og Vera arena):
+  //    window.eventApp.tilfoejFane({ id: "lys", navn: "💡 Lys", tegn: function (krop, api) { … }, kun: function () { return true; } })
+  //      → en ny fane i appen. tegn() får fanens indhold (krop) og dette api.
+  //    window.eventApp.tilfoejLeg({ id, navn, ikon, tid, folk, kort, regler: [], rum, tegn: function (boks, api, tilstand) { … } })
+  //      → en ny leg under 🎲 Lege. tegn() tegner legens egen "Hjælper til værten" (fx knapper der styrer rummet).
+  //    Vent på appen med:  window.eventApp ? gør() : window.addEventListener("eventapp-klar", gør)
+  // ---------------------------------------------------------------
+  const EA_EKSTRA_FANER = [];
+  function ekstraFaner() {
+    return EA_EKSTRA_FANER.filter(function (f) { try { return !f.kun || f.kun(); } catch (e) { return false; } });
+  }
+  window.eventApp = {
+    tilfoejFane: function (f) {
+      if (!f || !f.id || typeof f.tegn !== "function") return;
+      const i = EA_EKSTRA_FANER.findIndex(function (x) { return x.id === f.id; });
+      if (i >= 0) EA_EKSTRA_FANER[i] = f; else EA_EKSTRA_FANER.push(f);
+      if (appAaben() && side === "liste") tegnApp();
+    },
+    tilfoejLeg: function (l) {
+      if (!l || !l.id) return;
+      l.regler = l.regler || []; l.kort = l.kort || ""; l.tid = l.tid || ""; l.folk = l.folk || ""; l.ikon = l.ikon || "🎲";
+      const i = EA_LEGE.findIndex(function (x) { return x.id === l.id; });
+      if (i >= 0) EA_LEGE[i] = l; else EA_LEGE.push(l);
+    },
+    aabn: function (f) { if (f) fane = f; side = "liste"; if (typeof window.tlfAabnApp === "function") window.tlfAabnApp("event"); },
+    tegnIgen: function () { if (appAaben()) tegnApp(); },
+    erAaben: function (f) { return appAaben() && side === "liste" && (!f || fane === f); },
+    maaBruge: maaBruge, erTeam: erTeam, mig: mig, esc: esc,
+    sigIChat: sigIChat, gaaTil: gaaTil, rumListe: rumListe, rumNavn: rumNavn, herNu: herNu,
+    kald: kald, online: online, sendTeam: sendTeam, besked: lilleBesked, toKlik: toKlik,
+  };
+  try { window.dispatchEvent(new Event("eventapp-klar")); } catch (e) {}
+
+  // ---------------------------------------------------------------
   //  I baggrunden: ny chat, påmindelser og "appen er kommet/væk"
   // ---------------------------------------------------------------
   let sidstChatHent = 0, sidstPlanHent = 0, harAppFoer = null;
@@ -928,7 +1002,7 @@
     T + ".ea-logo b { font: 900 28px/1 Georgia, 'Times New Roman', serif; letter-spacing: 7px; color: #ffd98a; text-shadow: 0 0 14px rgba(255,190,90,.5), 0 2px 0 #7a1b2b; }",
     T + ".ea-logo span { font-size: 10px; letter-spacing: 4px; color: #f3b7c2; font-weight: 700; }",
     T + ".ea-logo small { font-size: 10.5px; opacity: .7; margin-top: 3px; }",
-    T + ".ea-faner { display: flex; gap: 3px; margin-bottom: 10px; background: rgba(0,0,0,.3); padding: 3px; border-radius: 12px; position: sticky; top: 0; z-index: 2; }",
+    T + ".ea-faner { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 10px; background: rgba(0,0,0,.3); padding: 3px; border-radius: 12px; position: sticky; top: 0; z-index: 2; }",
     T + ".ea-faner button { flex: 1 1 auto; white-space: nowrap; padding: 7px 3px; border-radius: 9px; border: 0; background: transparent; color: #f7dfa0; font-size: 10px; font-weight: 600; cursor: pointer; }",
     T + ".ea-faner button.valgt { background: linear-gradient(#ffd98a, #d9a441); color: #4a1622; }",
     T + ".ea-faner button i { font-style: normal; background: #e0283c; color: #fff; border-radius: 8px; padding: 0 5px; font-size: 9.5px; }",
@@ -977,6 +1051,7 @@
     T + ".ea-hj-knapper { display: flex; flex-wrap: wrap; gap: 5px; }",
     T + ".ea-hj-knapper button { flex: 1 1 40%; padding: 8px 6px; border-radius: 10px; border: 1px solid rgba(217,164,65,.5); background: linear-gradient(#7a1b2b, #4a0d1b); color: #ffe7b0; font-weight: 700; font-size: 11px; cursor: pointer; }",
     T + ".ea-hj-knapper button:disabled { opacity: .5; }",
+    T + ".ea-hj-knapper.ea-tre button { flex: 1 1 28%; font-size: 10px; padding: 8px 3px; }",
     T + ".ea-bingo { display: grid; grid-template-columns: repeat(15, 1fr); gap: 2px; }",
     T + ".ea-bingo i { font-style: normal; font-size: 8px; text-align: center; padding: 2px 0; border-radius: 3px; background: rgba(255,255,255,.06); opacity: .55; }",
     T + ".ea-bingo i.ja { background: #d9a441; color: #4a1622; opacity: 1; font-weight: 800; }",
