@@ -570,3 +570,23 @@ document.head.appendChild(forklaringStil);
   s.src = "js/event-app.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// ❓ Hotel-quiz (js/hotel-quiz.js): hver 10. minut kommer et spørgsmål op på hele hotellet. Man svarer med
+// :S og svaret i chatten, og den første med det rigtige svar vinder 2 Glimt. Ejerpanel → 🎉 Events → ❓ Hotel-quiz.
+// Spørgsmålene står i js/hotel-quiz-spoergsmaal.js. Kræver database-56-hotel-quiz.sql.
+(function () {
+  if (document.querySelector("script[src^='js/hotel-quiz.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/hotel-quiz.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 💡 Lysreaktion (js/lysreaktion.js): event-rum på 1. sal med et lysende dansegulv, lyspaneler og lyssøjler.
+// Lyset styres fra Event-appen (🎲 Lege → 💡 Lysreaktion): sluk, ét felt ad gangen, disko, bølge og spillet
+// Lysreaktion (den første på det lysende felt får et point). Kræver database-57-lysreaktion.sql.
+(function () {
+  if (document.querySelector("script[src^='js/lysreaktion.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/lysreaktion.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
