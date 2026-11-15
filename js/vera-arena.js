@@ -77,7 +77,11 @@
     { id: "venstre", navn: "Venstre skærm", vaeg: "venstre", fra: 5.2, til: 10.8, bund: 125, top: 275 },
     { id: "hoejre", navn: "Højre skærm", vaeg: "bag", fra: 15.3, til: 19.7, bund: 140, top: 260 },
   ];
-  const AR_SCENELYS = { slukket: "⚫ Slukket", varm: "🟡 Varmt lys", show: "🌈 Show" };
+  const AR_SCENELYS = { slukket: "⚫ Slukket", varm: "🟡 Varmt lys", show: "🌈 Show", spots: "🔦 Søgelys", disko: "🪩 Disko",
+    puls: "💓 Puls", regnbue: "🌈 Farveskift", strobe: "⚡ Stroboskop" };
+  // ✨ Effekterne i arenaen (tændes og slukkes hver for sig fra Event-appen). Alle i rummet ser dem samtidig.
+  const AR_EFFEKTER = { roeg: "🌫 Røg", konfetti: "🎊 Konfetti", bobler: "🫧 Sæbebobler", ild: "🔥 Flammer", fyrvaerkeri: "🎆 Fyrværkeri",
+    sne: "❄️ Snefald", hjerter: "💖 Hjerter", glitter: "✨ Glitter" };
 
   // =============================================================
   //  Små hjælpere
@@ -142,7 +146,7 @@
     if (svar.tilstand && typeof svar.tilstand === "object") {
       const t = svar.tilstand;
       ar = { bane: t.bane || "forhindring", baneTid: t.baneTid, baneAf: t.baneAf, skaerme: t.skaerme || {}, scene: t.scene || "varm",
-        skilt: t.skilt || null, nedtael: t.nedtael || 0 };
+        skilt: t.skilt || null, nedtael: t.nedtael || 0, effekter: t.effekter || {} };
     }
     arHentet = true;
     arFejl = "";
@@ -165,6 +169,7 @@
     if (del.bane) { ar.bane = del.bane; ar.baneTid = nu; ar.baneAf = arMig(); }
     if (del.scene) ar.scene = del.scene;
     if ("skilt" in del) ar.skilt = del.skilt ? { tekst: del.skilt, tid: nu } : null;
+    if (del.effekter) ar.effekter = del.effekter;
     if ("nedtael" in del) ar.nedtael = del.nedtael ? nu + del.nedtael * 1000 : 0;
     if (del.skaerm) {
       const ids = del.skaerm.id === "alle" ? AR_SKAERME.map(function (s) { return s.id; }) : [del.skaerm.id];
@@ -411,6 +416,14 @@
       if (!iArena()) return;
       try { tegnScene(); tegnBanen(); } catch (e) { console.warn(e); }
     };
+    // ----- effekterne tegnes oven på figurerne (men under talebobler) -----
+    if (typeof tegnBobler === "function") {
+      const tegnBoblerFoerArena = tegnBobler;
+      tegnBobler = function () {
+        try { tegnEffekter(); } catch (e) { console.warn(e); }
+        return tegnBoblerFoerArena.apply(this, arguments);
+      };
+    }
     // ----- skærmene på væggene -----
     const tegnVaeggeFoerArena = tegnVaegge;
     tegnVaegge = function () {
@@ -443,6 +456,8 @@
     const lys = ar.scene || "varm";
     if (lys === "slukket") {
       polygon(ctx, omraadeHjoerner(s), "rgba(0,0,0,0.35)");
+    } else if (lys !== "varm" && lys !== "show") {
+      tegnRumLys(lys, nu);
     } else {
       ctx.globalCompositeOperation = "lighter";
       const pletter = lys === "show"
@@ -469,13 +484,188 @@
     kantLinje(omraadeHjoerner(s), "#d9a441", 2.5);
     for (let i = 0; i <= s.b * 2; i++) {
       const p = punkt(s.x0 + i / 2, s.y0 + s.d);
-      const taendt = lys === "slukket" ? 0.25 : lys === "show" ? 0.5 + 0.5 * Math.sin(nu / 150 + i) : 0.9;
+      const taendt = lys === "slukket" ? 0.25 : lys === "varm" ? 0.9 : 0.5 + 0.5 * Math.sin(nu / (lys === "strobe" ? 60 : 150) + i);
       ctx.fillStyle = "rgba(255,226,150," + taendt + ")";
       ctx.shadowColor = "#ffd27a"; ctx.shadowBlur = 6 * taendt;
       ctx.beginPath(); ctx.arc(p.x, p.y - 2, 2.2, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
   }
+  // Lyspletter på gulvet (tegnes oven på gulvet, under figurerne)
+  function lysplet(x, y, r, farve, styrke) {
+    const m = punkt(x, y);
+    ctx.save();
+    ctx.translate(m.x, m.y); ctx.scale(1, 0.5);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    g.addColorStop(0, "rgba(" + farve + "," + styrke + ")"); g.addColorStop(1, "rgba(" + farve + ",0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  function hsl(h) {   // farvehjul → "r,g,b"
+    const f = function (n) { const k = (n + h / 30) % 12; return Math.round(255 * (0.5 - 0.5 * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); };
+    return f(0) + "," + f(8) + "," + f(4);
+  }
+  // De store lys-funktioner lyser hele rummet op, ikke kun scenen
+  function tegnRumLys(lys, nu) {
+    const B = RUM.bredde, D = RUM.dybde, s = AR_SCENE;
+    // rummet bliver lidt mørkere, så lyset står tydeligt frem
+    polygon(ctx, [punkt(0, 0), punkt(B, 0), punkt(B, D), punkt(0, D)], "rgba(5,0,3,0.35)");
+    ctx.globalCompositeOperation = "lighter";
+    if (lys === "spots") {
+      // fire hvide søgelys, der fejer hen over banen og tribunerne
+      for (let i = 0; i < 4; i++) {
+        const v = nu / (1400 + i * 300) + i * 1.7;
+        lysplet(B / 2 + Math.sin(v) * (B / 2 - 2), D / 2 + 1 + Math.cos(v * 0.8 + i) * (D / 2 - 2), 75, "255,245,220", 0.55);
+      }
+    } else if (lys === "disko") {
+      // mange små farvede prikker, der drejer rundt som fra en diskokugle
+      const drej = nu / 2600;
+      for (let i = 0; i < 36; i++) {
+        const a = i * 2.39996 + drej, rr = 1.5 + (i % 9) * 0.9;
+        lysplet(B / 2 + Math.cos(a) * rr, D / 2 + Math.sin(a) * rr * 0.8, 16, hsl((i * 47) % 360), 0.85);
+      }
+    } else if (lys === "puls") {
+      const st = 0.25 + 0.35 * Math.pow(0.5 + 0.5 * Math.sin(nu / 230), 3);
+      [[s.x0 + 2, 2], [s.x0 + s.b / 2, 2.4], [s.x0 + s.b - 2, 2], [B / 2 - 3, 9], [B / 2 + 3, 9]].forEach(function (p) { lysplet(p[0], p[1], 95, "255,60,110", st); });
+    } else if (lys === "regnbue") {
+      const h = (nu / 25) % 360;
+      [[s.x0 + 2, 2], [s.x0 + s.b / 2, 2.4], [s.x0 + s.b - 2, 2], [B / 2 - 3, 9], [B / 2 + 3, 9]].forEach(function (p, i) { lysplet(p[0], p[1], 100, hsl((h + i * 40) % 360), 0.45); });
+    } else if (lys === "strobe") {
+      // hvide blink ca. 4 gange i sekundet (ikke for voldsomt)
+      if (nu % 250 < 55) polygon(ctx, [punkt(0, 0), punkt(B, 0), punkt(B, D), punkt(0, D)], "rgba(255,255,255,0.28)");
+    }
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  // =============================================================
+  //  ✨ Effekterne: små partikler, der tegnes oven på det hele (lette for browseren: højst ca. 150 pr. effekt)
+  // =============================================================
+  const fx = {};          // effekt → liste med partikler
+  let fxTid = 0;
+  const KONFETTI_FARVER = ["#ffd27a", "#e8445a", "#ffffff", "#ff7ac0", "#7ac8ff", "#9be38a", "#c79bff"];
+  function sprite(farve, r) {   // en blød rund plet, tegnet én gang og genbrugt
+    const c = document.createElement("canvas"); c.width = c.height = r * 2;
+    const g = c.getContext("2d"), gr = g.createRadialGradient(r, r, 0, r, r, r);
+    gr.addColorStop(0, farve.replace("A", "1")); gr.addColorStop(1, farve.replace("A", "0"));
+    g.fillStyle = gr; g.fillRect(0, 0, r * 2, r * 2);
+    return c;
+  }
+  const RØG = sprite("rgba(225,215,225,A)", 64), GLØD = sprite("rgba(255,170,60,A)", 24), GNIST = sprite("rgba(255,255,255,A)", 12);
+  function rumKasse() {
+    const vh = RUM.vaegHoejde || 300;
+    const v = punkt(0, RUM.dybde), h = punkt(RUM.bredde, 0), t = punkt(0, 0), b = punkt(RUM.bredde, RUM.dybde);
+    return { x0: v.x, x1: h.x, y0: t.y - vh, y1: b.y };
+  }
+  function tilf(a, b) { return a + Math.random() * (b - a); }
+  function gulvPunkt(o) { return punkt(tilf(o.x0, o.x0 + o.b), tilf(o.y0, o.y0 + o.d)); }
+  function tegnEffekter() {
+    if (!iArena()) return;
+    const ef = ar.effekter || {};
+    const nu = performance.now();
+    const dt = Math.min(0.05, (nu - (fxTid || nu)) / 1000);
+    fxTid = nu;
+    const K = rumKasse(), W = K.x1 - K.x0, H = K.y1 - K.y0;
+    Object.keys(AR_EFFEKTER).forEach(function (id) {
+      const liste = fx[id] || (fx[id] = []);
+      const til = !!ef[id];
+      if (!til && !liste.length) return;
+      ctx.save();
+      if (id === "konfetti") {
+        while (til && liste.length < 150) liste.push({ x: tilf(K.x0, K.x1), y: tilf(K.y0 - H * 0.3, K.y0), vx: tilf(-15, 15), vy: tilf(40, 90), r: tilf(0, 6), vr: tilf(-6, 6), f: KONFETTI_FARVER[liste.length % 7] });
+        liste.forEach(function (p) {
+          p.x += (p.vx + Math.sin(nu / 400 + p.r) * 20) * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+          ctx.fillStyle = p.f; ctx.fillRect(p.x, p.y, 6 * Math.cos(p.r), 4);
+        });
+      } else if (id === "sne") {
+        while (til && liste.length < 130) liste.push({ x: tilf(K.x0, K.x1), y: tilf(K.y0 - H * 0.3, K.y0), vy: tilf(20, 45), s: tilf(1.2, 3), f: tilf(0, 6) });
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        liste.forEach(function (p) {
+          p.y += p.vy * dt; p.x += Math.sin(nu / 900 + p.f) * 12 * dt;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI * 2); ctx.fill();
+        });
+      } else if (id === "glitter") {
+        while (til && liste.length < 80) liste.push({ x: tilf(K.x0, K.x1), y: tilf(K.y0, K.y1), t: 0, l: tilf(0.6, 1.6) });
+        ctx.globalCompositeOperation = "lighter";
+        liste.forEach(function (p) {
+          p.t += dt; const a = Math.sin(Math.PI * Math.min(1, p.t / p.l));
+          ctx.globalAlpha = a; ctx.drawImage(GNIST, p.x - 6, p.y - 6);
+          ctx.fillStyle = "#ffe9a8"; ctx.fillRect(p.x - 5 * a, p.y - 0.6, 10 * a, 1.2); ctx.fillRect(p.x - 0.6, p.y - 5 * a, 1.2, 10 * a);
+        });
+      } else if (id === "hjerter") {
+        while (til && liste.length < 28) { const q = gulvPunkt({ x0: 0, y0: 4, b: RUM.bredde, d: RUM.dybde - 4 }); liste.push({ x: q.x, y: q.y, vy: tilf(25, 50), t: 0, l: tilf(2.5, 4.5), s: tilf(12, 22), f: tilf(0, 6) }); }
+        ctx.textAlign = "center";
+        liste.forEach(function (p) {
+          p.t += dt; p.y -= p.vy * dt;
+          ctx.globalAlpha = Math.max(0, 1 - p.t / p.l); ctx.font = Math.round(p.s) + "px serif";
+          ctx.fillText(p.f > 3 ? "💖" : "❤️", p.x + Math.sin(nu / 500 + p.f) * 8, p.y);
+        });
+      } else if (id === "bobler") {
+        while (til && liste.length < 45) { const q = gulvPunkt(AR_BANE); liste.push({ x: q.x, y: q.y, vy: tilf(20, 45), t: 0, l: tilf(3, 6), r: tilf(5, 12), f: tilf(0, 6) }); }
+        ctx.lineWidth = 1.2;
+        liste.forEach(function (p) {
+          p.t += dt; p.y -= p.vy * dt;
+          const x = p.x + Math.sin(nu / 600 + p.f) * 10;
+          ctx.globalAlpha = Math.max(0, 1 - p.t / p.l);
+          ctx.strokeStyle = "hsla(" + ((nu / 20 + p.f * 60) % 360) + ",80%,85%,0.85)";
+          ctx.beginPath(); ctx.arc(x, p.y, p.r, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = "rgba(255,255,255,0.12)"; ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.beginPath(); ctx.arc(x - p.r * 0.35, p.y - p.r * 0.35, p.r * 0.2, 0, Math.PI * 2); ctx.fill();
+        });
+      } else if (id === "roeg") {
+        while (til && liste.length < 36) { const q = gulvPunkt({ x0: 1, y0: 0, b: RUM.bredde - 2, d: 12 }); liste.push({ x: q.x, y: q.y, vx: tilf(-12, 12), vy: tilf(-6, -2), t: 0, l: tilf(5, 9), s: tilf(1.4, 2.6) }); }
+        liste.forEach(function (p) {
+          p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; const k = p.t / p.l;
+          ctx.globalAlpha = 0.22 * Math.sin(Math.PI * Math.min(1, k));
+          const w = 128 * p.s * (0.8 + k * 0.6);
+          ctx.drawImage(RØG, p.x - w / 2, p.y - w * 0.3, w, w * 0.6);
+        });
+      } else if (id === "ild") {
+        // flammer langs scenens forkant
+        while (til && liste.length < 110) {
+          const a = punkt(AR_SCENE.x0 + Math.random() * AR_SCENE.b, AR_SCENE.y0 + AR_SCENE.d);
+          liste.push({ x: a.x + tilf(-3, 3), y: a.y, vy: tilf(50, 110), t: 0, l: tilf(0.4, 0.9), s: tilf(0.6, 1.3) });
+        }
+        ctx.globalCompositeOperation = "lighter";
+        liste.forEach(function (p) {
+          p.t += dt; p.y -= p.vy * dt; const k = p.t / p.l;
+          ctx.globalAlpha = Math.max(0, 1 - k) * 0.8;
+          const w = 34 * p.s * (1 - k * 0.6);
+          ctx.drawImage(GLØD, p.x - w / 2, p.y - w / 2, w, w);
+        });
+      } else if (id === "fyrvaerkeri") {
+        // raketter fra banen, der springer ud oppe ved væggen
+        if (til && Math.random() < dt * 1.3) {
+          const q = gulvPunkt(AR_BANE);
+          liste.push({ raket: true, x: q.x, y: q.y, vy: tilf(260, 340), top: tilf(K.y0 + 30, K.y0 + H * 0.35), h: Math.floor(tilf(0, 360)) });
+        }
+        ctx.globalCompositeOperation = "lighter";
+        const nye = [];
+        liste.forEach(function (p) {
+          if (p.raket) {
+            p.y -= p.vy * dt;
+            ctx.fillStyle = "#fff2c0"; ctx.fillRect(p.x - 1, p.y, 2, 8);
+            if (p.y <= p.top) {
+              p.t = 99;
+              for (let i = 0; i < 46; i++) { const a = i / 46 * Math.PI * 2, v = tilf(60, 140); nye.push({ x: p.x, y: p.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, l: tilf(1, 1.6), h: p.h }); }
+            }
+            return;
+          }
+          p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 70 * dt; p.vx *= 0.985;
+          ctx.globalAlpha = Math.max(0, 1 - p.t / p.l);
+          ctx.fillStyle = "hsl(" + p.h + ",100%,70%)"; ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+        });
+        nye.forEach(function (n) { liste.push(n); });
+      }
+      ctx.restore();
+      // fjern dem, der er færdige (eller ude af rummet), og fyld ikke flere på, når effekten er slukket
+      fx[id] = liste.filter(function (p) {
+        if (p.raket) return p.t !== 99;
+        if (p.l && p.t >= p.l) return false;
+        return p.y < K.y1 + 40 && p.y > K.y0 - H * 0.5 && p.x > K.x0 - 60 && p.x < K.x1 + 60;
+      });
+    });
+  }
+
   function tegnBanen() {
     const b = AR_BANE;
     ctx.save();
@@ -716,9 +906,16 @@
       return "<button data-ar-bane='" + esc(b.id) + "'" + (b.id === ar.bane ? " class='lys-valgt ar-valgt'" : "") + "><b>" + b.ikon + " " + esc(b.navn) + "</b><small>" + esc(b.om || "") + "</small></button>";
     }).join("") + "</div><p class='ea-info'>Du kan også skrive <b>:skift</b> (næste bane) eller fx <b>:skift quiz</b> i chatten.</p>";
     // scenelys
-    html += "<h4 class='ea-dag'>💡 Lys på scenen</h4><div class='ea-hj-knapper'>" + Object.keys(AR_SCENELYS).map(function (k) {
+    html += "<h4 class='ea-dag'>💡 Lys på scenen</h4><div class='ar-gitter'>" + Object.keys(AR_SCENELYS).map(function (k) {
       return "<button data-ar-scene='" + k + "'" + (k === (ar.scene || "varm") ? " class='lys-valgt ar-valgt'" : "") + ">" + AR_SCENELYS[k] + "</button>";
-    }).join("") + "</div>";
+    }).join("") + "</div>" + (ar.scene === "strobe" ? "<p class='ea-info'>⚡ Stroboskop blinker. Brug det kun kort, og sluk det igen.</p>" : "");
+    const ef = ar.effekter || {};
+    const antal = Object.keys(AR_EFFEKTER).filter(function (k) { return ef[k]; }).length;
+    html += "<h4 class='ea-dag'>✨ Effekter</h4><p class='ea-info'>Tryk for at tænde, tryk igen for at slukke. Flere kan være tændt på én gang.</p>" +
+      "<div class='ar-gitter'>" + Object.keys(AR_EFFEKTER).map(function (k) {
+        return "<button data-ar-effekt='" + k + "'" + (ef[k] ? " class='lys-valgt ar-valgt'" : "") + ">" + AR_EFFEKTER[k] + (ef[k] ? " ✓" : "") + "</button>";
+      }).join("") + "</div><div class='ea-hj-knapper'><button data-ar-effekt='finale'>🎉 Finale (konfetti, fyrværkeri og glitter)</button>" +
+      (antal ? "<button data-ar-effekt='stop'>⏹ Stop alle effekter</button>" : "") + "</div>";
     // skærme
     const lyd = lydSkaerm();
     const kort = { midt: "🖥 Storskærm", venstre: "◀ Venstre", hoejre: "Højre ▶", alle: "Alle tre" };
@@ -754,6 +951,16 @@
         const b = find(k.dataset.arBane);
         saetArena({ bane: b.id }).then(igen); igen();
         if (api && api.besked) api.besked("🔄 Banen er nu " + b.navn);
+      });
+    });
+    krop.querySelectorAll("[data-ar-effekt]").forEach(function (k) {
+      k.addEventListener("click", function () {
+        const id = k.dataset.arEffekt;
+        let ny = Object.assign({}, ar.effekter || {});
+        if (id === "stop") ny = {};
+        else if (id === "finale") ny = Object.assign(ny, { konfetti: true, fyrvaerkeri: true, glitter: true });
+        else if (ny[id]) delete ny[id]; else ny[id] = true;
+        saetArena({ effekter: ny }).then(igen); igen();
       });
     });
     krop.querySelectorAll("[data-ar-scene]").forEach(function (k) {
@@ -895,6 +1102,8 @@
     ".ar-skaermknapper button { padding: 9px 4px; border-radius: 8px; cursor: pointer; font-weight: bold; }" +
     // Event-appens fane-bjælke bliver hængende øverst, når man ruller. Med fast baggrund kan man ikke se knapperne igennem den.
     ".ea-faner { background: #2b0c15 !important; box-shadow: 0 6px 12px rgba(0,0,0,.55); }" +
+    ".ar-gitter { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }" +
+    ".ar-gitter button { padding: 9px 4px; border-radius: 9px; cursor: pointer; font-weight: 600; }" +
     ".ar-regler { margin: 4px 0 8px; padding-left: 22px; font-size: 12px; }";
   document.head.appendChild(stil);
 
