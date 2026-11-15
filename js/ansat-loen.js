@@ -74,6 +74,7 @@
   //  Ejerpanel → 💼 Løn
   // -----------------------------------------------------------
   let data = null, fejl = "", henter = false, status = "";
+  let valgtAnsat = "", egenStatus = "";   // den ansatte, man har klikket på (egen løn)
 
   if (typeof PANEL_HJAELP !== "undefined") PANEL_HJAELP[FANE] = { titel: "💼 Løn til de ansatte",
     tekst: "Hver mandag får alle ansatte automatisk løn i Glimt. Du bestemmer beløbet og kan slå det fra.",
@@ -81,6 +82,8 @@
       "Den udbetales om mandagen (dansk tid), så snart nogen er inde på hotellet. Kun én gang pr. uge.",
       "Fyrer du en ansat i 🎖 Ansættelse, får de ingen løn mere fra det øjeblik.",
       "Ejerne får ikke løn (I kan give jer selv penge i Valuta).",
+      "Klik på en ansat for at give dem deres egen løn (eller 🚫 ingen løn). De andre får den almindelige løn.",
+      "Fyrer du en, forsvinder deres løn med det samme. Ansætter du dem igen, starter de på den almindelige løn.",
       "Ændrer du beløbet, gælder det fra næste udbetaling."] };
 
   const fane = document.createElement("button");
@@ -97,7 +100,7 @@
   setInterval(function () { fane.hidden = !erEjer(); }, 1000);
 
   function paaFanen() { return typeof ejerVindue !== "undefined" && !ejerVindue.hidden && ejerFane === FANE && erEjer(); }
-  function skriver() { const a = document.activeElement; return !!(a && a.id === "loen-beloeb"); }
+  function skriver() { const a = document.activeElement; return !!(a && (a.id === "loen-beloeb" || a.id === "loen-egen")); }
 
   function hent() {
     if (henter || !erEjer()) return;
@@ -137,7 +140,7 @@
     const fikNu = ansatte.filter(function (a) { return a.fik; }).length;
     sek.innerHTML = "<h3>💼 Løn til de ansatte</h3>" +
       "<p class='loen-status " + (data.til ? "til" : "fra") + "'>" + (data.til
-        ? "🟢 Slået til: hver mandag får alle ansatte <b>" + tal(data.beloeb) + " " + r(glimtNavn()) + " ⭐</b>"
+        ? "🟢 Slået til · almindelig løn hver mandag: <b>" + tal(data.beloeb) + " " + r(glimtNavn()) + " ⭐</b>"
         : "⏸ Slået fra: ingen får løn lige nu") + "</p>" +
       "<div class='sp-handlinger'>" + (data.til ? "<button type='button' data-loen-til='0'>🔴 Slå lønnen fra</button>"
         : "<button type='button' data-loen-til='1'>▶️ Slå lønnen til</button>") + "</div>" +
@@ -146,11 +149,25 @@
       [50, 100, 200, 500].map(function (n) { return "<button type='button' class='loen-hurtig' data-loen-hurtig='" + n + "'>" + n + "</button>"; }).join("") + "</div>" +
       "<p class='loen-ok'>" + r(status) + "</p>" +
       "<h3>Ansatte lige nu (" + ansatte.length + ")</h3>" +
-      "<p class='ejer-info'>Denne uge (fra " + r(ugeTekst(data.uge)) + "): " + fikNu + " af " + ansatte.length + " har fået løn.</p>" +
+      "<p class='ejer-info'>Denne uge (fra " + r(ugeTekst(data.uge)) + "): " + fikNu + " af " + ansatte.length + " har fået løn. " +
+        "<b>Klik på en ansat</b> for at give dem deres egen løn.</p>" +
       (ansatte.length ? "<ul class='loen-liste'>" + ansatte.map(function (a) {
-        return "<li><b>" + r(a.navn) + "</b> <span class='loen-skilt'>" + r(SKILT_NAVN[a.skilt] || a.skilt) + "</span>" +
-          "<span class='loen-uge'>" + (a.fik ? "✅ Fået " + tal(a.fik) + " ⭐ denne uge" : data.til ? "⏳ Får den snart" : "⏸ Lønnen er slået fra") + "</span>" +
-          "<small>I alt: " + tal(a.ialt) + " ⭐</small></li>";
+        const harEgen = a.egen !== null && a.egen !== undefined;
+        const loen = harEgen ? +a.egen : +data.beloeb;
+        const aaben = valgtAnsat === a.navn;
+        return "<li class='loen-ansat" + (aaben ? " aaben" : "") + "' data-loen-ansat='" + r(a.navn) + "' title='Klik for at ændre " + r(a.navn) + "s løn'>" +
+          "<b>" + r(a.navn) + "</b> <span class='loen-skilt'>" + r(SKILT_NAVN[a.skilt] || a.skilt) + "</span>" +
+          "<span class='loen-sats" + (harEgen ? " egen" : "") + "'>" + (loen > 0 ? "💼 " + tal(loen) + " ⭐ om ugen" : "🚫 Ingen løn") +
+            (harEgen ? " (egen løn)" : " (almindelig)") + "</span>" +
+          "<span class='loen-uge'>" + (a.fik ? "✅ Fået " + tal(a.fik) + " ⭐ denne uge" : !data.til ? "⏸ Lønnen er slået fra" : loen > 0 ? "⏳ Får den snart" : "") + "</span>" +
+          "<small>I alt: " + tal(a.ialt) + " ⭐</small>" +
+          (aaben ? "<div class='loen-egen-boks'><label>Løn til " + r(a.navn) + " pr. uge (" + r(glimtNavn()) + ")" +
+            "<input id='loen-egen' type='number' min='0' max='100000' value='" + loen + "'></label>" +
+            "<div class='sp-handlinger'><button type='button' data-loen-egen-gem>💾 Gem " + r(a.navn) + "s løn</button>" +
+            [50, 100, 200, 500].map(function (n) { return "<button type='button' class='loen-hurtig' data-loen-egen-hurtig='" + n + "'>" + n + "</button>"; }).join("") +
+            (harEgen ? "<button type='button' data-loen-egen-standard>↩ Almindelig løn (" + tal(data.beloeb) + ")</button>" : "") +
+            "<button type='button' data-loen-egen-ingen>🚫 Ingen løn</button><button type='button' data-loen-egen-luk>Luk</button></div>" +
+            "<p class='loen-ok'>" + r(egenStatus) + "</p></div>" : "") + "</li>";
       }).join("") + "</ul>" : "<p class='ejer-info'>Du har ingen ansatte endnu. Giv et skilt i 🎖 Ansættelse.</p>") +
       "<h3>Seneste udbetalinger</h3>" +
       (seneste.length ? "<ul class='loen-liste'>" + seneste.map(function (u) {
@@ -158,6 +175,49 @@
           "<span>+" + tal(u.beloeb) + " ⭐</span><small>" + r(dato(u.tid)) + "</small></li>";
       }).join("") + "</ul>" : "<p class='ejer-info'>Der er ikke udbetalt løn endnu.</p>");
     ejerIndhold.appendChild(sek);
+
+    // klik på en ansat → egen løn
+    sek.querySelectorAll("[data-loen-ansat]").forEach(function (li) {
+      li.addEventListener("click", function (e) {
+        if (e.target.closest(".loen-egen-boks")) return;
+        valgtAnsat = valgtAnsat === li.dataset.loenAnsat ? "" : li.dataset.loenAnsat;
+        egenStatus = "";
+        visFane();
+        const inp = document.getElementById("loen-egen");
+        if (inp) { inp.focus(); inp.select(); }
+      });
+    });
+    function gemEgen(beloeb) {
+      const navn = valgtAnsat;
+      egenStatus = "⏳ Gemmer …"; visFane();
+      serverKald("hv_loen_egen_saet", { p_token: token(), p_navn: navn, p_beloeb: beloeb }).then(function () {
+        egenStatus = beloeb === null ? "✅ " + navn + " får nu den almindelige løn." :
+          beloeb === 0 ? "✅ " + navn + " får ingen løn." : "✅ " + navn + " får nu " + tal(beloeb) + " " + glimtNavn() + " hver mandag.";
+        data = null; hent();
+      }).catch(function (e) {
+        egenStatus = "⚠️ " + (mangler(e) ? "Kør først database-49-loen-pr-ansat.sql i Supabase." : e.message);
+        visFane();
+      });
+    }
+    const eg = sek.querySelector("[data-loen-egen-gem]");
+    if (eg) {
+      const inp = sek.querySelector("#loen-egen");
+      eg.addEventListener("click", function () {
+        const n = parseInt(inp.value, 10);
+        if (!(n >= 0 && n <= 100000)) { egenStatus = "⚠️ Skriv et tal mellem 0 og 100.000."; visFane(); return; }
+        gemEgen(n);
+      });
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") eg.click(); });
+      sek.querySelectorAll("[data-loen-egen-hurtig]").forEach(function (k) {
+        k.addEventListener("click", function () { inp.value = k.dataset.loenEgenHurtig; });
+      });
+      const std = sek.querySelector("[data-loen-egen-standard]");
+      if (std) std.addEventListener("click", function () { gemEgen(null); });
+      sek.querySelector("[data-loen-egen-ingen]").addEventListener("click", function () { gemEgen(0); });
+      sek.querySelector("[data-loen-egen-luk]").addEventListener("click", function () { valgtAnsat = ""; egenStatus = ""; visFane(); });
+    }
+    // er den valgte blevet fyret? så luk boksen
+    if (valgtAnsat && !ansatte.some(function (a) { return a.navn === valgtAnsat; })) valgtAnsat = "";
 
     sek.querySelectorAll("[data-loen-til]").forEach(function (k) {
       k.addEventListener("click", function () { gem(k.dataset.loenTil === "1", null); });
@@ -210,6 +270,14 @@
     ".loen-liste li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 6px 4px; border-bottom: 1px solid #eadcbc; font-size: 12px; }",
     ".loen-liste .loen-skilt { background: #7a1f2e !important; color: #f6dfa0 !important; border-radius: 9px; padding: 1px 7px; font-size: 11px; }",
     ".loen-liste small { color: #8a6a4a; margin-left: auto; }",
+    ".loen-liste li.loen-ansat { cursor: pointer; border-radius: 8px; }",
+    ".loen-liste li.loen-ansat:hover { background: rgba(217,164,65,.15); }",
+    ".loen-liste li.loen-ansat.aaben { background: rgba(217,164,65,.22); cursor: default; }",
+    ".loen-liste .loen-sats { font-weight: bold; color: #5a2a18; }",
+    ".loen-liste .loen-sats.egen { color: #7a1f2e; }",
+    ".loen-egen-boks { flex-basis: 100%; margin-top: 6px; padding: 8px; background: #fffaf0; border: 2px solid #d9a441; border-radius: 8px; }",
+    ".loen-egen-boks label { display: flex; flex-direction: column; gap: 4px; font-weight: bold; font-size: 12px; color: #7a1f2e; }",
+    ".loen-egen-boks input { border: 1px solid #d9a441; border-radius: 6px; padding: 5px 6px; font: 13px Verdana, sans-serif; max-width: 160px; }",
   ].join("\n");
   document.head.appendChild(stil);
 })(0);

@@ -590,3 +590,23 @@ document.head.appendChild(forklaringStil);
   s.src = "js/lysreaktion.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🏟 Vera arena (js/vera-arena.js): stort gameshow-rum på 1. sal med hovedscene, udfordringsbane og tribuner.
+// Tre store skærme (YouTube eller tekst), scene-lys, skilt og nedtælling styres fra Event-appen (fanen 🏟 Arena).
+// Banen skifter spil med :skift i chatten (kun Eventfolk, Eventværter og ejeren). Kræver database-58-vera-arena.sql.
+(function () {
+  if (document.querySelector("script[src^='js/vera-arena.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vera-arena.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 🤖 Test-botter (js/test-botter.js): KUN for ejeren. Ejerpanel → ⚙️ System → 🤖 Test-botter. Lav så mange botter,
+// du vil, til at teste spil (de kan stå, gå rundt og jage lyset i Lysreaktion), og slet dem igen (én ad gangen eller alle).
+// Botter tæller ikke som spillere og kan aldrig få Glimt, VIP eller gevinster. Kræver database-59-test-botter.sql.
+(function () {
+  if (document.querySelector("script[src^='js/test-botter.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/test-botter.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
