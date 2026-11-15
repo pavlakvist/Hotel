@@ -551,3 +551,12 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vip-kort.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 👥 Ansatte i rummet (js/ansatte-i-rummet.js): i Ejerpanelets venstre side kan ansatte og ejeren se,
+// hvilke andre ansatte der er i samme rum (🟢 navn, skilt · rum). Klik → Staff chat. Ingen ny SQL.
+(function () {
+  if (document.querySelector("script[src^='js/ansatte-i-rummet.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/ansatte-i-rummet.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
