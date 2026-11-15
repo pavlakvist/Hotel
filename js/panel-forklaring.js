@@ -560,3 +560,13 @@ document.head.appendChild(forklaringStil);
   s.src = "js/ansatte-i-rummet.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎪 Event-app (js/event-app.js): telefon-app for Eventfolk, Eventværter og ejeren. Kommer selv på telefonen,
+// når man bliver ansat, og forsvinder igen. Faner: Events, Lege, Vindere og Team (med chat). Sætter også
+// skiltet Eventfolk tilbage i Ansættelse. Kræver database-55-event-app.sql.
+(function () {
+  if (document.querySelector("script[src^='js/event-app.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/event-app.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
