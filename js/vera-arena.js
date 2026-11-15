@@ -146,19 +146,23 @@
     if (svar.tilstand && typeof svar.tilstand === "object") {
       const t = svar.tilstand;
       ar = { bane: t.bane || "forhindring", baneTid: t.baneTid, baneAf: t.baneAf, skaerme: t.skaerme || {}, scene: t.scene || "varm",
-        skilt: t.skilt || null, nedtael: t.nedtael || 0, effekter: t.effekter || {} };
+        skilt: t.skilt || null, nedtael: t.nedtael || 0, effekter: t.effekter || {}, daemp: t.daemp || 0 };
     }
     arHentet = true;
     arFejl = "";
     opdaterSkaerme();
   }
   let henter = false;
+  // Hurtige skift: man ser sit eget tryk med det samme. Gamle svar fra serveren må ikke "rulle det tilbage",
+  // så svar, der blev sendt før ens seneste tryk, eller mens et tryk stadig er på vej, bliver sprunget over.
+  let sidstHent = 0;
+  let arSidstLokal = 0, arVenter = 0, arSaetNr = 0;
   function hentArena() {
     if (!arOnline() || henter) return Promise.resolve();
     henter = true;
     const sendt = Date.now();
     return serverKald("hv_arena_hent", { p_rum: ARENA_ID })
-      .then(function (s) { brugSvar(s, sendt); })
+      .then(function (s) { if (arVenter === 0 && sendt > arSidstLokal) brugSvar(s, sendt); })
       .catch(function (e) { arFejl = arMangler(e) ? ARENA_MANGLER : (e.message || "Kunne ikke hente arenaen."); })
       .finally(function () { henter = false; });
   }
@@ -166,10 +170,12 @@
   function saetArena(del) {
     // lokalt med det samme, så knapperne svarer hurtigt
     const nu = arNu();
+    arSidstLokal = Date.now();
     if (del.bane) { ar.bane = del.bane; ar.baneTid = nu; ar.baneAf = arMig(); }
     if (del.scene) ar.scene = del.scene;
     if ("skilt" in del) ar.skilt = del.skilt ? { tekst: del.skilt, tid: nu } : null;
     if (del.effekter) ar.effekter = del.effekter;
+    if ("daemp" in del) ar.daemp = del.daemp;
     if ("nedtael" in del) ar.nedtael = del.nedtael ? nu + del.nedtael * 1000 : 0;
     if (del.skaerm) {
       const ids = del.skaerm.id === "alle" ? AR_SKAERME.map(function (s) { return s.id; }) : [del.skaerm.id];
@@ -181,9 +187,11 @@
     }
     opdaterSkaerme();
     if (!arOnline() || !arToken()) { arFejl = "Du er ikke på serveren, så kun du kan se det."; return Promise.resolve(); }
-    const sendt = Date.now();
+    const sendt = Date.now(), nr = ++arSaetNr;
+    arVenter++;
     return serverKald("hv_arena_saet", { p_token: arToken(), p_rum: ARENA_ID, p_del: del })
-      .then(function (s) { brugSvar(s, sendt); })
+      .then(function (s) { if (nr === arSaetNr) brugSvar(s, sendt); })   // kun svaret på det SENESTE tryk bruges
+      .finally(function () { arVenter--; sidstHent = 0; })
       .catch(function (e) {
         arFejl = arMangler(e) ? ARENA_MANGLER : "Serveren svarede ikke, så det ses kun hos dig lige nu. (" + (e.message || "fejl") + ")";
         if (/logget ind|Kun ejeren/i.test(e.message || "")) arFejl = e.message;
@@ -211,14 +219,42 @@
     saetArena({ bane: ny.id });
     arBesked("🏟 Udfordringsbanen er nu: " + ny.ikon + " " + ny.navn + (iArena() ? "" : " (i Vera arena)"));
   }
+  // :lys disko · :effekt konfetti (tænd/sluk) · :effekt stop · :finale
+  function genvej(hvad, t) {
+    if (!arMaa()) { arBesked("🏟 Kun Eventfolk, Eventværter og ejeren kan styre Vera arena."); return; }
+    const n = lilleNavn(t);
+    const soeg = function (liste) {
+      return Object.keys(liste).find(function (k) { return lilleNavn(k) === n || lilleNavn(liste[k]) === n; }) ||
+        Object.keys(liste).find(function (k) { return n && (lilleNavn(k).indexOf(n) === 0 || lilleNavn(liste[k]).indexOf(n) === 0); });
+    };
+    if (hvad === "sluk") { saetArena({ effekter: {}, scene: "varm", daemp: 0 }); arBesked("⏻ Alle effekter er slukket, og lyset er normalt igen."); return; }
+    if (hvad === "finale") {
+      saetArena({ effekter: Object.assign({}, ar.effekter || {}, { konfetti: true, fyrvaerkeri: true, glitter: true }) });
+      arBesked("🎉 Finale!"); return;
+    }
+    if (hvad === "lys") {
+      const k = soeg(AR_SCENELYS);
+      if (!k) { arBesked("💡 Lys: " + Object.keys(AR_SCENELYS).map(function (x) { return ":lys " + x; }).join(" · ")); return; }
+      saetArena({ scene: k }); arBesked("💡 Lyset er nu " + AR_SCENELYS[k]); return;
+    }
+    if (/^(stop|sluk|ingen|alle)$/.test(n)) { saetArena({ effekter: {} }); arBesked("⏹ Alle effekter er slukket."); return; }
+    const k = soeg(AR_EFFEKTER);
+    if (!k) { arBesked("✨ Effekter: " + Object.keys(AR_EFFEKTER).map(function (x) { return ":effekt " + x; }).join(" · ") + " · :effekt stop"); return; }
+    const ny = Object.assign({}, ar.effekter || {});
+    if (ny[k]) delete ny[k]; else ny[k] = true;
+    saetArena({ effekter: ny });
+    arBesked(AR_EFFEKTER[k] + (ny[k] ? " er tændt." : " er slukket."));
+  }
   window.addEventListener("submit", function (e) {
     if (typeof chatForm === "undefined" || e.target !== chatForm) return;
-    const m = String(chatTekst.value || "").trim().match(/^[:：]\s*skift\b\s*(.*)$/i);
-    if (!m) return;
+    const tekst = String(chatTekst.value || "").trim();
+    const m = tekst.match(/^[:：]\s*skift\b\s*(.*)$/i);
+    const g = tekst.match(/^[:：]\s*(lys|effekt|finale|sluk)\b\s*(.*)$/i);
+    if (!m && !g) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     chatTekst.value = "";
-    skiftBane(m[1]);
+    if (m) skiftBane(m[1]); else genvej(g[1].toLowerCase(), g[2]);
   }, true);
 
   // =============================================================
@@ -565,6 +601,15 @@
     const dt = Math.min(0.05, (nu - (fxTid || nu)) / 1000);
     fxTid = nu;
     const K = rumKasse(), W = K.x1 - K.x0, H = K.y1 - K.y0;
+    // 🌙 lysdæmperen: gør rummet mørkere (kun det, der er tegnet, så videoerne på skærmene lyser stadig). Effekterne tegnes ovenpå og lyser.
+    const dm = Math.max(0, Math.min(85, Number(ar.daemp) || 0));
+    if (dm) {
+      ctx.save();
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = "rgba(4,0,6," + (dm / 100) + ")";
+      ctx.fillRect(K.x0 - 40, K.y0 - 40, W + 80, H + 80);
+      ctx.restore();
+    }
     Object.keys(AR_EFFEKTER).forEach(function (id) {
       const liste = fx[id] || (fx[id] = []);
       const til = !!ef[id];
@@ -868,11 +913,10 @@
   }
   setInterval(opdaterSkilt, 200);
 
-  // Hent arenaen fra serveren: tit når der tælles ned, ellers hvert 2. sekund (kun i arenaen eller med appen åben)
-  let sidstHent = 0;
+  // Hent arenaen fra serveren: tit når der tælles ned, ellers hvert sekund (kun i arenaen eller med appen åben)
   setInterval(function () {
     if (!iArena() && !appAaben()) return;
-    const hvorTit = ar.nedtael && arNu() < ar.nedtael + 3000 ? 700 : 2000;
+    const hvorTit = ar.nedtael && arNu() < ar.nedtael + 3000 ? 500 : 1000;
     if (Date.now() - sidstHent < hvorTit) return;
     sidstHent = Date.now();
     hentArena().then(function () { if (appAaben()) tegnAppIgen(); });
@@ -901,17 +945,40 @@
     html += "<div class='ea-hj-boks'><small>Vera arena lige nu</small><b>" + (bane ? bane.ikon + " " + esc(bane.navn) : "?") +
       " · " + AR_SCENELYS[ar.scene || "varm"] + "</b></div>";
     if (!iArena()) html += "<div class='ea-hj-knapper'><button data-ar='gaa'>🚶 Gå til Vera arena</button></div>";
+    // ⚡ Hurtig-skift: alt det vigtigste med ét tryk, øverst i fanen
+    const efH = ar.effekter || {};
+    const ikon = function (t) { return String(t).split(" ")[0]; };
+    const rest = function (t) { return String(t).split(" ").slice(1).join(" "); };
+    html += "<div class='ar-hurtig'><div class='ar-hurtig-top'><small>⚡ Hurtig-skift</small><button data-ar='slukalt' class='ar-sluk'>⏻ Sluk alt</button></div>" +
+      "<div class='ar-hr'><span>Lys</span>" + Object.keys(AR_SCENELYS).map(function (k) {
+        return "<button data-ar-scene='" + k + "' title='" + esc(rest(AR_SCENELYS[k])) + "'" + (k === (ar.scene || "varm") ? " class='ar-valgt'" : "") + ">" + ikon(AR_SCENELYS[k]) + "</button>";
+      }).join("") + "</div>" +
+      "<div class='ar-hr'><span>Effekt</span>" + Object.keys(AR_EFFEKTER).map(function (k) {
+        return "<button data-ar-effekt='" + k + "' title='" + esc(rest(AR_EFFEKTER[k])) + "'" + (efH[k] ? " class='ar-valgt'" : "") + ">" + ikon(AR_EFFEKTER[k]) + "</button>";
+      }).join("") + "</div>" +
+      "<div class='ar-daemper'><span>☀️</span><input type='range' min='0' max='85' step='5' value='" + (Number(ar.daemp) || 0) + "' data-ar-daemp aria-label='Lys i rummet'><span>🌙</span>" +
+      "<b>" + (Number(ar.daemp) ? "Mørkere: " + ar.daemp + " %" : "Fuldt lys") + "</b></div>" +
+      "<div class='ar-hr ar-hr-store'><button data-ar-effekt='finale'>🎉 Finale</button><button data-ar-effekt='stop'>⏹ Stop effekter</button>" +
+      "<button data-ar='naeste'>🔄 Næste bane</button></div>" +
+      "<div class='ar-hr ar-hr-store'><button data-ar-ned='3'>⏱ 3</button><button data-ar-ned='5'>⏱ 5</button><button data-ar-ned='10'>⏱ 10</button>" +
+      "<button data-ar='allelogo'>🖥 Logo på alle</button></div></div>";
     // baner
     html += "<h4 class='ea-dag'>🔄 Udfordringsbanen</h4><div class='ar-baner'>" + ARENA_BANER.map(function (b) {
       return "<button data-ar-bane='" + esc(b.id) + "'" + (b.id === ar.bane ? " class='lys-valgt ar-valgt'" : "") + "><b>" + b.ikon + " " + esc(b.navn) + "</b><small>" + esc(b.om || "") + "</small></button>";
-    }).join("") + "</div><p class='ea-info'>Du kan også skrive <b>:skift</b> (næste bane) eller fx <b>:skift quiz</b> i chatten.</p>";
+    }).join("") + "</div><p class='ea-info'>Du kan også skrive i chatten: <b>:skift</b> (næste bane), <b>:skift quiz</b>, <b>:lys disko</b>, <b>:effekt konfetti</b>, <b>:effekt stop</b>, <b>:finale</b> eller <b>:sluk</b> (slukker alt).</p>";
     // scenelys
     html += "<h4 class='ea-dag'>💡 Lys på scenen</h4><div class='ar-gitter'>" + Object.keys(AR_SCENELYS).map(function (k) {
       return "<button data-ar-scene='" + k + "'" + (k === (ar.scene || "varm") ? " class='lys-valgt ar-valgt'" : "") + ">" + AR_SCENELYS[k] + "</button>";
     }).join("") + "</div>" + (ar.scene === "strobe" ? "<p class='ea-info'>⚡ Stroboskop blinker. Brug det kun kort, og sluk det igen.</p>" : "");
+    const dm = Number(ar.daemp) || 0;
+    html += "<h4 class='ea-dag'>🌙 Lys i rummet (dæmper)</h4><div class='ar-daemper'><span>☀️</span><input type='range' min='0' max='85' step='5' value='" + dm + "' data-ar-daemp aria-label='Lys i rummet'><span>🌙</span>" +
+      "<b>" + (dm ? "Mørkere: " + dm + " %" : "Fuldt lys") + "</b></div>" +
+      "<div class='ar-skaermknapper'>" + [[0, "☀️ Fuldt lys"], [35, "🌤 Lidt mørkt"], [60, "🌗 Mørkt"], [80, "🌙 Meget mørkt"]].map(function (t) {
+        return "<button data-ar-daemp-trin='" + t[0] + "'" + (t[0] === dm ? " class='ar-valgt'" : "") + ">" + t[1] + "</button>";
+      }).join("") + "</div>";
     const ef = ar.effekter || {};
     const antal = Object.keys(AR_EFFEKTER).filter(function (k) { return ef[k]; }).length;
-    html += "<h4 class='ea-dag'>✨ Effekter</h4><p class='ea-info'>Tryk for at tænde, tryk igen for at slukke. Flere kan være tændt på én gang.</p>" +
+    html += "<h4 class='ea-dag'>✨ Effekter</h4><p class='ea-info'>Tryk for at tænde, tryk igen for at slukke. Det, der er tændt, lyser gult. Flere kan være tændt på én gang.</p>" +
       "<div class='ar-gitter'>" + Object.keys(AR_EFFEKTER).map(function (k) {
         return "<button data-ar-effekt='" + k + "'" + (ef[k] ? " class='lys-valgt ar-valgt'" : "") + ">" + AR_EFFEKTER[k] + (ef[k] ? " ✓" : "") + "</button>";
       }).join("") + "</div><div class='ea-hj-knapper'><button data-ar-effekt='finale'>🎉 Finale (konfetti, fyrværkeri og glitter)</button>" +
@@ -964,7 +1031,23 @@
       });
     });
     krop.querySelectorAll("[data-ar-scene]").forEach(function (k) {
-      k.addEventListener("click", function () { saetArena({ scene: k.dataset.arScene }).then(igen); igen(); });
+      k.addEventListener("click", function () {
+        // tryk på det lys, der allerede er tændt = sluk det (tilbage til normalt varmt lys)
+        const ny = k.dataset.arScene === ar.scene && ar.scene !== "varm" ? "varm" : k.dataset.arScene;
+        saetArena({ scene: ny }).then(igen); igen();
+      });
+    });
+    // lysdæmperen: rummet ændrer sig mens man trækker, og serveren får besked, når man slipper
+    krop.querySelectorAll("[data-ar-daemp]").forEach(function (sk) {
+      const tekst = sk.parentNode.querySelector("b");
+      sk.addEventListener("input", function () {
+        ar.daemp = Number(sk.value); arSidstLokal = Date.now();
+        tekst.textContent = ar.daemp ? "Mørkere: " + ar.daemp + " %" : "Fuldt lys";
+      });
+      sk.addEventListener("change", function () { saetArena({ daemp: Number(sk.value) }).then(igen); sk.blur(); igen(); });
+    });
+    krop.querySelectorAll("[data-ar-daemp-trin]").forEach(function (k) {
+      k.addEventListener("click", function () { saetArena({ daemp: Number(k.dataset.arDaempTrin) }).then(igen); igen(); });
     });
     krop.querySelectorAll("[data-ar-vis]").forEach(function (k) {
       k.addEventListener("click", function () {
@@ -1018,6 +1101,9 @@
         const hvad = k.dataset.ar;
         if (hvad === "gaa") { if (api && api.gaaTil) api.gaaTil(ARENA_ID); else gaaTilVaerelse(ARENA_ID); return; }
         if (hvad === "skiltvaek") saetArena({ skilt: "" }).then(igen);
+        if (hvad === "naeste") skiftBane("");
+        if (hvad === "slukalt") { saetArena({ effekter: {}, scene: "varm", daemp: 0 }).then(igen); if (api && api.besked) api.besked("⏻ Alle effekter er slukket, og lyset er normalt igen."); }
+        if (hvad === "allelogo") saetArena({ skaerm: { id: "alle" } }).then(igen);
         if (hvad === "regler" && bane) sig("🏟 " + bane.navn + ": " + bane.regler.map(function (r, i) { return (i + 1) + ") " + r; }).join(" "));
         igen();
       });
@@ -1104,6 +1190,17 @@
     ".ea-faner { background: #2b0c15 !important; box-shadow: 0 6px 12px rgba(0,0,0,.55); }" +
     ".ar-gitter { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }" +
     ".ar-gitter button { padding: 9px 4px; border-radius: 9px; cursor: pointer; font-weight: 600; }" +
+    ".ar-hurtig { margin: 0 0 10px; padding: 8px; border: 2px solid #d9a441; border-radius: 12px; background: rgba(0,0,0,.25); }" +
+    ".ar-hurtig > small { display: block; font-weight: bold; color: #ffd27a; margin-bottom: 4px; }" +
+    ".ar-daemper { display: flex; align-items: center; gap: 6px; margin: 8px 0 6px; } .ar-daemper input { flex: 1; min-width: 0; accent-color: #d9a441; }" +
+    ".ar-daemper b { font-size: 11px; min-width: 78px; text-align: right; }" +
+    ".ar-hurtig-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }" +
+    ".ar-sluk { padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; background: #e0283c !important; color: #fff !important; border: 2px solid #ffd27a; }" +
+    ".ar-hr button.ar-valgt { box-shadow: 0 0 10px #ffd27a; }" +
+    ".ar-hr { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0; }" +
+    ".ar-hr > span { width: 42px; font-size: 11px; opacity: .85; }" +
+    ".ar-hr button { min-width: 34px; height: 34px; padding: 0 6px; border-radius: 8px; cursor: pointer; font-size: 17px; line-height: 1; }" +
+    ".ar-hr-store button { flex: 1 1 auto; font-size: 12px; font-weight: bold; }" +
     ".ar-regler { margin: 4px 0 8px; padding-left: 22px; font-size: 12px; }";
   document.head.appendChild(stil);
 

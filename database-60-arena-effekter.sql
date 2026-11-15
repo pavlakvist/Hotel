@@ -1,6 +1,7 @@
 -- HELLO VERA, del 60: ✨ Vera arena får flere lys og effekter
 -- - Nye lys på scenen: Søgelys, Disko, Puls, Farveskift og Stroboskop.
 -- - Effekter, der kan tændes og slukkes: røg, konfetti, sæbebobler, flammer, fyrværkeri, snefald, hjerter og glitter.
+-- - Lysdæmper: gør hele rummet mørkere eller lysere (0 = fuldt lys, 85 = næsten mørkt).
 -- Kør database-58-vera-arena.sql FØRST (det har du allerede gjort).
 -- Kopiér ALT herfra → Supabase → SQL Editor → + New query → Run. Må gerne køres flere gange.
 
@@ -27,6 +28,9 @@ begin
     -- kun de kendte effekter, og kun "tændt" (true) gemmes
     t := t || jsonb_build_object('effekter', coalesce((select jsonb_object_agg(e.noegle, true) from jsonb_each(p_del->'effekter') e(noegle, vaerdi)
       where e.noegle in ('roeg', 'konfetti', 'bobler', 'ild', 'fyrvaerkeri', 'sne', 'hjerter', 'glitter') and e.vaerdi = 'true'::jsonb), '{}'::jsonb));
+  end if;
+  if p_del ? 'daemp' then
+    t := t || jsonb_build_object('daemp', greatest(0, least(85, coalesce(round((p_del->>'daemp')::numeric)::int, 0))));
   end if;
   if p_del ? 'skilt' then
     tekst := left(trim(coalesce(p_del->>'skilt', '')), 80);
