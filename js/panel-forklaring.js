@@ -610,3 +610,13 @@ document.head.appendChild(forklaringStil);
   s.src = "js/test-botter.js?t=" + Date.now();   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎡 Vera Festival (js/vera-festival.js): det store udendørs festivalområde med Hovedscene, Spil-strøget, Festival-gaden
+// og Oplevelsesområdet. Ejeren, Eventværter og Eventfolk styrer alt fra appen "Festival" (lys på hver bod, scene,
+// lyskæder, skærme, effekter, program). Gæster får appen "Vera Festival" med programmet. Kræver database-61-vera-festival.sql.
+(function () {
+  if (document.querySelector("script[src^='js/vera-festival.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vera-festival.js?t=" + Date.now();   // hentes altid frisk
+  document.body.appendChild(s);
+})();
