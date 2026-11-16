@@ -67,6 +67,31 @@
         { type: "ar-deltagerpult", x: 13, y: 8, retning: 0 },
         { type: "ar-mysteriekasse", x: 6, y: 11 }, { type: "ar-mysteriekasse", x: 9, y: 11 }, { type: "ar-mysteriekasse", x: 12, y: 11 },
       ] },
+    { id: "awards", navn: "Awards show", ikon: "🏆", tid: "20–40 min", folk: "alle", tema: "awards",
+      om: "Prisuddeling med rød løber, VIP-sofaer til de nominerede, pokaler og vinderpodie. Brug konfetti, fyrværkeri og lys, når vinderen bliver råbt op!",
+      regler: ["De nominerede sidder i VIP-sofaerne, publikum sidder på tribunerne.", "Værten står ved værtspulten og siger kategorien (skriv den på storskærmen).",
+        "Tæl ned med ⏱ 5 og sig vinderen. Tryk 🎉 Finale!", "Vinderen går ad den røde løber op til scenen og stiller sig på podiet."],
+      moebler: [
+        // rød løber fra publikum op til scenen, med reb på begge sider
+        { type: "ev-loeber", x: 9, y: 6, retning: 0 }, { type: "ev-loeber", x: 9, y: 9, retning: 0 },
+        { type: "ev-loeber", x: 10, y: 6, retning: 0 }, { type: "ev-loeber", x: 10, y: 9, retning: 0 },
+        { type: "ev-afspaerring", x: 8, y: 7, retning: 1 }, { type: "ev-afspaerring", x: 8, y: 10, retning: 1 },
+        { type: "ev-afspaerring", x: 11, y: 7, retning: 1 }, { type: "ev-afspaerring", x: 11, y: 10, retning: 1 },
+        // pokaler og konfettikanoner ved løberens ende
+        { type: "ev-pokal", x: 8, y: 6 }, { type: "ev-pokal", x: 11, y: 6 },
+        { type: "ev-konfettikanon", x: 7, y: 6 }, { type: "ev-konfettikanon", x: 12, y: 6 },
+        // de nominerede i VIP-sofaer til venstre
+        { type: "ev-vip-sofa", x: 4, y: 7, retning: 1 }, { type: "ev-vip-sofa", x: 4, y: 9, retning: 1 },
+        { type: "ev-vip-sofa", x: 6, y: 7, retning: 1 }, { type: "ev-vip-sofa", x: 6, y: 9, retning: 1 },
+        // vinderpodie og fotovæg til højre
+        { type: "ev-podie", x: 13, y: 7, retning: 0 },
+        { type: "ev-fotovaeg", x: 13, y: 10, retning: 0 }, { type: "ev-kamera", x: 14, y: 11 },
+        { type: "ev-champagnetaarn", x: 15, y: 9 }, { type: "ev-folieballoner", x: 15, y: 6 },
+        { type: "ev-spotlight", x: 4, y: 11 }, { type: "ev-spotlight", x: 15, y: 11 },
+        // blomster i guldurner foran scenen
+        { type: "ev-blomster", x: 5, y: 4 }, { type: "ev-blomster", x: 14, y: 4 },
+        { type: "ev-blomster", x: 8, y: 4 }, { type: "ev-blomster", x: 11, y: 4 },
+      ] },
   ];
 
   // =============================================================
@@ -121,6 +146,8 @@
   }
   // ligner teksten et link? (links skal aldrig stå som tekst på skærmene)
   function erLink(t) { return /https?:\/\/|www\.|youtu\.?be|\.com\b|\.dk\b/i.test(String(t || "")); }
+  // Banens tema (fx "awards"): så skifter hele arenaen udseende (vægge, gulv, scene og skærme)
+  function arTema() { const b = find(ar.bane); return (b && b.tema) || ""; }
   function find(id) { return ARENA_BANER.find(function (b) { return b.id === id; }) || null; }
   function lilleNavn(t) {
     return String(t || "").toLowerCase().replace(/æ/g, "ae").replace(/ø/g, "oe").replace(/å/g, "aa").replace(/[^a-z0-9]/g, "");
@@ -450,7 +477,7 @@
     tegnGulv = function () {
       tegnGulvFoerArena.apply(this, arguments);
       if (!iArena()) return;
-      try { tegnScene(); tegnBanen(); } catch (e) { console.warn(e); }
+      try { if (arTema() === "awards") tegnAwardsGulv(); tegnScene(); tegnBanen(); } catch (e) { console.warn(e); }
     };
     // ----- effekterne tegnes oven på figurerne (men under talebobler) -----
     if (typeof tegnBobler === "function") {
@@ -465,6 +492,7 @@
     tegnVaegge = function () {
       tegnVaeggeFoerArena.apply(this, arguments);
       if (!iArena()) return;
+      try { if (arTema() === "awards") tegnAwardsVaegge(); } catch (e) { console.warn(e); }
       try { AR_SKAERME.forEach(tegnSkaerm); } catch (e) { console.warn(e); }
     };
   }
@@ -472,6 +500,85 @@
   // =============================================================
   //  Tegning: scenen, banen og skærmene
   // =============================================================
+  // ----- 🏆 Awards-looket -----
+  function stjerne(cx, cy, R, r, farve) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const v = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r : R;
+      ctx.lineTo(cx + Math.cos(v) * rr, cy + Math.sin(v) * rr);
+    }
+    ctx.closePath(); ctx.fillStyle = farve; ctx.fill();
+  }
+  // Gulvet: dyb rød fløjlstæppe med guldmønster og "walk of fame"-stjerner langs løberen
+  function tegnAwardsGulv() {
+    const B = RUM.bredde, D = RUM.dybde;
+    ctx.save();
+    for (let x = 0; x < B; x++) for (let y = 0; y < D; y++) {
+      if (typeof erIRummet === "function" && !erIRummet(x, y)) continue;
+      polygon(ctx, diamant(x, y), (x + y) % 2 ? "#5a0f1e" : "#510d1b");
+      if ((x + y) % 2 === 0) {
+        const m = punkt(x + 0.5, y + 0.5);
+        ctx.save(); ctx.translate(m.x, m.y); ctx.scale(1, 0.5);
+        ctx.strokeStyle = "rgba(217,164,65,0.35)"; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(11, 0); ctx.lineTo(0, 11); ctx.lineTo(-11, 0); ctx.closePath(); ctx.stroke();
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  }
+  function tegnAwardsGulvStjerner() {
+    [[7, 7], [7, 10], [12, 7.5], [12, 10.5], [5, 5], [14.5, 5]].forEach(function (p) {
+      const m = punkt(p[0] + 0.5, p[1] + 0.5);
+      ctx.save(); ctx.translate(m.x, m.y); ctx.scale(1, 0.5);
+      stjerne(0, 0, 18, 7.5, "#d9a441"); stjerne(0, 0, 12, 5, "#ffe39a");
+      ctx.restore();
+    });
+  }
+  // Væggene: røde fløjlsgardiner med guldkant foroven og guldsnore (døren holdes fri)
+  function tegnAwardsVaegge() {
+    const B = RUM.bredde, D = RUM.dybde, vh = RUM.vaegHoejde || 300, doer = RUM.doer || { x: 0, y: 14 };
+    const nu = arNu();
+    ctx.save();
+    function strimmel(a, b, i, laengde) {
+      // et stykke gardin fra punkt a til b, hele væggens højde
+      const fold = 0.5 + 0.5 * Math.sin(i * 1.7);
+      const g = ctx.createLinearGradient(a.x, a.y - vh, a.x, a.y);
+      const lys = Math.round(70 + fold * 50);
+      g.addColorStop(0, "rgb(" + Math.round(lys * 0.9) + ",8,22)");
+      g.addColorStop(1, "rgb(" + Math.round(lys * 0.55) + ",4,12)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y - vh); ctx.lineTo(b.x, b.y - vh); ctx.lineTo(b.x, b.y); ctx.lineTo(a.x, a.y); ctx.closePath(); ctx.fill();
+    }
+    const trin = 0.5;
+    // bagvæggen (y = 0)
+    for (let f = 0, i = 0; f < B; f += trin, i++) strimmel(punkt(f, 0), punkt(f + trin, 0), i);
+    // venstre væg (x = 0), men ikke ved døren
+    for (let f = 0, i = 0; f < D; f += trin, i++) {
+      if (f >= doer.y - 0.5 && f < doer.y + 1.5) continue;
+      if (typeof ELEVATOR !== "undefined" && ELEVATOR.fra != null && f + trin > ELEVATOR.fra - 0.15 && f < ELEVATOR.til + 0.15) continue;   // elevatoren holdes fri
+      strimmel(punkt(0, f + trin), punkt(0, f), i + 3);
+    }
+    // guldkant foroven med frynser + en svag glans
+    ctx.lineWidth = 7; ctx.strokeStyle = "#d9a441";
+    ctx.beginPath();
+    const p0 = punkt(0, D), p1 = punkt(0, 0), p2 = punkt(B, 0);
+    ctx.moveTo(p0.x, p0.y - vh + 10); ctx.lineTo(p1.x, p1.y - vh + 10); ctx.lineTo(p2.x, p2.y - vh + 10); ctx.stroke();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#ffe39a";
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y - vh + 7); ctx.lineTo(p1.x, p1.y - vh + 7); ctx.lineTo(p2.x, p2.y - vh + 7); ctx.stroke();
+    // små blinkende stjerner højt oppe på gardinerne
+    for (let i = 0; i < 22; i++) {
+      const paaBag = i % 2 === 0, f = 0.7 + (i * 0.83) % (paaBag ? B - 1 : D - 3);
+      const p = paaBag ? punkt(f, 0) : punkt(0, f);
+      const h = vh - 30 - ((i * 37) % 50);
+      const a = 0.35 + 0.35 * Math.sin(nu / 400 + i * 1.3);
+      stjerne(p.x, p.y - h, 5, 2.2, "rgba(255,227,154," + a.toFixed(2) + ")");
+    }
+    // guldsnore i bunden af gardinerne
+    ctx.lineWidth = 3; ctx.strokeStyle = "rgba(217,164,65,0.8)";
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y - 4); ctx.lineTo(p1.x, p1.y - 4); ctx.lineTo(p2.x, p2.y - 4); ctx.stroke();
+    ctx.restore();
+  }
   function omraadeHjoerner(o) { return [punkt(o.x0, o.y0), punkt(o.x0 + o.b, o.y0), punkt(o.x0 + o.b, o.y0 + o.d), punkt(o.x0, o.y0 + o.d)]; }
   function kantLinje(h, farve, bredde) {
     ctx.strokeStyle = farve; ctx.lineWidth = bredde;
@@ -483,10 +590,16 @@
     // blankt mørkt scenegulv (planker)
     for (let x = s.x0; x < s.x0 + s.b; x++) for (let y = s.y0; y < s.y0 + s.d; y++) {
       if (!erIRummet(x, y)) continue;
-      polygon(ctx, diamant(x, y), (x + y) % 2 ? "#3a2118" : "#331c14");
+      polygon(ctx, diamant(x, y), arTema() === "awards" ? ((x + y) % 2 ? "#c99a3c" : "#b8862e") : (x + y) % 2 ? "#3a2118" : "#331c14");
       const a = punkt(x, y + 0.5), b = punkt(x + 1, y + 0.5);
       ctx.strokeStyle = "rgba(0,0,0,0.25)"; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    if (arTema() === "awards") {
+      // en stor guldstjerne midt på scenen
+      const m = punkt(s.x0 + s.b / 2, s.y0 + s.d / 2);
+      ctx.save(); ctx.translate(m.x, m.y); ctx.scale(1, 0.5);
+      stjerne(0, 0, 70, 30, "rgba(255,240,200,0.55)"); ctx.restore();
     }
     // lyset på scenen
     const lys = ar.scene || "varm";
@@ -733,7 +846,7 @@
     ctx.save();
     for (let x = b.x0; x < b.x0 + b.b; x++) for (let y = b.y0; y < b.y0 + b.d; y++) {
       if (!erIRummet(x, y)) continue;
-      polygon(ctx, diamant(x, y), (x + y) % 2 ? "#3d1621" : "#36131d");
+      polygon(ctx, diamant(x, y), arTema() === "awards" ? ((x + y) % 2 ? "#161012" : "#0e0a0b") : (x + y) % 2 ? "#3d1621" : "#36131d");
     }
     // tynde guldlinjer mellem felterne og en tyk guldkant rundt om banen
     ctx.strokeStyle = "rgba(217,164,65,0.18)"; ctx.lineWidth = 1;
@@ -742,6 +855,7 @@
     for (let y = b.y0; y <= b.y0 + b.d; y++) { const p = punkt(b.x0, y), q = punkt(b.x0 + b.b, y); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); }
     ctx.stroke();
     kantLinje(omraadeHjoerner(b), "#d9a441", 3);
+    if (arTema() === "awards") tegnAwardsGulvStjerner();
     const h = omraadeHjoerner(b);
     h.forEach(function (p) {
       ctx.fillStyle = "#ffd27a"; ctx.shadowColor = "#ffd27a"; ctx.shadowBlur = 8;
@@ -808,7 +922,7 @@
       const nu = arNu();
       ctx.fillStyle = "#e9c46a"; ctx.shadowColor = "#ffb84a"; ctx.shadowBlur = 14 + 6 * Math.sin(nu / 500);
       ctx.font = "bold " + (s.id === "midt" ? 88 : 76) + "px Georgia, serif";
-      ctx.fillText("VERA ARENA", W / 2, H / 2 - 30);
+      ctx.fillText(arTema() === "awards" ? "VERA AWARDS" : "VERA ARENA", W / 2, H / 2 - 30);
       ctx.shadowBlur = 0;
       ctx.fillStyle = "#f3e6cc"; ctx.font = "30px Georgia, serif";
       ctx.fillText(bane ? bane.ikon + "  " + bane.navn : "", W / 2, H / 2 + 50);
@@ -845,9 +959,62 @@
     });
     return bedst ? bedst.id : null;
   }
-  function ytKommando(f, func) {
-    try { f.el.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: [] }), "*"); } catch (e) {}
+  function ytKommando(f, func, args) {
+    try { f.el.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*"); } catch (e) {}
   }
+  // =============================================================
+  //  🔄 YouTube-synk: alle ser videoen det SAMME sted (også dem, der kommer ind senere)
+  //  Delt hjælper: window.veraYtSync.lyt(iframe) + window.veraYtSync.synk(iframe, startetMs, nuMs) kan bruges af andre rum.
+  // =============================================================
+  const ytInfo = new WeakMap();   // iframe -> { tid, laengde, tilstand, set }
+  window.addEventListener("message", function (e) {
+    if (!/youtube(-nocookie)?\.com$/.test(String(e.origin || "").replace(/^https?:\/\/(www\.)?/, ""))) return;
+    let d = e.data;
+    try { if (typeof d === "string") d = JSON.parse(d); } catch (x) { return; }
+    if (!d || !d.info) return;
+    const f = Array.prototype.find.call(document.querySelectorAll("iframe"), function (x) { return x.contentWindow === e.source; });
+    if (!f) return;
+    const i = ytInfo.get(f) || {};
+    if (typeof d.info.currentTime === "number") { i.tid = d.info.currentTime; i.set = Date.now(); }
+    if (typeof d.info.duration === "number" && d.info.duration > 0) i.laengde = d.info.duration;
+    if (typeof d.info.playerState === "number") i.tilstand = d.info.playerState;
+    ytInfo.set(f, i);
+  });
+  function ytSend(el, func, args) {
+    try { el.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*"); } catch (e) {}
+  }
+  const veraYtSync = {
+    // bed YouTube-afspilleren om at fortælle, hvor langt den er (kaldes, når iframen er indlæst)
+    lyt: function (el) {
+      ytInfo.set(el, {});
+      const spoerg = function () { try { el.contentWindow.postMessage(JSON.stringify({ event: "listening", id: el.title || "vera" }), "*"); } catch (e) {} };
+      el.addEventListener("load", function () { ytInfo.set(el, {}); spoerg(); setTimeout(spoerg, 800); setTimeout(spoerg, 2500); });
+    },
+    // hvor langt videoen SKAL være nu (sekunder)
+    position: function (startetMs, nuMs) { return Math.max(0, ((nuMs || Date.now()) - startetMs) / 1000); },
+    // ret afspilleren til, hvis den er mere end 2,5 sek forkert, eller sluk den, når videoen er slut hos alle
+    synk: function (el, startetMs, nuMs) {
+      const i = ytInfo.get(el);
+      if (!i || i.tid == null || !el.src) return;
+      const skal = veraYtSync.position(startetMs, nuMs);
+      const nuTid = i.tid + (i.tilstand === 1 ? (Date.now() - i.set) / 1000 : 0);
+      if (i.laengde && skal >= i.laengde - 0.5) {
+        if (i.tilstand !== 0 && i.tilstand !== 2) ytSend(el, "pauseVideo"), ytSend(el, "seekTo", [Math.max(0, i.laengde - 0.3), true]);
+        return;
+      }
+      if (Math.abs(nuTid - skal) > 2.5) { ytSend(el, "seekTo", [skal, true]); ytSend(el, "playVideo"); i.tid = skal; i.set = Date.now(); }
+      else if (i.tilstand === 2 || i.tilstand === 5 || i.tilstand === -1) ytSend(el, "playVideo");
+    },
+  };
+  window.veraYtSync = veraYtSync;
+  AR_SKAERME.forEach(function (s) { veraYtSync.lyt(arIframes[s.id].el); });
+  setInterval(function () {
+    if (!iframesSat || !iArena()) return;
+    AR_SKAERME.forEach(function (s) {
+      const f = arIframes[s.id], d = skaermData(s.id);
+      if (f.v && d.v === f.v && d.t) veraYtSync.synk(f.el, d.t, arNu());
+    });
+  }, 2000);
   function opdaterSkaerme(tving) {
     if (!iframesSat) return;
     const lyd = lydSkaerm();
@@ -865,8 +1032,13 @@
       }
       f.v = d.v; f.n = d.n; f.lyd = s.id === lyd;
       const start = Math.max(0, Math.floor((arNu() - (d.t || arNu())) / 1000));
+      // starter altid uden lyd (så må browseren afspille med det samme), og lyden tændes bagefter, hvis man har klikket på siden
       f.el.src = "https://www.youtube-nocookie.com/embed/" + d.v + "?autoplay=1&controls=0&rel=0&playsinline=1&enablejsapi=1&start=" + start +
-        (f.lyd ? "" : "&mute=1") + "&origin=" + encodeURIComponent(location.origin);
+        "&mute=1&origin=" + encodeURIComponent(location.origin);
+      if (f.lyd) setTimeout(function () {
+        const aktiv = navigator.userActivation ? navigator.userActivation.hasBeenActive : false;
+        if (f.lyd && aktiv) ytKommando(f, "unMute");
+      }, 1500);
     });
   }
   // læg skærmene præcis over hullerne i væggen (følger med, når man trækker og zoomer)
@@ -901,6 +1073,8 @@
   lydKnap.addEventListener("click", function () {
     const lyd = lydSkaerm();
     if (!lyd) return;
+    const d = skaermData(lyd);
+    if (d.t) ytKommando(arIframes[lyd], "seekTo", [veraYtSync.position(d.t, arNu()), true]);   // hop hen hvor de andre er
     ytKommando(arIframes[lyd], "unMute"); ytKommando(arIframes[lyd], "playVideo");
     lydTrykket[lyd + skaermData(lyd).n] = true;
     lydKnap.hidden = true;
@@ -924,7 +1098,7 @@
     else if (ar.nedtael && nu - ar.nedtael < 2500) html += "<div class='as-tal'>GO! 🏁</div>";
     if (ar.skilt && ar.skilt.tekst) html += "<div class='as-stor'>" + esc(ar.skilt.tekst) + "</div>";
     if (!html) { skilt.hidden = true; return; }
-    html = "<div class='as-top'>🏟 VERA ARENA</div>" + html;
+    html = "<div class='as-top'>" + (arTema() === "awards" ? "🏆 VERA AWARDS" : "🏟 VERA ARENA") + "</div>" + html;
     skilt.hidden = false;
     if (skilt.innerHTML !== html) skilt.innerHTML = html;
   }

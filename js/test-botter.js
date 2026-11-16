@@ -4,8 +4,16 @@
 //
 //  • Lav så mange botter, du vil (Bot-1, Bot-2 …). De står i dit rum, rundt om dig.
 //  • Alle på hotellet kan se dem, ligesom rigtige spillere (med 🤖 foran navnet).
-//  • Botterne kan: stå stille, gå rundt, eller jage lyset i 💡 Lysreaktion.
+//  • Botterne kan: stå stille, gå rundt, eller 🎮 Spil med.
 //    De kan også sige noget i chatten (og svare på quizzen med :S).
+//  • 🎮 Spil med = botten spiller med i det spil, der er i rummet:
+//      💡 Lysreaktion  – jager lyset (som før).
+//      🏟 Vera arena   – Forhindringsbane: går til START under nedtællingen og løber til MÅL ved GO.
+//                        Rød eller Guld: vælger RØD eller GULD under nedtællingen (nogle er for langsomme).
+//                        Buzzer-quiz: de 5 første står ved pultene og svarer på spørgsmålene i chatten.
+//      Chat-legene fra Event-appen (i alle rum): Quiz, Hurtigst til at skrive, Bingo, Gæt et tal og Frys-dans.
+//      Skriver værten fx "Bot-3 er ude", går Bot-3 ud af spillet. "Alle er med igen" henter dem ind igen.
+//      ❓ Hotel-quizzen: botterne gætter med, men ALTID forkert, så de aldrig tager runden fra en rigtig spiller.
 //  • 🖱 Flyt med klik: vælg en bot, og klik på et felt i rummet.
 //  • 🗑 Slet en bot, eller 🗑 Slet alle botter. Listen viser ALTID alle botter,
 //    også dem du laver senere, så du altid kan slette dem igen.
@@ -98,8 +106,9 @@
   const ADFAERD = {
     staa: { ikon: "🧍", navn: "Stå stille" },
     gaa: { ikon: "🚶", navn: "Gå rundt" },
-    lys: { ikon: "💡", navn: "Jag lyset" },
+    lys: { ikon: "🎮", navn: "Spil med" },   // hed før "Jag lyset" – nu spiller den med i alle spil (serveren kender den som "lys")
   };
+  const ARENA_RUM = "arena";
 
   const botter = {};          // navn -> { navn, token, rum, x, y, retning, figur, vis, adfaerd, online, rute }
   let hentet = false, henter = false, fejl = "", besked = "";
@@ -211,19 +220,333 @@
     return tagSkridt(b);
   }
 
-  let sidstPuls = 0, pulser = false;
+  // =============================================================
+  //  🎮 Spil med
+  // =============================================================
+  function feltI(x0, x1, y0, y1) {
+    for (let i = 0; i < 40; i++) {
+      const x = x0 + Math.floor(Math.random() * (x1 - x0 + 1)), y = y0 + Math.floor(Math.random() * (y1 - y0 + 1));
+      if (kanGaaHer(x, y)) return { x: x, y: y };
+    }
+    return null;
+  }
+  // gå hen mod b.maalFelt (finder selv vejen; er der ingen vej, hopper den derhen – kun til test)
+  function gaaHen(b) {
+    const m = b.maalFelt;
+    if (!m) return tagSkridt(b);
+    if (b.x === m.x && b.y === m.y) { b.rute = []; return false; }
+    const sidste = b.rute.length ? b.rute[b.rute.length - 1] : null;
+    if (!sidste || sidste.x !== m.x || sidste.y !== m.y) {
+      ruteTil(b, m.x, m.y);
+      if (!b.rute.length) b.rute = [{ x: m.x, y: m.y }];
+    }
+    return tagSkridt(b);
+  }
+  function nulstilSpil(b) { b.rute = []; b.lysRunde = null; b.maalFelt = null; b.arNed = null; b.arBane = null; b.ude = false; }
+  function spillerMed(b) { return b.vis && b.adfaerd === "lys"; }
+
+  // Botten siger noget i chatten (efter lidt tid, så det ser ud, som om den skriver)
+  function botSiger(b, tekst, efter) {
+    setTimeout(function () {
+      if (!botter[b.navn] || !b.vis || !kanServer()) return;
+      serverKald("hv_chat_send", { p_token: b.token, p_rum: b.rum, p_tekst: tekst, p_boble: null }).catch(function () {});
+    }, efter || 0);
+  }
+  function tilf(liste) { return liste[Math.floor(Math.random() * liste.length)]; }
+  function bland(liste) {
+    const l = liste.slice();
+    for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = l[i]; l[i] = l[j]; l[j] = t; }
+    return l;
+  }
+
+  // ---------- 🏟 Vera arena ----------
+  const AR_PULTE = [[5, 7], [7, 7], [9, 7], [11, 7], [13, 7]];   // guldpladerne bag buzzer-pultene
+  const maalI = {};   // nedtælling → hvor mange botter er kommet i mål
+  function arenaTilstand() { try { return window.veraArena && window.veraArena.hent ? window.veraArena.hent() : null; } catch (e) { return null; } }
+  function tilskuer(b) {   // ude eller ikke med: stil dig foran tribunerne og se på
+    if (!b.maalFelt || b.maalFelt.y !== 12) b.maalFelt = feltI(4, 15, 12, 12) || feltI(4, 15, 12, 13);
+    return gaaHen(b);
+  }
+  function arenaSpil(b, langsom) {
+    const ar = arenaTilstand();
+    if (!ar) return langsom ? gaaRundt(b, 0.1) : false;
+    const bane = ar.bane || "tom";
+    const noegle = bane + "|" + (ar.baneTid || 0);
+    if (b.arBane !== noegle) { b.arBane = noegle; b.ude = false; b.maalFelt = null; b.arNed = null; b.rute = []; }   // ny bane = alle er med igen
+    if (b.ude) return langsom ? tilskuer(b) : false;
+    const nu = Date.now();
+    const ned = Number(ar.nedtael) || 0;
+
+    if (bane === "forhindring") {
+      if (ned && nu < ned) {
+        // nedtællingen: stil dig på START
+        if (b.arNed !== ned) {
+          b.arNed = ned; b.iMaal = false;
+          b.maalFelt = feltI(4, 4, 6, 11);
+          b.fart = 0.45 + Math.random() * 0.5;           // hvor hurtig botten løber
+          b.reager = ned + 150 + Math.random() * 1500;    // hvor hurtigt den opdager GO
+        }
+        return gaaHen(b);
+      }
+      if (ned && b.arNed === ned && !b.iMaal && nu - ned < 90000) {
+        // GO! løb til MÅL
+        if (nu < b.reager) return false;
+        if (!b.maalFelt || b.maalFelt.x !== 15) { b.maalFelt = feltI(15, 15, 6, 11); b.rute = []; }
+        if (!b.maalFelt) return false;
+        if (Math.random() > b.fart) return false;
+        const flyttet = gaaHen(b);
+        if (b.x === b.maalFelt.x && b.y === b.maalFelt.y) {
+          b.iMaal = true;
+          maalI[ned] = (maalI[ned] || 0) + 1;
+          if (maalI[ned] === 1) botSiger(b, "🏁 I mål!", 200);
+          else if (Math.random() < 0.3) botSiger(b, tilf(["Puh 😅", "Det var tæt på!", "Godt løb alle sammen 👏", "Igen igen!"]), 400 + Math.random() * 1500);
+        }
+        return flyttet;
+      }
+      return langsom ? gaaHen(b) : false;
+    }
+
+    if (bane === "roedguld") {
+      if (ned && nu < ned + 600 && b.arNed !== ned) {
+        // hver bot bestemmer sig efter et stykke tid (nogle når det ikke)
+        if (b.rgNed !== ned) { b.rgNed = ned; b.rgVent = nu + 400 + Math.random() * Math.max(800, (ned - nu) * 1.05); }
+        if (nu < b.rgVent) return false;
+        b.arNed = ned;
+        b.maalFelt = Math.random() < 0.5 ? feltI(5, 8, 6, 11) : feltI(11, 14, 6, 11);
+        b.rute = [];
+      }
+      if (b.maalFelt) return gaaHen(b);
+      return langsom ? gaaRundt(b, 0.1) : false;
+    }
+
+    if (bane === "quiz") {
+      const med = Object.values(botter).filter(function (x) { return spillerMed(x) && x.rum === ARENA_RUM && !x.ude; })
+        .sort(function (a, c) { return a.navn.localeCompare(c.navn, "da", { numeric: true }); });
+      const i = med.indexOf(b);
+      b.paaPult = i >= 0 && i < AR_PULTE.length;
+      if (b.paaPult) {
+        const p = AR_PULTE[i];
+        if (!b.maalFelt || b.maalFelt.x !== p[0] || b.maalFelt.y !== p[1]) { b.maalFelt = { x: p[0], y: p[1] }; b.rute = []; }
+        return langsom ? gaaHen(b) : false;
+      }
+      return langsom ? tilskuer(b) : false;
+    }
+    return langsom ? gaaRundt(b, 0.2) : false;   // tom bane: dans lidt rundt
+  }
+
+  // ---------- 🎉 Chat-legene (Event-appen) i alle andre rum ----------
+  const fest = { frys: false, dans: false, bingo: null, gaet: null, quizNr: 0, quizLoest: 0 };
+  function festSpil(b, langsom) {
+    if (b.ude) return false;
+    if (fest.frys) {
+      // nogle botter er lidt for langsomme til at stoppe (og bliver måske taget i det!)
+      if (b.frysFejl && Date.now() < b.frysFejl) return langsom ? gaaRundt(b, 1) : false;
+      b.rute = [];
+      return false;
+    }
+    return langsom ? gaaRundt(b, fest.dans ? 0.5 : 0.15) : false;
+  }
+
+  function ren(t) { return String(t || "").toLowerCase().replace(/\([^)]*\)/g, "").replace(/[^a-z0-9æøåäöüé]/g, ""); }
+  function svarTekst(s) { return String(s || "").replace(/\s*\([^)]*\)\s*/g, " ").trim(); }
+  function quizLister() {
+    const lister = [];
+    if (Array.isArray(window.VERA_QUIZ)) lister.push(window.VERA_QUIZ);
+    (window.EA_LEGE || []).forEach(function (l) {
+      if (l.hjaelper === "spoergsmaal" && Array.isArray(l.liste) && Array.isArray(l.liste[0])) lister.push(l.liste);
+    });
+    return lister;
+  }
+  function findSpoergsmaal(tekst) {
+    const t = ren(tekst);
+    if (t.length < 8) return null;
+    const lister = quizLister();
+    for (let i = 0; i < lister.length; i++) {
+      for (let j = 0; j < lister[i].length; j++) {
+        const q = ren(lister[i][j][0]);
+        if (q.length >= 8 && t.indexOf(q) >= 0) return { svar: lister[i][j][1], liste: lister[i] };
+      }
+    }
+    return null;
+  }
+  function findOrd(tekst) {
+    const leg = (window.EA_LEGE || []).find(function (l) { return l.id === "ord"; });
+    if (!leg || !Array.isArray(leg.liste) || tekst.length > 60) return null;
+    const ordene = tekst.toLowerCase().split(/[^a-zæøåäöüé]+/);
+    return leg.liste.find(function (o) { return ordene.indexOf(String(o).toLowerCase()) >= 0; }) || null;
+  }
+  function stavefejl(o) {
+    if (o.length < 4) return o;
+    const i = 1 + Math.floor(Math.random() * (o.length - 2));
+    return o.slice(0, i) + o[i + 1] + o[i] + o.slice(i + 2);
+  }
+  function eetTal(tekst) {   // er beskeden bare ét tal? (fx "42" eller "Tal: 42!")
+    const m = String(tekst).match(/^\D{0,12}?(\d{1,3})\D{0,4}$/);
+    return m ? parseInt(m[1], 10) : null;
+  }
+  function navnNaevnt(tekst, navn) {
+    return new RegExp("(^|[^a-z0-9-])" + navn.replace(/[-]/g, "\\-") + "(?![0-9])", "i").test(tekst);
+  }
+  function gaetNu(med) {
+    const g = fest.gaet;
+    if (!g || g.lo > g.hi || !med.length) return;
+    const b = tilf(med);
+    const midt = (g.lo + g.hi) / 2, spred = (g.hi - g.lo) / 3;
+    const tal = Math.max(g.lo, Math.min(g.hi, Math.round(midt + (Math.random() * 2 - 1) * spred)));
+    g.sidst = tal;
+    botSiger(b, String(tal), 1500 + Math.random() * 2500);
+  }
+
+  // Botterne "hører" alt, der bliver sagt i dit rum
+  function hoerChat(navn, tekst) {
+    if (!erEjer() || !hentet || erBot(navn)) return;
+    tekst = String(tekst || "").trim();
+    if (!tekst || tekst[0] === ":") return;
+    const her = mitRum();
+    const med = Object.values(botter).filter(function (b) { return spillerMed(b) && b.rum === her; });
+    if (!med.length) return;
+    const lille = tekst.toLowerCase();
+
+    // "Bot-3 er ude" / "Alle er med igen"
+    if (/\bude\b|\bout\b/.test(lille)) {
+      let nogen = false;
+      med.forEach(function (b) {
+        if (!navnNaevnt(tekst, b.navn)) return;
+        nogen = true; b.ude = true; b.maalFelt = null; b.rute = [];
+        if (Math.random() < 0.5) botSiger(b, tilf(["Øv 😩", "Nååå 😭", "Godt spillet!", "Næste gang 💪"]), 800 + Math.random() * 1500);
+      });
+      if (nogen) return;
+    }
+    if (/alle er med igen|alle er med|ny runde|ny leg/.test(lille)) {
+      med.forEach(function (b) { b.ude = false; b.maalFelt = null; b.rute = []; });
+      fest.frys = false;
+    }
+
+    // 🧊 Frys-dans
+    if (/frys|freeze/.test(lille)) {
+      fest.frys = true;
+      med.forEach(function (b) { b.rute = []; b.frysFejl = Math.random() < 0.15 ? Date.now() + 1300 : 0; });
+      return;
+    }
+    if (/dans|videre|musik|start|kør/.test(lille)) {
+      fest.frys = false; fest.dans = /dans|musik/.test(lille) || fest.dans;
+    }
+
+    // 🔢 Gæt et tal
+    if (/gæt (et|mit) tal|tænker på et tal|gæt et nummer/.test(lille)) {
+      fest.gaet = { lo: 1, hi: 100, sidst: null };
+      const m = lille.match(/(\d+)\s*(til|-)\s*(\d+)/);
+      if (m) { fest.gaet.lo = parseInt(m[1], 10); fest.gaet.hi = parseInt(m[3], 10); }
+      gaetNu(med);
+      return;
+    }
+    if (fest.gaet) {
+      if (/rigtigt|korrekt|vandt|vinder|tillykke/.test(lille)) { fest.gaet = null; return; }
+      const tal = eetTal(tekst);
+      if (tal !== null && !/højere|lavere/.test(lille)) { fest.gaet.sidst = tal; return; }   // en spiller gættede
+      if (fest.gaet.sidst !== null && /højere|større|op\b/.test(lille)) { fest.gaet.lo = fest.gaet.sidst + 1; gaetNu(med); return; }
+      if (fest.gaet.sidst !== null && /lavere|mindre|ned\b/.test(lille)) { fest.gaet.hi = fest.gaet.sidst - 1; gaetNu(med); return; }
+    }
+
+    // 🎱 Bingo
+    if (/bingo|banko/.test(lille) && /5 tal|fem tal|vælg|skriv/.test(lille)) {
+      fest.bingo = { trukket: {}, plader: {} };
+      med.forEach(function (b, i) {
+        const tal = bland(Array.from({ length: 75 }, function (_, n) { return n + 1; })).slice(0, 5).sort(function (a, c) { return a - c; });
+        fest.bingo.plader[b.navn] = { tal: tal, banko: false };
+        botSiger(b, tal.join(", "), 1000 + i * 400 + Math.random() * 3000);
+      });
+      return;
+    }
+    if (fest.bingo) {
+      const tal = eetTal(tekst);
+      if (tal !== null && tal >= 1 && tal <= 75) {
+        fest.bingo.trukket[tal] = true;
+        med.forEach(function (b) {
+          const p = fest.bingo.plader[b.navn];
+          if (!p || p.banko) return;
+          if (p.tal.every(function (t) { return fest.bingo.trukket[t]; })) { p.banko = true; botSiger(b, "BANKO! 🎉", 800 + Math.random() * 2500); }
+        });
+        return;
+      }
+    }
+
+    // ❓ Quiz (spørgsmålene fra Event-appen)
+    const q = findSpoergsmaal(tekst);
+    if (q) {
+      const nr = ++fest.quizNr;
+      const kan = med.filter(function (b) { return b.rum !== ARENA_RUM || !arenaTilstand() || arenaTilstand().bane !== "quiz" || b.paaPult; });
+      bland(kan).slice(0, 3).forEach(function (b) {
+        const rigtig = Math.random() < 0.5;
+        const andet = tilf(q.liste)[1];
+        const svar = svarTekst(rigtig ? q.svar : (ren(andet) === ren(q.svar) ? "Ved ikke 🤔" : andet));
+        setTimeout(function () {
+          if (fest.quizLoest === nr) return;   // en anden bot har allerede svaret rigtigt
+          if (rigtig) fest.quizLoest = nr;
+          botSiger(b, svar, 0);
+        }, 2500 + Math.random() * 6500);
+      });
+      return;
+    }
+
+    // ⌨️ Hurtigst til at skrive
+    const ord = findOrd(tekst);
+    if (ord) {
+      bland(med).slice(0, 3).forEach(function (b) {
+        botSiger(b, Math.random() < 0.25 ? stavefejl(ord) : ord, 1500 + Math.random() * 4500);
+      });
+    }
+  }
+  if (typeof sig === "function") {
+    const sigFoerBotter = sig;
+    sig = function (hvem, navn, tekst) {
+      sigFoerBotter.apply(this, arguments);
+      try { hoerChat(navn, tekst); } catch (e) {}
+    };
+  }
+
+  // ---------- ❓ Hotel-quizzen: botterne gætter med, men altid forkert ----------
+  const quizSet = {};
+  let quizHenter = false, quizForskel = 0;
+  setInterval(function () {
+    if (quizHenter || !erEjer() || !kanServer() || !hentet) return;
+    const med = Object.values(botter).filter(spillerMed);
+    if (!med.length) return;
+    quizHenter = true;
+    serverKald("hv_quiz_hent", { p_token: token() }).then(function (svar) {
+      const ru = svar && svar.runde;
+      if (svar && svar.nu) quizForskel = svar.nu - Date.now();
+      if (!ru || quizSet[ru.id]) return;
+      quizSet[ru.id] = true;
+      if (ru.vinder || Date.now() + quizForskel >= ru.slut) return;
+      const valgte = bland(med).slice(0, 3);
+      valgte.forEach(function (b) {
+        setTimeout(function () {
+          // "jeg gætter på 12" kan aldrig være det rigtige svar, så botten tager aldrig runden fra en spiller
+          serverKald("hv_quiz_svar", { p_token: b.token, p_runde: ru.id, p_svar: "jeg gætter på " + Math.floor(Math.random() * 100) }).catch(function () {});
+        }, 3000 + Math.random() * 12000);
+      });
+      if (typeof chatlogLinje === "function") {
+        chatlogLinje("🤖 " + r(valgte.map(function (b) { return b.navn; }).join(", ")) + " gætter med på hotel-quizzen (botter svarer altid forkert, så de aldrig tager præmien).", "cl-quiz");
+      }
+    }).catch(function () {}).then(function () { quizHenter = false; });
+  }, 8000);
+
+  let sidstPuls = 0, pulser = false, tik = 0;
   function bevaeg() {
     if (!erEjer() || !kanServer() || !hentet) return;
     const her = mitRum();
+    const langsom = (tik++ % 2) === 0;   // almindelig gang: hvert 2. tik. Løb i arenaen: hvert tik
     let flyttet = false;
     Object.values(botter).forEach(function (b) {
       if (!b.vis || b.rum !== her) return;
-      if (b.adfaerd === "gaa") flyttet = gaaRundt(b, 0.25) || flyttet;
-      else if (b.adfaerd === "lys" && b.rum === LYS_RUM) flyttet = jagLyset(b) || flyttet;
-      else if (b.adfaerd === "lys") flyttet = gaaRundt(b, 0.25) || flyttet;
+      if (b.adfaerd === "gaa") { if (langsom) flyttet = gaaRundt(b, 0.25) || flyttet; }
+      else if (b.adfaerd === "lys" && b.rum === LYS_RUM) { if (langsom) flyttet = jagLyset(b) || flyttet; }
+      else if (b.adfaerd === "lys" && b.rum === ARENA_RUM) flyttet = arenaSpil(b, langsom) || flyttet;
+      else if (b.adfaerd === "lys") flyttet = festSpil(b, langsom) || flyttet;
     });
     const nu = Date.now();
-    if ((flyttet || nu - sidstPuls > 4000) && !pulser) pulsNu();
+    if (((flyttet && nu - sidstPuls > 450) || nu - sidstPuls > 4000) && !pulser) pulsNu();
   }
   function pulsNu() {
     const synlige = Object.values(botter).filter(function (b) { return b.vis; });
@@ -235,7 +558,7 @@
     }) }).catch(function (e) { fejl = serverFejl(e); })
       .then(function () { pulser = false; });
   }
-  setInterval(bevaeg, 600);
+  setInterval(bevaeg, 300);
   setInterval(function () {
     if (!erEjer() || !kanServer()) return;
     if (fejl && !paaFanen()) return;   // fx hvis databasen ikke kender botter endnu: spørg kun, når fanen er åben
@@ -299,7 +622,7 @@
     const valgte = Object.values(botter).filter(function (b) { return !navne || navne.indexOf(b.navn) >= 0; });
     const rum = mitRum() || "hal";
     const felter = felterOmkringMig(valgte.length);
-    valgte.forEach(function (b, i) { b.rum = rum; b.x = felter[i].x; b.y = felter[i].y; b.rute = []; b.lysRunde = null; });
+    valgte.forEach(function (b, i) { b.rum = rum; b.x = felter[i].x; b.y = felter[i].y; nulstilSpil(b); });
     pulsNu().then(function () { faerdig("📍 " + (navne ? navne.join(", ") : "Alle botter") + " står nu i " + rumNavn(rum) + "."); });
   }
   function sig(navne, tekst) {
@@ -348,7 +671,7 @@
         flytSkilt.querySelector("button").addEventListener("click", stopFlyt);
         return;
       }
-      b.rum = mitRum() || b.rum; b.x = f.x; b.y = f.y; b.rute = []; b.lysRunde = null;
+      b.rum = mitRum() || b.rum; b.x = f.x; b.y = f.y; nulstilSpil(b);
       const navn = flytBot;
       pulsNu();
       besked = "📍 " + navn + " står nu på feltet " + f.x + ", " + f.y + ".";
@@ -363,7 +686,11 @@
   if (typeof PANEL_HJAELP !== "undefined") PANEL_HJAELP[FANE] = { titel: "🤖 Test-botter",
     tekst: "Lav botter, der står i rummene som spillere, så du kan teste spil (fx Lysreaktion med mange spillere). Kun du kan se denne fane.",
     punkter: ["Stil dig i det rum, hvor botterne skal være, og tryk <b>➕ Lav botter</b>. De kommer rundt om dig.",
-      "<b>🚶 Gå rundt</b> og <b>💡 Jag lyset</b> virker kun, når du selv er i samme rum som botterne.",
+      "<b>🚶 Gå rundt</b> og <b>🎮 Spil med</b> virker kun, når du selv er i samme rum som botterne.",
+      "<b>🎮 Spil med</b>: botterne spiller med i det spil, der er i rummet: 💡 Lysreaktion, 🏟 Vera arena (Forhindringsbane, Rød eller Guld, Buzzer-quiz) og chat-legene fra Event-appen (Quiz, Hurtigst til at skrive, Bingo, Gæt et tal, Frys-dans).",
+      "I arenaen reagerer botterne på nedtællingen: under nedtællingen går de til START (eller vælger RØD/GULD), og ved GO løber de.",
+      "Skriv fx <b>Bot-3 er ude</b> i chatten, så går Bot-3 ud af spillet. <b>Alle er med igen</b> henter dem ind igen.",
+      "På ❓ hotel-quizzen gætter botterne med, men altid forkert, så de aldrig tager runden fra en rigtig spiller.",
       "Botterne er online, så længe du har hotellet åbent. Lukker du det, går de offline og kommer igen næste gang.",
       "Botter tæller ikke som spillere og kan aldrig få Glimt, Stella, VIP eller gevinster.",
       "Du kan altid slette en bot med 🗑, eller alle botter med <b>🗑 Slet alle botter</b>."] };
@@ -430,6 +757,8 @@
         "<div class='tb-raekke tb-slet-alle'><button type='button' id='tb-slet-alle' class='tb-roed'>🗑 Slet alle botter</button></div></div>";
 
       // Hver bot for sig
+      html += "<p class='tb-lille'>🎮 <b>Spil med</b>: botterne spiller med i rummets spil: 💡 Lysreaktion, 🏟 Vera arena (forhindring, rød/guld, buzzer-quiz) " +
+        "og Event-appens chat-lege (quiz, hurtigst til at skrive, bingo, gæt et tal, frys-dans). Skriv fx <b>Bot-3 er ude</b> i chatten for at sende en bot ud.</p>";
       html += "<div class='tb-liste'>" + alle.map(function (b) {
         const status = !b.vis ? "<i class='tb-prik skjult'></i>Skjult" : b.online ? "<i class='tb-prik'></i>Online" : "<i class='tb-prik vent'></i>Kommer om lidt";
         return "<div class='tb-bot" + (b.vis ? "" : " tb-skjult") + "' data-tb-bot='" + r(b.navn) + "'>" +
