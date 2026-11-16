@@ -604,9 +604,26 @@
     // 🌙 lysdæmperen: gør rummet mørkere (kun det, der er tegnet, så videoerne på skærmene lyser stadig). Effekterne tegnes ovenpå og lyser.
     const dm = Math.max(0, Math.min(85, Number(ar.daemp) || 0));
     if (dm) {
+      // Ligesom i biografen: skærmene bliver IKKE mørke, og scenen står i lyset. Kun resten af rummet dæmpes.
       ctx.save();
+      ctx.beginPath();
+      ctx.rect(K.x0 - 40, K.y0 - 40, W + 80, H + 80);
+      const huller = AR_SKAERME.map(function (sk) { return udvid(skaermHjoerner(sk), 10); });
+      huller.forEach(function (h) {
+        // tegnes "baglæns", så de bliver huller i det mørke område
+        ctx.moveTo(h[h.length - 1].x, h[h.length - 1].y);
+        for (let i = h.length - 2; i >= 0; i--) ctx.lineTo(h[i].x, h[i].y);
+        ctx.closePath();
+      });
+      ctx.clip("evenodd");
       ctx.globalCompositeOperation = "source-atop";
-      ctx.fillStyle = "rgba(4,0,6," + (dm / 100) + ")";
+      // scenen står i en blød lyskegle midt i mørket
+      const sc = AR_SCENE, mid = punkt(sc.x0 + sc.b / 2, sc.y0 + sc.d / 2), ven = punkt(sc.x0, sc.y0 + sc.d / 2), hoe = punkt(sc.x0 + sc.b, sc.y0 + sc.d / 2);
+      const r = Math.abs(hoe.x - ven.x) / 2, cy = mid.y - 60;
+      const g = ctx.createRadialGradient(mid.x, cy, r * 0.45, mid.x, cy, r * 1.25);
+      g.addColorStop(0, "rgba(4,0,6,0)");
+      g.addColorStop(1, "rgba(4,0,6," + (dm / 100) + ")");
+      ctx.fillStyle = g;
       ctx.fillRect(K.x0 - 40, K.y0 - 40, W + 80, H + 80);
       ctx.restore();
     }
