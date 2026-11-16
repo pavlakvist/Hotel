@@ -556,7 +556,22 @@
     FE_SKAERME.forEach(function (s) { const d = skaermData(s.id); if (d.v && (!bedst || (d.t || 0) > (skaermData(bedst.id).t || 0))) bedst = s; });
     return bedst ? bedst.id : null;
   }
-  function ytKommando(f, func) { try { f.el.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: [] }), "*"); } catch (e) {} }
+  function ytKommando(f, func, args) { try { f.el.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*"); } catch (e) {} }
+  // 🔄 YouTube-synk: alle ser videoen det SAMME sted, også dem der kommer ind senere.
+  // Bruger den delte hjælper window.veraYtSync fra js/vera-arena.js (lyt + synk hvert 2. sek).
+  function ytPos(d) { return Math.max(0, (feNu() - (d.t || feNu())) / 1000); }
+  setInterval(function () {
+    const Y = window.veraYtSync;
+    if (!Y || !iframesSat) return;
+    let nyLyt = false;
+    FE_SKAERME.forEach(function (s) { const f = feIframes[s.id]; if (!f.lytter) { Y.lyt(f.el); f.lytter = true; if (f.v) nyLyt = true; } });
+    if (nyLyt) opdaterSkaerme(true);   // genindlæs én gang, så afspilleren begynder at fortælle, hvor langt den er
+    if (!iFest()) return;
+    FE_SKAERME.forEach(function (s) {
+      const f = feIframes[s.id], d = skaermData(s.id);
+      if (f.v && d.v === f.v && d.t) Y.synk(f.el, d.t, feNu());
+    });
+  }, 2000);
   function opdaterSkaerme(tving) {
     if (!iframesSat) return;
     const lyd = lydSkaerm();
@@ -568,7 +583,7 @@
         return;
       }
       f.v = d.v; f.n = d.n; f.lyd = s.id === lyd;
-      const start = Math.max(0, Math.floor((feNu() - (d.t || feNu())) / 1000));
+      const start = Math.floor(ytPos(d));
       f.el.src = "https://www.youtube-nocookie.com/embed/" + d.v + "?autoplay=1&controls=0&rel=0&playsinline=1&enablejsapi=1&start=" + start +
         (f.lyd ? "" : "&mute=1") + "&origin=" + encodeURIComponent(location.origin);
     });
@@ -578,6 +593,8 @@
   const lydTrykket = {};
   lydKnap.addEventListener("click", function () {
     const lyd = lydSkaerm(); if (!lyd) return;
+    const d = skaermData(lyd);
+    if (d.t) ytKommando(feIframes[lyd], "seekTo", [ytPos(d), true]);   // hop hen hvor de andre er
     ytKommando(feIframes[lyd], "unMute"); ytKommando(feIframes[lyd], "playVideo");
     lydTrykket[lyd + skaermData(lyd).n] = true; lydKnap.hidden = true;
   });
@@ -947,6 +964,7 @@
           feBesked("🎡 Velkommen til VERA FESTIVAL! Hovedscenen er bagerst, spil-strøget til højre, festival-gaden forrest og oplevelserne til venstre.");
         }
         hentFest();
+        abHent().then(abVelkommen);
       } else if (varHer) {
         if (feZoomFoer !== null && typeof brugerZoom !== "undefined") { brugerZoom = feZoomFoer; KAMERA.x = 0; KAMERA.y = 0; }
         feZoomFoer = null;
@@ -971,13 +989,13 @@
     tegnGulv = function () {
       if (!iFest()) return tegnGulvFoer.apply(this, arguments);
       // gulvet ligger allerede i billedet. Her kommer kun det, der ændrer sig: skærmene og lyset på scenegulvet
-      try { FE_SKAERME.forEach(tegnSkaerm); tegnScenegulvLys(feNu()); } catch (e) { console.warn(e); }
+      try { FE_SKAERME.forEach(tegnSkaerm); tegnScenegulvLys(feNu()); tegnAbKontrol(false); } catch (e) { console.warn(e); }
     };
     if (typeof tegnBobler === "function") {
       const tegnBoblerFoer = tegnBobler;
       tegnBobler = function () {
         if (iFest()) {
-          try { const nu = feNu(); tegnMoerke(); tegnSceneLys(nu); tegnLys(nu); tegnEffekter(); } catch (e) { console.warn(e); }
+          try { const nu = feNu(); tegnMoerke(); tegnSceneLys(nu); tegnLys(nu); tegnAbKontrol(true); tegnEffekter(); } catch (e) { console.warn(e); }
         }
         return tegnBoblerFoer.apply(this, arguments);
       };
@@ -1167,7 +1185,7 @@
   };
   function tegnStyrIgen() {
     if (!styrAaben() || styrForm) return;
-    const n = JSON.stringify([fe, feFejl, program, programFejl, styrFane]);
+    const n = JSON.stringify([fe, feFejl, program, programFejl, styrFane, abP, abPFejl]);
     if (n === styrSidst) return;
     const el = styrEl(), aktiv = document.activeElement;
     if (el && aktiv && el.contains(aktiv) && /INPUT|TEXTAREA|SELECT/.test(aktiv.tagName)) return;
@@ -1176,11 +1194,11 @@
   function tegnStyr() {
     const el = styrEl();
     if (!el) return;
-    styrSidst = JSON.stringify([fe, feFejl, program, programFejl, styrFane]);
+    styrSidst = JSON.stringify([fe, feFejl, program, programFejl, styrFane, abP, abPFejl]);
     if (!feMaa()) { el.innerHTML = topHtml(styrApi, "Festival") + "<div class='tlf-indhold ea-app'><p class='ea-tom'>Festival-appen er kun for ejeren, Eventværter og Eventfolk.</p></div>"; return; }
     if (styrForm) { tegnProgramForm(el); return; }
     const scrollFoer = el.querySelector(".ea-app") ? el.querySelector(".ea-app").scrollTop : 0;
-    const faner = [["styr", "⚡ Styring"], ["lys", "💡 Lys"], ["skaerme", "📺 Skærme"], ["program", "📅 Program"]];
+    const faner = [["styr", "⚡ Styr"], ["lys", "💡 Lys"], ["skaerme", "📺 Skærme"], ["program", "📅 Program"], ["armbaand", "🎟 Armbånd"]];
     el.innerHTML = topHtml(styrApi, "Festival") + "<div class='tlf-indhold ea-app fe-app'>" +
       "<div class='ea-logo fe-logo'><b>👑 VERA</b><span>✦ FESTIVAL ✦</span><small>Styring for ansatte · " + esc(feMig()) + "</small></div>" +
       "<div class='ea-faner'>" + faner.map(function (f) { return "<button data-fe-fane='" + f[0] + "'" + (f[0] === styrFane ? " class='valgt'" : "") + ">" + f[1] + "</button>"; }).join("") + "</div>" +
@@ -1255,15 +1273,18 @@
       if (programFejl) html += "<p class='ea-advarsel'>" + esc(programFejl) + "</p>";
       html += "<div class='ea-knapper'><button class='ea-stor ea-guld' data-fe='nyt'>➕ Nyt arrangement</button></div>" +
         "<p class='ea-info'>Programmet kan alle gæster se i appen 🎟 Vera Festival. De kan sætte ⭐ og få en påmindelse 10 min før.</p>" + programListe(true);
+    } else if (styrFane === "armbaand") {
+      html += abStyrHtml();
     }
     krop.innerHTML = html;
     const ny = el.querySelector(".ea-app"); if (ny) ny.scrollTop = scrollFoer;
     kobl(el);
+    if (styrFane === "armbaand") abStyrKobl(el);
   }
   function kobl(el) {
     const igen = function () { tegnStyr(); };
     const besk = function (t) { if (styrApi && styrApi.besked) styrApi.besked(t); else feBesked(t); };
-    el.querySelectorAll("[data-fe-fane]").forEach(function (b) { b.addEventListener("click", function () { styrFane = b.dataset.feFane; tegnStyr(); if (styrFane === "program") hentProgram().then(tegnStyrIgen); }); });
+    el.querySelectorAll("[data-fe-fane]").forEach(function (b) { b.addEventListener("click", function () { styrFane = b.dataset.feFane; tegnStyr(); if (styrFane === "program") hentProgram().then(tegnStyrIgen); if (styrFane === "armbaand") abPHent().then(function () { styrSidst = ""; tegnStyrIgen(); }); }); });
     el.querySelectorAll("[data-fe-scene]").forEach(function (k) {
       k.addEventListener("click", function () { const ny = k.dataset.feScene === fe.scene && fe.scene !== "varm" ? "varm" : k.dataset.feScene; saetFest({ scene: ny }).then(tegnStyrIgen); igen(); });
     });
@@ -1387,7 +1408,7 @@
   const GAEST_APP = {
     navn: "Vera Festival", ikSvg: IKON_GAEST, bg: "linear-gradient(#ff8fc6, #8a1446)", fast: true,
     tal: function () { return programNu() ? 1 : 0; },
-    tegn: function (el, api) { gaestApi = api; tegnGaest(); hentProgram().then(function () { if (gaestAaben()) tegnGaest(); }); },
+    tegn: function (el, api) { gaestApi = api; tegnGaest(); hentProgram().then(function () { if (gaestAaben()) tegnGaest(); }); abHent().then(function () { if (gaestAaben()) tegnGaest(); }); },
     luk: function () { gaestApi = null; },
   };
   function gaaTilFestival(omr) {
@@ -1412,6 +1433,7 @@
       "<div class='fe-plakat'><span>👑</span><b>VERA</b><i>F E S T I V A L</i><small>Hotellets store udendørs festival</small></div>" +
       (live ? "<div class='fe-live'>🔴 Lige nu: <b>" + esc(live.titel) + "</b> · " + esc(FE_STEDER[live.sted] || "") + "</div>" : "") +
       "<div class='ea-knapper'><button class='ea-stor ea-guld' data-fg='gaa'>" + (iFest() ? "🎡 Du er på festivalen" : "🚶 Gå til festivalen") + "</button></div>" +
+      abGaestHtml() +
       "<div class='ea-faner'>" + [["program", "📅 Program"], ["omraader", "🗺 Områder"], ["mine", "⭐ Mine"]].map(function (f) {
         return "<button data-fg-fane='" + f[0] + "'" + (f[0] === gaestFane ? " class='valgt'" : "") + ">" + f[1] + "</button>";
       }).join("") + "</div>";
@@ -1431,6 +1453,7 @@
     html += "</div>";
     el.innerHTML = html;
     el.querySelectorAll("[data-fg-fane]").forEach(function (b) { b.addEventListener("click", function () { gaestFane = b.dataset.fgFane; tegnGaest(); }); });
+    abGaestKobl(el);
     el.querySelectorAll("[data-fg='gaa']").forEach(function (b) { b.addEventListener("click", function () { if (!iFest()) gaaTilFestival(); }); });
     el.querySelectorAll("[data-fg-omr]").forEach(function (b) { b.addEventListener("click", function () { gaaTilFestival(b.dataset.fgOmr); }); });
     el.querySelectorAll("[data-fp-stjerne]").forEach(function (b) {
@@ -1441,7 +1464,388 @@
       });
     });
   }
-  setInterval(function () { if (gaestAaben()) { const n = JSON.stringify([program, gaestFane, iFest(), Math.floor(Date.now() / 30000)]); if (n !== tegnGaest.sidst) { tegnGaest.sidst = n; tegnGaest(); } } }, 1000);
+  setInterval(function () { if (gaestAaben()) { const n = JSON.stringify([program, gaestFane, iFest(), Math.floor(Date.now() / 30000), ab, abFejl, abBekraeft]); if (n !== tegnGaest.sidst) { tegnGaest.sidst = n; tegnGaest(); } } }, 1000);
+
+  // =============================================================
+  //  🎟 Festival-armbånd (database-62-festival-armbaand.sql)
+  //  Gæsterne køber et armbånd i appen Vera Festival. En Festival-vagt (eller ejeren/de ansatte) scanner det ved indgangen.
+  //  Uden scannet armbånd kommer man ikke længere end indgangen (eller ikke ind foran scenen, hvis ejeren vælger det).
+  // =============================================================
+  const AB_MANGLER = "⚠️ Serveren kender ikke festival-armbåndene endnu. Kør database-62-festival-armbaand.sql i Supabase → SQL Editor.";
+  const AB_KRAEV = { fra: "🚪 Alle må komme ind", hele: "🎟 Armbånd til hele festivalen", scene: "🎤 Kun foran scenen" };
+  const AB_INDGANG = { x1: 6, y0: 23, y1: 26 };                 // indgangen ved porten (her må alle stå)
+  const AB_SCENE = { x0: 9, x1: 27, y1: 12 };                    // pladsen foran scenen
+  let ab = null, abFejl = "", abHentet = 0, abHenter = false, abP = null, abPFejl = "", abBekraeft = false;
+  function abMangler(e) { return /function|schema cache|does not exist|hv_festival_(armbaand|salg|scan|personale)/i.test((e && e.message) || ""); }
+  function abFejlTekst(e) { return abMangler(e) ? AB_MANGLER : (e && e.message) || "Noget gik galt."; }
+  // Ejeren og alle ansatte (fx Festival-vagter) kan scanne og går altid frit
+  function feErAnsat() {
+    try { return feErEjer() || feMaa() || (typeof erAnsat === "function" && erAnsat(feMig())); } catch (e) { return false; }
+  }
+  function abPenge(svar) {
+    if (!svar || svar.glimt == null) return;
+    try { if (typeof saetPenge === "function") saetPenge({ glimt: svar.glimt, stella: svar.stella }, false); } catch (e) {}
+  }
+  function abHent() {
+    if (!feOnline() || abHenter) return Promise.resolve();
+    abHenter = true;
+    const foer = ab && ab.mit;
+    return serverKald("hv_festival_armbaand_hent", { p_token: feToken() })
+      .then(function (s) {
+        ab = s; abFejl = ""; abHentet = Date.now();
+        if (foer && !foer.scannet && s && s.mit && s.mit.scannet) {
+          const t = "✅ Dit armbånd er scannet. God festival! 🎡";
+          feBesked(t);
+          try { if (typeof window.tlfNotis === "function") window.tlfNotis("festival-program", "🎟 Vera Festival", t); } catch (e) {}
+        }
+      })
+      .catch(function (e) { abFejl = abFejlTekst(e); if (abMangler(e)) ab = null; })
+      .finally(function () { abHenter = false; });
+  }
+  function abPHent() {
+    if (!feOnline() || !feErAnsat()) return Promise.resolve();
+    return serverKald("hv_festival_personale", { p_token: feToken() })
+      .then(function (s) { abP = s; abPFejl = ""; if (s && s.salg) { ab = ab || {}; ab.salg = s.salg; } })
+      .catch(function (e) { abPFejl = abFejlTekst(e); });
+  }
+  function abSaet(del) {
+    return serverKald("hv_festival_salg_saet", { p_token: feToken(), p_del: del })
+      .then(function (s) { abP = s; abPFejl = ""; if (s && s.salg) { ab = ab || {}; ab.salg = s.salg; } })
+      .catch(function (e) { abPFejl = abFejlTekst(e); });
+  }
+  function abKoeb() {
+    return serverKald("hv_festival_armbaand_koeb", { p_token: feToken() })
+      .then(function (s) { ab = s; abFejl = ""; abPenge(s); feBesked("🎟 Du har købt et festival-armbånd! Vis det til en Festival-vagt ved indgangen."); })
+      .catch(function (e) { abFejl = abFejlTekst(e); });
+  }
+  // Skal man have armbånd, og har man et scannet?
+  function abKraev() { return ab && ab.salg ? ab.salg.kraev : "fra"; }
+  function abOk() {
+    if (!feOnline() || !ab || !ab.salg || abKraev() === "fra" || feErAnsat()) return true;
+    return !!(ab.mit && ab.mit.scannet);
+  }
+  function iIndgang(x, y) { return x <= AB_INDGANG.x1 && y >= AB_INDGANG.y0 && y <= AB_INDGANG.y1; }
+  function foranScenen(x, y) { return x >= AB_SCENE.x0 && x <= AB_SCENE.x1 && y <= AB_SCENE.y1; }
+  function abSpaerret(x, y) {
+    if (abOk()) return false;
+    return abKraev() === "hele" ? !iIndgang(x, y) : foranScenen(x, y);
+  }
+  function abTekst() {
+    const pris = ab && ab.salg ? ab.salg.pris : 10;
+    if (!ab || !ab.mit) return "🎟 Du skal have et festival-armbånd for at komme " + (abKraev() === "scene" ? "ind foran scenen" : "ind på festivalen") +
+      ". Køb det i appen Vera Festival på telefonen (" + pris + " ⭐), og vis det til en Festival-vagt ved indgangen.";
+    return "📟 Dit armbånd er ikke scannet endnu. Vis det til en Festival-vagt ved indgangen, så kommer du ind.";
+  }
+  function abVelkommen() { if (iFest() && !abOk() && abKraev() === "hele") feBesked(abTekst()); }
+  // man kan ikke gå ind på de spærrede felter
+  function pakKanGaa() {
+    if (typeof kanGaa !== "function" || kanGaa.feAb) return;
+    const foer = kanGaa;
+    const ny = function (x, y) { if (iFest() && abSpaerret(x, y)) return false; return foer.apply(this, arguments); };
+    ny.feAb = true;
+    kanGaa = ny;
+  }
+  function pakGaaTil() {
+    if (typeof gaaTil !== "function" || gaaTil.feAb) return;
+    const foer = gaaTil;
+    const ny = function (x, y) {
+      if (iFest() && abSpaerret(Math.round(x), Math.round(y))) feBesked(abTekst());
+      return foer.apply(this, arguments);
+    };
+    ny.feAb = true;
+    gaaTil = ny;
+  }
+  // står man et sted, man ikke må (fx fordi kravet lige er slået til), sendes man hen til indgangen
+  function abSendUd() {
+    if (!iFest() || typeof figur === "undefined" || figur.sidde) return;
+    const fx = Math.round(figur.x), fy = Math.round(figur.y);
+    if (!abSpaerret(fx, fy)) return;
+    const steder = abKraev() === "hele" ? [[2, 25], [3, 24], [1, 24], [4, 25], [1, 25]] : [[18, 15], [17, 15], [19, 15], [16, 16], [20, 16]];
+    const sted = steder.find(function (p) { try { return kanGaa(p[0], p[1]); } catch (e) { return true; } }) || steder[0];
+    figur.rute = []; figur.x = sted[0]; figur.y = sted[1];
+    centrerPaaFigur(true);
+    feBesked(abTekst());
+  }
+  setInterval(function () {
+    try { pakKanGaa(); pakGaaTil(); abSendUd(); } catch (e) {}
+    // hold armbåndet friskt, mens man er på festivalen (så man kommer ind, lige når det er scannet)
+    const ofte = iFest() && ab && ab.mit && !ab.mit.scannet ? 4000 : 20000;
+    if ((iFest() || gaestAaben()) && Date.now() - abHentet > ofte) abHent().then(function () { if (gaestAaben()) tegnGaest(); });
+  }, 1000);
+  // kontrollen ved indgangen (en guldstreg på jorden), når der kræves armbånd
+  function tegnAbKontrol(skilt) {
+    if (!ab || !ab.salg || abKraev() === "fra") return;
+    ctx.save();
+    const linje = function (pts) {
+      ctx.beginPath(); pts.forEach(function (p, i) { if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
+      if (skilt) return;   // stregen ligger på jorden, skiltet tegnes øverst
+      ctx.strokeStyle = "rgba(255,217,138,.9)"; ctx.lineWidth = 3 * ZOOM; ctx.setLineDash([10 * ZOOM, 7 * ZOOM]); ctx.stroke();
+    };
+    let mid;
+    if (abKraev() === "hele") {
+      const a = punkt(AB_INDGANG.x1 + 1, AB_INDGANG.y0), b = punkt(AB_INDGANG.x1 + 1, AB_INDGANG.y1 + 1);
+      linje([a, b]); mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    } else {
+      const a = punkt(AB_SCENE.x0, AB_SCENE.y1 + 1), b = punkt(AB_SCENE.x1 + 1, AB_SCENE.y1 + 1);
+      linje([a, b]); mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    }
+    ctx.setLineDash([]);
+    if (!skilt) { ctx.restore(); return; }
+    const t = "🎟 ARMBÅND-KONTROL";
+    ctx.font = "bold " + Math.round(11 * ZOOM) + "px Georgia, serif";
+    const w = ctx.measureText(t).width + 14 * ZOOM, h = 18 * ZOOM;
+    ctx.fillStyle = "rgba(74,13,43,.9)"; ctx.strokeStyle = "#e8b65a"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(mid.x - w / 2, mid.y - h - 6 * ZOOM, w, h, 6 * ZOOM); else ctx.rect(mid.x - w / 2, mid.y - h - 6 * ZOOM, w, h);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#ffe6f2"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(t, mid.x, mid.y - h / 2 - 6 * ZOOM);
+    ctx.restore();
+  }
+
+  // ----- stregkode (Code 39, samme slags som biografbilletterne, så en rigtig håndscanner kan læse den) -----
+  const AB_CODE39 = { "0": "101000111011101", "1": "111010001010111", "2": "101110001010111", "3": "111011100010101", "4": "101000111010111",
+    "5": "111010001110101", "6": "101110001110101", "7": "101000101110111", "8": "111010001011101", "9": "101110001011101",
+    "A": "111010100010111", "B": "101110100010111", "C": "111011101000101", "D": "101011100010111", "E": "111010111000101", "F": "101110111000101" };
+  const AB_CODE39_KANT = "100010111011101";
+  function abStregkode(kode) {
+    const bits = [AB_CODE39_KANT].concat(String(kode).toUpperCase().split("").map(function (c) { return AB_CODE39[c] || ""; })).concat([AB_CODE39_KANT]).join("0");
+    let rects = "", i = 0;
+    while (i < bits.length) {
+      if (bits[i] === "1") { let j = i; while (j < bits.length && bits[j] === "1") j++; rects += "<rect x='" + (i + 10) + "' y='0' width='" + (j - i) + "' height='40'/>"; i = j; } else i++;
+    }
+    return "<svg class='fe-stregkode' viewBox='0 0 " + (bits.length + 20) + " 40' preserveAspectRatio='none'><rect width='100%' height='40' fill='#fff'/><g fill='#000'>" + rects + "</g></svg>";
+  }
+  function klTid(t) { return t ? kl(t) : ""; }
+
+  // ----- armbåndet i gæsteappen -----
+  function abGaestHtml() {
+    if (!feOnline()) return "";
+    if (abFejl === AB_MANGLER) return feErAnsat() ? "<p class='ea-advarsel'>" + esc(AB_MANGLER) + "</p>" : "";
+    if (!ab || !ab.salg) return "<p class='ea-info'>🎟 Henter armbånd …</p>";
+    const s = ab.salg, m = ab.mit;
+    let h = "";
+    if (abFejl) h += "<p class='ea-advarsel'>" + esc(abFejl) + "</p>";
+    if (m) {
+      h += "<div class='fe-armbaand" + (m.scannet ? " ok" : "") + "'><div class='fe-ab-baand'><span>👑 VERA FESTIVAL</span><i>" + esc(m.spiller) + "</i></div>" +
+        "<div class='fe-ab-kode'>" + abStregkode(m.kode) + "<b>" + esc(m.kode) + "</b></div>" +
+        "<small>" + (m.scannet ? "✅ Scannet kl. " + klTid(m.scannet) + (m.scannet_af ? " af " + esc(m.scannet_af) : "") + ". Du kan gå frit rundt på festivalen."
+          : "📟 Vis armbåndet til en Festival-vagt ved indgangen. Når det er scannet, kommer du ind.") + "</small></div>";
+      return h;
+    }
+    const udsolgt = s.maks != null && s.solgt >= s.maks;
+    h += "<div class='fe-ab-koeb'><b>🎟 Festival-armbånd</b><small>" +
+      (s.kraev === "hele" ? "Du skal have et armbånd for at komme ind på festivalen." : s.kraev === "scene" ? "Du skal have et armbånd for at komme ind foran scenen." : "Armbåndet er dit bevis på, at du var med på Vera Festival.") +
+      (s.maks != null ? " Der er " + Math.max(0, s.maks - s.solgt) + " tilbage." : "") + "</small>";
+    if (udsolgt) h += "<em class='ea-aflyst'>Udsolgt</em>";
+    else if (!s.salg) h += "<em class='ea-aflyst'>Ikke til salg lige nu</em>";
+    else h += "<button class='ea-stor ea-guld' data-fg-ab='koeb'>" + (abBekraeft ? "✔ Ja, køb for " + s.pris + " ⭐" : "🎟 Køb armbånd · " + s.pris + " ⭐") + "</button>";
+    return h + "</div>";
+  }
+  function abGaestKobl(el) {
+    el.querySelectorAll("[data-fg-ab='koeb']").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (!abBekraeft) { abBekraeft = true; tegnGaest(); setTimeout(function () { abBekraeft = false; if (gaestAaben()) tegnGaest(); }, 5000); return; }
+        abBekraeft = false; b.disabled = true;
+        abKoeb().then(function () { if (gaestAaben()) tegnGaest(); });
+      });
+    });
+  }
+
+  // ----- fanen 🎟 Armbånd i Festival-appen (ejeren, Eventværter og Eventfolk) -----
+  let abNyFestival = false;
+  function abStyrHtml() {
+    let h = "";
+    if (abPFejl) h += "<p class='ea-advarsel'>" + esc(abPFejl) + "</p>";
+    if (!abP || !abP.salg) return h + "<p class='ea-info'>Henter armbånd …</p>";
+    const s = abP.salg, liste = abP.armbaand || [];
+    const udsolgt = s.maks != null && s.solgt >= s.maks;
+    h += "<div class='fe-tal'><div><b>" + s.solgt + (s.maks != null ? "/" + s.maks : "") + "</b><small>solgt</small></div><div><b>" + s.scannet + "</b><small>scannet</small></div>" +
+      "<div><b>" + (abP.glimt_ialt || 0) + " ⭐</b><small>tjent</small></div></div>" +
+      (udsolgt ? "<p class='ea-advarsel'>🔴 Udsolgt! Sæt et højere antal eller fjern grænsen, hvis flere skal kunne købe.</p>" : "");
+    h += "<div class='ea-hj-knapper'><button data-fe-ab='scanner'>📟 Åbn armbåndsscanneren</button></div>";
+    h += "<h4 class='ea-dag'>⚙️ Salg</h4><div class='fe-bod'>" +
+      "<form class='ar-form' data-fe-abform='pris'><label class='fe-lbl'>Pris pr. armbånd</label><input type='number' min='0' max='10000' name='v' value='" + s.pris + "'><span class='fe-enhed'>⭐</span><button type='submit'>Gem</button></form>" +
+      "<form class='ar-form' data-fe-abform='maks'><label class='fe-lbl'>Højst antal</label><input type='number' min='0' name='v' value='" + (s.maks != null ? s.maks : "") + "' placeholder='ingen grænse'><button type='submit'>Gem</button></form>" +
+      "<div class='ea-hj-knapper'><button data-fe-ab='salg'" + (s.salg ? " class='ar-valgt'" : "") + ">" + (s.salg ? "🟢 Salget er ÅBENT — tryk for at lukke" : "🔴 Salget er LUKKET — tryk for at åbne") + "</button></div></div>";
+    h += "<h4 class='ea-dag'>🚪 Hvor skal man have armbånd?</h4><div class='ar-gitter'>" + Object.keys(AB_KRAEV).map(function (k) {
+      return "<button data-fe-abkraev='" + k + "'" + (k === s.kraev ? " class='ar-valgt'" : "") + ">" + AB_KRAEV[k] + "</button>";
+    }).join("") + "</div><p class='ea-info'>Ejeren og alle ansatte går altid frit. Gæster uden scannet armbånd bliver ved indgangen" +
+      (s.kraev === "scene" ? " (her: kun pladsen foran scenen er spærret)" : "") + ".</p>";
+    h += "<h4 class='ea-dag'>🎟 Solgte armbånd</h4>" + (liste.length ? "<ul class='fe-ab-liste'>" + liste.map(function (a) {
+      return "<li class='" + (a.scannet ? "ok" : "") + "'><b>" + esc(a.spiller) + "</b><code>" + esc(a.kode) + "</code>" +
+        (a.scannet ? "<em>✅ " + klTid(a.scannet) + "</em><button data-fe-abfortryd='" + a.id + "' title='Fortryd scanningen'>↩</button>"
+          : "<button data-fe-abscan='" + esc(a.kode) + "' title='Scan'>📟</button>") +
+        "<button data-fe-abfjern='" + a.id + "' class='ea-sikker' title='Fjern armbåndet og giv Glimt tilbage'>✕</button></li>";
+    }).join("") + "</ul>" : "<p class='ea-tom'>Ingen har købt et armbånd endnu.</p>");
+    h += "<h4 class='ea-dag'>🔄 Ny festival</h4><p class='ea-info'>Starter en ny festival: alle skal købe et nyt armbånd. De gamle armbånd virker ikke mere.</p>" +
+      "<div class='ea-hj-knapper'><button data-fe-ab='ny' class='ea-sikker'>" + (abNyFestival ? "⚠️ Er du sikker? Tryk igen" : "🔄 Start en ny festival") + "</button></div>";
+    return h;
+  }
+  function abStyrKobl(el) {
+    const igen = function () { styrSidst = ""; tegnStyr(); };
+    const besk = function (t) { if (styrApi && styrApi.besked) styrApi.besked(t); else feBesked(t); };
+    el.querySelectorAll("[data-fe-abform]").forEach(function (f) {
+      f.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const v = f.querySelector("input").value.trim(), d = {};
+        d[f.dataset.feAbform] = f.dataset.feAbform === "maks" ? v : Number(v || 0);
+        abSaet(d).then(function () { besk(f.dataset.feAbform === "pris" ? "🎟 Prisen er nu " + abP.salg.pris + " ⭐" : abP.salg.maks != null ? "🎟 Højst " + abP.salg.maks + " armbånd" : "🎟 Ingen grænse for antal armbånd"); igen(); });
+      });
+    });
+    el.querySelectorAll("[data-fe-abkraev]").forEach(function (k) { k.addEventListener("click", function () { abSaet({ kraev: k.dataset.feAbkraev }).then(function () { besk(AB_KRAEV[k.dataset.feAbkraev]); igen(); }); }); });
+    el.querySelectorAll("[data-fe-abscan]").forEach(function (k) { k.addEventListener("click", function () { abScan(k.dataset.feAbscan); }); });
+    el.querySelectorAll("[data-fe-abfortryd]").forEach(function (k) {
+      k.addEventListener("click", function () { serverKald("hv_festival_scan_fortryd", { p_token: feToken(), p_id: Number(k.dataset.feAbfortryd) }).then(abPHent).catch(function (e) { abPFejl = abFejlTekst(e); }).then(igen); });
+    });
+    el.querySelectorAll("[data-fe-abfjern]").forEach(function (k) {
+      k.addEventListener("click", function () {
+        if (k.dataset.sikker !== "1") { k.dataset.sikker = "1"; k.textContent = "Fjern?"; return; }
+        serverKald("hv_festival_armbaand_fjern", { p_token: feToken(), p_id: Number(k.dataset.feAbfjern) })
+          .then(function (s) { abP = s; besk("✕ Armbåndet er fjernet, og Glimt er givet tilbage."); }).catch(function (e) { abPFejl = abFejlTekst(e); }).then(igen);
+      });
+    });
+    el.querySelectorAll("[data-fe-ab]").forEach(function (k) {
+      k.addEventListener("click", function () {
+        const hvad = k.dataset.feAb;
+        if (hvad === "scanner") { abAabnScanner(); return; }
+        if (hvad === "salg") abSaet({ salg: !abP.salg.salg }).then(igen);
+        if (hvad === "ny") {
+          if (!abNyFestival) { abNyFestival = true; igen(); setTimeout(function () { abNyFestival = false; }, 5000); return; }
+          abNyFestival = false;
+          abSaet({ ny: true }).then(function () { besk("🔄 En ny festival er startet. Alle skal købe et nyt armbånd."); abHent(); igen(); });
+        }
+      });
+    });
+  }
+
+  // ----- 📟 Armbåndsscanneren (ejeren og de ansatte, fx Festival-vagter) -----
+  let abLyd = null;
+  function abBip(ok) {
+    try {
+      abLyd = abLyd || new (window.AudioContext || window.webkitAudioContext)();
+      const t = abLyd.currentTime;
+      (ok ? [[1760, 0, 0.09], [2350, 0.1, 0.12]] : [[220, 0, 0.18], [180, 0.2, 0.25]]).forEach(function (n) {
+        const o = abLyd.createOscillator(), g = abLyd.createGain();
+        o.type = ok ? "square" : "sawtooth"; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, t + n[1]); g.gain.exponentialRampToValueAtTime(0.12, t + n[1] + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + n[1] + n[2]);
+        o.connect(g); g.connect(abLyd.destination); o.start(t + n[1]); o.stop(t + n[1] + n[2] + 0.02);
+      });
+    } catch (e) {}
+  }
+  const abScanner = document.createElement("div");
+  abScanner.id = "fe-scanner";
+  abScanner.hidden = true;
+  abScanner.innerHTML =
+    "<div class='fes-top'><span class='fes-led'></span><b>📟 Armbåndsscanner</b><button type='button' class='fes-luk' title='Luk'>✕</button></div>" +
+    "<div class='fes-skaerm'><div class='fes-laser'></div><div class='fes-svar'><b>Klar til at scanne</b><small>Scan stregkoden eller skriv koden fra armbåndet</small></div></div>" +
+    "<form class='fes-form'><input type='text' maxlength='20' placeholder='Kode, fx F3A9C1' autocomplete='off' spellcheck='false'><button type='submit'>Scan</button></form>" +
+    "<div class='fes-liste'></div>";
+  document.body.appendChild(abScanner);
+  if (typeof goerFlytbar === "function") try { goerFlytbar(abScanner, abScanner.querySelector(".fes-top"), "mit-hotel-flyt-fe-scanner"); } catch (e) {}
+  const abInput = abScanner.querySelector("input");
+  abScanner.querySelector(".fes-luk").addEventListener("click", function () { abScanner.hidden = true; });
+  abScanner.querySelector(".fes-form").addEventListener("submit", function (e) { e.preventDefault(); const k = abInput.value; abInput.value = ""; abScan(k); });
+  function abAabnScanner() {
+    if (!feErAnsat()) return;
+    abScanner.hidden = false;
+    if (typeof window.lukTelefon === "function") try { window.lukTelefon(); } catch (e) {}
+    abTegnScanListe();
+    setTimeout(function () { abInput.focus(); }, 50);
+    abPHent().then(abTegnScanListe);
+  }
+  function abSvar(type, titel, tekst) {
+    const s = abScanner.querySelector(".fes-svar");
+    abScanner.querySelector(".fes-skaerm").className = "fes-skaerm " + type;
+    s.innerHTML = "<b>" + titel + "</b><small>" + tekst + "</small>";
+    clearTimeout(abSvar.t);
+    abSvar.t = setTimeout(function () {
+      abScanner.querySelector(".fes-skaerm").className = "fes-skaerm";
+      s.innerHTML = "<b>Klar til at scanne</b><small>Scan stregkoden eller skriv koden fra armbåndet</small>";
+    }, 6000);
+  }
+  function abScan(kode) {
+    if (!feErAnsat()) return;
+    abScanner.hidden = false;
+    abSvar("", "Scanner …", esc(kode));
+    serverKald("hv_festival_scan", { p_token: feToken(), p_kode: kode }).then(function (svar) {
+      const a = svar.armbaand || {};
+      if (svar.status === "allerede") { abBip(false); abSvar("gul", "⚠️ Allerede scannet", esc(a.spiller) + "<br>Scannet kl. " + klTid(a.scannet) + (a.scannet_af ? " af " + esc(a.scannet_af) : "")); }
+      else { abBip(true); abSvar("groen", "✅ Godkendt", "<b>" + esc(a.spiller) + "</b> må komme ind på festivalen 🎡"); }
+      return abPHent();
+    }).then(function () { abTegnScanListe(); if (styrAaben()) { styrSidst = ""; tegnStyr(); } }).catch(function (e) {
+      abBip(false);
+      abSvar("roed", "❌ Ikke godkendt", esc(abFejlTekst(e)));
+    });
+  }
+  function abTegnScanListe() {
+    const holder = abScanner.querySelector(".fes-liste");
+    if (abPFejl) { holder.innerHTML = "<p>" + esc(abPFejl) + "</p>"; return; }
+    if (!abP) { holder.innerHTML = "<p>Henter armbånd …</p>"; return; }
+    const l = (abP.armbaand || []).slice().sort(function (a, b) { return (a.scannet ? 1 : 0) - (b.scannet ? 1 : 0) || String(a.spiller).localeCompare(String(b.spiller)); });
+    holder.innerHTML = "<h4>🎟 Vera Festival · " + esc(AB_KRAEV[abP.salg.kraev] || "") + "</h4><p class='fes-tal'>✅ " + abP.salg.scannet + " af " + abP.salg.solgt + " armbånd scannet</p>" +
+      (l.length ? "<ul>" + l.map(function (a) {
+        return "<li class='" + (a.scannet ? "ok" : "") + "'><span>" + esc(a.spiller) + "</span>" +
+          (a.scannet ? "<em>✅ " + klTid(a.scannet) + "</em>" : "<button type='button' data-fes-scan='" + esc(a.kode) + "' title='Scan " + esc(a.spiller) + "s armbånd'>📟</button>") + "</li>";
+      }).join("") + "</ul>" : "<p>Ingen har købt et armbånd endnu.</p>");
+    holder.querySelectorAll("[data-fes-scan]").forEach(function (k) { k.addEventListener("click", function () { abScan(k.dataset.fesScan); }); });
+  }
+  setInterval(function () { if (!abScanner.hidden) { if (!feErAnsat()) { abScanner.hidden = true; return; } abPHent().then(abTegnScanListe); } }, 6000);
+  // 📟-knap på festivalen for ejeren og de ansatte
+  const abScanKnap = document.createElement("button");
+  abScanKnap.id = "fe-scan-knap"; abScanKnap.type = "button"; abScanKnap.innerHTML = "📟 Armbåndsscanner"; abScanKnap.hidden = true;
+  abScanKnap.addEventListener("click", function () { if (abScanner.hidden) abAabnScanner(); else abScanner.hidden = true; });
+  document.body.appendChild(abScanKnap);
+  setInterval(function () {
+    const tlf = document.getElementById("telefon");
+    const vis = iFest() && feOnline() && feErAnsat() && !(tlf && !tlf.hidden);   // skjules, mens telefonen er åben
+    if (abScanKnap.hidden === vis) abScanKnap.hidden = !vis;
+  }, 500);
+
+  // ----- 🎟 Det nye job: Festival-vagt (samme opsætning som Biograf medhjælper i js/vera-cinema.js) -----
+  const FV_SKILT = "festivalvagt";
+  const FV_JOB_KAN = ["📟 Får armbåndsscanneren og scanner gæsternes festival-armbånd ved indgangen",
+    "🚪 Går frit rundt på hele Vera Festival", "🎟 Kan se, hvem der har købt armbånd, og hvem der er scannet",
+    "💼 Får løn hver mandag som de andre ansatte"];
+  vent(function () { return typeof SKILTE !== "undefined" && typeof ANSAT_SKILTE !== "undefined"; }, function () {
+    if (!SKILTE.some(function (s) { return s.id === FV_SKILT; })) {
+      let efter = SKILTE.findIndex(function (s) { return s.id === "biografhjaelper"; });
+      if (efter < 0) efter = SKILTE.findIndex(function (s) { return s.id === "eventfolk"; });
+      if (efter < 0) efter = SKILTE.findIndex(function (s) { return s.id === "eventvaert"; });
+      SKILTE.splice(efter + 1, 0, { id: FV_SKILT, navn: "Festival-vagt", tekst: "Scanner festival-armbånd ved indgangen til Vera Festival.",
+        fil: "billeder/skilte/festival-vagt.png" });
+    }
+    if (ANSAT_SKILTE.indexOf(FV_SKILT) < 0) ANSAT_SKILTE.push(FV_SKILT);
+    if (typeof JOB_KAN !== "undefined") JOB_KAN[FV_SKILT] = FV_JOB_KAN.concat(typeof PERSONALE_KAN !== "undefined" ? PERSONALE_KAN : []);
+  });
+  vent(function () { return typeof JOB_BESKRIVELSE !== "undefined" && typeof SKILTE !== "undefined"; }, function () {
+    JOB_BESKRIVELSE[FV_SKILT] = "Som Festival-vagt står du ved porten til Vera Festival og scanner gæsternes festival-armbånd med armbåndsscanneren 📟. Gæsterne køber armbåndet i appen Vera Festival, og de kommer først længere ind end indgangen, når armbåndet er scannet. Du hjælper gæsterne og holder øje med, at alle har armbånd.";
+    SKILTE.forEach(function (sk) { if (sk.id === FV_SKILT) sk.beskrivelse = JOB_BESKRIVELSE[FV_SKILT]; });
+  });
+  vent(function () { return typeof ROLLE_FANER !== "undefined" && typeof ROLLE_NAVN !== "undefined"; }, function () {
+    function giv() {
+      const fra = (ROLLE_FANER.staff || ["guide", "mitjob", "staffchat"]).filter(function (f) { return f !== "beskeder"; });
+      if (!ROLLE_FANER[FV_SKILT]) ROLLE_FANER[FV_SKILT] = [];
+      const l = ROLLE_FANER[FV_SKILT];
+      fra.forEach(function (f) { if (l.indexOf(f) < 0) l.push(f); });
+      if (l.indexOf("guide") > 0) { l.splice(l.indexOf("guide"), 1); l.unshift("guide"); }
+      ROLLE_NAVN[FV_SKILT] = "🛡️ Festival-panel";
+    }
+    giv();
+    setInterval(giv, 2000);
+  });
+  vent(function () { return typeof ROLLE_GUIDE !== "undefined"; }, function () {
+    ROLLE_GUIDE[FV_SKILT] = "Du er Festival-vagt. Gå til Vera Festival og tryk 📟 Armbåndsscanner øverst til højre. Scan gæsternes armbånd ved porten, så kan de komme ind.";
+  });
+  vent(function () { return typeof STAFF_RANG !== "undefined"; }, function () {
+    if (STAFF_RANG.some(function (r) { return r[0] === FV_SKILT; })) return;
+    const i = STAFF_RANG.findIndex(function (r) { return r[0] === "andet"; });
+    STAFF_RANG.splice(i < 0 ? STAFF_RANG.length : i, 0, [FV_SKILT, "🎟 Festival-vagt"]);
+  });
+  vent(function () { return typeof VS_KATEGORIER !== "undefined"; }, function () {
+    if (!VS_KATEGORIER.some(function (k) { return k[0] === FV_SKILT; })) VS_KATEGORIER.push([FV_SKILT, "🎟", "Festival-vagt"]);
+    if (typeof JOB_KAN !== "undefined" && JOB_KAN[FV_SKILT] && JOB_KAN[FV_SKILT].indexOf("📅 Kan skrive sig på vagter i vagtskemaet") < 0) JOB_KAN[FV_SKILT].push("📅 Kan skrive sig på vagter i vagtskemaet");
+  });
 
   // =============================================================
   //  Til andre filer: window.veraFestival
@@ -1496,6 +1900,53 @@
     "#telefon .ea-app .ar-skaermknapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 6px; }" +
     "#telefon .ea-app .ar-skaermknapper button { padding: 9px 4px; border-radius: 8px; cursor: pointer; font-weight: bold; }" +
     "#telefon .ea-app .ar-form { display: flex; gap: 6px; margin: 6px 0; } #telefon .ea-app .ar-form input { flex: 1; } #telefon .ea-app .ar-form button { padding: 6px 10px; border-radius: 8px; cursor: pointer; }";
+  // 🎟 armbånd + armbåndsscanner
+  stil.textContent += [
+    "#telefon .fe-armbaand { margin: 8px 0; padding: 10px; border-radius: 14px; background: linear-gradient(160deg, #ff8fc6, #b0285f 60%, #5a0d2e); border: 2px solid #ffd98a; box-shadow: 0 6px 18px rgba(0,0,0,.35); color: #fff; }",
+    "#telefon .fe-armbaand.ok { border-color: #8fe0a0; box-shadow: 0 0 0 2px rgba(143,224,160,.35), 0 6px 18px rgba(0,0,0,.35); }",
+    "#telefon .fe-ab-baand { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-radius: 20px; background: repeating-linear-gradient(90deg, #ffd98a 0 6px, #f3b94b 6px 12px); color: #5a0d2e; font: 900 12px Georgia, serif; letter-spacing: 1px; }",
+    "#telefon .fe-ab-baand i { font-style: normal; font-weight: 700; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    "#telefon .fe-ab-kode { margin: 8px 0 6px; padding: 6px; border-radius: 10px; background: #fff; text-align: center; }",
+    "#telefon .fe-ab-kode b { display: block; color: #111; font: 700 15px 'Courier New', monospace; letter-spacing: 4px; }",
+    "#telefon .fe-stregkode { width: 100%; height: 44px; display: block; }",
+    "#telefon .fe-armbaand small { display: block; font-size: 11.5px; line-height: 1.35; }",
+    "#telefon .fe-ab-koeb { margin: 8px 0; padding: 10px; border-radius: 14px; border: 2px dashed #ffd98a; background: rgba(0,0,0,.25); display: grid; gap: 6px; }",
+    "#telefon .fe-ab-koeb b { color: #ffd98a; } #telefon .fe-ab-koeb small { font-size: 11.5px; opacity: .9; line-height: 1.35; }",
+    "#telefon .fe-tal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }",
+    "#telefon .fe-tal div { text-align: center; padding: 6px 2px; border-radius: 10px; background: rgba(0,0,0,.25); border: 1px solid rgba(255,217,138,.4); }",
+    "#telefon .fe-tal b { display: block; color: #ffd98a; font-size: 16px; } #telefon .fe-tal small { font-size: 10.5px; opacity: .8; }",
+    "#telefon .fe-bod .ar-form { display: flex; gap: 6px; align-items: center; margin: 4px 0; }",
+    "#telefon .fe-lbl { flex: 1.3; font-size: 11.5px; } #telefon .fe-bod .ar-form input { flex: 1; min-width: 0; width: 60px; padding: 6px; border-radius: 8px; border: 2px solid #d9a441; }",
+    "#telefon .fe-enhed { font-size: 12px; }",
+    "#telefon .fe-ab-liste { list-style: none; margin: 4px 0; padding: 0; display: grid; gap: 4px; }",
+    "#telefon .fe-ab-liste li { display: flex; align-items: center; gap: 6px; padding: 5px 7px; border-radius: 9px; background: rgba(0,0,0,.25); font-size: 12px; }",
+    "#telefon .fe-ab-liste li.ok { background: rgba(47,174,92,.22); }",
+    "#telefon .fe-ab-liste li b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    "#telefon .fe-ab-liste li code { font-size: 11px; color: #ffd98a; } #telefon .fe-ab-liste li em { font-style: normal; font-size: 10.5px; color: #9fe0a8; }",
+    "#telefon .fe-ab-liste li button { border: 1px solid rgba(255,217,138,.5); border-radius: 7px; background: rgba(0,0,0,.3); color: #fff; cursor: pointer; padding: 1px 6px; }",
+    "#fe-scan-knap { position: fixed; right: 16px; top: 166px; z-index: 40; padding: 8px 14px; border-radius: 12px; border: 2px solid #d9a441; background: linear-gradient(#8a1446, #3a0820); color: #ffe7b0; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.4); }",
+    "#fe-scan-knap[hidden], #fe-scanner[hidden] { display: none !important; }",
+    "#fe-scanner { position: fixed; right: 24px; top: 210px; z-index: 60; width: 300px; max-width: calc(100vw - 32px); background: linear-gradient(#5a1238, #23060f); border-radius: 26px 26px 18px 18px; padding: 10px 12px 14px; box-shadow: 0 14px 34px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15); color: #f2f2f2; font-size: 12.5px; border: 2px solid #15161a; }",
+    "#fe-scanner .fes-top { display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px; cursor: move; } #fe-scanner .fes-top b { flex: 1; color: #ffd98a; letter-spacing: .5px; }",
+    "#fe-scanner .fes-led { width: 9px; height: 9px; border-radius: 50%; background: #ff3b9b; box-shadow: 0 0 8px #ff3b9b; animation: fes-blink 1.2s infinite; }",
+    "@keyframes fes-blink { 50% { opacity: .3; } } @keyframes fes-laser { from { top: 20%; } to { top: 80%; } }",
+    "#fe-scanner .fes-luk { width: 26px; height: 26px; border-radius: 8px; border: 1px solid #777; background: #33363d; color: #fff; cursor: pointer; padding: 0; }",
+    "#fe-scanner .fes-skaerm { position: relative; height: 104px; border-radius: 12px; background: radial-gradient(120% 120% at 50% 0%, #20343a, #0b1416); border: 3px solid #111; overflow: hidden; display: grid; place-items: center; text-align: center; transition: background .2s; }",
+    "#fe-scanner .fes-skaerm.groen { background: radial-gradient(120% 120% at 50% 0%, #2fae5c, #0d3b1e); } #fe-scanner .fes-skaerm.roed { background: radial-gradient(120% 120% at 50% 0%, #d23a4a, #3b0d14); }",
+    "#fe-scanner .fes-skaerm.gul { background: radial-gradient(120% 120% at 50% 0%, #d9a441, #4a3410); }",
+    "#fe-scanner .fes-laser { position: absolute; left: 8%; right: 8%; height: 2px; background: #ff2a2a; box-shadow: 0 0 10px 2px rgba(255,40,40,.8); top: 50%; animation: fes-laser 1.6s ease-in-out infinite alternate; }",
+    "#fe-scanner .fes-skaerm.groen .fes-laser, #fe-scanner .fes-skaerm.roed .fes-laser, #fe-scanner .fes-skaerm.gul .fes-laser { display: none; }",
+    "#fe-scanner .fes-svar { position: relative; display: grid; gap: 4px; padding: 0 10px; } #fe-scanner .fes-svar b { font-size: 15px; } #fe-scanner .fes-svar small { font-size: 11.5px; opacity: .92; line-height: 1.35; }",
+    "#fe-scanner .fes-form { display: flex; gap: 6px; margin: 10px 0 8px; }",
+    "#fe-scanner .fes-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 2px solid #111; background: #e9efe9; color: #111; font: 700 15px 'Courier New', monospace; letter-spacing: 3px; text-transform: uppercase; }",
+    "#fe-scanner .fes-form button { padding: 0 14px; border-radius: 10px; border: 0; background: linear-gradient(#ff5aa8, #c0285f); color: #fff; font-weight: 800; cursor: pointer; box-shadow: 0 3px 0 #6d0f36; }",
+    "#fe-scanner .fes-liste { background: rgba(0,0,0,.25); border-radius: 12px; padding: 8px 10px; max-height: 230px; overflow-y: auto; }",
+    "#fe-scanner .fes-liste h4 { margin: 0 0 4px; color: #ffd98a; font-size: 12.5px; } #fe-scanner .fes-liste p { margin: 2px 0 6px; } #fe-scanner .fes-tal { color: #9fe0a8; font-weight: 700; }",
+    "#fe-scanner .fes-liste ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }",
+    "#fe-scanner .fes-liste li { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; background: rgba(255,255,255,.06); } #fe-scanner .fes-liste li.ok { background: rgba(47,174,92,.18); }",
+    "#fe-scanner .fes-liste li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } #fe-scanner .fes-liste li em { font-style: normal; font-size: 11px; color: #9fe0a8; }",
+    "#fe-scanner .fes-liste li button { border: 1px solid #777; border-radius: 7px; background: #33363d; color: #fff; cursor: pointer; padding: 2px 8px; }",
+  ].join("");
   document.head.appendChild(stil);
 
   // =============================================================
