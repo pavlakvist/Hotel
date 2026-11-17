@@ -19,9 +19,11 @@
   window.veraFestivalKlar = true;
 
   const FE_ID = "festival";
+  const FP_ID = "festivalpark";        // 🎡 Festivalparken (madboder, spil og forlystelser), man går derover fra festivalen
   const FE_MANGLER = "⚠️ Serveren kender ikke Vera Festival endnu. Kør database-61-vera-festival.sql i Supabase → SQL Editor.";
   const FE_FRA_FIL = location.protocol === "file:";
-  const FE_B = 36, FE_D = 30;
+  let FE_B = 36, FE_D = 30;          // skifter, når man går mellem festivalen og parken
+  let FR = null;                      // det rum, vi er i (FE_RUM.festival eller FE_RUM.festivalpark)
   const PX_M = 76.35;           // pixels pr. meter i højden (spillets skala)
   const F_M = 1 / 0.77;         // felter pr. meter (1 felt = 0,77 m)
   const FE_STI = "billeder/moebler/";
@@ -31,11 +33,14 @@
   const FE_SCENE = { x0: 11, y0: 0, b: 14, d: 5 };            // scenegulvet
   const FE_OMRAADER = [
     { id: "scene", navn: "Hovedscenen", ikon: "🎤", om: "Den store scene med LED-skærme, lys og plads til hele publikummet.", x: 18, y: 9 },
-    { id: "spil", navn: "Spil-strøget", ikon: "🎯", om: "Boder med festivalspil, bamser og lykkehjul.", x: 30, y: 5 },
-    { id: "gaden", navn: "Festival-gaden", ikon: "🍔", om: "Mad & drikke, is & slik, borde med parasoller og springvandet.", x: 18, y: 23 },
     { id: "oplevelse", navn: "Oplevelsesområdet", ikon: "✨", om: "VIP-lounge, blomsterbue, fotovæg og lykkehjul på græsset.", x: 4, y: 10 },
+    { id: "gaden", navn: "Madgaden", ikon: "🍔", om: "I Festivalparken: mad & drikke, drinks, is & slik, borde med parasoller og springvandet.", x: 14, y: 20, rum: FP_ID },
+    { id: "spil", navn: "Spil-strøget", ikon: "🎯", om: "I Festivalparken: spilboder, lykkehjul, piñata og gong.", x: 31, y: 21, rum: FP_ID },
+    { id: "forlystelser", navn: "Forlystelserne", ikon: "🎡", om: "I Festivalparken: det store pariserhjul og karrusellen.", x: 29, y: 4, rum: FP_ID },
   ];
-  function feltType(x, y) {
+  function feltType(x, y) { return FR ? FR.felt(x, y) : feltFest(x, y); }
+  function feltFest(x, y) {
+    if (x >= 30 && x <= 31 && y <= 13) return "grus";                 // stien op til Festivalparken
     if (x >= FE_SCENE.x0 && x < FE_SCENE.x0 + FE_SCENE.b && y < FE_SCENE.y0 + FE_SCENE.d) return "scene";
     if (x <= 9 && (y === 24 || y === 25)) return "taeppe";          // rød løber fra porten
     if (x <= 8 && y <= 21 && !(y === 10 || y === 11) && !(x === 8)) return "graes";
@@ -57,8 +62,11 @@
     { id: "fe-bod-drinks", navn: "Drinks", ikon: "🍹" },
     { id: "fe-bod-slik", navn: "Is & Slik", ikon: "🍦" },
     { id: "fe-bod-spil", navn: "Festival Spil", ikon: "🎯" },
+    { id: "fp-pariserhjul", navn: "Pariserhjulet", ikon: "🎡" },
+    { id: "fp-karrusel", navn: "Karrusellen", ikon: "🎠" },
   ];
-  const FE_STEDER = { scene: "🎤 Hovedscenen", spil: "🎯 Spil-strøget", gaden: "🍔 Festival-gaden", oplevelse: "✨ Oplevelsesområdet", hele: "🎡 Hele festivalen" };
+  const FE_STEDER = { scene: "🎤 Hovedscenen", oplevelse: "✨ Oplevelsesområdet", gaden: "🍔 Madgaden", spil: "🎯 Spil-strøget",
+    forlystelser: "🎡 Forlystelserne", hele: "👑 Hele festivalen" };
 
   // =============================================================
   //  Små hjælpere
@@ -75,7 +83,10 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function iFest() { try { return rumValg === "vaerelse" && aktivtVaerelse === FE_ID; } catch (e) { return false; } }
+  // iFest = på festivalen eller i parken · iPlads = på selve festivalpladsen (scenen) · iPark = i Festivalparken
+  function iFest() { try { return rumValg === "vaerelse" && (aktivtVaerelse === FE_ID || aktivtVaerelse === FP_ID); } catch (e) { return false; } }
+  function iPlads() { try { return rumValg === "vaerelse" && aktivtVaerelse === FE_ID; } catch (e) { return false; } }
+  function iPark() { try { return rumValg === "vaerelse" && aktivtVaerelse === FP_ID; } catch (e) { return false; } }
   function feToken() { try { return typeof mitToken === "function" ? mitToken() : null; } catch (e) { return null; } }
   function feOnline() { return typeof SERVER !== "undefined" && SERVER.til && typeof serverKald === "function"; }
   function feMangler(e) { return /function|schema cache|does not exist|hv_festival/i.test((e && e.message) || ""); }
@@ -197,6 +208,9 @@
     { id: "fe-blomsterkasse", navn: "Blomsterkasse", ankre: [[126, 260], [126, 260], [126, 260], [126, 260]] },
     { id: "fe-haek", navn: "Hæk med lys", ankre: [[126, 283], [126, 283], null, null], kunEn: true },
     { id: "fe-skraldespand", navn: "Skraldespand", ankre: [[126, 280], [126, 280], [126, 280], [126, 280]] },
+    { id: "fe-vejskilt", navn: "Vejskilt", ankre: [[196, 620], [196, 620], [196, 620], [196, 620]] },
+    { id: "fp-karrusel", navn: "Karrusel", felter: [4, 4], ankre: [[494, 1094], [494, 1094], [494, 1094], [494, 1094]] },
+    { id: "fp-raekvaerk", navn: "Rækværk til broen", ankre: [[186, 381], [186, 381], [186, 381], [186, 381]] },
   ];
   FE_TYPER.forEach(function (t) {
     t.skala = 0.5;
@@ -256,16 +270,16 @@
     s("ev-lykkehjul", 5, 17); s("ev-candyfloss", 2, 19); s("fe-trae-rosa", 7, 20); s("fe-baenk", 0, 17, 1);
     s("fe-blomsterkasse", 1, 9); s("fe-blomsterkasse", 6, 9); s("fe-blomsterkasse", 1, 12); s("fe-blomsterkasse", 6, 12);
     s("fe-gadelampe", 7, 9); s("fe-gadelampe", 7, 12);
-    // 🎯 Spil-strøget (højre side)
-    s("fe-bod-spil", 28, 0); s("fe-bod-spil", 32, 0);
-    s("ev-lykkehjul", 34, 5); s("ev-pinata", 30, 6); s("ev-konfettikanon", 28, 5); s("ev-gong", 34, 8);
-    s("fe-gadelampe", 27, 9); s("fe-gadelampe", 33, 10); s("fe-baenk", 29, 10, 0); s("fe-skraldespand", 32, 11);
-    s("fe-lyspael", 28, 3); s("fe-lyspael", 34, 3);
-    // 🍔 Festival-gaden: madboder, springvand, borde og lys
-    s("fe-bod-mad", 27, 14); s("fe-bod-drinks", 30, 14); s("fe-bod-slik", 33, 14);
+    // 🎡 Vejen til Festivalparken (højre bagerst): porten, vejskiltet, lygter og bænke
+    s("fe-gadelampe", 29, 1); s("fe-gadelampe", 32, 1); s("fe-vejskilt", 33, 4);
+    s("fe-blomsterkasse", 29, 5); s("fe-blomsterkasse", 32, 5); s("fe-blomsterkasse", 29, 9); s("fe-blomsterkasse", 32, 9);
+    s("fe-baenk", 27, 7, 0); s("fe-baenk", 33, 8, 0); s("fe-trae-rosa", 35, 1); s("fe-trae", 27, 2);
+    s("fe-gadelampe", 27, 11); s("fe-gadelampe", 34, 11); s("fe-skraldespand", 33, 12);
+    s("fe-lyspael", 28, 4); s("fe-lyspael", 34, 6);
+    // 🍽 Pladsen forrest: springvand, borde og lys (madboderne står nu i Festivalparken)
     s("fe-springvand", 17, 19);
     s("fe-baenk", 17, 17, 0); s("fe-baenk", 17, 22, 2); s("fe-baenk", 15, 19, 1); s("fe-baenk", 20, 19, 3);
-    [[11, 17], [11, 23], [23, 23], [15, 26], [21, 26], [29, 19], [29, 24], [33, 19], [33, 24]].forEach(function (b) {
+    [[11, 17], [11, 23], [23, 23], [15, 26], [21, 26], [28, 15], [32, 15], [29, 19], [29, 24], [33, 19], [33, 24]].forEach(function (b) {
       s("fe-parasolbord", b[0], b[1], 0);
       s("fe-traestol", b[0], b[1] - 1, 0); s("fe-traestol", b[0] + 1, b[1] - 1, 0);
       s("fe-traestol", b[0], b[1] + 1, 2); s("fe-traestol", b[0] + 1, b[1] + 1, 2);
@@ -281,8 +295,8 @@
     s("fe-skraldespand", 13, 15); s("fe-skraldespand", 26, 23); s("fe-skraldespand", 9, 26); s("fe-skraldespand", 32, 27);
     return l;
   })();
-  function feSomData() {
-    return FE_MOEBLER.filter(function (m) { return MOEBEL_TYPER[m.type]; })
+  function feSomData(liste) {
+    return (liste || FE_MOEBLER).filter(function (m) { return MOEBEL_TYPER[m.type]; })
       .map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: false, retning: m.retning || 0 }; });
   }
 
@@ -290,70 +304,187 @@
   //  Kulisserne bag pladsen: scenen, porten om elevatoren, hækken og træerne (tegnes som "væggene")
   //  felt = fodaftrykket (x, y, bredde, dybde) uden for pladsen, anker = billedets forreste hjørne
   // =============================================================
-  const ELEV_FRA = 24, ELEV_TIL = 26;
+  let ELEV_FRA = 24, ELEV_TIL = 26;
+  const FE_FORAN = ["fe-port", "fe-scene-kulisse", "fp-port-0", "fp-port-1", "fp-pariserhjul"];     // tegnes oven på gulvet
   const FE_KULISSER = (function () {
     const l = [];
     const k = function (navn, x, y, w, d, anker, r) { l.push({ navn: navn, src: FE_KUL + navn + ".png?r=2", x: x, y: y, w: w, d: d, anker: anker }); };
+    // pariserhjulet i Festivalparken kan ses langt bagved
+    l.push({ navn: "fp-pariserhjul-langt", src: FE_KUL + "fp-pariserhjul.png?r=1", x: 23, y: -10, w: 14, d: 4, anker: [1434, 2821] });
     // træer langt bagved
     [1, 5, 27.5, 31, 34.5].forEach(function (x, i) { k(i % 2 ? "fe-trae" : "fe-trae-rosa", x, -2.4, 1, 1, i % 2 ? [286, 1008] : [276, 891]); });
     [3, 7, 11, 15, 19, 29].forEach(function (y, i) { k(i % 2 ? "fe-trae-rosa-v" : "fe-trae-v", -2.4, y, 1, 1, i % 2 ? [276, 891] : [286, 1008]); });
     // hækken langs begge bagkanter (ikke bag scenen og ikke ved porten)
-    for (let x = 0; x < FE_B; x++) if (x < 10 || x >= 26) k("fe-haek-0", x, -1, 1, 1, [126, 283]);
+    for (let x = 0; x < FE_B; x++) if (x < 10 || (x >= 26 && (x < 29 || x > 32))) k("fe-haek-0", x, -1, 1, 1, [126, 283]);
     for (let y = 0; y < FE_D; y++) if (y < ELEV_FRA - 1 || y > ELEV_TIL) k("fe-haek-1", -1, y, 1, 1, [126, 283]);
     // hovedscenen (16 felter bred) og porten (4 felter)
     k("fe-scene-kulisse", 10, -1.6, 16, 1.6, [1566, 2131]);
     k("fe-port", -1, ELEV_FRA - 1, 1, 4, [126, 1023]);
+    // porten til Festivalparken (højre bagerst)
+    l.push({ navn: "fp-port-0", src: FE_KUL + "fp-port-0.png?r=1", x: 29, y: -1, w: 4, d: 1, anker: [414, 1023] });
     // tegnes bagfra og frem
     l.sort(function (a, b) { return (a.x + a.w + a.y + a.d) - (b.x + b.w + b.y + b.d); });
     return l;
   })();
 
   // =============================================================
+  //  🎡 FESTIVALPARKEN — et rum for sig selv, som en rigtig forlystelsespark
+  //  Man kommer fra festivalen gennem porten (venstre bagkant), over broen ved åen og ind i parken.
+  //  Madgaden til venstre, spil-strøget til højre og forlystelserne (pariserhjul + karrusel) bagerst.
+  // =============================================================
+  const FP_B = 40, FP_D = 32;
+  const FP_AA = [4, 6];                 // åen løber langs y (x 4-6)
+  const FP_BRO = [15, 16];              // broen og stien ind fra porten (y 15-16)
+  const FP_ELEV = [24, 26];
+  function feltPark(x, y) {
+    if (x >= FP_AA[0] && x <= FP_AA[1]) return y >= FP_BRO[0] && y <= FP_BRO[1] ? "bro" : "vand";
+    if (x < FP_AA[0]) return (y >= FP_BRO[0] && y <= FP_BRO[1]) || (x <= 2 && y >= FP_ELEV[0] && y <= FP_ELEV[1]) || (x === 2 && y > FP_BRO[1] && y < FP_ELEV[0]) ? "grus" : "graes";
+    if (y >= FP_BRO[0] && y <= FP_BRO[1]) return "grus";              // hovedstien
+    if (x >= 22 && x <= 23) return "grus";                            // tværstien
+    if (y >= 11 && y <= 14) return "sten";                            // foran boderne
+    if (y <= 10) return x < 22 ? "graes" : "sten";                    // plænen og forlystelsespladsen
+    if (x < 22) return (x === 7 || y === FP_D - 1) ? "graes" : "sten"; // madgaden
+    return (x === FP_B - 1 || y === FP_D - 1) ? "graes" : (x >= 25 && x <= 26 && y >= 27 && y <= 29) ? "bed" : "sten";
+  }
+  const FP_MOEBLER = (function () {
+    const l = [];
+    const s = function (type, x, y, r) { l.push({ type: type, x: x, y: y, retning: r || 0 }); };
+    // 🌉 broen over åen: rækværk på begge sider og lygter ved enderne
+    for (let x = FP_AA[0]; x <= FP_AA[1]; x++) { s("fp-raekvaerk", x, FP_BRO[0] - 1, 0); s("fp-raekvaerk", x, FP_BRO[1] + 1, 2); }
+    s("fe-gadelampe", 3, 14); s("fe-gadelampe", 7, 14); s("fe-gadelampe", 3, 17); s("fe-gadelampe", 7, 17);
+    // græsset ved porten (før åen)
+    s("fe-vejskilt", 1, 13); s("fe-trae-rosa", 1, 3); s("fe-trae", 2, 8); s("fe-trae-rosa", 0, 20); s("fe-trae", 3, 29);
+    s("fe-blomsterkasse", 0, 11); s("fe-blomsterkasse", 3, 11); s("fe-baenk", 0, 6, 1); s("ev-lanterne", 3, 21); s("ev-lanterne", 1, 18);
+    // 🍔 Madgaden: boderne vender ud mod stien, borde og springvand foran
+    s("fe-bod-mad", 8, 11); s("fe-bod-drinks", 12, 11); s("fe-bod-slik", 16, 11); s("fe-bod-mad", 19, 11, 0);
+    s("fe-springvand", 13, 23);
+    s("fe-baenk", 13, 21, 0); s("fe-baenk", 13, 26, 2);
+    [[8, 19], [17, 19], [8, 23], [18, 24], [8, 28], [12, 29], [17, 28]].forEach(function (b) {
+      s("fe-parasolbord", b[0], b[1], 0);
+      s("fe-traestol", b[0], b[1] - 1, 0); s("fe-traestol", b[0] + 1, b[1] - 1, 0);
+      s("fe-traestol", b[0], b[1] + 1, 2); s("fe-traestol", b[0] + 1, b[1] + 1, 2);
+    });
+    s("fe-skraldespand", 11, 14); s("fe-skraldespand", 21, 21); s("ev-lanterne", 11, 25); s("ev-lanterne", 16, 25);
+    s("fe-gadelampe", 21, 18); s("fe-gadelampe", 21, 27);
+    // 🎯 Spil-strøget: spilboder ud mod stien og spil på pladsen foran
+    s("fe-bod-spil", 25, 11); s("fe-bod-spil", 29, 11); s("fe-bod-spil", 33, 11); s("fe-bod-spil", 37, 11);
+    s("ev-lykkehjul", 26, 20); s("ev-pinata", 30, 20); s("ev-gong", 34, 20); s("ev-konfettikanon", 37, 21);
+    s("ev-lykkehjul", 29, 26); s("ev-candyfloss", 34, 26); s("fe-baenk", 31, 29, 0); s("fe-baenk", 36, 29, 0);
+    s("fe-trae-rosa", 38, 30); s("fe-trae-rosa", 25, 28); s("fe-skraldespand", 24, 22); s("fe-skraldespand", 38, 24);
+    s("fe-gadelampe", 24, 18); s("fe-gadelampe", 38, 18); s("fe-gadelampe", 24, 30);
+    // lyskæder langs hovedstien
+    [8, 14, 20, 26, 32, 38].forEach(function (x) { s("fe-lyspael", x, 17); });
+    [10, 16, 25, 31, 37].forEach(function (x) { s("fe-lyspael", x, 14); });
+    // 🎡 Forlystelserne bagerst: pariserhjulet (kulisse bag kanten) og karrusellen
+    s("fp-karrusel", 31, 4);
+    s("fe-gadelampe", 25, 2); s("fe-gadelampe", 38, 2); s("fe-gadelampe", 29, 9); s("fe-gadelampe", 36, 9);
+    s("fe-baenk", 25, 7, 0); s("fe-baenk", 37, 6, 0); s("ev-lanterne", 30, 3); s("ev-lanterne", 35, 3); s("fe-skraldespand", 24, 9);
+    s("fe-vejskilt", 24, 13);
+    // 🌸 plænen bag madgaden
+    s("fe-trae-rosa", 9, 1); s("fe-trae-rosa", 18, 2); s("fe-trae", 13, 6); s("fe-trae-rosa", 20, 8);
+    s("fe-baenk", 10, 5, 0); s("fe-baenk", 15, 3, 0); s("ev-candyfloss", 16, 8); s("ev-blomsterbue", 9, 8);
+    s("ev-lanterne", 12, 3); s("ev-lanterne", 18, 6); s("fe-blomsterkasse", 8, 10); s("fe-blomsterkasse", 21, 5);
+    return l;
+  })();
+  const FP_KULISSER = (function () {
+    const l = [];
+    const k = function (navn, x, y, w, d, anker) { l.push({ navn: navn, src: FE_KUL + navn + ".png?r=2", x: x, y: y, w: w, d: d, anker: anker }); };
+    [9.5, 14, 18.5, 1].forEach(function (x, i) { k(i % 2 ? "fe-trae" : "fe-trae-rosa", x, -2.4, 1, 1, i % 2 ? [286, 1008] : [276, 891]); });
+    [2, 7, 11, 20, 29].forEach(function (y, i) { k(i % 2 ? "fe-trae-rosa-v" : "fe-trae-v", -2.4, y, 1, 1, i % 2 ? [276, 891] : [286, 1008]); });
+    for (let x = 0; x < FP_B; x++) if ((x < FP_AA[0] || x > FP_AA[1]) && x < 23) k("fe-haek-0", x, -1, 1, 1, [126, 283]);
+    for (let y = 0; y < FP_D; y++) if ((y < FP_BRO[0] - 1 || y > FP_BRO[1] + 1) && (y < FP_ELEV[0] - 1 || y > FP_ELEV[1])) k("fe-haek-1", -1, y, 1, 1, [126, 283]);
+    l.push({ navn: "fp-pariserhjul", src: FE_KUL + "fp-pariserhjul.png?r=1", x: 24, y: -4, w: 14, d: 4, anker: [1434, 2821] });
+    l.push({ navn: "fp-port-1", src: FE_KUL + "fp-port-1.png?r=1", x: -1, y: FP_BRO[0] - 1, w: 1, d: 4, anker: [126, 1023] });
+    k("fe-port", -1, FP_ELEV[0] - 1, 1, 4, [126, 1023]);
+    l.sort(function (a, b) { return (a.x + a.w + a.y + a.d) - (b.x + b.w + b.y + b.d); });
+    return l;
+  })();
+  function gulvPark(g) {
+    // broens planker får en mørk kant mod vandet
+    const a = punkt(FP_AA[0], FP_BRO[0]), b = punkt(FP_AA[1] + 1, FP_BRO[0]), c = punkt(FP_AA[1] + 1, FP_BRO[1] + 1), d = punkt(FP_AA[0], FP_BRO[1] + 1);
+    polygon(g, [d, c, { x: c.x, y: c.y + 7 }, { x: d.x, y: d.y + 7 }], "#3a2414");
+    g.strokeStyle = "rgba(30,18,10,.8)"; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.moveTo(d.x, d.y); g.lineTo(c.x, c.y); g.stroke();
+  }
+  // felterne uden for pladsen, hvor stierne og åen fortsætter
+  function udeFelter(x0, x1, y0, y1) { const l = []; for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) l.push([x, y]); return l; }
+  const FE_RUM = {};
+  FE_RUM[FE_ID] = { id: FE_ID, b: 36, d: 30, felt: feltFest, kul: FE_KULISSER, elev: [24, 26], gulvEkstra: gulvFestival, bag: 13, top: 13,
+    ude: [["grus", udeFelter(30, 31, -3, -1)]], moebler: FE_MOEBLER };
+  FE_RUM[FP_ID] = { id: FP_ID, b: FP_B, d: FP_D, felt: feltPark, kul: FP_KULISSER, elev: FP_ELEV, gulvEkstra: gulvPark, bag: 6, top: 13,
+    ude: [["grus", udeFelter(-3, -1, FP_BRO[0], FP_BRO[1])], ["vand", udeFelter(FP_AA[0], FP_AA[1], -3, -1)]], moebler: FP_MOEBLER };
+  FR = FE_RUM[FE_ID];
+  function brugRum(id) {
+    const n = FE_RUM[id] || FE_RUM[FE_ID];
+    if (FR === n) return;
+    FR = n; FE_B = n.b; FE_D = n.d; ELEV_FRA = n.elev[0]; ELEV_TIL = n.elev[1];
+    FE_CACHE = null; feKaedeNoegle = "";
+  }
+  // kan man gå her? (i parken kan man ikke gå i åen, kun over broen)
+  function parkKanGaa(x, y) { return feltPark(Math.round(x), Math.round(y)) !== "vand"; }
+
+  // =============================================================
   //  Gulvet og kulisserne tegnes én gang ind i et billede (meget hurtigere), ligesom js/realistisk.js
   // =============================================================
   const FE_TEKSTURER = { sten: FE_KUL + "fe-brosten.jpg", graes: FE_KUL + "fe-graes.jpg", scene: FE_KUL + "fe-scenegulv.jpg",
-    bed: FE_KUL + "fe-bed.jpg", taeppe: FE_KUL + "fe-taeppe.jpg" };
+    bed: FE_KUL + "fe-bed.jpg", taeppe: FE_KUL + "fe-taeppe.jpg", grus: FE_KUL + "fp-grus.jpg", vand: FE_KUL + "fp-vand.jpg", bro: FE_KUL + "fp-broplanker.jpg" };
+  const FE_FARVER = { sten: "#9c8682", graes: "#3c6a2c", scene: "#3a2118", bed: "#4a3020", taeppe: "#8a1838", grus: "#97806a", vand: "#2a6a80", bro: "#7a5236" };
   function billede(src) { return typeof hentBillede === "function" ? hentBillede(src) : null; }
   function klar(b) { return !!b && (typeof billedeKlar === "function" ? billedeKlar(b) : b.complete && b.naturalWidth > 0); }
-  function feltSti(g, test) {
+  function feltSti(g, test, felter) {
     g.beginPath();
-    for (let x = 0; x < FE_B; x++) for (let y = 0; y < FE_D; y++) {
-      if (!test(x, y)) continue;
+    const et = function (x, y) {
       const d = diamant(x, y);
       g.moveTo(d[0].x, d[0].y); for (let i = 1; i < 4; i++) g.lineTo(d[i].x, d[i].y); g.closePath();
-    }
+    };
+    if (felter) { felter.forEach(function (f) { et(f[0], f[1]); }); return; }
+    for (let x = 0; x < FE_B; x++) for (let y = 0; y < FE_D; y++) if (test(x, y)) et(x, y);
+  }
+  // fyld felterne med en tekstur (felter = en liste [x, y] uden for pladsen, ellers alle felter af den type)
+  function fyldTekstur(g, type, felter) {
+    const o = punkt(0, 0), bil = billede(FE_TEKSTURER[type]);
+    g.save();
+    feltSti(g, function (x, y) { return feltType(x, y) === type; }, felter);
+    if (klar(bil)) {
+      const F = bil.width / 4;
+      const mo = g.createPattern(bil, "repeat");
+      mo.setTransform(new DOMMatrix([FLISE_B / 2 / F, FLISE_H / 2 / F, -FLISE_B / 2 / F, FLISE_H / 2 / F, o.x, o.y]));
+      g.fillStyle = mo;
+    } else g.fillStyle = FE_FARVER[type];
+    g.fill();
+    g.restore();
   }
   function tegnGulvLag(g) {
-    const o = punkt(0, 0);
-    Object.keys(FE_TEKSTURER).forEach(function (type) {
-      const bil = billede(FE_TEKSTURER[type]);
-      g.save();
-      feltSti(g, function (x, y) { return feltType(x, y) === type; });
-      if (klar(bil)) {
-        const F = bil.width / 4;
-        const mo = g.createPattern(bil, "repeat");
-        mo.setTransform(new DOMMatrix([FLISE_B / 2 / F, FLISE_H / 2 / F, -FLISE_B / 2 / F, FLISE_H / 2 / F, o.x, o.y]));
-        g.fillStyle = mo;
-      } else g.fillStyle = { sten: "#9c8682", graes: "#3c6a2c", scene: "#3a2118", bed: "#4a3020", taeppe: "#8a1838" }[type];
-      g.fill();
-      g.restore();
-    });
+    const brugt = {};
+    for (let x = 0; x < FE_B; x++) for (let y = 0; y < FE_D; y++) brugt[feltType(x, y)] = 1;
+    Object.keys(FE_TEKSTURER).forEach(function (type) { if (brugt[type]) fyldTekstur(g, type); });
     // kantsten mellem brosten og græs/bede
     g.save();
     g.lineCap = "round";
     for (let x = 0; x < FE_B; x++) for (let y = 0; y < FE_D; y++) {
       const t = feltType(x, y);
-      if (t !== "graes" && t !== "bed") continue;
+      if (t !== "graes" && t !== "bed" && t !== "vand") continue;
       [[1, 0], [0, 1], [-1, 0], [0, -1]].forEach(function (r) {
         const nx = x + r[0], ny = y + r[1];
         if (nx < 0 || ny < 0 || nx >= FE_B || ny >= FE_D) return;
         const n = feltType(nx, ny);
-        if (n === "graes" || n === "bed") return;
+        if (t === "vand" ? (n === "vand" || n === "bro") : (n === "graes" || n === "bed" || n === "vand")) return;
         let a, b;
         if (r[0] === 1) { a = punkt(x + 1, y); b = punkt(x + 1, y + 1); }
         else if (r[0] === -1) { a = punkt(x, y); b = punkt(x, y + 1); }
         else if (r[1] === 1) { a = punkt(x, y + 1); b = punkt(x + 1, y + 1); }
         else { a = punkt(x, y); b = punkt(x + 1, y); }
+        if (t === "vand") {
+          // åbredden: mørk jord og runde sten langs vandet
+          g.strokeStyle = "rgba(40,30,20,0.75)"; g.lineWidth = 7;
+          g.beginPath(); g.moveTo(a.x, a.y + 1); g.lineTo(b.x, b.y + 1); g.stroke();
+          for (let i = 0; i < 4; i++) {
+            const t2 = (i + 0.5) / 4, sx = a.x + (b.x - a.x) * t2, sy = a.y + (b.y - a.y) * t2;
+            g.fillStyle = ["#a89a8e", "#8c7f74", "#b7aba0"][(x + y + i) % 3];
+            g.beginPath(); g.ellipse(sx, sy, 4.2, 2.6, 0, 0, Math.PI * 2); g.fill();
+          }
+          return;
+        }
         g.strokeStyle = "rgba(60,40,35,0.55)"; g.lineWidth = 4.5;
         g.beginPath(); g.moveTo(a.x, a.y + 1); g.lineTo(b.x, b.y + 1); g.stroke();
         g.strokeStyle = "#cdbcb2"; g.lineWidth = 2.6;
@@ -361,6 +492,18 @@
       });
     }
     g.restore();
+    if (FR && FR.gulvEkstra) FR.gulvEkstra(g);
+    // jordkanten forrest (pladsen "står" på jorden). Hvor åen løber ud, er kanten blå
+    for (let x = 0; x < FE_B; x++) {
+      const v = punkt(x, FE_D), m = punkt(x + 1, FE_D), vd = feltType(x, FE_D - 1) === "vand";
+      polygon(g, [v, m, { x: m.x, y: m.y + 14 }, { x: v.x, y: v.y + 14 }], vd ? "#1d4a5a" : "#2c3a22");
+    }
+    for (let y = 0; y < FE_D; y++) {
+      const m = punkt(FE_B, y + 1), h = punkt(FE_B, y), vd = feltType(FE_B - 1, y) === "vand";
+      polygon(g, [m, h, { x: h.x, y: h.y + 14 }, { x: m.x, y: m.y + 14 }], vd ? "#163a48" : "#1f2a18");
+    }
+  }
+  function gulvFestival(g) {
     // scenegulvet: guldkant og en sort forkant, så det ser ud som en rigtig scene
     const s = FE_SCENE;
     const fv = punkt(s.x0, s.y0 + s.d), fh = punkt(s.x0 + s.b, s.y0 + s.d), bh = punkt(s.x0 + s.b, s.y0);
@@ -371,10 +514,6 @@
     // røde løber: guldkant
     g.strokeStyle = "rgba(217,164,65,0.9)"; g.lineWidth = 2;
     [[punkt(0, 24), punkt(10, 24)], [punkt(0, 26), punkt(10, 26)]].forEach(function (l) { g.beginPath(); g.moveTo(l[0].x, l[0].y); g.lineTo(l[1].x, l[1].y); g.stroke(); });
-    // jordkanten forrest (pladsen "står" på jorden)
-    const v = punkt(0, FE_D), m = punkt(FE_B, FE_D), h = punkt(FE_B, 0);
-    polygon(g, [v, m, { x: m.x, y: m.y + 14 }, { x: v.x, y: v.y + 14 }], "#2c3a22");
-    polygon(g, [m, h, { x: h.x, y: h.y + 14 }, { x: m.x, y: m.y + 14 }], "#1f2a18");
   }
   function tegnKulisse(g, k) {
     const b = billede(k.src);
@@ -386,15 +525,17 @@
     // mørkt panel bag elevatoren (i porten)
     const pa = p3(-0.05, ELEV_FRA - 0.3, 0), pb = p3(-0.05, ELEV_TIL + 0.3, 0);
     polygon(g, [pa, pb, { x: pb.x, y: pb.y - 3.3 * PX_M }, { x: pa.x, y: pa.y - 3.3 * PX_M }], "#2a0b14");
-    FE_KULISSER.forEach(function (k) { if (k.navn !== "fe-port" && k.navn !== "fe-scene-kulisse") tegnKulisse(g, k); });
+    // stierne og åen fortsætter lidt ud bag pladsen
+    (FR.ude || []).forEach(function (u) { fyldTekstur(g, u[0], u[1]); });
+    FR.kul.forEach(function (k) { if (FE_FORAN.indexOf(k.navn) < 0) tegnKulisse(g, k); });
     tegnGulvLag(g);
-    FE_KULISSER.forEach(function (k) { if (k.navn === "fe-port" || k.navn === "fe-scene-kulisse") tegnKulisse(g, k); });
+    FR.kul.forEach(function (k) { if (FE_FORAN.indexOf(k.navn) >= 0) tegnKulisse(g, k); });
   }
   let FE_CACHE = null;
   function antalKlar() {
     let n = 0;
     Object.keys(FE_TEKSTURER).forEach(function (k) { if (klar(billede(FE_TEKSTURER[k]))) n++; });
-    FE_KULISSER.forEach(function (k) { if (klar(billede(k.src))) n++; });
+    FR.kul.forEach(function (k) { if (klar(billede(k.src))) n++; });
     return n;
   }
   function feCache() {
@@ -404,13 +545,13 @@
     const o = punkt(0, 0);
     const ox = T.a * o.x + T.e, oy = T.d * o.y + T.f;
     // hele pladsen med kulisser (målt fra hjørnet 0,0 i skærm-pixels)
-    const v = punkt(-3, FE_D), h = punkt(FE_B, -3), b = punkt(FE_B, FE_D);
+    const v = punkt(-3, FE_D), h = punkt(FE_B, -FR.bag), b = punkt(FE_B, FE_D);
     const gx1 = Math.floor(T.a * (v.x - 260) + T.e - ox), gx2 = Math.ceil(T.a * (h.x + 260) + T.e - ox);
-    const gy1 = Math.floor(T.d * (o.y - 9.2 * PX_M) + T.f - oy), gy2 = Math.ceil(T.d * (b.y + 30) + T.f - oy);
+    const gy1 = Math.floor(T.d * (o.y - FR.top * PX_M) + T.f - oy), gy2 = Math.ceil(T.d * (b.y + 30) + T.f - oy);
     const sx1 = Math.max(gx1, Math.floor(-ox)), sy1 = Math.max(gy1, Math.floor(-oy));
     const sx2 = Math.min(gx2, Math.ceil(W - ox)), sy2 = Math.min(gy2, Math.ceil(H - oy));
     if (sx2 <= sx1 || sy2 <= sy1) return null;
-    const noegle = [T.a.toFixed(4), T.d.toFixed(4), W, H, antalKlar()].join("|");
+    const noegle = [FR.id, T.a.toFixed(4), T.d.toFixed(4), W, H, antalKlar()].join("|");
     const k = FE_CACHE;
     if (k && k.noegle === noegle && sx1 >= k.x1 && sy1 >= k.y1 && sx2 <= k.x2 && sy2 <= k.y2) {
       return { c: k.c, x: Math.round(ox + k.x1), y: Math.round(oy + k.y1) };
@@ -566,7 +707,7 @@
     let nyLyt = false;
     FE_SKAERME.forEach(function (s) { const f = feIframes[s.id]; if (!f.lytter) { Y.lyt(f.el); f.lytter = true; if (f.v) nyLyt = true; } });
     if (nyLyt) opdaterSkaerme(true);   // genindlæs én gang, så afspilleren begynder at fortælle, hvor langt den er
-    if (!iFest()) return;
+    if (!iPlads()) return;
     FE_SKAERME.forEach(function (s) {
       const f = feIframes[s.id], d = skaermData(s.id);
       if (f.v && d.v === f.v && d.t) Y.synk(f.el, d.t, feNu());
@@ -577,7 +718,7 @@
     const lyd = lydSkaerm();
     FE_SKAERME.forEach(function (s) {
       const f = feIframes[s.id], d = skaermData(s.id);
-      if (!(iFest() && viserVideo(s))) { if (f.v) { f.el.removeAttribute("src"); f.v = null; f.n = -1; } return; }
+      if (!(iPlads() && viserVideo(s))) { if (f.v) { f.el.removeAttribute("src"); f.v = null; f.n = -1; } return; }
       if (!tving && f.v === d.v && f.n === d.n) {
         if (f.lyd !== (s.id === lyd)) { f.lyd = s.id === lyd; ytKommando(f, f.lyd ? "unMute" : "mute"); }
         return;
@@ -605,7 +746,7 @@
       const sx = r.width / BREDDE, sy = r.height / HOEJDE;
       FE_SKAERME.forEach(function (s) {
         const f = feIframes[s.id];
-        const vis = iFest() && viserVideo(s) && !!f.v;
+        const vis = iPlads() && viserVideo(s) && !!f.v;
         if (f.el.hidden === vis) f.el.hidden = !vis;
         if (!vis) return;
         const h = skaermHjoerner(s);
@@ -613,7 +754,7 @@
         f.el.style.transform = "matrix(" + [(B.x - A.x) / 640, (B.y - A.y) / 640, (D.x - A.x) / 360, (D.y - A.y) / 360, A.x, A.y].join(",") + ")";
       });
       const lyd = lydSkaerm();
-      const vis = iFest() && !!lyd && !FE_FRA_FIL && !lydTrykket[lyd + skaermData(lyd).n];
+      const vis = iPlads() && !!lyd && !FE_FRA_FIL && !lydTrykket[lyd + skaermData(lyd).n];
       if (lydKnap.hidden === vis) lydKnap.hidden = !vis;
     }
     requestAnimationFrame(placerSkaerme);
@@ -737,11 +878,68 @@
           const p = paaMoebel(m, Math.cos(a * 3 + j) * rr, Math.sin(a * 2 + j) * rr, 0.43 + (j % 2) * 0.75);
           lighter(gloed("230,245,255"), p.x, p.y, 10, 0.8);
         }
+      } else if (m.type === "fp-karrusel") {
+        const lys = (fe.boder && fe.boder["fp-karrusel"]) || "varm";
+        for (let j = 0; j < 32; j++) {
+          const a = j / 32 * Math.PI * 2 + nu / 4000;
+          const p = paaMoebel(m, Math.cos(a) * 1.7, Math.sin(a) * 1.7, 2.56);
+          const f = lysFarve(lys, j, nu);
+          if (!f) continue;
+          lighter(gloed(f), p.x, p.y, 22, 0.9);
+          ctx.globalAlpha = 1; ctx.fillStyle = "rgb(" + f + ")"; ctx.fillRect(p.x - 1.2, p.y - 1.2, 2.6, 2.6);
+        }
+        const f0 = lysFarve(lys, 2, nu);
+        if (f0) {
+          const g = paaMoebel(m, 0, 0, 0.3);
+          ctx.save(); ctx.translate(g.x, g.y); ctx.scale(1, 0.5); lighter(gloed(f0), 0, 0, 330, 0.35); ctx.restore();
+        }
       } else if (m.type === "ev-lanterne" && fe.lamper !== false) {
         const p = paaMoebel(m, 0, 0, 0.22);
         lighter(gloed("255,190,110"), p.x, p.y, 54, 0.7);
       }
     });
+    if (iPark()) tegnHjulLys(nu, lighter);
+    ctx.restore();
+  }
+  // 🎡 pærerne på pariserhjulet (kulissen bag parken): et lysbånd, der løber rundt
+  function tegnHjulLys(nu, lighter) {
+    const lys = (fe.boder && fe.boder["fp-pariserhjul"]) || "varm";
+    const k = FP_KULISSER.find(function (x) { return x.navn === "fp-pariserhjul"; });
+    if (!k || lys === "slukket") return;
+    const cx = k.x + k.w / 2, cy = k.y + k.d / 2 + 0.5 * F_M, HZ = 6.55, R = 5.02;
+    const N = 64;
+    for (let j = 0; j < N; j++) {
+      const a = j / N * Math.PI * 2;
+      const p = p3(cx + Math.cos(a) * R * F_M, cy, HZ + Math.sin(a) * R);
+      const f = lysFarve(lys, j, nu);
+      if (!f) continue;
+      const loeb = 0.55 + 0.45 * Math.sin(a * 4 - nu / 260);
+      lighter(gloed(f), p.x, p.y, 20, 0.5 + 0.45 * loeb);
+      ctx.globalAlpha = 0.6 + 0.4 * loeb; ctx.fillStyle = "rgb(" + f + ")"; ctx.fillRect(p.x - 1.3, p.y - 1.3, 2.6, 2.6);
+    }
+    // egerne lyser i takt
+    for (let e = 0; e < 16; e++) {
+      const a = e / 16 * Math.PI * 2, f = lysFarve(lys, e * 4, nu);
+      if (!f || (Math.floor(nu / 400) + e) % 4) continue;
+      for (let t = 0.25; t < 1; t += 0.25) {
+        const p = p3(cx + Math.cos(a) * R * t * F_M, cy, HZ + Math.sin(a) * R * t);
+        lighter(gloed(f), p.x, p.y, 16, 0.6);
+      }
+    }
+    const nav = p3(cx, cy, HZ);
+    lighter(gloed(lys === "varm" ? "255,90,170" : (lysFarve(lys, 0, nu) || "255,90,170")), nav.x, nav.y, 120, 0.45);
+  }
+  // 💧 små glimt, der flyder med strømmen i åen
+  function tegnAaGlimt(nu) {
+    ctx.save(); ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 70; i++) {
+      const x = FP_AA[0] + 0.15 + ((i * 0.618) % 1) * (FP_AA[1] - FP_AA[0] + 0.7);
+      const y = ((i * 2.37 + nu / 1400) % (FP_D + 2)) - 1;
+      if (y < 0 || y > FP_D || (y > FP_BRO[0] - 0.2 && y < FP_BRO[1] + 1.2)) continue;
+      const p = punkt(x, y), a = 0.25 + 0.3 * Math.sin(nu / 300 + i * 1.7);
+      if (a <= 0.05) continue;
+      ctx.globalAlpha = a; ctx.drawImage(gloed("200,235,255"), p.x - 6, p.y - 2.5, 12, 5);
+    }
     ctx.restore();
   }
   // 🎤 lys fra scenens lyskanoner: kegler af lys ned på scenen og publikum
@@ -781,7 +979,7 @@
     if (!a) return;
     ctx.save();
     ctx.beginPath(); ctx.rect(-20, -20, BREDDE + 40, HOEJDE + 40);
-    FE_SKAERME.forEach(function (s) {
+    if (iPlads()) FE_SKAERME.forEach(function (s) {
       const h = skaermHjoerner(s);
       ctx.moveTo(h[3].x, h[3].y); ctx.lineTo(h[2].x, h[2].y); ctx.lineTo(h[1].x, h[1].y); ctx.lineTo(h[0].x, h[0].y); ctx.closePath();
     });
@@ -921,12 +1119,22 @@
       NAV_RUM.push({ id: FE_ID, etage: "ude", navn: "🎡 Vera Festival", om: "Det store festivalområde: hovedscene, spil-strøg, festival-gade og oplevelser.",
         billede: "billeder/rum/festival.png", maks: 200, rum: "vaerelse", vaerelse: FE_ID });
     }
+    // 🎡 Festivalparken (står ikke i navigatøren — man går derover fra festivalen)
+    INDBYGGEDE_RUM[FP_ID] = { id: FP_ID, navn: "Festivalparken", ejer: EJER_NAVNE[0], bredde: FP_B, dybde: FP_D,
+      vaeg: "#2a0b14", gulv1: "#9c8682", gulv2: "#8e7874", vaegHoejde: 470, doer: null };
+    if (typeof RF_STANDARD !== "undefined") RF_STANDARD[FP_ID] = { vaeg: "#2a0b14", gulv1: "#9c8682", gulv2: "#8e7874" };
+    // de gemte møbler bruges, men står boderne stadig på festivalen fra før parken, får festivalen den nye opstilling
+    const brugGemt = function (id, liste) {
+      if (!Array.isArray(liste) || !liste.length) return false;
+      if (id === FE_ID && liste.some(function (m) { return /^fe-bod-/.test(m.type); }) && !liste.some(function (m) { return m.type === "fe-vejskilt"; })) return false;
+      return true;
+    };
     const vaerelseMoeblerFoer = vaerelseMoebler;
     vaerelseMoebler = function (id) {
-      if (id === FE_ID && !andreVaerelser[FE_ID]) {
+      if (FE_RUM[id] && !andreVaerelser[id]) {
         let gemt = null;
-        try { gemt = JSON.parse(localStorage.getItem("mit-hotel-rum-" + FE_ID) || "null"); } catch (e) {}
-        andreVaerelser[FE_ID] = (Array.isArray(gemt) && gemt.length ? gemt : feSomData())
+        try { gemt = JSON.parse(localStorage.getItem("mit-hotel-rum-" + id) || "null"); } catch (e) {}
+        andreVaerelser[id] = (brugGemt(id, gemt) ? gemt : feSomData(FE_RUM[id].moebler))
           .map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; });
       }
       return vaerelseMoeblerFoer(id);
@@ -935,7 +1143,9 @@
       const serverKaldFoer = serverKald;
       serverKald = async function (funktion, data) {
         const svar = await serverKaldFoer(funktion, data);
-        if (funktion === "hv_rum_moebler_hent" && svar && !(Array.isArray(svar[FE_ID]) && svar[FE_ID].length)) svar[FE_ID] = feSomData();
+        if (funktion === "hv_rum_moebler_hent" && svar) {
+          [FE_ID, FP_ID].forEach(function (id) { if (!brugGemt(id, svar[id])) svar[id] = feSomData(FE_RUM[id].moebler); });
+        }
         return svar;
       };
     }
@@ -952,16 +1162,27 @@
     }
     const skiftRumFoer = skiftRum;
     skiftRum = function (navn) {
-      const varHer = iFest();
+      const varHer = iFest(), fra = varHer ? aktivtVaerelse : null;
       skiftRumFoer.apply(this, arguments);
       if (iFest()) {
+        brugRum(aktivtVaerelse);
         if (typeof placerElevator === "function") placerElevator();
-        if (!varHer) {
-          // man kommer ind gennem porten, lidt tættere på, så figurerne ikke bliver bittesmå på den store plads
-          if (typeof figur !== "undefined") { figur.x = 1; figur.y = 25; figur.retning = "ned-hoejre"; }
+        if ((fra !== aktivtVaerelse || navn === "vaerelse") && typeof figur !== "undefined") {
+          figur.rute = [];
+          if (iPark()) {
+            // over fra festivalen: man står lige inden for parkens port, ved broen over åen
+            figur.x = 1; figur.y = FP_BRO[0]; figur.retning = "ned-hoejre";
+            feBesked("🎡 Velkommen til FESTIVALPARKEN! Gå over broen: Madgaden til venstre, spil-strøget til højre og pariserhjul + karrusel bagerst.");
+          } else if (fra === FP_ID) {
+            figur.x = 30; figur.y = 1; figur.retning = "ned-venstre";             // tilbage gennem porten til parken
+            feBesked("👑 Tilbage på VERA FESTIVAL.");
+          } else {
+            // man kommer ind gennem porten, lidt tættere på, så figurerne ikke bliver bittesmå på den store plads
+            figur.x = 1; figur.y = 25; figur.retning = "ned-hoejre";
+            feBesked("🎡 Velkommen til VERA FESTIVAL! Hovedscenen er bagerst, oplevelserne til venstre — og porten bagerst til højre fører over åen til Festivalparken med mad, spil og pariserhjul.");
+          }
           if (feZoomFoer === null && typeof brugerZoom !== "undefined") { feZoomFoer = brugerZoom; brugerZoom = Math.max(brugerZoom, 1.75); }
           centrerPaaFigur(true);
-          feBesked("🎡 Velkommen til VERA FESTIVAL! Hovedscenen er bagerst, spil-strøget til højre, festival-gaden forrest og oplevelserne til venstre.");
         }
         hentFest();
         abHent().then(abVelkommen);
@@ -975,6 +1196,7 @@
     const tegnVaeggeFoer = tegnVaegge;
     tegnVaegge = function () {
       if (!iFest()) return tegnVaeggeFoer.apply(this, arguments);
+      brugRum(aktivtVaerelse);
       try {
         tegnHimmel();
         const k = feCache();
@@ -989,13 +1211,16 @@
     tegnGulv = function () {
       if (!iFest()) return tegnGulvFoer.apply(this, arguments);
       // gulvet ligger allerede i billedet. Her kommer kun det, der ændrer sig: skærmene og lyset på scenegulvet
-      try { FE_SKAERME.forEach(tegnSkaerm); tegnScenegulvLys(feNu()); tegnAbKontrol(false); } catch (e) { console.warn(e); }
+      try {
+        if (iPlads()) { FE_SKAERME.forEach(tegnSkaerm); tegnScenegulvLys(feNu()); tegnAbKontrol(false); }
+        else tegnAaGlimt(feNu());
+      } catch (e) { console.warn(e); }
     };
     if (typeof tegnBobler === "function") {
       const tegnBoblerFoer = tegnBobler;
       tegnBobler = function () {
         if (iFest()) {
-          try { const nu = feNu(); tegnMoerke(); tegnSceneLys(nu); tegnLys(nu); tegnAbKontrol(true); tegnEffekter(); } catch (e) { console.warn(e); }
+          try { const nu = feNu(); tegnMoerke(); if (iPlads()) tegnSceneLys(nu); tegnLys(nu); if (iPlads()) tegnAbKontrol(true); tegnEffekter(); } catch (e) { console.warn(e); }
         }
         return tegnBoblerFoer.apply(this, arguments);
       };
@@ -1009,6 +1234,22 @@
       };
     }
   }
+  // 🚪 porten: står man i åbningen (festivalen x 30-31, y 0 · parken x 0, y 15-16), går man over til det andet sted
+  function tilPark() {
+    if (!abOk() && abKraev() === "hele") { feBesked(abTekst()); return; }
+    if (typeof gaaTilVaerelse === "function") gaaTilVaerelse(FP_ID);
+  }
+  function tilFestival() { if (typeof gaaTilVaerelse === "function") gaaTilVaerelse(FE_ID); }
+  let fePortTid = 0;
+  setInterval(function () {
+    try {
+      if (!iFest() || typeof figur === "undefined" || (figur.rute && figur.rute.length) || figur.sidde) return;
+      if (Date.now() - fePortTid < 1500) return;
+      const x = Math.round(figur.x), y = Math.round(figur.y);
+      if (iPlads() && y === 0 && x >= 30 && x <= 31) { fePortTid = Date.now(); tilPark(); }
+      else if (iPark() && x === 0 && y >= FP_BRO[0] && y <= FP_BRO[1]) { fePortTid = Date.now(); tilFestival(); }
+    } catch (e) {}
+  }, 250);
   // lyspletter på scenegulvet (under figurerne)
   function tegnScenegulvLys(nu) {
     const lys = fe.scene || "varm";
@@ -1185,7 +1426,7 @@
   };
   function tegnStyrIgen() {
     if (!styrAaben() || styrForm) return;
-    const n = JSON.stringify([fe, feFejl, program, programFejl, styrFane, abP, abPFejl]);
+    const n = JSON.stringify([fe, feFejl, program, programFejl, styrFane, abP, abPFejl, iFest(), iPark()]);
     if (n === styrSidst) return;
     const el = styrEl(), aktiv = document.activeElement;
     if (el && aktiv && el.contains(aktiv) && /INPUT|TEXTAREA|SELECT/.test(aktiv.tagName)) return;
@@ -1194,7 +1435,7 @@
   function tegnStyr() {
     const el = styrEl();
     if (!el) return;
-    styrSidst = JSON.stringify([fe, feFejl, program, programFejl, styrFane, abP, abPFejl]);
+    styrSidst = JSON.stringify([fe, feFejl, program, programFejl, styrFane, abP, abPFejl, iFest(), iPark()]);
     if (!feMaa()) { el.innerHTML = topHtml(styrApi, "Festival") + "<div class='tlf-indhold ea-app'><p class='ea-tom'>Festival-appen er kun for ejeren, Eventværter og Eventfolk.</p></div>"; return; }
     if (styrForm) { tegnProgramForm(el); return; }
     const scrollFoer = el.querySelector(".ea-app") ? el.querySelector(".ea-app").scrollTop : 0;
@@ -1207,6 +1448,7 @@
     let html = "";
     if (feFejl) html += "<p class='ea-advarsel'>" + esc(feFejl) + "</p>";
     if (!iFest()) html += "<div class='ea-hj-knapper'><button data-fe='gaa'>🚶 Gå til Vera Festival</button></div>";
+    else html += "<div class='ea-hj-knapper'><button data-fe='gaapark'>" + (iPark() ? "👑 Tilbage til festivalpladsen" : "🎡 Gå til Festivalparken") + "</button></div>";
     const ef = fe.effekter || {};
     const ikon = function (t) { return String(t).split(" ")[0]; };
     const rest = function (t) { return String(t).split(" ").slice(1).join(" "); };
@@ -1236,7 +1478,7 @@
       html += "<p class='ea-info'>Genveje i chatten: <b>:festlys disko</b>, <b>:festeffekt konfetti</b>, <b>:festfinale</b>, <b>:festsluk</b>.</p>";
     } else if (styrFane === "lys") {
       html += "<div class='ea-hj-knapper'><button data-fe='slukalt' class='ar-sluk'>⏻ Sluk alt (normalt lys)</button></div>";
-      html += "<h4 class='ea-dag'>🏪 Lys på hver bod</h4>";
+      html += "<h4 class='ea-dag'>🏪 Lys på boderne og forlystelserne</h4>";
       html += "<div class='fe-bod fe-alle'><b>🎪 Alle boder på én gang</b><div class='ar-hr'>" + knapper(FE_LYSFARVER, "data-fe-alleboder", function () { return false; }) + "</div></div>";
       FE_BODER.forEach(function (b) {
         const nu = (fe.boder || {})[b.id] || "varm";
@@ -1356,6 +1598,7 @@
       k.addEventListener("click", function () {
         const hvad = k.dataset.fe;
         if (hvad === "gaa") { gaaTilFestival(); return; }
+        if (hvad === "gaapark") { if (iPark()) tilFestival(); else tilPark(); if (typeof window.lukTelefon === "function") window.lukTelefon(); return; }
         if (hvad === "slukalt") { slukAlt().then(tegnStyrIgen); besk("⏻ Alt er slukket, og lyset er normalt igen."); }
         if (hvad === "lamper") saetFest({ lamper: fe.lamper === false }).then(tegnStyrIgen);
         if (hvad === "allelogo") saetFest({ skaerm: { id: "alle" } }).then(tegnStyrIgen);
@@ -1413,10 +1656,12 @@
   };
   function gaaTilFestival(omr) {
     const o = omr ? FE_OMRAADER.find(function (x) { return x.id === omr; }) : null;
-    if (!iFest()) gaaTilVaerelse(FE_ID);
-    if (o && typeof figur !== "undefined") {
+    let rum = (o && o.rum) || FE_ID;
+    if (rum === FP_ID && !abOk() && abKraev() === "hele") { rum = FE_ID; feBesked(abTekst()); }
+    if (!iFest() || aktivtVaerelse !== rum) gaaTilVaerelse(rum);
+    if (o && typeof figur !== "undefined" && rum === (o.rum || FE_ID)) {
       setTimeout(function () {
-        if (!iFest()) return;
+        if (!iFest() || aktivtVaerelse !== rum) return;
         try {
           if (typeof gaaTil === "function") gaaTil(o.x, o.y);
           else { figur.x = o.x; figur.y = o.y; centrerPaaFigur(true); }
@@ -1528,6 +1773,7 @@
   function foranScenen(x, y) { return x >= AB_SCENE.x0 && x <= AB_SCENE.x1 && y <= AB_SCENE.y1; }
   function abSpaerret(x, y) {
     if (abOk()) return false;
+    if (iPark()) return abKraev() === "hele";
     return abKraev() === "hele" ? !iIndgang(x, y) : foranScenen(x, y);
   }
   function abTekst() {
@@ -1541,7 +1787,11 @@
   function pakKanGaa() {
     if (typeof kanGaa !== "function" || kanGaa.feAb) return;
     const foer = kanGaa;
-    const ny = function (x, y) { if (iFest() && abSpaerret(x, y)) return false; return foer.apply(this, arguments); };
+    const ny = function (x, y) {
+      if (iFest() && abSpaerret(x, y)) return false;
+      if (iPark() && !parkKanGaa(x, y)) return false;                // man kan ikke gå i åen
+      return foer.apply(this, arguments);
+    };
     ny.feAb = true;
     kanGaa = ny;
   }
@@ -1549,7 +1799,7 @@
     if (typeof gaaTil !== "function" || gaaTil.feAb) return;
     const foer = gaaTil;
     const ny = function (x, y) {
-      if (iFest() && abSpaerret(Math.round(x), Math.round(y))) feBesked(abTekst());
+      if (iPlads() && abSpaerret(Math.round(x), Math.round(y))) feBesked(abTekst());
       return foer.apply(this, arguments);
     };
     ny.feAb = true;
@@ -1560,6 +1810,7 @@
     if (!iFest() || typeof figur === "undefined" || figur.sidde) return;
     const fx = Math.round(figur.x), fy = Math.round(figur.y);
     if (!abSpaerret(fx, fy)) return;
+    if (iPark()) { tilFestival(); return; }            // tilbage til festivalen, så sendes man derfra til indgangen
     const steder = abKraev() === "hele" ? [[2, 25], [3, 24], [1, 24], [4, 25], [1, 25]] : [[18, 15], [17, 15], [19, 15], [16, 16], [20, 16]];
     const sted = steder.find(function (p) { try { return kanGaa(p[0], p[1]); } catch (e) { return true; } }) || steder[0];
     figur.rute = []; figur.x = sted[0]; figur.y = sted[1];
