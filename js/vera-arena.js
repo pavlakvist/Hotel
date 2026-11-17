@@ -11,7 +11,7 @@
 //    Kun Eventfolk, Eventværter og ejeren må bruge :skift.
 //  - Alt kan også styres fra Event-appen på telefonen: fanen 🏟 Arena (bane, scene-lys, skærme, skilt, nedtælling).
 //  - NYE BANER: læg en ny bane i ARENA_BANER herunder (eller kald window.veraArena.tilfoejBane({...}) fra en anden fil).
-//    En bane er bare et navn og en liste med møbler, der står på udfordringsbanen (x 4–15, y 6–11).
+//    En bane er bare et navn og en liste med møbler, der står på udfordringsbanen (x 6–23, y 8–16).
 //  - Møblerne (realistiske 3D): ar-tribune, ar-vaertspult, ar-deltagerpult, ar-kegle, ar-haek, ar-start, ar-maal,
 //    ar-plade-roed, ar-plade-guld, ar-mysteriekasse. Billeder i billeder/moebler/ar-*/. De findes også under Staff.
 //  Kræver database-58-vera-arena.sql. Hentes fra slutningen af js/panel-forklaring.js (hotel.html ikke rørt).
@@ -25,8 +25,10 @@
   const ARENA_MANGLER = "⚠️ Serveren kender ikke Vera arena endnu. Kør database-58-vera-arena.sql i Supabase → SQL Editor.";
   const ARENA_FRA_FIL = location.protocol === "file:";
   // områderne i rummet (felter)
-  const AR_SCENE = { x0: 6, y0: 0, b: 8, d: 4 };     // hovedscenen ved bagvæggen
-  const AR_BANE = { x0: 4, y0: 6, b: 12, d: 6 };     // udfordringsbanen
+  // 17/11: arenaen er gjort meget større (30 x 24 felter i stedet for 20 x 16)
+  const AR_B = 30, AR_D = 24;
+  const AR_SCENE = { x0: 9, y0: 0, b: 12, d: 5 };    // hovedscenen ved bagvæggen
+  const AR_BANE = { x0: 6, y0: 8, b: 18, d: 9 };     // udfordringsbanen (x 6–23, y 8–16)
 
   // =============================================================
   //  🔄 BANERNE (spillene på udfordringsbanen). Nemt at udvide: kopiér en bane og ret den.
@@ -38,59 +40,64 @@
       om: "Løb fra START til MÅL uden om keglerne og hækkene. Den første i mål vinder.",
       regler: ["Alle stiller sig på START.", "Værten tæller ned (Event-appen → 🏟 Arena → Nedtælling).", "Løb uden om keglerne og gennem hullerne i hækkene.", "Den første på MÅL vinder runden."],
       moebler: [
-        { type: "ar-start", x: 4, y: 6, retning: 0 }, { type: "ar-start", x: 4, y: 9, retning: 0 },
-        { type: "ar-kegle", x: 6, y: 6 }, { type: "ar-kegle", x: 6, y: 8 }, { type: "ar-kegle", x: 6, y: 10 },
-        { type: "ar-kegle", x: 8, y: 7 }, { type: "ar-kegle", x: 8, y: 9 }, { type: "ar-kegle", x: 8, y: 11 },
-        { type: "ar-haek", x: 10, y: 6, retning: 1 }, { type: "ar-haek", x: 10, y: 7, retning: 1 },
-        { type: "ar-haek", x: 10, y: 9, retning: 1 }, { type: "ar-haek", x: 10, y: 10, retning: 1 },
-        { type: "ar-kegle", x: 12, y: 6 }, { type: "ar-kegle", x: 12, y: 8 }, { type: "ar-kegle", x: 12, y: 10 },
-        { type: "ar-mysteriekasse", x: 13, y: 11 },
-        { type: "ar-maal", x: 15, y: 6, retning: 0 }, { type: "ar-maal", x: 15, y: 9, retning: 0 },
+        // tre START-måtter, kegler, hække med huller og tre MÅL-måtter
+        { type: "ar-start", x: 6, y: 8, retning: 0 }, { type: "ar-start", x: 6, y: 11, retning: 0 }, { type: "ar-start", x: 6, y: 14, retning: 0 },
+        { type: "ar-kegle", x: 9, y: 8 }, { type: "ar-kegle", x: 9, y: 10 }, { type: "ar-kegle", x: 9, y: 12 }, { type: "ar-kegle", x: 9, y: 14 }, { type: "ar-kegle", x: 9, y: 16 },
+        { type: "ar-kegle", x: 12, y: 9 }, { type: "ar-kegle", x: 12, y: 11 }, { type: "ar-kegle", x: 12, y: 13 }, { type: "ar-kegle", x: 12, y: 15 },
+        { type: "ar-haek", x: 15, y: 8, retning: 1 }, { type: "ar-haek", x: 15, y: 9, retning: 1 },
+        { type: "ar-haek", x: 15, y: 11, retning: 1 }, { type: "ar-haek", x: 15, y: 12, retning: 1 },
+        { type: "ar-haek", x: 15, y: 14, retning: 1 }, { type: "ar-haek", x: 15, y: 15, retning: 1 },
+        { type: "ar-kegle", x: 18, y: 8 }, { type: "ar-kegle", x: 18, y: 10 }, { type: "ar-kegle", x: 18, y: 12 }, { type: "ar-kegle", x: 18, y: 14 }, { type: "ar-kegle", x: 18, y: 16 },
+        { type: "ar-kegle", x: 20, y: 9 }, { type: "ar-kegle", x: 20, y: 13 },
+        { type: "ar-mysteriekasse", x: 21, y: 16 },
+        { type: "ar-maal", x: 23, y: 8, retning: 0 }, { type: "ar-maal", x: 23, y: 11, retning: 0 }, { type: "ar-maal", x: 23, y: 14, retning: 0 },
       ] },
+
     { id: "roedguld", navn: "Rød eller Guld", ikon: "🟥", tid: "10–15 min", folk: "3+",
       om: "Værten stiller et spørgsmål med to svar. Stil dig på RØD eller GULD. De, der står forkert, er ude.",
       regler: ["Værten siger et spørgsmål og to svar: ét er rødt og ét er guld.", "Alle har 10 sekunder til at stille sig på en farve (brug nedtællingen).", "De, der står på den forkerte farve, er ude og går op på tribunen.", "Den sidste tilbage vinder."],
       moebler: (function () {
         const l = [];
-        for (let x = 5; x <= 8; x++) for (let y = 6; y <= 11; y++) l.push({ type: "ar-plade-roed", x: x, y: y });
-        for (let x = 11; x <= 14; x++) for (let y = 6; y <= 11; y++) l.push({ type: "ar-plade-guld", x: x, y: y });
+        for (let x = 7; x <= 13; x++) for (let y = 8; y <= 16; y++) l.push({ type: "ar-plade-roed", x: x, y: y });
+        for (let x = 16; x <= 22; x++) for (let y = 8; y <= 16; y++) l.push({ type: "ar-plade-guld", x: x, y: y });
         return l;
       })() },
-    { id: "quiz", navn: "Buzzer-quiz", ikon: "🔴", tid: "10–20 min", folk: "2–5",
-      om: "Fem deltagere står bag hver sin pult med en buzzer. Værten læser spørgsmål op fra værtspulten på scenen.",
-      regler: ["Fem deltagere stiller sig på guldpladerne bag pultene.", "Værten læser et spørgsmål op.", "Den første, der skriver svaret i chatten, får et point (værten holder øje).", "Vinderen må vælge en af mysteriekasserne!"],
-      moebler: [
-        { type: "ar-plade-guld", x: 5, y: 7 }, { type: "ar-plade-guld", x: 7, y: 7 }, { type: "ar-plade-guld", x: 9, y: 7 },
-        { type: "ar-plade-guld", x: 11, y: 7 }, { type: "ar-plade-guld", x: 13, y: 7 },
-        { type: "ar-deltagerpult", x: 5, y: 8, retning: 0 }, { type: "ar-deltagerpult", x: 7, y: 8, retning: 0 },
-        { type: "ar-deltagerpult", x: 9, y: 8, retning: 0 }, { type: "ar-deltagerpult", x: 11, y: 8, retning: 0 },
-        { type: "ar-deltagerpult", x: 13, y: 8, retning: 0 },
-        { type: "ar-mysteriekasse", x: 6, y: 11 }, { type: "ar-mysteriekasse", x: 9, y: 11 }, { type: "ar-mysteriekasse", x: 12, y: 11 },
-      ] },
+
+    { id: "quiz", navn: "Buzzer-quiz", ikon: "🔴", tid: "10–20 min", folk: "2–8",
+      om: "Otte deltagere står bag hver sin pult med en buzzer. Værten læser spørgsmål op fra værtspulten på scenen.",
+      regler: ["Otte deltagere stiller sig på guldpladerne bag pultene.", "Værten læser et spørgsmål op.", "Den første, der skriver svaret i chatten, får et point (værten holder øje).", "Vinderen må vælge en af mysteriekasserne!"],
+      moebler: (function () {
+        // otte deltagere bag hver sin pult
+        const l = [];
+        for (let x = 7; x <= 21; x += 2) l.push({ type: "ar-plade-guld", x: x, y: 10 }, { type: "ar-deltagerpult", x: x, y: 11, retning: 0 });
+        l.push({ type: "ar-mysteriekasse", x: 9, y: 15 }, { type: "ar-mysteriekasse", x: 14, y: 15 }, { type: "ar-mysteriekasse", x: 19, y: 15 });
+        return l;
+      })() },
+
     { id: "awards", navn: "Awards show", ikon: "🏆", tid: "20–40 min", folk: "alle", tema: "awards",
-      om: "Prisuddeling med rød løber, VIP-sofaer til de nominerede, pokaler og vinderpodie. Brug konfetti, fyrværkeri og lys, når vinderen bliver råbt op!",
+      om: "Prisuddeling med rød løber, seks VIP-sofaer til de nominerede, pokaler og vinderpodie. Brug konfetti, fyrværkeri og lys, når vinderen bliver råbt op!",
       regler: ["De nominerede sidder i VIP-sofaerne, publikum sidder på tribunerne.", "Værten står ved værtspulten og siger kategorien (skriv den på storskærmen).",
         "Tæl ned med ⏱ 5 og sig vinderen. Tryk 🎉 Finale!", "Vinderen går ad den røde løber op til scenen og stiller sig på podiet."],
       moebler: [
         // rød løber fra publikum op til scenen, med reb på begge sider
-        { type: "ev-loeber", x: 9, y: 6, retning: 0 }, { type: "ev-loeber", x: 9, y: 9, retning: 0 },
-        { type: "ev-loeber", x: 10, y: 6, retning: 0 }, { type: "ev-loeber", x: 10, y: 9, retning: 0 },
-        { type: "ev-afspaerring", x: 8, y: 7, retning: 1 }, { type: "ev-afspaerring", x: 8, y: 10, retning: 1 },
-        { type: "ev-afspaerring", x: 11, y: 7, retning: 1 }, { type: "ev-afspaerring", x: 11, y: 10, retning: 1 },
+        { type: "ev-loeber", x: 14, y: 8, retning: 0 }, { type: "ev-loeber", x: 14, y: 11, retning: 0 }, { type: "ev-loeber", x: 14, y: 14, retning: 0 },
+        { type: "ev-loeber", x: 15, y: 8, retning: 0 }, { type: "ev-loeber", x: 15, y: 11, retning: 0 }, { type: "ev-loeber", x: 15, y: 14, retning: 0 },
+        { type: "ev-afspaerring", x: 13, y: 9, retning: 1 }, { type: "ev-afspaerring", x: 13, y: 12, retning: 1 }, { type: "ev-afspaerring", x: 13, y: 15, retning: 1 },
+        { type: "ev-afspaerring", x: 16, y: 9, retning: 1 }, { type: "ev-afspaerring", x: 16, y: 12, retning: 1 }, { type: "ev-afspaerring", x: 16, y: 15, retning: 1 },
         // pokaler og konfettikanoner ved løberens ende
-        { type: "ev-pokal", x: 8, y: 6 }, { type: "ev-pokal", x: 11, y: 6 },
-        { type: "ev-konfettikanon", x: 7, y: 6 }, { type: "ev-konfettikanon", x: 12, y: 6 },
-        // de nominerede i VIP-sofaer til venstre
-        { type: "ev-vip-sofa", x: 4, y: 7, retning: 1 }, { type: "ev-vip-sofa", x: 4, y: 9, retning: 1 },
-        { type: "ev-vip-sofa", x: 6, y: 7, retning: 1 }, { type: "ev-vip-sofa", x: 6, y: 9, retning: 1 },
+        { type: "ev-pokal", x: 13, y: 8 }, { type: "ev-pokal", x: 16, y: 8 },
+        { type: "ev-konfettikanon", x: 12, y: 8 }, { type: "ev-konfettikanon", x: 17, y: 8 },
+        // de nominerede i seks VIP-sofaer til venstre
+        { type: "ev-vip-sofa", x: 7, y: 9, retning: 1 }, { type: "ev-vip-sofa", x: 7, y: 12, retning: 1 }, { type: "ev-vip-sofa", x: 7, y: 15, retning: 1 },
+        { type: "ev-vip-sofa", x: 10, y: 9, retning: 1 }, { type: "ev-vip-sofa", x: 10, y: 12, retning: 1 }, { type: "ev-vip-sofa", x: 10, y: 15, retning: 1 },
         // vinderpodie og fotovæg til højre
-        { type: "ev-podie", x: 13, y: 7, retning: 0 },
-        { type: "ev-fotovaeg", x: 13, y: 10, retning: 0 }, { type: "ev-kamera", x: 14, y: 11 },
-        { type: "ev-champagnetaarn", x: 15, y: 9 }, { type: "ev-folieballoner", x: 15, y: 6 },
-        { type: "ev-spotlight", x: 4, y: 11 }, { type: "ev-spotlight", x: 15, y: 11 },
+        { type: "ev-podie", x: 19, y: 9, retning: 0 },
+        { type: "ev-fotovaeg", x: 19, y: 13, retning: 0 }, { type: "ev-kamera", x: 21, y: 15 },
+        { type: "ev-champagnetaarn", x: 23, y: 12 }, { type: "ev-folieballoner", x: 23, y: 8 },
+        { type: "ev-spotlight", x: 6, y: 16 }, { type: "ev-spotlight", x: 23, y: 16 },
         // blomster i guldurner foran scenen
-        { type: "ev-blomster", x: 5, y: 4 }, { type: "ev-blomster", x: 14, y: 4 },
-        { type: "ev-blomster", x: 8, y: 4 }, { type: "ev-blomster", x: 11, y: 4 },
+        { type: "ev-blomster", x: 8, y: 5 }, { type: "ev-blomster", x: 12, y: 5 },
+        { type: "ev-blomster", x: 17, y: 5 }, { type: "ev-blomster", x: 21, y: 5 },
       ] },
   ];
 
@@ -98,9 +105,9 @@
   //  📺 De store skærme (på væggene). fra/til = felter langs væggen, bund/top = pixels over gulvet
   // =============================================================
   const AR_SKAERME = [
-    { id: "midt", navn: "Storskærmen", vaeg: "bag", fra: 6.4, til: 13.6, bund: 105, top: 290, lyd: true },
-    { id: "venstre", navn: "Venstre skærm", vaeg: "venstre", fra: 5.2, til: 10.8, bund: 125, top: 275 },
-    { id: "hoejre", navn: "Højre skærm", vaeg: "bag", fra: 15.3, til: 19.7, bund: 140, top: 260 },
+    { id: "midt", navn: "Storskærmen", vaeg: "bag", fra: 9.4, til: 20.6, bund: 120, top: 350, lyd: true },
+    { id: "venstre", navn: "Venstre skærm", vaeg: "venstre", fra: 8.6, til: 16.4, bund: 140, top: 320 },
+    { id: "hoejre", navn: "Højre skærm", vaeg: "bag", fra: 22.4, til: 29.4, bund: 150, top: 320 },
   ];
   const AR_SCENELYS = { slukket: "⚫ Slukket", varm: "🟡 Varmt lys", show: "🌈 Show", spots: "🔦 Søgelys", disko: "🪩 Disko",
     puls: "💓 Puls", regnbue: "🌈 Farveskift", strobe: "⚡ Stroboskop" };
@@ -353,33 +360,60 @@
   // =============================================================
   const ARENA_MOEBLER = (function () {
     const l = [
-      // hovedscenen
-      { type: "ar-vaertspult", x: 9, y: 2, retning: 0 },
-      { type: "ev-mikrofon", x: 7, y: 2, retning: 0 },
-      { type: "ev-mikrofon", x: 12, y: 2, retning: 0 },
-      { type: "ev-spotlight", x: 6, y: 0, retning: 0 },
-      { type: "ev-spotlight", x: 13, y: 0, retning: 0 },
-      { type: "ev-hoejtaler", x: 5, y: 0, retning: 0 },
-      { type: "ev-hoejtaler", x: 14, y: 0, retning: 0 },
+      // hovedscenen (x 9–20)
+      { type: "ar-vaertspult", x: 14, y: 2, retning: 0 },
+      { type: "ev-mikrofon", x: 11, y: 3, retning: 0 },
+      { type: "ev-mikrofon", x: 18, y: 3, retning: 0 },
+      { type: "ev-spotlight", x: 9, y: 0, retning: 0 },
+      { type: "ev-spotlight", x: 20, y: 0, retning: 0 },
+      { type: "ev-hoejtaler", x: 8, y: 0, retning: 0 },
+      { type: "ev-hoejtaler", x: 21, y: 0, retning: 0 },
       // ved siden af scenen
-      { type: "ev-kamera", x: 16, y: 3, retning: 2 },
-      { type: "ev-kamera", x: 3, y: 4, retning: 1 },
+      { type: "ev-kamera", x: 23, y: 4, retning: 2 },
+      { type: "ev-kamera", x: 6, y: 5, retning: 1 },
       { type: "cafe-plante", x: 0, y: 0, retning: 0 },
-      { type: "cafe-plante", x: 19, y: 0, retning: 0 },
-      { type: "ev-pokal", x: 17, y: 0, retning: 0 },
+      { type: "cafe-plante", x: AR_B - 1, y: 0, retning: 0 },
+      { type: "ev-pokal", x: 26, y: 0, retning: 0 },
       { type: "ev-podie", x: 1, y: 1, retning: 0 },
     ];
-    // tilskuere: to rækker i venstre side (vender mod højre), to rækker i højre side (vender mod venstre),
-    // og to rækker forrest (vender mod scenen). Gangene imellem er fri, så man kan komme hen til sæderne.
-    [5, 7, 9, 11].forEach(function (y) {
-      l.push({ type: "ar-tribune", x: 0, y: y, retning: 1 }, { type: "ar-tribune", x: 2, y: y, retning: 1 });
-      l.push({ type: "ar-tribune", x: 17, y: y, retning: 3 }, { type: "ar-tribune", x: 19, y: y, retning: 3 });
+    // tilskuere: tre rækker i venstre side (vender mod højre), tre rækker i højre side (vender mod venstre),
+    // og tre rækker forrest (vender mod scenen). Gangene imellem er fri, så man kan komme hen til sæderne.
+    [7, 9, 11, 13, 15, 17].forEach(function (y) {
+      [0, 2, 4].forEach(function (x) { l.push({ type: "ar-tribune", x: x, y: y, retning: 1 }); });
+      [25, 27, 29].forEach(function (x) { l.push({ type: "ar-tribune", x: x, y: y, retning: 3 }); });
     });
-    [4, 6, 8, 10, 12, 14].forEach(function (x) {
-      l.push({ type: "ar-tribune", x: x, y: 13, retning: 2 }, { type: "ar-tribune", x: x, y: 15, retning: 2 });
+    [6, 8, 10, 12, 14, 16, 18, 20, 22].forEach(function (x) {
+      [19, 21, 23].forEach(function (y) { l.push({ type: "ar-tribune", x: x, y: y, retning: 2 }); });
     });
     return l;
   })();
+  // Den gamle, lille arena (20 x 16). Har nogen gemt den, laves den om til den store (se arenaStor).
+  const ARENA_MOEBLER_LILLE = (function () {
+    const l = [
+      { type: "ar-vaertspult", x: 9, y: 2 }, { type: "ev-mikrofon", x: 7, y: 2 }, { type: "ev-mikrofon", x: 12, y: 2 },
+      { type: "ev-spotlight", x: 6, y: 0 }, { type: "ev-spotlight", x: 13, y: 0 }, { type: "ev-hoejtaler", x: 5, y: 0 }, { type: "ev-hoejtaler", x: 14, y: 0 },
+      { type: "ev-kamera", x: 16, y: 3 }, { type: "ev-kamera", x: 3, y: 4 }, { type: "cafe-plante", x: 0, y: 0 }, { type: "cafe-plante", x: 19, y: 0 },
+      { type: "ev-pokal", x: 17, y: 0 }, { type: "ev-podie", x: 1, y: 1 },
+    ];
+    [5, 7, 9, 11].forEach(function (y) { l.push({ type: "ar-tribune", x: 0, y: y }, { type: "ar-tribune", x: 2, y: y }, { type: "ar-tribune", x: 17, y: y }, { type: "ar-tribune", x: 19, y: y }); });
+    [4, 6, 8, 10, 12, 14].forEach(function (x) { l.push({ type: "ar-tribune", x: x, y: 13 }, { type: "ar-tribune", x: x, y: 15 }); });
+    return l;
+  })();
+  // Er en gemt møbelliste fra den lille arena? Så bliver standardmøblerne skiftet ud med de store,
+  // og alt det, nogen selv har sat ind, flyttes med (ganget op, så det står samme sted i den store arena).
+  function arenaStor(liste) {
+    if (!Array.isArray(liste) || !liste.length) return liste;
+    if (liste.some(function (m) { return m && (m.x >= 20 || m.y >= 16); })) return liste;   // allerede stor
+    const lille = ARENA_MOEBLER_LILLE.map(function (m) { return m.type + "," + m.x + "," + m.y; });
+    const egne = liste.filter(function (m) {
+      const i = lille.indexOf(m.type + "," + m.x + "," + m.y);
+      if (i >= 0) { lille[i] = ""; return false; }
+      return true;
+    }).map(function (m) {
+      return Object.assign({}, m, { x: Math.min(AR_B - 1, Math.round(m.x * AR_B / 20)), y: Math.min(AR_D - 1, Math.round(m.y * AR_D / 16)) });
+    });
+    return arenaSomData().concat(egne);
+  }
   function arenaSomData() {
     return ARENA_MOEBLER.filter(function (m) { return MOEBEL_TYPER[m.type]; })
       .map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: false, retning: m.retning || 0 }; });
@@ -420,15 +454,15 @@
   //  Rummet
   // =============================================================
   function lavRummet() {
-    INDBYGGEDE_RUM[ARENA_ID] = { id: ARENA_ID, navn: "Vera arena", ejer: EJER_NAVNE[0], bredde: 20, dybde: 16,
-      vaeg: "#3a1420", gulv1: "#2b1a1f", gulv2: "#26161b", vaegHoejde: 320, doer: { x: 0, y: 14 } };
+    INDBYGGEDE_RUM[ARENA_ID] = { id: ARENA_ID, navn: "Vera arena", ejer: EJER_NAVNE[0], bredde: AR_B, dybde: AR_D,
+      vaeg: "#3a1420", gulv1: "#2b1a1f", gulv2: "#26161b", vaegHoejde: 380, doer: { x: 0, y: AR_D - 2 } };
     if (typeof RF_STANDARD !== "undefined") RF_STANDARD[ARENA_ID] = { vaeg: "#3a1420", gulv1: "#2b1a1f", gulv2: "#26161b" };
     // i navigatøren (og elevatoren) på 1. sal, efter event-rummene og Lysreaktion
     if (!NAV_RUM.some(function (r) { return r.id === ARENA_ID; })) {
       let efter = -1;
       NAV_RUM.forEach(function (r, i) { if (r.etage === "sal1" && (/^event\d+$/.test(r.id) || r.id === "lysreaktion")) efter = i; });
       NAV_RUM.splice(efter >= 0 ? efter + 1 : NAV_RUM.length, 0, { id: ARENA_ID, etage: "sal1", navn: "🏟 Vera arena",
-        om: "Hotellets store gameshow-arena med scene, udfordringsbane og tribuner.", billede: "billeder/rum/event.png", maks: 60, rum: "vaerelse", vaerelse: ARENA_ID });
+        om: "Hotellets store gameshow-arena med scene, udfordringsbane og tribuner.", billede: "billeder/rum/event.png", maks: 120, rum: "vaerelse", vaerelse: ARENA_ID });
     }
     // møblerne: det, der er gemt på denne computer, ellers rummets egne
     const vaerelseMoeblerFoerArena = vaerelseMoebler;
@@ -436,7 +470,7 @@
       if (id === ARENA_ID && !andreVaerelser[ARENA_ID]) {
         let gemt = null;
         try { gemt = JSON.parse(localStorage.getItem("mit-hotel-rum-" + ARENA_ID) || "null"); } catch (e) {}
-        gemt = Array.isArray(gemt) ? arenaUdenBane(gemt) : null;
+        gemt = Array.isArray(gemt) ? arenaStor(arenaUdenBane(gemt)) : null;
         andreVaerelser[ARENA_ID] = (gemt && gemt.length ? gemt : arenaSomData())
           .map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; });
       }
@@ -452,7 +486,7 @@
         const svar = await serverKaldFoerArena(funktion, data);
         if (funktion === "hv_rum_moebler_hent" && svar) {
           if (!(Array.isArray(svar[ARENA_ID]) && svar[ARENA_ID].length)) svar[ARENA_ID] = arenaSomData();
-          else svar[ARENA_ID] = arenaUdenBane(svar[ARENA_ID]);
+          else svar[ARENA_ID] = arenaStor(arenaUdenBane(svar[ARENA_ID]));
         }
         return svar;
       };
@@ -527,7 +561,7 @@
     ctx.restore();
   }
   function tegnAwardsGulvStjerner() {
-    [[7, 7], [7, 10], [12, 7.5], [12, 10.5], [5, 5], [14.5, 5]].forEach(function (p) {
+    [[12, 10], [12, 14], [17, 10.5], [17, 14.5], [7, 6], [22, 6]].forEach(function (p) {
       const m = punkt(p[0] + 0.5, p[1] + 0.5);
       ctx.save(); ctx.translate(m.x, m.y); ctx.scale(1, 0.5);
       stjerne(0, 0, 18, 7.5, "#d9a441"); stjerne(0, 0, 12, 5, "#ffe39a");
@@ -536,7 +570,7 @@
   }
   // Væggene: røde fløjlsgardiner med guldkant foroven og guldsnore (døren holdes fri)
   function tegnAwardsVaegge() {
-    const B = RUM.bredde, D = RUM.dybde, vh = RUM.vaegHoejde || 300, doer = RUM.doer || { x: 0, y: 14 };
+    const B = RUM.bredde, D = RUM.dybde, vh = RUM.vaegHoejde || 300, doer = RUM.doer || { x: 0, y: AR_D - 2 };
     const nu = arNu();
     ctx.save();
     function strimmel(a, b, i, laengde) {
@@ -1330,11 +1364,14 @@
 
   // =============================================================
   //  Til andre filer: window.veraArena
-  //    .tilfoejBane({ id, navn, ikon, om, regler: [], moebler: [{ type, x, y, retning }] })   → en ny bane (x 4–15, y 6–11)
+  //    .tilfoejBane({ id, navn, ikon, om, regler: [], moebler: [{ type, x, y, retning }] })   → en ny bane (x 6–23, y 8–16)
   //    .skift(id) · .saet({ ... }) · .hent()
   // =============================================================
   window.veraArena = {
     baner: ARENA_BANER, skaerme: AR_SKAERME, bane: AR_BANE, scene: AR_SCENE,
+    // felter til fx test-botterne: [x fra, x til, y fra, y til]
+    felter: { start: [6, 6, 8, 16], maal: [23, 23, 8, 16], roed: [7, 13, 8, 16], guld: [16, 22, 8, 16], tilskuer: [6, 23, 17, 17],
+      pulte: [[7, 10], [9, 10], [11, 10], [13, 10], [15, 10], [17, 10], [19, 10], [21, 10]] },
     tilfoejBane: function (b) {
       if (!b || !b.id || !Array.isArray(b.moebler)) return;
       b.ikon = b.ikon || "🎲"; b.navn = b.navn || b.id;

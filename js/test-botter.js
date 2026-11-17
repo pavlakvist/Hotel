@@ -260,11 +260,15 @@
   }
 
   // ---------- 🏟 Vera arena ----------
-  const AR_PULTE = [[5, 7], [7, 7], [9, 7], [11, 7], [13, 7]];   // guldpladerne bag buzzer-pultene
+  // felterne i arenaen (arenaen blev større 17/11, så de hentes fra vera-arena.js, hvis den er der)
+  function arF(navn, gl) { try { const f = window.veraArena && window.veraArena.felter; return (f && f[navn]) || gl; } catch (e) { return gl; } }
+  function arFelt(navn, gl) { const f = arF(navn, gl); return feltI(f[0], f[1], f[2], f[3]); }
+  const AR_PULTE_GL = [[5, 7], [7, 7], [9, 7], [11, 7], [13, 7]];   // guldpladerne bag buzzer-pultene (den lille arena)
   const maalI = {};   // nedtælling → hvor mange botter er kommet i mål
   function arenaTilstand() { try { return window.veraArena && window.veraArena.hent ? window.veraArena.hent() : null; } catch (e) { return null; } }
   function tilskuer(b) {   // ude eller ikke med: stil dig foran tribunerne og se på
-    if (!b.maalFelt || b.maalFelt.y !== 12) b.maalFelt = feltI(4, 15, 12, 12) || feltI(4, 15, 12, 13);
+    const t = arF("tilskuer", [4, 15, 12, 12]);
+    if (!b.maalFelt || b.maalFelt.y !== t[2]) b.maalFelt = feltI(t[0], t[1], t[2], t[3]) || feltI(t[0], t[1], t[2], t[3] + 1);
     return gaaHen(b);
   }
   function arenaSpil(b, langsom) {
@@ -282,7 +286,7 @@
         // nedtællingen: stil dig på START
         if (b.arNed !== ned) {
           b.arNed = ned; b.iMaal = false;
-          b.maalFelt = feltI(4, 4, 6, 11);
+          b.maalFelt = arFelt("start", [4, 4, 6, 11]);
           b.fart = 0.45 + Math.random() * 0.5;           // hvor hurtig botten løber
           b.reager = ned + 150 + Math.random() * 1500;    // hvor hurtigt den opdager GO
         }
@@ -291,7 +295,8 @@
       if (ned && b.arNed === ned && !b.iMaal && nu - ned < 90000) {
         // GO! løb til MÅL
         if (nu < b.reager) return false;
-        if (!b.maalFelt || b.maalFelt.x !== 15) { b.maalFelt = feltI(15, 15, 6, 11); b.rute = []; }
+        const m = arF("maal", [15, 15, 6, 11]);
+        if (!b.maalFelt || b.maalFelt.x !== m[0]) { b.maalFelt = feltI(m[0], m[1], m[2], m[3]); b.rute = []; }
         if (!b.maalFelt) return false;
         if (Math.random() > b.fart) return false;
         const flyttet = gaaHen(b);
@@ -312,7 +317,7 @@
         if (b.rgNed !== ned) { b.rgNed = ned; b.rgVent = nu + 400 + Math.random() * Math.max(800, (ned - nu) * 1.05); }
         if (nu < b.rgVent) return false;
         b.arNed = ned;
-        b.maalFelt = Math.random() < 0.5 ? feltI(5, 8, 6, 11) : feltI(11, 14, 6, 11);
+        b.maalFelt = Math.random() < 0.5 ? arFelt("roed", [5, 8, 6, 11]) : arFelt("guld", [11, 14, 6, 11]);
         b.rute = [];
       }
       if (b.maalFelt) return gaaHen(b);
@@ -323,9 +328,10 @@
       const med = Object.values(botter).filter(function (x) { return spillerMed(x) && x.rum === ARENA_RUM && !x.ude; })
         .sort(function (a, c) { return a.navn.localeCompare(c.navn, "da", { numeric: true }); });
       const i = med.indexOf(b);
-      b.paaPult = i >= 0 && i < AR_PULTE.length;
+      const pulte = arF("pulte", AR_PULTE_GL);
+      b.paaPult = i >= 0 && i < pulte.length;
       if (b.paaPult) {
-        const p = AR_PULTE[i];
+        const p = pulte[i];
         if (!b.maalFelt || b.maalFelt.x !== p[0] || b.maalFelt.y !== p[1]) { b.maalFelt = { x: p[0], y: p[1] }; b.rute = []; }
         return langsom ? gaaHen(b) : false;
       }
