@@ -1,8 +1,8 @@
 // =============================================================
 //  📻 Vera-radio — hotellets egen radio
 //  - Nyt job 🎙 Radiovært (skilt, jobbeskrivelse, Staff chat, vagtskema og løn som de andre ansatte).
-//  - 🎙 Radiostudiet på 2. sal: kun radioværter og ejeren kan komme ind. Podcastbord med
-//    computere og mikrofoner, hvor man sidder overfor hinanden.
+//  - 🎙 Radiostudiet på 2. sal: kun radioværter og ejeren kan komme ind. Realistiske 3D-møbler
+//    (17/11): mixerpult, talebord, studiestole, lydisolering, ON AIR, pladereol, pladespiller m.m.
 //  - Ejerpanel → 📻 Radio (kun radioværter og ejeren): start/slut live, lyttere, musik, playlister,
 //    pause/fortsæt, snak (optag med mikrofonen, oplæs tekst eller et live-link), radioprogrammer
 //    med dato og tidspunkt, næste emne, gemte udsendelser, beskeder fra lytterne og vagtskema.
@@ -156,30 +156,89 @@
     { id: "radio-onair", navn: "ON AIR-lampe" },
     { id: "radio-hoejttaler", navn: "Studiehøjttaler" },
     { id: "radio-reol", navn: "Pladereol med gammel radio", felter: [2, 1] },
+    // 17/11: realistiske 3D-møbler til studiet (skala 0.5 ligesom arena- og festival-møblerne)
+    { id: "rs-mixerpult", navn: "Værtens mixerpult", felter: [2, 1], ankre: [[222, 392], [126, 392], [222, 392], [126, 392]] },
+    { id: "rs-talebord", navn: "Talebord med 4 mikrofoner", felter: [2, 1], ankre: [[222, 369], [126, 369], [222, 369], [126, 369]] },
+    { id: "rs-stol", navn: "Studiestol", saede: 38, centrer: true, bagfra: true, ankre: [[126, 321], [126, 321], [126, 321], [126, 321]] },
+    { id: "rs-sofa", navn: "Lædersofa til gæster", felter: [2, 1], saede: 34, centrer: true, ankre: [[222, 331], [126, 331], [222, 331], [126, 331]] },
+    { id: "rs-sofabord", navn: "Lille marmorbord", ankre: [[126, 222], [126, 222], [126, 222], [126, 222]] },
+    { id: "rs-mikrofon", navn: "Mikrofon på stativ", ankre: [[126, 360], [126, 360], [126, 360], [126, 360]] },
+    { id: "rs-hoejttaler", navn: "Studiehøjttaler på fod", ankre: [[126, 344], [126, 344], [126, 344], [126, 344]] },
+    { id: "rs-onair", navn: "ON AIR-skilt (væg)", ankre: [[126, 466], [126, 466], [126, 466], [126, 466]] },
+    { id: "rs-skumpanel", navn: "Lydisolering (væg)", ankre: [[126, 489], [126, 489], [126, 489], [126, 489]] },
+    { id: "rs-pladespiller", navn: "Pladespiller på skab", ankre: [[126, 291], [126, 291], [126, 291], [126, 291]] },
+    { id: "rs-pladereol", navn: "Reol med LP-plader", felter: [2, 1], ankre: [[222, 507], [126, 507], [222, 507], [126, 507]] },
+    { id: "rs-guldplader", navn: "Guldplader (væg)", ankre: [[126, 451], [126, 451], [126, 451], [126, 451]] },
+    { id: "rs-rack", navn: "Udstyrs-rack", ankre: [[126, 398], [126, 398], [126, 398], [126, 398]] },
+    { id: "rs-skilt", navn: "VERA RADIO-skilt (væg)", felter: [2, 1], ankre: [[222, 514], [126, 514], [222, 514], [126, 514]] },
+    { id: "rs-taeppe", navn: "VERA RADIO-tæppe", felter: [3, 2], kanGaaPaa: true, ankre: [[318, 282], [222, 282], [318, 282], [222, 282]] },
+    { id: "rs-studielampe", navn: "Studielampe", ankre: [[126, 428], [126, 428], [126, 428], [126, 428]] },
   ];
-  // retning 0 vender ned mod venstre, 1 ned mod højre, 2 og 3 vender ryggen til (man sidder bagfra)
+  // Studiet før 17/11 (bruges til at skifte de gamle standardmøbler ud med de nye)
+  const RV_GAMLE = [
+    "radio-reol,1,0", "radio-onair,4,0", "radio-hoejttaler,3,0", "radio-hoejttaler,7,0", "radio-reol,8,0",
+    "radio-stol,3,2", "radio-stol,4,2", "radio-bord,3,3", "radio-stol,3,4", "radio-stol,4,4",
+    "radio-stol,6,2", "radio-stol,7,2", "radio-bord,6,3", "radio-stol,6,4", "radio-stol,7,4",
+    "cafe-sofa,0,3", "cafe-plante,0,0", "cafe-plante,0,7", "cafe-lampe,0,6", "radio-hoejttaler,9,7",
+  ];
+  // retning 0 vender ned mod venstre (ryggen mod bagvæggen), 1 ned mod højre (ryggen mod venstre væg), 2 og 3 vender ryggen til
   const RV_MOEBLER = [
-    { type: "radio-reol", x: 1, y: 0, retning: 0 },
-    { type: "radio-onair", x: 4, y: 0, retning: 0 },
-    { type: "radio-hoejttaler", x: 3, y: 0, retning: 0 },
-    { type: "radio-hoejttaler", x: 7, y: 0, retning: 0 },
-    { type: "radio-reol", x: 8, y: 0, retning: 0 },
-    // podcastbordene: én sidder bag bordet og kigger frem, én sidder foran med ryggen til os
-    { type: "radio-stol", x: 3, y: 2, retning: 0 }, { type: "radio-stol", x: 4, y: 2, retning: 0 },
-    { type: "radio-bord", x: 3, y: 3, retning: 0 },
-    { type: "radio-stol", x: 3, y: 4, retning: 2 }, { type: "radio-stol", x: 4, y: 4, retning: 2 },
-    { type: "radio-stol", x: 6, y: 2, retning: 0 }, { type: "radio-stol", x: 7, y: 2, retning: 0 },
-    { type: "radio-bord", x: 6, y: 3, retning: 0 },
-    { type: "radio-stol", x: 6, y: 4, retning: 2 }, { type: "radio-stol", x: 7, y: 4, retning: 2 },
-    { type: "cafe-sofa", x: 0, y: 3, retning: 1 },
-    { type: "cafe-plante", x: 0, y: 0, retning: 0 },
-    { type: "cafe-plante", x: 0, y: 7, retning: 0 },
-    { type: "cafe-lampe", x: 0, y: 6, retning: 0 },
-    { type: "radio-hoejttaler", x: 9, y: 7, retning: 0 },
+    // bagvæggen: lydisolering, plader, det store skilt, ON AIR og udstyr
+    { type: "rs-skumpanel", x: 0, y: 0, retning: 0 }, { type: "rs-skumpanel", x: 1, y: 0, retning: 0 },
+    { type: "rs-pladereol", x: 2, y: 0, retning: 0 },
+    { type: "rs-guldplader", x: 4, y: 0, retning: 0 },
+    { type: "rs-skilt", x: 5, y: 0, retning: 0 },
+    { type: "rs-onair", x: 7, y: 0, retning: 0 },
+    { type: "rs-skumpanel", x: 8, y: 0, retning: 0 }, { type: "rs-skumpanel", x: 9, y: 0, retning: 0 },
+    { type: "rs-rack", x: 10, y: 0, retning: 0 }, { type: "rs-rack", x: 11, y: 0, retning: 0 },
+    // venstre væg (elevatoren kommer på det frie stykke)
+    { type: "rs-skumpanel", x: 0, y: 1, retning: 1 },
+    { type: "rs-pladespiller", x: 0, y: 5, retning: 1 },
+    { type: "rs-sofa", x: 0, y: 6, retning: 1 },
+    { type: "cafe-plante", x: 0, y: 8, retning: 0 },
+    // værtens pult: værten sidder bag pulten og kigger frem, højttalere ved siden af
+    { type: "rs-stol", x: 5, y: 2, retning: 0 }, { type: "rs-stol", x: 6, y: 2, retning: 0 },
+    { type: "rs-mixerpult", x: 5, y: 3, retning: 0 },
+    { type: "rs-hoejttaler", x: 4, y: 3, retning: 0 }, { type: "rs-hoejttaler", x: 7, y: 3, retning: 0 },
+    // talebordet til gæster: to bagved og to foran (med ryggen til)
+    { type: "rs-stol", x: 8, y: 4, retning: 0 }, { type: "rs-stol", x: 9, y: 4, retning: 0 },
+    { type: "rs-talebord", x: 8, y: 5, retning: 0 },
+    { type: "rs-stol", x: 8, y: 6, retning: 2 }, { type: "rs-stol", x: 9, y: 6, retning: 2 },
+    { type: "rs-studielampe", x: 11, y: 4, retning: 3 }, { type: "rs-studielampe", x: 6, y: 5, retning: 1 },
+    { type: "rs-mikrofon", x: 11, y: 6, retning: 3 },
+    { type: "rs-hoejttaler", x: 11, y: 8, retning: 3 },
+    // hyggehjørnet med tæppe og sofa
+    { type: "rs-taeppe", x: 1, y: 6, retning: 0 },
+    { type: "rs-sofabord", x: 2, y: 7, retning: 0 },
+    { type: "rs-stol", x: 3, y: 7, retning: 3 },
   ];
+  const RV_B = 12, RV_D = 9;
   function rvMoeblerData() {
     return RV_MOEBLER.filter(function (m) { return typeof MOEBEL_TYPER === "undefined" || MOEBEL_TYPER[m.type]; })
       .map(function (m) { return { type: m.type, x: m.x, y: m.y, spejlet: false, retning: m.retning }; });
+  }
+  // Er det studiets gamle indretning? Så kommer de nye møbler ind, og det, nogen selv har sat ind, bliver stående
+  // (hvis der er plads, ellers ryger det ud — de gamle standardmøbler forsvinder)
+  function rvNyIndretning(liste) {
+    if (!Array.isArray(liste) || !liste.length) return liste;
+    if (liste.some(function (m) { return m && /^rs-/.test(m.type); })) return liste;   // allerede de nye møbler
+    const gamle = RV_GAMLE.slice();
+    const egne = liste.filter(function (m) {
+      if (!m) return false;
+      const i = gamle.indexOf(m.type + "," + m.x + "," + m.y);
+      if (i >= 0) { gamle[i] = ""; return false; }
+      return true;
+    });
+    const nye = rvMoeblerData();
+    const optaget = {};
+    nye.forEach(function (m) {
+      const t = MOEBEL_TYPER[m.type] || {};
+      if (t.kanGaaPaa) return;
+      const f = t.felter || [1, 1];
+      const w = (m.retning || 0) % 2 ? f[1] : f[0], d = (m.retning || 0) % 2 ? f[0] : f[1];
+      for (let i = 0; i < w; i++) for (let j = 0; j < d; j++) optaget[(m.x + i) + "," + (m.y + j)] = true;
+    });
+    return nye.concat(egne.filter(function (m) { return !optaget[m.x + "," + m.y] && m.x < RV_B && m.y < RV_D; }));
   }
   function iStudiet() { return typeof rumValg !== "undefined" && rumValg === "vaerelse" && typeof aktivtVaerelse !== "undefined" && aktivtVaerelse === "radio"; }
 
@@ -189,14 +248,15 @@
   }, function () {
     RV_TYPER.forEach(function (t) {
       if (MOEBEL_TYPER[t.id]) return;
-      t.retninger = [0, 1, 2, 3].map(function (i) { return "billeder/moebler/" + t.id + "/" + t.id + "-" + i + ".png"; });
+      t.retninger = [0, 1, 2, 3].map(function (i) { return "billeder/moebler/" + t.id + "/" + t.id + "-" + i + ".png" + (t.ankre ? "?r=1" : ""); });
+      if (t.ankre) t.skala = 0.5;
       t.kategori = "Radio";
       MOEBLER.push(t);
       MOEBEL_TYPER[t.id] = t;
       forberedRetninger(t);
     });
-    INDBYGGEDE_RUM.radio = { id: "radio", navn: "Radiostudiet", ejer: EJER_NAVNE[0], bredde: 10, dybde: 8,
-      vaeg: "#4a1824", gulv1: "#3b3036", gulv2: "#352a30", vaegHoejde: 210, doer: null };
+    INDBYGGEDE_RUM.radio = { id: "radio", navn: "Radiostudiet", ejer: EJER_NAVNE[0], bredde: RV_B, dybde: RV_D,
+      vaeg: "#4a1824", gulv1: "#5a3a26", gulv2: "#523422", vaegHoejde: 230, doer: null };
     // Radiostudiet får sin egen etage i elevatoren og navigatøren (2. sal blev til Lejlighederne)
     if (typeof ETAGER !== "undefined" && !ETAGER.some(function (e) { return e.id === "radio"; })) {
       const efter = ETAGER.findIndex(function (e) { return e.id === "lej"; });
@@ -224,7 +284,7 @@
       if (id === "radio" && typeof andreVaerelser !== "undefined" && !andreVaerelser.radio) {
         let gemt = null;
         try { gemt = JSON.parse(localStorage.getItem("mit-hotel-rum-radio") || "null"); } catch (e) {}
-        andreVaerelser.radio = (Array.isArray(gemt) && gemt.length ? gemt : rvMoeblerData())
+        andreVaerelser.radio = (Array.isArray(gemt) && gemt.length ? rvNyIndretning(gemt) : rvMoeblerData())
           .map(function (m) { return Object.assign({}, m); }).filter(function (m) { return MOEBEL_TYPER[m.type]; });
       }
       return vaerelseMoeblerFoerRadio(id);
@@ -233,7 +293,9 @@
       const serverKaldFoerRadio = serverKald;
       serverKald = async function (funktion, data) {
         const svar = await serverKaldFoerRadio(funktion, data);
-        if (funktion === "hv_rum_moebler_hent" && svar && !(Array.isArray(svar.radio) && svar.radio.length)) svar.radio = rvMoeblerData();
+        if (funktion === "hv_rum_moebler_hent" && svar) {
+          svar.radio = Array.isArray(svar.radio) && svar.radio.length ? rvNyIndretning(svar.radio) : rvMoeblerData();
+        }
         return svar;
       };
     }
@@ -241,7 +303,7 @@
       const skiftRumFoerRadio = skiftRum;
       skiftRum = function (navn) {
         skiftRumFoerRadio(navn);
-        if (iStudiet()) try { besked.textContent = "🎙 Velkommen i Radiostudiet! Klik på et podcastbord (eller 🛡 → 📻 Radio) for at styre Vera-radio."; } catch (e) {}
+        if (iStudiet()) try { besked.textContent = "🎙 Velkommen i Radiostudiet! Klik på mixerpulten (eller 🛡 → 📻 Radio) for at styre Vera-radio."; } catch (e) {}
       };
     }
     // Fyret? Så skal man ud af studiet
@@ -265,7 +327,7 @@
         if (typeof valgtType !== "undefined" && valgtType) return;
         const f = musTilFelt(e);
         const m = moebelPaa(f.x, f.y);
-        if (m && m.type === "radio-bord") setTimeout(function () { aabnPanel(); }, 250);
+        if (m && (m.type === "radio-bord" || m.type === "rs-mixerpult" || m.type === "rs-talebord")) setTimeout(function () { aabnPanel(); }, 250);
       });
     });
   });
@@ -1618,7 +1680,7 @@
     try { localStorage.setItem("mit-hotel-radio-guide-set", "1"); } catch (e) {}
     const trin = [
       ["🎖", "Sådan bliver man radiovært", "På forsiden trykker man <b>🎖️ Ansøg om at være staff</b> og vælger <b>Radiovært</b>. Ejeren giver skiltet i Ejerpanelet → Personale → Ansættelse. Radioværter får løn hver mandag ligesom de andre ansatte."],
-      ["🛡", "Find Radio-panelet", "Tryk på <b>🛡-knappen</b> nederst i chatbaren og vælg <b>📻 Radio</b>. Du kan også tage elevatoren til <b>📻 Radiostudiet</b> og klikke på et af podcastbordene. Kun radioværter og ejeren kan komme ind i studiet."],
+      ["🛡", "Find Radio-panelet", "Tryk på <b>🛡-knappen</b> nederst i chatbaren og vælg <b>📻 Radio</b>. Du kan også tage elevatoren til <b>📻 Radiostudiet</b> og klikke på mixerpulten eller talebordet. Kun radioværter og ejeren kan komme ind i studiet."],
       ["🔴", "Gå live", "Under <b>🎙 Studie</b> skriver du en titel og et emne (eller vælger et program) og trykker <b>🔴 Gå live</b>. Hele hotellet kan se, at radioen er live, og ON AIR lyser."],
       ["🎙", "Snak i mikrofonen", "Under <b>Snak i radioen → 🔴 Mikrofon live</b> trykker du <b>Tænd mikrofonen</b> og så <b>Tillad</b>, når browseren spørger. Nu hører alle lytterne dig med det samme, og musikken bliver skruet ned hos dem. Den gule streg viser, at mikrofonen virker. Brug <b>🔇</b>, hvis du skal hoste, og <b>⏹ Sluk mikrofonen</b>, når du er færdig. Kun én kan snakke ad gangen, så den anden vært tager over, når du slukker. Brug gerne høretelefoner, og åbn hotellet på nettet (github.io) i Chrome, Edge eller Firefox."],
       ["🗣", "Andre måder at snakke på", "<b>🎙 Optag klip</b>: optag op til 2 minutter og send det ud. <b>🗣 Oplæs tekst</b>: skriv noget, og computeren læser det højt. <b>📡 Live-link</b>: hvis I har jeres egen live-radio et andet sted."],
