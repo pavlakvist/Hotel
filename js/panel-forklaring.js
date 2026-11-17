@@ -151,6 +151,8 @@ document.head.appendChild(forklaringStil);
 
 // 📝 Eventnoter, 🏆 vindere og 🎁 gratis gevinst (js/event-vindere.js) hentes herfra,
 // så hotel.html ikke skal ændres. Den kører, når alt det andet er klar.
+// ⚡ "?t=" + Math.floor(Date.now() / 600000): tallet skifter hvert 10. minut. Så kan browseren
+//    gemme filerne imens (hotellet åbner hurtigere), og rettelser ses stadig efter højst 10 min.
 (function () {
   const s = document.createElement("script");
   s.src = "js/event-vindere.js?v=4";
@@ -193,7 +195,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/biograf.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/biograf.js?t=" + Date.now();   // hentes altid frisk, så rettelser i biografen ses med det samme
+  s.src = "js/biograf.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk, så rettelser i biografen ses med det samme
   document.body.appendChild(s);
 })();
 
@@ -201,7 +203,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/postkontor.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/postkontor.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/postkontor.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -209,7 +211,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/tagterrasse.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/tagterrasse.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/tagterrasse.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -217,7 +219,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/shop-hotel-moebler.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/shop-hotel-moebler.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/shop-hotel-moebler.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -225,7 +227,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/shop-koeb.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/shop-koeb.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/shop-koeb.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -233,7 +235,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/cafe.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/cafe.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/cafe.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -241,7 +243,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/pixel-moebler.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/pixel-moebler.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/pixel-moebler.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -249,7 +251,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/hjoerner.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/hjoerner.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/hjoerner.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -257,7 +259,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/gang-rettet.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/gang-rettet.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/gang-rettet.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -265,7 +267,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/realistisk.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/realistisk.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/realistisk.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -273,7 +275,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/realistisk-ui.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/realistisk-ui.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/realistisk-ui.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -281,7 +283,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/realistisk-elevator.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/realistisk-elevator.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/realistisk-elevator.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -289,7 +291,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/figurer-real.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/figurer-real.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/figurer-real.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -298,7 +300,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/toej-rigtigt.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/toej-rigtigt.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/toej-rigtigt.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -306,7 +308,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/kun-elevator.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/kun-elevator.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/kun-elevator.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -314,7 +316,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/staff-moebler.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/staff-moebler.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/staff-moebler.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -322,7 +324,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/lager-shift.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/lager-shift.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/lager-shift.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -330,7 +332,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/rum-farver.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/rum-farver.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/rum-farver.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -340,7 +342,7 @@ document.head.appendChild(forklaringStil);
   ["js/skelet-gang.js", "js/saeder.js"].forEach(function (fil) {
     if (document.querySelector("script[src^='" + fil + "']")) return;
     const s = document.createElement("script");
-    s.src = fil + "?t=" + Date.now();   // hentes altid frisk
+    s.src = fil + "?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
     document.body.appendChild(s);
   });
 })();
@@ -351,7 +353,7 @@ document.head.appendChild(forklaringStil);
   function hent() {
     if (typeof STAFF_TYPER === "undefined") { setTimeout(hent, 200); return; }
     const s = document.createElement("script");
-    s.src = "js/terninger.js?t=" + Date.now();   // hentes altid frisk
+    s.src = "js/terninger.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
     document.body.appendChild(s);
   }
   hent();
@@ -361,7 +363,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vagtskema.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vagtskema.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vagtskema.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -369,7 +371,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/loppemarked.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/loppemarked.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/loppemarked.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -377,7 +379,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/fart-maaler.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/fart-maaler.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/fart-maaler.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -385,7 +387,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/museum.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/museum.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/museum.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -393,7 +395,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/event-reklame.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/event-reklame.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/event-reklame.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -401,7 +403,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/byggetilstand.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/byggetilstand.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/byggetilstand.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -409,7 +411,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/ejer-enkel.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/ejer-enkel.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/ejer-enkel.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -417,7 +419,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/hotel-farve.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/hotel-farve.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/hotel-farve.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -425,7 +427,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/garderobe-ny.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/garderobe-ny.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/garderobe-ny.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -433,7 +435,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/telefon.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/telefon.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/telefon.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -441,7 +443,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vekselboers.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vekselboers.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vekselboers.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -449,7 +451,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/ansat-loen.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/ansat-loen.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/ansat-loen.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -457,7 +459,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/loppe-tider.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/loppe-tider.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/loppe-tider.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -466,7 +468,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/beskeder-adgang.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/beskeder-adgang.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/beskeder-adgang.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -475,7 +477,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vera-radio.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vera-radio.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vera-radio.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -484,7 +486,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vera-cinema.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vera-cinema.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vera-cinema.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -493,7 +495,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vera-maps.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vera-maps.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vera-maps.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -502,7 +504,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vera-translate.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vera-translate.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vera-translate.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -511,7 +513,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/toej-lag.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/toej-lag.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/toej-lag.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -520,7 +522,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/biograf-forhal.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/biograf-forhal.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/biograf-forhal.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -529,7 +531,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/avatar-vera.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/avatar-vera.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/avatar-vera.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -539,7 +541,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vip.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vip.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vip.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -548,7 +550,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vip-kort.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vip-kort.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vip-kort.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -557,7 +559,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/ansatte-i-rummet.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/ansatte-i-rummet.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/ansatte-i-rummet.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -567,7 +569,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/event-app.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/event-app.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/event-app.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -577,7 +579,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/hotel-quiz.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/hotel-quiz.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/hotel-quiz.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -587,7 +589,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/lysreaktion.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/lysreaktion.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/lysreaktion.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -597,7 +599,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vera-arena.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vera-arena.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vera-arena.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -607,7 +609,7 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/test-botter.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/test-botter.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/test-botter.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
 
@@ -617,6 +619,6 @@ document.head.appendChild(forklaringStil);
 (function () {
   if (document.querySelector("script[src^='js/vera-festival.js']")) return;
   const s = document.createElement("script");
-  s.src = "js/vera-festival.js?t=" + Date.now();   // hentes altid frisk
+  s.src = "js/vera-festival.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();

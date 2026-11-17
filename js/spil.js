@@ -90,6 +90,9 @@ const figur = {
 //  Billeder
 // =============================================================
 const billeder = {};
+// Møbelbilleder hentes først, når de skal bruges (i rummet, i shoppen osv.),
+// ikke alle sammen, når hotellet åbner. Det gør, at hotellet loader meget hurtigere.
+const venterPaaBillede = {};
 
 function hentBillede(sti) {
   if (!sti) return null;
@@ -101,6 +104,11 @@ function hentBillede(sti) {
   };
   b.src = sti;
   billeder[sti] = b;
+  // møbler, der venter på netop dette billede (se forberedRetninger herunder)
+  if (venterPaaBillede[sti]) {
+    venterPaaBillede[sti].forEach(function (klar) { b.addEventListener("load", klar); });
+    delete venterPaaBillede[sti];
+  }
   return b;
 }
 
@@ -130,9 +138,10 @@ function forberedRetninger(t) {
   t.klipper = t.retninger.map(function (sti) { return sti ? [0, 0, 0, 0] : null; });
   t.retninger.forEach(function (sti, r) {
     if (!sti) return;
-    const b = hentBillede(sti);
-    function klar() { t.klipper[r] = [0, 0, b.naturalWidth, b.naturalHeight]; tjekGennemsigtig(b, sti); }
-    if (billedeKlar(b)) klar(); else b.addEventListener("load", klar);
+    function klar() { const b = billeder[sti]; t.klipper[r] = [0, 0, b.naturalWidth, b.naturalHeight]; tjekGennemsigtig(b, sti); }
+    const b = billeder[sti];
+    if (b) { if (billedeKlar(b)) klar(); else b.addEventListener("load", klar); return; }
+    (venterPaaBillede[sti] = venterPaaBillede[sti] || []).push(klar);   // hentes først, når det skal vises
   });
 }
 MOEBLER.forEach(function (t) { if (Array.isArray(t.retninger)) forberedRetninger(t); });
@@ -1105,8 +1114,29 @@ MOEBLER.forEach(function (type) {
   knapBoks.appendChild(knap);
 });
 
+// Ikonerne tegnes (og deres billeder hentes) først, når knappen kan ses på skærmen.
+// Så henter hotellet ikke billeder af alle møbler, når det åbner.
+const ikonSynlig = typeof IntersectionObserver === "function"
+  ? new IntersectionObserver(function (poster) {
+      poster.forEach(function (p) {
+        if (!p.isIntersecting) return;
+        ikonSynlig.unobserve(p.target);
+        const i = ikoner.find(function (x) { return x.ikon === p.target; });
+        if (i) { i.synlig = true; tegnEtIkon(i); }
+      });
+    })
+  : null;
+
 function tegnIkoner() {
   ikoner.forEach(function (i) {
+    if (!ikonSynlig) return tegnEtIkon(i);
+    if (i.synlig) return tegnEtIkon(i);
+    if (!i.holdesOeje) { i.holdesOeje = true; ikonSynlig.observe(i.ikon); }
+  });
+}
+
+function tegnEtIkon(i) {
+  {
     const c = i.ikon.getContext("2d");
     c.clearRect(0, 0, i.ikon.width, i.ikon.height);
     const b = hentBillede(i.type.billede);
@@ -1123,7 +1153,7 @@ function tegnIkoner() {
       tegnMoebel(c, i.type, 0, 0, false);
       c.restore();
     }
-  });
+  }
 }
 
 const valgtBoks = document.getElementById("valgt-boks");
