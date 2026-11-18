@@ -622,3 +622,13 @@ document.head.appendChild(forklaringStil);
   s.src = "js/vera-festival.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🏨 Indretning (js/indretning-moebler.js): mange møbler i vinrød, guld og creme til at indrette alle rum
+// (sofaer, borde, senge, lamper, planter, tæpper, gulvfliser, billeder, reception, scene, køkken/bad, vægge).
+// Kan købes i Shoppen og stilles med 🔨 Byggetilstand. Billederne hentes først, når et møbel skal vises.
+(function () {
+  if (document.querySelector("script[src^='js/indretning-moebler.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/indretning-moebler.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
+  document.body.appendChild(s);
+})();
