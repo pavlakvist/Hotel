@@ -642,3 +642,24 @@ document.head.appendChild(forklaringStil);
   s.src = "js/jul-lobby.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 💜 Vera-Messenger (js/vera-messenger.js): app i App Butik på telefonen for 5 Glimt (ejeren gratis).
+// Alle gæster og ansatte kan skrive sammen uden at være venner + fælles chat for hele hotellet.
+// Mute/frys/ban og chatfilter gælder også her. Ejeren kan læse alle samtaler. Kræver database-64-vera-messenger.sql.
+(function () {
+  if (document.querySelector("script[src^='js/vera-messenger.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/vera-messenger.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
+  document.body.appendChild(s);
+})();
+
+// 🎨 Telefon-temaer (js/telefon-temaer.js): 6 temaer til Vera-telefonen (Grand Hotel, Enchanted, Y2K, Neon Night,
+// Vintage, Ice Crystal) til 10 Stella stykket. Købes i App Butik → 🎨 Temaer og skiftes i Indstillinger → Tema.
+// Hele telefonen skifter: baggrund, ikoner, farver, knapper og skrift. Ejeren har alle gratis.
+// Kræver database-65-telefon-temaer.sql.
+(function () {
+  if (document.querySelector("script[src^='js/telefon-temaer.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/telefon-temaer.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
+  document.body.appendChild(s);
+})();
