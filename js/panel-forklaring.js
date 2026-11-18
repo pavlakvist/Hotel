@@ -632,3 +632,13 @@ document.head.appendChild(forklaringStil);
   s.src = "js/indretning-moebler.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🎄 Juletema (js/jul-lobby.js): 24 julemøbler (juletræer, gaver, kranse, nisser, rensdyr, kane, snemand, julepejs ...)
+// i Shoppen under 🎄 Jul, og en fyldig juleindretning af velkomsthallen. Ejeren tænder og slukker juletemaet i
+// Ejerpanel → ⚙️ System → 🎄 Juletema (den gamle lobby gemmes og kommer tilbage, når man slukker).
+(function () {
+  if (document.querySelector("script[src^='js/jul-lobby.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/jul-lobby.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
+  document.body.appendChild(s);
+})();
