@@ -58,7 +58,7 @@
     { id: "moderation", ikon: "🚩", navn: "Rapporter",   faner: ["rapporter", "strafrapporter"] },
     { id: "spillere",   ikon: "👥", navn: "Spillere",    faner: ["spillere", "chat", "beskeder"] },
     { id: "events",     ikon: "🎉", navn: "Events",      faner: ["events", "quiz", "eventnoter", "vindere", "biograf", "cinema", "loppe", "radio"] },
-    { id: "oekonomi",   ikon: "🪙", navn: "Penge",       faner: ["valuta", "veksel", "vip", "rares"] },
+    { id: "oekonomi",   ikon: "🪙", navn: "Penge",       faner: ["valuta", "veksel", "vip", "rares", "bytte"] },
     { id: "personale",  ikon: "🪪", navn: "Ansatte",     faner: ["ansaettelse", "loen", "staffchat", "vagtskema", "ansoegninger"] },
     { id: "system",     ikon: "⚙️", navn: "System",      faner: ["system", "rum", "adminlog", "ip", "sletbruger"] },
   ];

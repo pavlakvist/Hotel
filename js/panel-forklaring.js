@@ -663,3 +663,13 @@ document.head.appendChild(forklaringStil);
   s.src = "js/telefon-temaer.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
   document.body.appendChild(s);
 })();
+
+// 🔄 Møbelbytte (js/moebelbytte.js): klik på en anden spiller i samme rum → 🔄 Byt møbler. Begge lægger møbler fra
+// Mine ting i byttevinduet og trykker ✔ Godkend. Serveren passer på møblerne og bytter dem på én gang, så ingen kan snyde.
+// Ejeren og MOD ser bytte-loggen i Ejerpanel → 🪙 Penge → 🔄 Møbelbytte. Kræver database-66-moebelbytte.sql.
+(function () {
+  if (document.querySelector("script[src^='js/moebelbytte.js']")) return;
+  const s = document.createElement("script");
+  s.src = "js/moebelbytte.js?t=" + Math.floor(Date.now() / 600000);   // hentes altid frisk
+  document.body.appendChild(s);
+})();

@@ -170,14 +170,40 @@
     };
   }
 
-  // Har man gemt Vera som sin figur, så tag hende på igen
-  // (spillet læser det gemte udseende, før denne fil er hentet)
+  // Har man gemt Vera som sin figur, så tag hende på igen.
+  // Spillet læser det gemte udseende, FØR denne fil er hentet. Indtil da kender spillet ikke Vera
+  // og bruger pigen. Hvis en anden fil (fx tøjlaget) gemmer udseendet i det korte øjeblik,
+  // blev pigen gemt oven i Vera, og Vera var væk næste gang (rettet 19/11).
+  // Derfor huskes Vera-valget nu også i en ekstra nøgle, som kun denne fil bruger.
+  const VERA_NOEGLE = "mit-hotel-vera-valgt";
+  const GENDANNET_NOEGLE = "mit-hotel-vera-gendannet-1";
+
+  // Hver gang udseendet gemmes, mens denne fil kører: husk om Vera er valgt eller ej
+  if (typeof gemGarderobe === "function") {
+    const gemGarderobeFoerVera = gemGarderobe;
+    gemGarderobe = function () {
+      const r = gemGarderobeFoerVera.apply(this, arguments);
+      try {
+        if (garderobe.type === "vera") localStorage.setItem(VERA_NOEGLE, "ja");
+        else localStorage.removeItem(VERA_NOEGLE);   // man har selv valgt en anden figur
+      } catch (e) {}
+      return r;
+    };
+  }
+
   try {
-    const gemt = JSON.parse(localStorage.getItem("mit-hotel-figur-5"));
-    if (gemt && gemt.type === "vera" && typeof garderobe !== "undefined" && garderobe.type !== "vera") {
-      garderobe.type = "vera";
-      if (gemt.ting) garderobe.ting = gemt.ting;
-      if (gemt.farver) Object.assign(garderobe.farver, gemt.farver);
+    if (typeof garderobe !== "undefined" && garderobe.type !== "vera") {
+      const gemt = JSON.parse(localStorage.getItem("mit-hotel-figur-5") || "null");
+      let tagPaa = false;
+      if (gemt && gemt.type === "vera") tagPaa = true;                    // gemt som Vera
+      else if (localStorage.getItem(VERA_NOEGLE) === "ja") tagPaa = true;  // Vera blev skrevet over ved en fejl
+      else if (!localStorage.getItem(GENDANNET_NOEGLE) && gemt && gemt.ting && gemt.ting.vera &&
+               Object.keys(gemt.ting.vera).length) tagPaa = true;          // én gang: red Vera, der forsvandt før rettelsen
+      try { localStorage.setItem(GENDANNET_NOEGLE, "ja"); } catch (e) {}
+      if (tagPaa) {
+        garderobe.type = "vera";     // ansigt, frisure og hårfarve ligger stadig gemt under "vera"
+        gemGarderobe();
+      }
     }
   } catch (e) {}
   if (typeof tegnForhaandsvisning === "function") tegnForhaandsvisning();
